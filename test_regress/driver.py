@@ -3095,8 +3095,8 @@ if __name__ == '__main__':
         for envvar in ('MAKEFLAGS', 'MFLAGS'):
             makeflags = os.environ.get(envvar)
             if makeflags:
-                os.environ[envvar] = re.sub(
-                    r'(^|\s)--?jobserver-(?:auth|fds)=\S+', '', makeflags).strip()
+                os.environ[envvar] = re.sub(r'(^|\s)--?jobserver-(?:auth|fds)=\S+', '',
+                                            makeflags).strip()
         Args.driver_build_jobs_n = Args.driver_build_jobs
     elif len(Arg_Tests) >= 2 and Args.jobs >= 2:
         Args.driver_build_jobs_n = 2
