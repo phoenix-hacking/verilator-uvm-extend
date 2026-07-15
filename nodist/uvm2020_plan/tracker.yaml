@@ -1,0 +1,155 @@
+# DESCRIPTION: Verilator: UVM 2020.3.1 regression evidence tracker
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+updated: 2026-07-14
+objective: evidence-backed UVM 2020.3.1 package smoke
+
+lane:
+  id: uvm2020
+  command: make -C test_regress uvm2020
+  ci_suite: uvm2020
+  object_suffix: -uvm2020
+  controls:
+    test_jobs: 1
+    build_jobs: 1
+    output_groups: 6
+    clean_before: complete_test_object_directory
+    inherited_jobserver: ignored_when_build_jobs_explicit
+    stale_seed_name: interrupted.gch
+    stale_seed_directories: 3
+    defaults_changed: false
+  tests:
+    - test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py
+    - test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py
+    - test_regress/t/t_uvm_dpi_v2020_3_1.py
+
+issues:
+  21:
+    title: Prove upstream UVM package elaborates unmodified
+    state: in_progress
+    local: pass
+    ci: pending
+    claim: vendored_concatenated_package_smoke_only
+  39:
+    title: Prove UVM_NO_DPI tutorial flow
+    state: in_progress
+    local: pass
+    ci: pending
+    claim: basic_no_dpi_run_test_flow_only
+
+evidence:
+  HARNESS-FANOUT-0001:
+    local: pass
+    ci: pending
+  HARNESS-CLEAN-0001:
+    local: pass
+    ci: pending_target_seeds_all_directories
+  UVM-PKG-NODPI-0001:
+    local: pass
+    ci: pending
+  UVM-PKG-DPI-0001:
+    local: pass
+    ci: pending
+  UVM-DPI-HDL-0001:
+    local: pass
+    ci: pending
+  HARNESS-DEFAULT-0001:
+    local: pass
+    ci: not_separately_validated
+
+validation:
+  local:
+    date: 2026-07-14
+    timezone: America/Los_Angeles
+    base_revision: f82f59a0246f7e62f2f3a237446fdf10788cd09f
+    source_state: fresh_clone_plus_proposed_change
+    environment:
+      os: Ubuntu 24.04.3 LTS
+      kernel: Linux 6.12.47 x86_64
+      compiler: g++ 13.3.0
+      python: 3.12.13
+      verilator: 5.051 devel
+    multiprocessing:
+      context: fork
+      caveat: >-
+        The local sandbox blocks the AF_UNIX socket required by forkserver, so
+        an untracked sitecustomize shim selected fork. CI uses the committed
+        driver's normal forkserver context.
+    runs:
+      initial_lane:
+        command: make -C test_regress uvm2020
+        status: pass
+        passed: 3
+        failed: 0
+        elapsed: "4:42"
+        observed_build_jobs: 1
+        observed_output_groups: 6
+      interrupted_recovery:
+        command: make -C test_regress uvm2020
+        seeded: >-
+          test_regress/obj_vlt/t_uvm_hello_all_v2020_3_1_nodpi-uvm2020/interrupted.gch
+        status: pass
+        passed: 3
+        failed: 0
+        elapsed: "4:41"
+        sentinel_removed: true
+      integrated_seeded_lane:
+        command: make -j8 -C test_regress uvm2020
+        seeded_directories: 3
+        status: pass
+        passed: 3
+        failed: 0
+        elapsed: "4:44"
+        sentinels_removed: 3
+        post_run_assertion: pass
+        observed_build_jobs: 1
+        observed_output_groups: 6
+      default_policy:
+        test: test_regress/t/t_math_arith.py
+        invocations: 2
+        status: pass
+        automatic_build_jobs: 9
+        sentinel_retained: true
+      inherited_jobserver:
+        parent_make_jobs: 8
+        requested_build_jobs: 1
+        observed_gmake_jobs: 1
+        status: pass
+    markers:
+      no_dpi:
+        - UVM TEST PASSED
+        - Self PASSED
+        - NO_DPI_USED
+        - NO_VISIT_CHECK
+      dpi_hello:
+        - UVM TEST PASSED
+        - Self PASSED
+      dpi_hdl:
+        - golden_output_match
+        - Self PASSED
+    static_checks:
+      python_compile: pass
+      bash_syntax: pass
+      workflow_yaml: pass
+      tracker_yaml: pass
+      diff_check: pass
+      invalid_build_jobs_rejected: pass
+      sentinel_assertion_fail_fast: pass
+  ci:
+    status: pending_draft_pr
+    context: Test | ubuntu-26.04 | gcc | uvm2020
+    target_seeded_directories: 3
+
+dpi_boundary:
+  no_dpi_defines:
+    - UVM_HDL_NO_DPI
+    - UVM_REGEX_NO_DPI
+    - UVM_CMDLINE_NO_DPI
+  excluded_claims:
+    - hdl_backdoor
+    - c_reference_models
+    - full_regex
+    - full_command_line_helpers
+    - dpi_parity

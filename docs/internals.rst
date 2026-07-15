@@ -2350,11 +2350,24 @@ driver.py Non-Scenario Arguments
    Same as ``verilator --debugi level``: Set Verilator internal debugging
    level globally to the specified debug level (1-10).
 
+.. option:: --driver-build-jobs <jobs>
+
+   Set how many parallel jobs each generated gmake build may use. Tests that
+   request Verilator build-job grouping also use this value for
+   ``--build-jobs``. By default, the driver derives the value from the selected
+   tests and test-process concurrency. An explicit value ignores an inherited
+   make jobserver so the requested cap remains effective.
+
 .. option:: --driver-clean
 
    After a test passes, remove the generated objects. Reduces storage
    requirements, but may result in longer runtime if the tests are run
    again.
+
+.. option:: --driver-clean-before
+
+   Before each selected test starts, remove its complete generated-object
+   directory. This prevents reuse of objects left by an interrupted run.
 
 .. option:: --dump-tree
 

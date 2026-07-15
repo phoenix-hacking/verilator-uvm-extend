@@ -468,7 +468,9 @@ class Runner:
                       running_id=process.running_id)
 
         test.oprint("=" * 50)
-        test._prep()
+        # A skipped rerun exists only to print the earlier failure logs, and a
+        # fail-max skip is not a test attempt.  Preserve their object trees.
+        test._prep(clean_before=not (process.rerun_skipping or process.fail_max_skip))
         if process.rerun_skipping:
             print("  ---------- Earlier logfiles below; test was rerunnable = False\n")
             os.system("cat " + test.obj_dir + "/*.log")
@@ -1002,7 +1004,12 @@ class VlTest:
                         result[param] = True
         return result
 
-    def _prep(self) -> None:
+    def _prep(self, clean_before=True) -> None:
+        if clean_before and Args.driver_clean_before:
+            try:
+                shutil.rmtree(self.obj_dir)
+            except FileNotFoundError:
+                pass
         VtOs.mkdir_ok(self.obj_dir)  # Ok if already exists
 
     def _read(self) -> None:
@@ -2964,7 +2971,15 @@ if __name__ == '__main__':
     parser.add_argument('--benchmark', action='store', help='enable benchmarking')
     parser.add_argument('--debug', action='store_const', const=9, help='enable debug')
     # --debugi: see _parameter()
+    parser.add_argument('--driver-build-jobs',
+                        action='store',
+                        default=None,
+                        type=int,
+                        help='generated gmake job count (default: automatic)')
     parser.add_argument('--driver-clean', action='store_true', help='clean after test passes')
+    parser.add_argument('--driver-clean-before',
+                        action='store_true',
+                        help='clean each selected test object directory before running')
     parser.add_argument('--fail-max',
                         action='store',
                         default=None,
@@ -3018,6 +3033,8 @@ if __name__ == '__main__':
                             help='scenario-enable ' + scen)
 
     (Args, rest) = parser.parse_known_intermixed_args()
+    if Args.driver_build_jobs is not None and Args.driver_build_jobs < 1:
+        parser.error('--driver-build-jobs must be at least 1')
     Args.passdown_verilator_flags = []
     Args.passdown_verilated_flags = []
 
@@ -3071,8 +3088,23 @@ if __name__ == '__main__':
 
     forker = Forker(Args.jobs)
 
-    if len(Arg_Tests) >= 2 and Args.jobs >= 2:
+    if Args.driver_build_jobs is not None:
+        # An inherited GNU Make jobserver takes precedence over Verilator's
+        # --build-jobs value.  An explicit driver cap must therefore detach
+        # child builds from the parent make's jobserver.
+        for envvar in ('MAKEFLAGS', 'MFLAGS'):
+            makeflags = os.environ.get(envvar)
+            if makeflags:
+                os.environ[envvar] = re.sub(
+                    r'(^|\s)--?jobserver-(?:auth|fds)=\S+', '', makeflags).strip()
+        Args.driver_build_jobs_n = Args.driver_build_jobs
+    elif len(Arg_Tests) >= 2 and Args.jobs >= 2:
         Args.driver_build_jobs_n = 2
+    else:
+        # Speed up single-test makes
+        Args.driver_build_jobs_n = calc_jobs()
+
+    if len(Arg_Tests) >= 2 and Args.jobs >= 2:
         # Read supported into master process, so don't call every subprocess
         Capabilities.warmup_cache()
         # Without this tests such as t_debug_sigsegv_bt_bad.py will occasionally
@@ -3080,9 +3112,6 @@ if __name__ == '__main__':
         print("== Many jobs; redirecting STDIN", file=sys.stderr)
         #
         sys.stdin = open("/dev/null", 'r', encoding="utf8")  # pylint: disable=consider-using-with
-    else:
-        # Speed up single-test makes
-        Args.driver_build_jobs_n = calc_jobs()
 
     if Capabilities.have_dev_asan and platform.system() == "Darwin":
         # Otherwise asan prints warning that causes mismatch with expected output

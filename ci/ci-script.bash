@@ -119,6 +119,9 @@ elif [ "$CI_BUILD_STAGE_NAME" = "test" ]; then
     dist-vlt-3)
       "$MAKE" -C "$TEST_REGRESS" SCENARIOS="--dist --vlt --driver-clean" DRIVER_HASHSET=--hashset=3/4
       ;;
+    uvm2020)
+      "$MAKE" -C "$TEST_REGRESS" uvm2020
+      ;;
     vltmt-0)
       "$MAKE" -C "$TEST_REGRESS" SCENARIOS="--vltmt --driver-clean" DRIVER_HASHSET=--hashset=0/3
       ;;

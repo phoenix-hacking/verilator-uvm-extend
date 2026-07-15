@@ -58,6 +58,26 @@ vlt:
 vltmt:
 	$(PYTHON3) driver.py $(DRIVER_FLAGS) --vltmt --stop
 
+UVM2020_TESTS := \
+	t/t_uvm_hello_all_v2020_3_1_nodpi.py \
+	t/t_uvm_hello_all_v2020_3_1_dpi.py \
+	t/t_uvm_dpi_v2020_3_1.py
+UVM2020_OBJ_DIRS := $(patsubst t/%.py,obj_vlt/%-uvm2020,$(UVM2020_TESTS))
+UVM2020_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_OBJ_DIRS))
+
+.PHONY: uvm2020
+uvm2020:
+	mkdir -p $(UVM2020_OBJ_DIRS)
+	touch $(UVM2020_SENTINELS)
+	$(PYTHON3) driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+		--obj-suffix=-uvm2020 --vlt $(UVM2020_TESTS)
+	@for sentinel in $(UVM2020_SENTINELS); do \
+		if test -e "$$sentinel"; then \
+			echo "%Error: stale-artifact sentinel survived: $$sentinel" >&2; \
+			exit 1; \
+		fi; \
+	done; echo "uvm2020: stale-artifact cleanup PASSED"
+
 ######################################################################
 
 random:
