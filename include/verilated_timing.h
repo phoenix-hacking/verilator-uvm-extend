@@ -135,9 +135,11 @@ public:
         // Usually these coroutines should get resumed; we only need to clean up if we destroy a
         // model with some coroutines suspended
         if (VL_UNLIKELY(m_coro)) {
-            m_coro.destroy();
-            if (m_process && m_process->state() != VlProcess::KILLED) {
-                m_process->state(VlProcess::FINISHED);
+            const std::coroutine_handle<> coro = std::exchange(m_coro, nullptr);
+            const VlProcessRef process = m_process;
+            coro.destroy();
+            if (process && process->state() != VlProcess::KILLED) {
+                process->state(VlProcess::FINISHED);
             }
         }
     }
@@ -376,8 +378,15 @@ public:
 // wait statements.
 
 struct VlForever final {
+    VlProcessRef m_process;  // Data of the suspended process, null if not needed
+
     bool await_ready() const { return false; }  // Always suspend
-    void await_suspend(std::coroutine_handle<> coro) const { coro.destroy(); }
+    template <typename T_Promise>
+    void await_suspend(std::coroutine_handle<T_Promise> coro) const {
+        if (m_process) m_process->state(VlProcess::WAITING);
+        coro.promise().suspendForever();
+        coro.destroy();
+    }
     void await_resume() const {}
 };
 
@@ -464,10 +473,12 @@ private:
 
         void unhandled_exception() const { std::abort(); }
         void return_void() const {}
+        void suspendForever();
     };
 
     // MEMBERS
     VlPromise* m_promisep;  // The promise created for this coroutine
+    bool m_suspendedForever = false;  // Coroutine ended at a constant-false wait
 
 public:
     // TYPES
@@ -483,7 +494,8 @@ public:
     // Move. Update the pointers each time the return object is moved
     // cppcheck-suppress noExplicitConstructor
     VlCoroutine(VlCoroutine&& other)
-        : m_promisep{std::exchange(other.m_promisep, nullptr)} {
+        : m_promisep{std::exchange(other.m_promisep, nullptr)}
+        , m_suspendedForever{std::exchange(other.m_suspendedForever, false)} {
         if (m_promisep) m_promisep->m_corop = this;
     }
     ~VlCoroutine() {
@@ -493,9 +505,17 @@ public:
 
     // METHODS
     // Suspend the awaiter if the coroutine is suspended (the promise exists)
-    bool await_ready() const noexcept { return !m_promisep; }
+    bool await_ready() const noexcept { return !m_promisep && !m_suspendedForever; }
     // Set the awaiting coroutine as the continuation of the current coroutine
-    void await_suspend(std::coroutine_handle<> coro) { m_promisep->m_continuation = coro; }
+    template <typename T_Promise>
+    void await_suspend(std::coroutine_handle<T_Promise> coro) {
+        if (m_suspendedForever) {
+            coro.promise().suspendForever();
+            coro.destroy();
+        } else {
+            m_promisep->m_continuation = coro;
+        }
+    }
     void await_resume() const noexcept {}
 };
 

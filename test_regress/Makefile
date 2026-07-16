@@ -58,18 +58,29 @@ vlt:
 vltmt:
 	$(PYTHON3) driver.py $(DRIVER_FLAGS) --vltmt --stop
 
-UVM2020_TESTS := \
+UVM2020_REDUCED_TESTS := \
+	t/t_uvm_lrm_sched_wait_zero.py \
+	t/t_uvm_lrm_process_kill_tree.py \
+	t/t_uvm_lrm_process_kill_self_tree.py \
+	t/t_uvm_lrm_process_kill_self_zero.py \
+	t/t_uvm_lrm_process_kill_function.py \
+	t/t_uvm_lrm_process_kill_wait_zero.py \
+	t/t_timing_finish.py \
+	t/t_finish_stops_nonfinal.py \
+	t/t_clocking_virtual.py
+UVM2020_PACKAGE_TESTS := \
+	t/t_uvm_core_factory_basic.py \
 	t/t_uvm_hello_all_v2020_3_1_nodpi.py \
 	t/t_uvm_hello_all_v2020_3_1_dpi.py \
 	t/t_uvm_dpi_v2020_3_1.py
+UVM2020_TESTS := $(UVM2020_REDUCED_TESTS) $(UVM2020_PACKAGE_TESTS)
 UVM2020_OBJ_DIRS := $(patsubst t/%.py,obj_vlt/%-uvm2020,$(UVM2020_TESTS))
 UVM2020_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_OBJ_DIRS))
 
 .PHONY: uvm2020
 uvm2020:
-	mkdir -p $(UVM2020_OBJ_DIRS)
-	touch $(UVM2020_SENTINELS)
 	$(PYTHON3) driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+		--driver-clean-before-seed=interrupted.gch \
 		--obj-suffix=-uvm2020 --vlt $(UVM2020_TESTS)
 	@for sentinel in $(UVM2020_SENTINELS); do \
 		if test -e "$$sentinel"; then \

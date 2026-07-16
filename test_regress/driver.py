@@ -1006,11 +1006,27 @@ class VlTest:
 
     def _prep(self, clean_before=True) -> None:
         if clean_before and Args.driver_clean_before:
+            if os.path.islink(self.obj_dir):
+                self.error("Refusing to clean symlinked object directory: " + self.obj_dir)
+            if Args.driver_clean_before_seed:
+                VtOs.mkdir_ok(self.obj_dir)
+                seed_filename = os.path.join(self.obj_dir, Args.driver_clean_before_seed)
+                with open(seed_filename, "w", encoding="utf-8") as seed_fh:
+                    seed_fh.write("interrupted-run sentinel\n")
+            quarantine_dir = self.obj_dir + "__clean__" + str(os.getpid()) + "_" + str(
+                time.time_ns())
             try:
-                shutil.rmtree(self.obj_dir)
+                os.rename(self.obj_dir, quarantine_dir)
             except FileNotFoundError:
-                pass
+                quarantine_dir = None
         VtOs.mkdir_ok(self.obj_dir)  # Ok if already exists
+        if clean_before and Args.driver_clean_before:
+            remaining = os.listdir(self.obj_dir)
+            if remaining:
+                self.error("Clean-before left entries in object directory: "
+                           + ", ".join(sorted(remaining)))
+            if quarantine_dir:
+                shutil.rmtree(quarantine_dir)
 
     def _read(self) -> None:
         if not os.path.exists(self.py_filename):
@@ -2980,6 +2996,10 @@ if __name__ == '__main__':
     parser.add_argument('--driver-clean-before',
                         action='store_true',
                         help='clean each selected test object directory before running')
+    parser.add_argument('--driver-clean-before-seed',
+                        action='store',
+                        default=None,
+                        help='create this basename in each object directory before cleaning')
     parser.add_argument('--fail-max',
                         action='store',
                         default=None,
@@ -3035,6 +3055,12 @@ if __name__ == '__main__':
     (Args, rest) = parser.parse_known_intermixed_args()
     if Args.driver_build_jobs is not None and Args.driver_build_jobs < 1:
         parser.error('--driver-build-jobs must be at least 1')
+    if Args.driver_clean_before_seed:
+        if not Args.driver_clean_before:
+            parser.error('--driver-clean-before-seed requires --driver-clean-before')
+        if (os.path.basename(Args.driver_clean_before_seed) != Args.driver_clean_before_seed
+                or Args.driver_clean_before_seed in ('.', '..')):
+            parser.error('--driver-clean-before-seed must be a file basename')
     Args.passdown_verilator_flags = []
     Args.passdown_verilated_flags = []
 

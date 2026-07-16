@@ -29,22 +29,26 @@
 void VlCoroutineHandle::resume() {
     // Only null if we have a fork..join_any and one of the other child processes resumed the
     // main process
-    if (VL_LIKELY(m_coro)) {
+    const std::coroutine_handle<> coro = std::exchange(m_coro, nullptr);
+    if (VL_LIKELY(coro)) {
+        const VlProcessRef process = m_process;
+        VlProcess* const previousProcessp = VlProcess::currentp();
         VL_DEBUG_IF(VL_DBG_MSGF("             Resuming: "); dump(););
-        if (m_process) {  // If process state is managed with std::process
-            if (m_process->state() == VlProcess::KILLED) {
-                m_coro.destroy();
+        if (process) {  // If process state is managed with std::process
+            if (process->state() == VlProcess::KILLED) {
+                coro.destroy();
             } else {
-                m_process->state(VlProcess::RUNNING);
-                VlProcess::currentp(m_process.get());
-                m_coro();
-                VlProcess::currentp(nullptr);
+                process->state(VlProcess::RUNNING);
+                VlProcess::currentp(process.get());
+                coro();
             }
         } else {
             VlProcess::currentp(nullptr);
-            m_coro();
+            coro();
         }
-        m_coro = nullptr;
+        // A resumed coroutine can synchronously resume another coroutine through a fork-sync
+        // callback. Restore the caller's process context instead of assuming this is top-level.
+        VlProcess::currentp(previousProcessp);
     }
 }
 
@@ -284,25 +288,64 @@ void VlDynamicTriggerScheduler::dump() const {
 //======================================================================
 // VlForkSync:: Methods
 
-void VlProcess::forkSyncOnKill(VlForkSyncState* forkSyncp) {
+void VlProcess::collectChildren(std::vector<VlProcessRef>& processps) {
+    for (VlProcess* const childp : m_children) {
+        VlProcessRef childRefp = childp->shared_from_this();
+        processps.emplace_back(childRefp);
+        childp->collectChildren(processps);
+    }
+}
+
+void VlProcess::disableProcesses(const std::vector<VlProcessRef>& processps) {
+    std::vector<std::shared_ptr<VlForkSyncState>> forkSyncps;
+    forkSyncps.reserve(processps.size());
+
+    // Mark the full tree before callbacks can resume or destroy any coroutine frames.
+    for (const VlProcessRef& processp : processps) {
+        if (processp->m_state == KILLED || processp->m_state == FINISHED) continue;
+        processp->m_state = KILLED;
+        if (processp->m_forkSyncOnKillDone) continue;
+        if (const std::shared_ptr<VlForkSyncState> forkSyncp
+            = processp->m_forkSyncOnKillp.lock()) {
+            processp->m_forkSyncOnKillDone = true;
+            forkSyncps.emplace_back(forkSyncp);
+        }
+    }
+
+    // Keep both the processes and callback states alive until every notification completes.
+    for (const std::shared_ptr<VlForkSyncState>& forkSyncp : forkSyncps) forkSyncp->done();
+}
+
+void VlProcess::disable() {
+    std::vector<VlProcessRef> processps{shared_from_this()};
+    collectChildren(processps);
+    disableProcesses(processps);
+}
+
+void VlProcess::disableFork() {
+    std::vector<VlProcessRef> processps;
+    collectChildren(processps);
+    disableProcesses(processps);
+}
+
+void VlProcess::forkSyncOnKill(const std::shared_ptr<VlForkSyncState>& forkSyncp) {
     m_forkSyncOnKillp = forkSyncp;
     m_forkSyncOnKillDone = false;
 }
 
 void VlProcess::forkSyncOnKillClear(VlForkSyncState* forkSyncp) {
-    if (m_forkSyncOnKillp != forkSyncp) return;
-    m_forkSyncOnKillp = nullptr;
+    const std::shared_ptr<VlForkSyncState> registeredp = m_forkSyncOnKillp.lock();
+    if (registeredp && registeredp.get() != forkSyncp) return;
+    m_forkSyncOnKillp.reset();
     m_forkSyncOnKillDone = false;
 }
 
 void VlProcess::state(int s) {
-    if (s == KILLED && m_state != KILLED && m_state != FINISHED && m_forkSyncOnKillp
-        && !m_forkSyncOnKillDone) {
-        m_forkSyncOnKillDone = true;
-        m_state = s;
-        m_forkSyncOnKillp->done();
+    if (s == KILLED) {
+        disable();
         return;
     }
+    if (m_state == KILLED) return;
     m_state = s;
 }
 
@@ -313,7 +356,7 @@ VlForkSyncState::~VlForkSyncState() {
 void VlForkSync::onKill(VlProcessRef process) {
     if (!process) return;
     m_state->m_onKillProcessps.emplace_back(process);
-    process->forkSyncOnKill(m_state.get());
+    process->forkSyncOnKill(m_state);
 }
 
 void VlForkSyncState::done(const char* filename, int lineno) {
@@ -344,6 +387,13 @@ VlCoroutine::VlPromise::~VlPromise() {
     if (m_corop) m_corop->m_promisep = nullptr;
     // If there is a continuation, destroy it
     if (m_continuation) m_continuation.destroy();
+}
+
+void VlCoroutine::VlPromise::suspendForever() {
+    if (!m_corop) return;
+    m_corop->m_promisep = nullptr;
+    m_corop->m_suspendedForever = true;
+    m_corop = nullptr;
 }
 
 std::suspend_never VlCoroutine::VlPromise::final_suspend() noexcept {

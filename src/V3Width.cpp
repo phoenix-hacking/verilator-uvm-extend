@@ -7835,10 +7835,14 @@ class WidthVisitor final : public VNVisitor {
                     v3Global.rootp()->typeTablep()->addTypesp(newdtypep);
                     varp->dtypep(newdtypep);
                 }
-                // Mark that self requires process instance
-                if (AstNodeFTask* const ftaskp
-                    = VN_CAST(m_memberMap.findMember(nodep, "self"), NodeFTask)) {
-                    ftaskp->setNeedProcess();
+                // Mark methods that need the caller's process instance.  self() stores it in the
+                // returned handle.  kill() needs it propagated through the call graph so a caller
+                // that belongs to the killed subtree can stop immediately without exceptions.
+                for (const char* const namep : {"self", "kill"}) {
+                    if (AstNodeFTask* const ftaskp
+                        = VN_CAST(m_memberMap.findMember(nodep, namep), NodeFTask)) {
+                        ftaskp->setNeedProcess();
+                    }
                 }
             }
         }

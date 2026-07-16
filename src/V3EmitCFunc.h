@@ -773,7 +773,8 @@ public:
             }
             putns(nodep, funcp->nameProtect());
         }
-        emitCCallArgs(nodep, nodep->selfPointerProtect(m_useSelfForThis), m_cfuncp->needProcess());
+        emitCCallArgs(nodep, nodep->selfPointerProtect(m_useSelfForThis),
+                      m_cfuncp->needProcess() || m_instantiatesOwnProcess);
     }
     void visit(AstCMethodCall* nodep) override {
         const AstCFunc* const funcp = nodep->funcp();
@@ -781,7 +782,7 @@ public:
         iterateConst(nodep->fromp());
         putnbs(nodep, "->");
         putns(funcp, funcp->nameProtect());
-        emitCCallArgs(nodep, "", m_cfuncp->needProcess());
+        emitCCallArgs(nodep, "", m_cfuncp->needProcess() || m_instantiatesOwnProcess);
     }
     void visit(AstCAwait* nodep) override {
         putns(nodep, "co_await ");

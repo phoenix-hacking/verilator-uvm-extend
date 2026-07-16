@@ -301,18 +301,21 @@ using VlProcessRef = std::shared_ptr<VlProcess>;
 class VlForkSync;
 class VlForkSyncState;
 
-class VlProcess final {
+class VlProcess final : public std::enable_shared_from_this<VlProcess> {
     // MEMBERS
     int m_state;  // Current state of the process
     VlProcessRef m_parentp = nullptr;  // Parent process, if exists
     std::set<VlProcess*> m_children;  // Active child processes
-    VlForkSyncState* m_forkSyncOnKillp
-        = nullptr;  // Optional fork..join counter to decrement on kill
+    std::weak_ptr<VlForkSyncState> m_forkSyncOnKillp;  // Optional fork..join kill callback
     bool m_forkSyncOnKillDone = false;  // Ensure on-kill callback fires only once
     VlRNG m_rng;  // Per-process RNG (IEEE 1800-2023 18.14)
 
     // Thread-local current process pointer for hierarchical object seeding
     static thread_local VlProcess* t_currentp;
+
+    // METHODS
+    void collectChildren(std::vector<VlProcessRef>& processps);
+    static void disableProcesses(const std::vector<VlProcessRef>& processps);
 
 public:
     // TYPES
@@ -345,16 +348,9 @@ public:
 
     int state() const { return m_state; }
     void state(int s);
-    void disable() {
-        state(KILLED);
-        disableFork();
-    }
-    void disableFork() {
-        // childp->disable() may resume coroutines and mutate m_children
-        const std::set<VlProcess*> children = m_children;
-        for (VlProcess* childp : children) childp->disable();
-    }
-    void forkSyncOnKill(VlForkSyncState* forkSyncp);
+    void disable();
+    void disableFork();
+    void forkSyncOnKill(const std::shared_ptr<VlForkSyncState>& forkSyncp);
     void forkSyncOnKillClear(VlForkSyncState* forkSyncp);
     bool completed() const { return state() == FINISHED || state() == KILLED; }
     bool completedFork() const {

@@ -14,12 +14,16 @@ module t;
   task kill_me_after_1ns();
     fork
       #1 proc.kill();
-      #3 begin
-        $write("*-* All Finished *-*\n");
-        $finish;
-      end
     join_none
   endtask
+
+  // This watchdog must not be a child of proc: process::kill() terminates the
+  // target process and all of its subprocesses.
+  initial begin
+    #4;
+    $write("*-* All Finished *-*\n");
+    $finish;
+  end
 
   always @(posedge clk) begin
     if (!b) begin

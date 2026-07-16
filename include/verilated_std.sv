@@ -176,7 +176,9 @@ package std;
     endfunction
 
     function void kill();
-      set_status(KILLED);
+`ifdef VERILATOR_TIMING
+      $c(m_process, "->disable();");
+`endif
     endfunction
 
     function void suspend();
