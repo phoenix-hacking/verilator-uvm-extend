@@ -70,6 +70,8 @@ UVM2020_REDUCED_TESTS := \
 	t/t_clocking_virtual.py
 UVM2020_PACKAGE_TESTS := \
 	t/t_uvm_core_factory_basic.py \
+	t/t_uvm_config_vif_clocking.py \
+	t/t_uvm_core_phasing.py \
 	t/t_uvm_hello_all_v2020_3_1_nodpi.py \
 	t/t_uvm_hello_all_v2020_3_1_dpi.py \
 	t/t_uvm_dpi_v2020_3_1.py
@@ -79,11 +81,12 @@ UVM2020_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_OBJ_DIRS))
 
 .PHONY: uvm2020
 uvm2020:
+	$(PYTHON3) ../nodist/uvm2020_plan/check_cleanup_safety.py
 	$(PYTHON3) driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
 		--driver-clean-before-seed=interrupted.gch \
 		--obj-suffix=-uvm2020 --vlt $(UVM2020_TESTS)
 	@for sentinel in $(UVM2020_SENTINELS); do \
-		if test -e "$$sentinel"; then \
+		if test -e "$$sentinel" || test -L "$$sentinel"; then \
 			echo "%Error: stale-artifact sentinel survived: $$sentinel" >&2; \
 			exit 1; \
 		fi; \

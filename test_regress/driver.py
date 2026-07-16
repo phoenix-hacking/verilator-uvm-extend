@@ -1006,12 +1006,28 @@ class VlTest:
 
     def _prep(self, clean_before=True) -> None:
         if clean_before and Args.driver_clean_before:
-            if os.path.islink(self.obj_dir):
-                self.error("Refusing to clean symlinked object directory: " + self.obj_dir)
+            symlink_component = self._clean_before_symlink_component(self.obj_dir)
+            if symlink_component:
+                self.error("Refusing to clean object directory with symlinked path component: " +
+                           symlink_component)
             if Args.driver_clean_before_seed:
                 VtOs.mkdir_ok(self.obj_dir)
+                symlink_component = self._clean_before_symlink_component(self.obj_dir)
+                if symlink_component:
+                    self.error("Refusing to seed object directory with symlinked path component: " +
+                               symlink_component)
                 seed_filename = os.path.join(self.obj_dir, Args.driver_clean_before_seed)
-                with open(seed_filename, "w", encoding="utf-8") as seed_fh:
+                if os.path.islink(seed_filename):
+                    self.error("Refusing to replace symlinked clean-before seed: " + seed_filename)
+                seed_flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+                if hasattr(os, 'O_NOFOLLOW'):
+                    seed_flags |= os.O_NOFOLLOW
+                try:
+                    seed_fd = os.open(seed_filename, seed_flags, 0o666)
+                except OSError as exc:
+                    self.error("Unable to create clean-before seed safely: " + str(exc))
+                    return
+                with os.fdopen(seed_fd, "w", encoding="utf-8") as seed_fh:
                     seed_fh.write("interrupted-run sentinel\n")
             quarantine_dir = self.obj_dir + "__clean__" + str(os.getpid()) + "_" + str(
                 time.time_ns())
@@ -1021,12 +1037,37 @@ class VlTest:
                 quarantine_dir = None
         VtOs.mkdir_ok(self.obj_dir)  # Ok if already exists
         if clean_before and Args.driver_clean_before:
+            symlink_component = self._clean_before_symlink_component(self.obj_dir)
+            if symlink_component:
+                self.error("Clean-before recreated a symlinked object path component: " +
+                           symlink_component)
             remaining = os.listdir(self.obj_dir)
             if remaining:
                 self.error("Clean-before left entries in object directory: " +
                            ", ".join(sorted(remaining)))
             if quarantine_dir:
                 shutil.rmtree(quarantine_dir)
+
+    @staticmethod
+    def _clean_before_symlink_component(path: str) -> Optional[str]:
+        """Return the first existing symlink component in path, if any."""
+        absolute_path = os.path.abspath(path)
+        working_directory = os.path.abspath(os.getcwd())
+        try:
+            common_path = os.path.commonpath((working_directory, absolute_path))
+        except ValueError:
+            common_path = os.path.splitdrive(absolute_path)[0] + os.path.sep
+        current_path = common_path
+        relative_path = os.path.relpath(absolute_path, common_path)
+        for component in relative_path.split(os.path.sep):
+            if component in ('', '.'):
+                continue
+            current_path = os.path.join(current_path, component)
+            if not os.path.lexists(current_path):
+                break
+            if os.path.islink(current_path):
+                return current_path
+        return None
 
     def _read(self) -> None:
         if not os.path.exists(self.py_filename):
