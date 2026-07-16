@@ -446,10 +446,8 @@ class TransformForksVisitor final : public VNVisitor {
         // Propagate if needs process
         if (nodep->needProcess()) {
             newfuncp->setNeedProcess();
-            newfuncp->addStmtsp(new AstCStmt{
-                flp,
-                "if (vlProcess->state() != VlProcess::KILLED) "
-                "vlProcess->state(VlProcess::FINISHED);"});
+            newfuncp->addStmtsp(new AstCStmt{flp, "if (vlProcess->state() != VlProcess::KILLED) "
+                                                  "vlProcess->state(VlProcess::FINISHED);"});
         }
         remapLocals(newfuncp, callp);
     }

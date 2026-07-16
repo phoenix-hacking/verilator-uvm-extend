@@ -1023,8 +1023,8 @@ class VlTest:
         if clean_before and Args.driver_clean_before:
             remaining = os.listdir(self.obj_dir)
             if remaining:
-                self.error("Clean-before left entries in object directory: "
-                           + ", ".join(sorted(remaining)))
+                self.error("Clean-before left entries in object directory: " +
+                           ", ".join(sorted(remaining)))
             if quarantine_dir:
                 shutil.rmtree(quarantine_dir)
 

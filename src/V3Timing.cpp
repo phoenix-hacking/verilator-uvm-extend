@@ -762,8 +762,7 @@ class TimingControlVisitor final : public VNVisitor {
     // Non-inlined SystemVerilog functions carry their return value as the last output argument.
     static bool hasSyntheticReturnOutput(const AstCFunc* const funcp) {
         const AstVar* lastArgp = nullptr;
-        for (const AstVar* argp = funcp->argsp(); argp;
-             argp = VN_AS(argp->nextp(), Var)) {
+        for (const AstVar* argp = funcp->argsp(); argp; argp = VN_AS(argp->nextp(), Var)) {
             lastArgp = argp;
         }
         return lastArgp && lastArgp->noCReset()
@@ -939,10 +938,9 @@ class TimingControlVisitor final : public VNVisitor {
     void visit(AstInitial* nodep) override {
         visit(static_cast<AstNodeProcedure*>(nodep));
         if (nodep->needProcess() && !nodep->user1SetOnce()) {
-            nodep->addStmtsp(new AstCStmt{
-                nodep->fileline(),
-                "if (vlProcess->state() != VlProcess::KILLED) "
-                "vlProcess->state(VlProcess::FINISHED);"});
+            nodep->addStmtsp(new AstCStmt{nodep->fileline(),
+                                          "if (vlProcess->state() != VlProcess::KILLED) "
+                                          "vlProcess->state(VlProcess::FINISHED);"});
         }
     }
     void visit(AstJumpBlock* nodep) override {
@@ -1066,17 +1064,17 @@ class TimingControlVisitor final : public VNVisitor {
                 UASSERT_OBJ(refp && refp->access().isWriteOnly(), nodep,
                             "Function-return output must be a writable variable reference");
                 FileLine* const flp = refp->fileline();
-                AstVarScope* const resultVscp = createTemp(
-                    flp, m_processKillValueNames.get(refp), refp->dtypep(), callStmtp);
+                AstVarScope* const resultVscp = createTemp(flp, m_processKillValueNames.get(refp),
+                                                           refp->dtypep(), callStmtp);
                 VNRelinker handle;
                 refp->unlinkFrBack(&handle);
                 handle.relink(new AstVarRef{flp, resultVscp, VAccess::WRITE});
-                outputCommitp = new AstAssign{
-                    flp, refp, new AstVarRef{flp, resultVscp, VAccess::READ}};
+                outputCommitp
+                    = new AstAssign{flp, refp, new AstVarRef{flp, resultVscp, VAccess::READ}};
             }
-            const std::string returnStmt
-                = m_processCoroutine ? "co_return;"
-                                     : (m_processReturnsVoid ? "return;" : "return {};");
+            const std::string returnStmt = m_processCoroutine
+                                               ? "co_return;"
+                                               : (m_processReturnsVoid ? "return;" : "return {};");
             auto* const checkp = new AstCStmt{
                 nodep->fileline(),
                 "if (VL_UNLIKELY(vlProcess->state() == VlProcess::KILLED)) " + returnStmt};
