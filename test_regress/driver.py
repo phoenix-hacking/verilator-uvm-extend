@@ -1014,8 +1014,9 @@ class VlTest:
                 VtOs.mkdir_ok(self.obj_dir)
                 symlink_component = self._clean_before_symlink_component(self.obj_dir)
                 if symlink_component:
-                    self.error("Refusing to seed object directory with symlinked path component: " +
-                               symlink_component)
+                    self.error(
+                        "Refusing to seed object directory with symlinked path component: " +
+                        symlink_component)
                 seed_filename = os.path.join(self.obj_dir, Args.driver_clean_before_seed)
                 if os.path.islink(seed_filename):
                     self.error("Refusing to replace symlinked clean-before seed: " + seed_filename)
