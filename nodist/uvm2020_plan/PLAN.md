@@ -28,7 +28,7 @@ combined into one percentage:
 | Program exit criteria | `C01` through `C21` (21) | A criterion counts only when its status is `pass` and every referenced public capability milestone has exited. |
 | Public capability milestones | `M00` through `M19` (20) | A milestone exits only when every required gate has accepted evidence. |
 | Atomic milestone gates | 46 required gates | Engineering progress counts each required gate with accepted evidence; this diagnostic does not substitute for milestone exits. |
-| Pull request #41 lane evidence | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local proofs pass and five CI proofs are pending: 6/11, or 54.5%. |
+| Pull request #41 lane evidence | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs pass: 11/11, or 100.0%. |
 | Test corpora | Per-corpus planned-test count | Report implementation, execution, pass, and verified rates separately as described below. |
 
 Full-program `C01`-`C21` completion cannot be inferred from a lane evidence
@@ -69,15 +69,15 @@ The current checker-derived snapshot is:
 
 ```text
 program criteria: 0/21 (0.0%)
-public milestone exits: 1/20 (5.0%)
-atomic milestone gates: 22/46 (47.8%)
-PR #41 lane evidence: 6/11 (54.5%)
+public milestone exits: 2/20 (10.0%)
+atomic milestone gates: 24/46 (52.2%)
+PR #41 lane evidence: 11/11 (100.0%)
 mixed corpus: planned=108 implemented=108 executed=100 passed=100 failed=0 blocked=8
 mixed corpus rates: execution=92.6% pass/executed=100.0% verified=92.6%
 issue #5 mapped gates: 4/6 (66.7%)
 issue #7 mapped gates: 3/4 (75.0%)
-issue #21 mapped gates: 4/6 (66.7%)
-issue #39 mapped gates: 4/9 (44.4%)
+issue #21 mapped gates: 5/6 (83.3%)
+issue #39 mapped gates: 6/9 (66.7%)
 ```
 
 The mixed corpus consists of 102 L0 reduced-language tests and six minimal
@@ -85,10 +85,11 @@ UVM tests at L1. One hundred tests have accepted passing evidence. Eight
 frozen-corpus entries are blocked: one by the missing local debug-tool build
 and seven by the absence of a constraint solver. Blocked entries remain in the
 denominator and do not count as executed. This is a compatibility inventory,
-not an IEEE or UVM conformance rate. Public milestone `M00` has exited. `M04`
-still requires explicit event-region and RTL fast-path performance closure;
-`M06` still requires APB setup/access proof. No full-program criterion has yet
-cleared all of its public milestone dependencies.
+not an IEEE or UVM conformance rate. Public milestones `M00` and `M01` have
+exited. `M04` still requires explicit event-region and RTL fast-path
+performance closure; `M06` still requires APB setup/access proof. No
+full-program criterion has yet cleared all of its public milestone
+dependencies.
 
 ## Lane contract
 
@@ -161,10 +162,10 @@ is an Ubuntu GCC entry in the normal `build-test` workflow, which connects the
 proof to the repository's built-checkout regression path.
 
 The current 15-test target passed locally, including all 15 post-run sentinel
-assertions, in 14:27. Canonical CI is still pending. The PR #41 metric
-deliberately retains its original three-test proof boundary and therefore
-remains 6/11: expanding the local target does not retroactively add or replace
-the five required CI proof environments.
+assertions, in 14:27. The canonical Ubuntu 26.04 GCC `uvm2020` job then passed
+the same target 15/0 in 6:00 and repeated the cleanup assertion. That job
+supplies all five required CI proof environments, so the PR #41 metric is now
+11/11 (100.0%).
 
 ## Frozen repo-native compatibility corpus
 
@@ -434,8 +435,9 @@ dispositions, and reproducible dashboard.
 
 This subsection applies to the original three-test pull request #41 lane. It
 supplies six accepted local proof environments out of the lane's 11 required
-environments. Later local expansion does not change that denominator or stand
-in for the five pending canonical-CI proofs.
+environments. Later local expansion did not change that denominator or stand
+in for the five then-pending canonical-CI proofs; the dedicated canonical job
+recorded below subsequently supplied them.
 
 Validation was run on 2026-07-14 (America/Los_Angeles) from a fresh clone based
 on `f82f59a0246f7e62f2f3a237446fdf10788cd09f`, plus this change. The host was
@@ -583,9 +585,20 @@ and seven dependency skips are eight blocked entries. With the six L1 UVM
 tests, the current mixed corpus is 100 pass, zero semantic failures, and eight
 blocked—not 72/72 semantic pass.
 
-No expanded-lane canonical CI result is claimed. Until the
-`Test | ubuntu-26.04 | gcc | uvm2020` context passes, PR #41 evidence remains
-6/11 (54.5%) and the expanded lane's CI proof remains pending.
+The canonical `Test | ubuntu-26.04 | gcc | uvm2020` job passed 15/0 in 6:00
+and printed `uvm2020: stale-artifact cleanup PASSED`. The accepted job is
+<https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/29489670514/job/87592850312>.
+GitHub tested synthetic merge `80ca22d72275f3e1bd865c460b7a99868b88a38e`
+for source head `7170338f85745a68eeec557e6eb7e88f63a281fc`.
+Implementation head `e887b700dcd7a3d1169f4d20bb5ac7bcc4d3967c` is its
+direct automatic-format child and changes only Python line wrapping; it is
+not claimed as an exact tested head. The following CI-recording commit changes
+tracker documentation only. This evidence closes the five pending PR proof
+environments, `M01-G02`, and `M17-G02`. `M05-G03` remains pending: the
+factory slice passed this lane, but class/static closure is still open and has
+no canonical-CI proof. The broader `build-test` run was still in progress when
+this lane result was recorded, and the Contributor Agreement remains a
+separate human DCO requirement.
 
 Historical `LEDGER-*` logs mentioned in the issues are not present in the
 repository and are not treated as reproduced evidence here.

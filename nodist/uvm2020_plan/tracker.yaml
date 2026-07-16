@@ -60,9 +60,9 @@ issues:
     milestones: [M01, M03]
     progress_basis: accepted_required_gates_in_owned_milestones
     progress:
-      complete: 4
+      complete: 5
       total: 6
-      percent: 66.7
+      percent: 83.3
   39:
     id: A19
     url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/39
@@ -72,9 +72,9 @@ issues:
     milestones: [M01, M14, M17]
     progress_basis: accepted_required_gates_in_owned_milestones
     progress:
-      complete: 4
+      complete: 6
       total: 9
-      percent: 44.4
+      percent: 66.7
   40:
     id: A20
     url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/40
@@ -109,9 +109,9 @@ lane:
     - UVM-DPI-HDL-0001
     - HARNESS-DEFAULT-0001
   progress:
-    complete: 6
+    complete: 11
     total: 11
-    percent: 54.5
+    percent: 100.0
 
 expanded_lane:
   id: uvm2020-current
@@ -150,7 +150,11 @@ expanded_lane:
     elapsed: "14:27"
     sentinels_removed: 15
   ci_result:
-    status: pending
+    status: pass
+    passed: 15
+    failed: 0
+    elapsed: "6:00"
+    ref: validation.ci.runs.expanded_uvm_lane
 
 evidence:
   HARNESS-FANOUT-0001:
@@ -164,8 +168,9 @@ evidence:
           - validation.local.runs.parent_jobserver
       ci:
         required: true
-        status: pending
-        refs: []
+        status: pass
+        refs:
+          - validation.ci.runs.expanded_uvm_lane
   HARNESS-CLEAN-0001:
     claim: complete suffixed object directories are removed before attempts
     proofs:
@@ -176,8 +181,9 @@ evidence:
           - validation.local.runs.integrated_seeded_lane
       ci:
         required: true
-        status: pending
-        refs: []
+        status: pass
+        refs:
+          - validation.ci.runs.expanded_uvm_lane
   UVM-PKG-NODPI-0001:
     claim: vendored concatenated UVM 2020.3.1 no-DPI package hello
     proofs:
@@ -188,8 +194,9 @@ evidence:
           - validation.local.runs.integrated_seeded_lane
       ci:
         required: true
-        status: pending
-        refs: []
+        status: pass
+        refs:
+          - validation.ci.runs.expanded_uvm_lane
   UVM-PKG-DPI-0001:
     claim: vendored concatenated UVM 2020.3.1 DPI package hello
     proofs:
@@ -200,8 +207,9 @@ evidence:
           - validation.local.runs.integrated_seeded_lane
       ci:
         required: true
-        status: pending
-        refs: []
+        status: pass
+        refs:
+          - validation.ci.runs.expanded_uvm_lane
   UVM-DPI-HDL-0001:
     claim: UVM 2020.3.1 DPI HDL API smoke
     proofs:
@@ -212,8 +220,9 @@ evidence:
           - validation.local.runs.integrated_seeded_lane
       ci:
         required: true
-        status: pending
-        refs: []
+        status: pass
+        refs:
+          - validation.ci.runs.expanded_uvm_lane
   HARNESS-DEFAULT-0001:
     claim: omitting the new options preserves automatic fanout and object reuse
     proofs:
@@ -354,8 +363,9 @@ evidence:
           - validation.local.runs.expanded_uvm_lane
       ci:
         required: true
-        status: pending
-        refs: []
+        status: pass
+        refs:
+          - validation.ci.runs.expanded_uvm_lane
 
 milestones:
   M00:
@@ -382,7 +392,7 @@ milestones:
   M01:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/2
     title: Existing UVM smoke baseline
-    status: in_progress
+    status: pass
     gates:
       M01-G01-LOCAL-SMOKE:
         title: Existing three-test UVM smoke passes locally
@@ -390,7 +400,7 @@ milestones:
         evidence: [LOCAL-UVM-SMOKE-0001]
       M01-G02-PR-CI:
         title: Original clean lane passes canonical CI
-        status: pending
+        status: pass
         evidence:
           - HARNESS-FANOUT-0001
           - HARNESS-CLEAN-0001
@@ -485,6 +495,9 @@ milestones:
         title: Factory and class closure pass canonical CI
         status: pending
         evidence: [EXPANDED-UVM-LANE-0001]
+        note: >-
+          The factory slice passes the canonical lane, but class/static
+          closure remains open in M05-G02 and has no canonical-CI proof.
   M06:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7
     title: Interfaces, virtual interfaces, modports, and clocking closure
@@ -615,7 +628,7 @@ milestones:
         evidence: [LOCAL-LANE-CONTRACT-0001]
       M17-G02-CANONICAL-CI:
         title: Clean-checkout canonical CI lane passes
-        status: pending
+        status: pass
         evidence:
           - HARNESS-FANOUT-0001
           - HARNESS-CLEAN-0001
@@ -1228,17 +1241,17 @@ progress:
     total: 21
     percent: 0.0
   milestones:
-    complete: 1
+    complete: 2
     total: 20
-    percent: 5.0
+    percent: 10.0
   gates:
-    complete: 22
+    complete: 24
     total: 46
-    percent: 47.8
+    percent: 52.2
   lane:
-    complete: 6
+    complete: 11
     total: 11
-    percent: 54.5
+    percent: 100.0
   corpus:
     planned: 108
     implemented: 108
@@ -1687,9 +1700,42 @@ validation:
         cleanup_policy: atomic_quarantine
         generated_state_location: isolated_tmp_execution_root
   ci:
-    status: pending
+    status: pass
     context: Test | ubuntu-26.04 | gcc | uvm2020
     target_seeded_directories: 15
+    runs:
+      expanded_uvm_lane:
+        status: pass
+        workflow: build-test
+        workflow_run_id: 29489670514
+        workflow_run_url: >-
+          https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/29489670514
+        job_id: 87592850312
+        job_url: >-
+          https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/29489670514/job/87592850312
+        context: Test | ubuntu-26.04 | gcc | uvm2020
+        command: make -C test_regress uvm2020
+        tested_merge_revision: 80ca22d72275f3e1bd865c460b7a99868b88a38e
+        source_head_revision: 7170338f85745a68eeec557e6eb7e88f63a281fc
+        autoformat_child_revision: e887b700dcd7a3d1169f4d20bb5ac7bcc4d3967c
+        head_relation: source_head_to_direct_autoformat_only_child
+        recording_commit_policy: tracker_only_ci_skip
+        passed: 15
+        failed: 0
+        elapsed: "6:00"
+        test_jobs: 1
+        build_jobs: 1
+        output_groups: 6
+        seeded_directories: 15
+        sentinels_removed: 15
+        post_run_assertion: pass
+        workflow_run_status_at_record: in_progress
+        note: >-
+          The job ran GitHub's synthetic merge of source head 7170338f into
+          base f82f59a0. Implementation head e887b700 is its direct automatic
+          make-format child and changes only Python line wrapping; e887b700
+          itself is not claimed as tested. The following tracker-recording
+          commit changes evidence documentation only.
 
 dpi_boundary:
   no_dpi_defines:

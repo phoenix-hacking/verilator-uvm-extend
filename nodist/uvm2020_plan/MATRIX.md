@@ -4,41 +4,41 @@
 
 # UVM 2020.3.1 evidence matrix
 
-The first table records the original three-test pull request #41 lane. The
-current fifteen-test lane is tracked separately below because its accepted
-local result does not replace the five still-pending original PR CI proofs.
+The first table records the original three-test pull request #41 proof
+boundary. The current fifteen-test target is tracked separately below; its
+passing canonical job supplies the five required CI proof environments.
 
 | Evidence ID | Issue | Proof | Expected evidence | Local | CI |
 |---|---:|---|---|---|---|
-| HARNESS-FANOUT-0001 | #21, #39 | Named lane uses one test process and one generated-build job | `--jobs=1`, `--driver-build-jobs=1`, `--build-jobs 1`, `--output-groups 6` | Pass: three 3/0 runs plus parent-jobserver probe | Pending |
-| HARNESS-CLEAN-0001 | #21, #39 | Lane removes its complete suffixed object directory before every attempt | Planted `interrupted.gch` files are absent after a passing run | Pass: all three original target-seeded sentinels removed | Pending; current fifteen-test CI target is tracked separately |
-| UVM-PKG-NODPI-0001 | #21, #39 | Vendored concatenated UVM 2020.3.1 no-DPI package hello | `UVM TEST PASSED`, `Self PASSED`, exit 0 | Pass: expected warnings observed | Pending |
-| UVM-PKG-DPI-0001 | #21 | Vendored concatenated UVM 2020.3.1 DPI package hello | `UVM TEST PASSED`, `Self PASSED`, exit 0 | Pass | Pending |
-| UVM-DPI-HDL-0001 | #21 | UVM 2020.3.1 DPI HDL API regression | Golden output match, `Self PASSED`, exit 0 | Pass | Pending |
+| HARNESS-FANOUT-0001 | #21, #39 | Named lane uses one test process and one generated-build job | `--jobs=1`, `--driver-build-jobs=1`, `--build-jobs 1`, `--output-groups 6` | Pass: three 3/0 runs plus parent-jobserver probe | Pass: canonical fifteen-test job retained 1/1 fanout and output groups 6 |
+| HARNESS-CLEAN-0001 | #21, #39 | Lane removes its complete suffixed object directory before every attempt | Planted `interrupted.gch` files are absent after a passing run | Pass: all three original target-seeded sentinels removed | Pass: 15/15 child-local sentinels removed; cleanup postcheck passed |
+| UVM-PKG-NODPI-0001 | #21, #39 | Vendored concatenated UVM 2020.3.1 no-DPI package hello | `UVM TEST PASSED`, `Self PASSED`, exit 0 | Pass: expected warnings observed | Pass: canonical fifteen-test job 87592850312 |
+| UVM-PKG-DPI-0001 | #21 | Vendored concatenated UVM 2020.3.1 DPI package hello | `UVM TEST PASSED`, `Self PASSED`, exit 0 | Pass | Pass: canonical fifteen-test job 87592850312 |
+| UVM-DPI-HDL-0001 | #21 | UVM 2020.3.1 DPI HDL API regression | Golden output match, `Self PASSED`, exit 0 | Pass | Pass: canonical fifteen-test job 87592850312 |
 | HARNESS-DEFAULT-0001 | #21, #39 | Omit new options | Existing automatic fanout and object reuse remain selected | Pass: two runs; `-j 9`; sentinel retained | Not separately validated |
 
 The five evidence IDs other than `HARNESS-DEFAULT-0001` each require local and
 CI proof. `HARNESS-DEFAULT-0001` requires local proof only. Pull request #41
-therefore has 11 required proof environments: all six local proofs pass and
-the five CI proofs are pending, for 6/11 accepted (54.5%). This measures
-evidence acceptance, not UVM feature completion or a test pass rate.
+therefore has 11 required proof environments: all six local and all five CI
+proofs pass, for 11/11 accepted (100.0%). This measures evidence acceptance,
+not UVM feature completion or a test pass rate.
 
 ## Progress denominators
 
 | Metric | Correct denominator | Current interpretation |
 |---|---:|---|
 | Program criteria | 21 (`C01`-`C21`) | 0/21 complete (0.0%); every criterion retains at least one open public-milestone dependency. |
-| Public capability exits | 20 (`M00`-`M19`) | 1/20 exited (5.0%); `M00` has accepted evidence for every tracker gate. |
-| Atomic milestone gates | 46 required gates | 22/46 pass (47.8%); this engineering diagnostic does not substitute for public milestone exits. |
+| Public capability exits | 20 (`M00`-`M19`) | 2/20 exited (10.0%); `M00` and `M01` have accepted evidence for every tracker gate. |
+| Atomic milestone gates | 46 required gates | 24/46 pass (52.2%); this engineering diagnostic does not substitute for public milestone exits. |
 | Library implementation order | None | Unpadded `M0`-`M17` is dependency-order metadata and must never be converted to a completion percentage. |
-| PR #41 lane evidence | 11 required proof environments | 6 pass locally; 5 CI proofs pending; 54.5% accepted. |
+| PR #41 lane evidence | 11 required proof environments | Six local and five CI proofs pass; 100.0% accepted. |
 | Tracker mixed corpus | 108 planned tests | 108 implemented; 100 executed/pass and 8 blocked; execution and verified 92.6%; pass/executed 100.0%. |
 | Frozen compatibility selection | 72 manifest entries | All 72 received reproducible dispositions: 64 pass, one debug-build environment block, and seven no-solver skips. This is not a 72/72 semantic-pass claim. |
 
 Mapped issue progress is also checker-derived: issue #5 is 4/6 gates (66.7%),
-issue #7 is 3/4 (75.0%), issue #21 is 4/6 (66.7%), and issue #39 is 4/9
-(44.4%). Open event-region/performance, APB, and canonical-CI gates remain in
-their denominators.
+issue #7 is 3/4 (75.0%), issue #21 is 5/6 (83.3%), and issue #39 is 6/9
+(66.7%). Open event-region/performance, APB, broader package/API, DPI/reference,
+VPI/backdoor, and performance gates remain in their denominators.
 
 The tracker checker computes the program, milestone, atomic-gate, PR-evidence,
 and mixed-corpus metrics from atomic status and evidence records:
@@ -110,7 +110,7 @@ The exact reduced-test and neighbor commands are recorded in `PLAN.md`.
 | Reduced compatibility selection | 69 | Observed within full run | 61 pass, one debug-build environment block, and seven no-solver skips |
 | Full compatibility selection | 72 | Disposition complete | 64 pass; `t_class_dead_varscope_uaf` blocked because the image lacks `bin/verilator_bin_dbg` and system `FlexLexer.h`; seven randomize/constraint tests skipped because no constraint solver is available; 9:44 |
 | Expanded local UVM lane | 15 | Pass | 15/0 in 14:27; atomic quarantine removed 15 child-local `interrupted.gch` sentinels; test/build fanout stayed 1/1; stale-artifact postcheck passed |
-| Expanded CI UVM lane | 15 | Pending | No accepted workflow result |
+| Expanded CI UVM lane | 15 | Pass | 15/0 in 6:00; cleanup postcheck passed in job 87592850312 for source head `7170338f` |
 
 Use these reproducible commands:
 
@@ -132,7 +132,7 @@ by itself establish full-program completion.
 
 ## Current classification
 
-- Package and no-DPI smoke: local execution passed; draft-PR CI pending.
+- Package and no-DPI smoke: local execution and the dedicated draft-PR CI lane passed.
 - Full UVM package/API support: not claimed.
 - No-DPI parity with DPI: not claimed; the boundary in `PLAN.md` remains a
   known support-envelope constraint.
@@ -143,9 +143,10 @@ by itself establish full-program completion.
   performance, and APB gates remain open, so no milestone exit is inferred.
 - Expanded fifteen-test lane: the prior 13/0 local result remains historical;
   the exact fixed target passed 15/0 locally in 14:27 with its cleanup
-  postcheck, while canonical CI remains pending.
+  postcheck, and the canonical job passed 15/0 in 6:00 with the same postcheck.
 - Frozen 72-test corpus: every entry has a reproducible disposition (64 pass,
   one environment block, seven dependency skips); this is not 72/72 semantic
   compatibility.
-- CI promotion: the named suite is configured; its required PR proofs remain
-  pending.
+- CI promotion: the dedicated named suite supplies all five required CI
+  proofs; PR lane evidence is 11/11. The broader workflow matrix and human DCO
+  remain separate review gates.
