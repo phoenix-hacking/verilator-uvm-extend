@@ -90,6 +90,7 @@ enum NodeFlag : uint8_t {
     T_NEEDS_PROC = 1 << 4,  // Needs access to VlProcess if it's allocated
     T_HAS_PROC = 1 << 5,  // Has VlProcess argument in the signature
     T_MAY_KILL_PROC = 1 << 6,  // Can kill the caller's current process
+    T_DEFER_KILL_PROC = 1 << 7,  // Defers cancellation until a batch helper returns
 };
 
 enum ForkType : uint8_t {
@@ -108,6 +109,19 @@ enum PropagationType : uint8_t {
 static void addFlags(AstNode* const nodep, uint8_t flags) { nodep->user2Or(flags); }
 // Check if a node has ALL of the expected flags set
 static bool hasFlags(AstNode* const nodep, uint8_t flags) { return !(~nodep->user2() & flags); }
+// Check for an intrinsic method on the built-in std::process class
+static bool isStdProcessMethod(const AstClass* const classp, const AstCFunc* const funcp,
+                               const string& name) {
+    const AstClass* methodClassp = classp;
+    if (!methodClassp && funcp->scopep()) {
+        if (const AstClassPackage* const classPackagep
+            = VN_CAST(funcp->scopep()->modp(), ClassPackage)) {
+            methodClassp = classPackagep->classp();
+        }
+    }
+    return methodClassp == v3Global.rootp()->stdPackageProcessp()
+           && (funcp->name() == name || funcp->name() == "__VnoInFunc_" + name);
+}
 
 // ######################################################################
 //  Detect nodes affected by timing and/or requiring a process
@@ -307,10 +321,8 @@ class TimingSuspendableVisitor final : public VNVisitor {
     void visit(AstCFunc* nodep) override {
         VL_RESTORER(m_procp);
         m_procp = nodep;
-        if (m_classp == v3Global.rootp()->stdPackageProcessp()
-            && (nodep->name() == "kill" || nodep->name() == "__VnoInFunc_kill")) {
-            addFlags(nodep, T_MAY_KILL_PROC);
-        }
+        if (isStdProcessMethod(m_classp, nodep, "kill")) addFlags(nodep, T_MAY_KILL_PROC);
+        if (isStdProcessMethod(m_classp, nodep, "killQueue")) addFlags(nodep, T_DEFER_KILL_PROC);
         iterateChildren(nodep);
         if (nodep->needProcess()) addFlags(nodep, T_FORCES_PROC | T_NEEDS_PROC);
         DepVtx* const sVxp = getSuspendDepVtx(nodep);
@@ -497,6 +509,7 @@ class TimingControlVisitor final : public VNVisitor {
     bool m_hasProcess = false;  // True if current scope has a VlProcess handle available
     bool m_processCoroutine = false;  // True if process cancellation needs a co_return
     bool m_processReturnsVoid = true;  // True if a non-coroutine cancellation uses return
+    bool m_deferProcessCancellation = false;  // True while draining process::killQueue
     int m_forkCnt = 0;  // Number of forks inside a module
     bool m_underJumpBlock = false;  // True if we are inside of a jump-block
     bool m_underProcedure = false;  // True if we are under an always or initial
@@ -993,10 +1006,14 @@ class TimingControlVisitor final : public VNVisitor {
         VL_RESTORER(m_hasProcess);
         VL_RESTORER(m_processCoroutine);
         VL_RESTORER(m_processReturnsVoid);
+        VL_RESTORER(m_deferProcessCancellation);
         m_procp = nodep;
         m_hasProcess = hasFlags(nodep, T_HAS_PROC);
         m_processCoroutine = hasFlags(nodep, T_SUSPENDEE);
         m_processReturnsVoid = nodep->rtnTypeVoid() == "void";
+        // Named disable batches process handles through killQueue.  Drain the entire queue before
+        // its caller observes that the current process was killed and unwinds.
+        m_deferProcessCancellation = hasFlags(nodep, T_DEFER_KILL_PROC);
         iterateChildren(nodep);
         if (hasFlags(nodep, T_HAS_PROC)) nodep->setNeedProcess();
         if (!(hasFlags(nodep, T_SUSPENDEE))) return;
@@ -1031,7 +1048,8 @@ class TimingControlVisitor final : public VNVisitor {
         }
 
         const bool needsProcess = funcp->needProcess() || hasFlags(funcp, T_HAS_PROC);
-        const bool needsCancellationCheck = hasFlags(funcp, T_MAY_KILL_PROC);
+        const bool needsCancellationCheck
+            = hasFlags(funcp, T_MAY_KILL_PROC) && !m_deferProcessCancellation;
         if (needsProcess) m_hasProcess = true;
         const bool firstVisit = !nodep->user1SetOnce();
         AstNode* callParentp = nodep->backp();

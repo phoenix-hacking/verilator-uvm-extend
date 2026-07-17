@@ -583,7 +583,7 @@ which supports the environment-blocked classification but is not counted as a
 canonical full-baseline pass. In tracker roll-ups the one environment failure
 and seven dependency skips are eight blocked entries. With the six L1 UVM
 tests, the current mixed corpus is 100 pass, zero semantic failures, and eight
-blocked—not 72/72 semantic pass.
+blocked--not 72/72 semantic pass.
 
 The canonical `Test | ubuntu-26.04 | gcc | uvm2020` job passed 15/0 in 6:00
 and printed `uvm2020: stale-artifact cleanup PASSED`. The accepted job is

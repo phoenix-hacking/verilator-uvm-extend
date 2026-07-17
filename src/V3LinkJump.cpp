@@ -326,10 +326,9 @@ class LinkJumpVisitor final : public VNVisitor {
         AstStmtExpr* const killStmtp = getQueueKillStmtp(fl, processQueuep);
         nodep->addNextHere(killStmtp);
 
-        // 'process::kill' does not immediately kill the current process
-        // executing the disable statement (because it's in the running state).
-        // If the disable statement is indeed executed by a process under the
-        // target AstFork, then jump to the end of that fork branch.
+        // Killing the current process unwinds cooperatively after killQueue drains.  If the
+        // disable statement executes under the target AstFork, also jump to the end of that fork
+        // branch so no statements after the disable can run on paths without process unwinding.
         if (VN_IS(targetp, Fork)) {
             AstNodeBlock* forkBranchp = nullptr;
             for (AstNodeBlock* const blockp : vlstd::reverse_view(m_blockStack)) {
@@ -525,8 +524,9 @@ class LinkJumpVisitor final : public VNVisitor {
             AstStmtExpr* const killStmtp = getQueueKillStmtp(nodep->fileline(), processQueuep);
             nodep->addNextHere(killStmtp);
 
-            // process::kill does not terminate the currently running process immediately.
-            // If we disable the current task by name from inside itself, jump to its end.
+            // Process cancellation unwinds cooperatively.  If the current task disables itself by
+            // name, also jump to its end so no statements after the disable can run on paths
+            // without process unwinding.
             if (m_ftaskp == taskp) {
                 AstNode* jumpTargetp = taskp;
                 const auto it = m_taskDisableBegins.find(taskp);
@@ -553,9 +553,9 @@ class LinkJumpVisitor final : public VNVisitor {
                         = getQueueKillStmtp(nodep->fileline(), processQueuep);
                     nodep->addNextHere(killStmtp);
 
-                    // process::kill does not terminate the currently running process immediately.
-                    // If disable executes inside a fork branch of this named block, jump to the
-                    // end of that branch to prevent statements after disable from executing.
+                    // Process cancellation unwinds cooperatively.  If disable executes inside a
+                    // fork branch of this named block, also jump to the end of that branch so no
+                    // statements after the disable can run on paths without process unwinding.
                     AstBegin* currentBeginp = nullptr;
                     for (AstNodeBlock* const blockp : vlstd::reverse_view(m_blockStack)) {
                         if (VN_IS(blockp, Begin)) {
