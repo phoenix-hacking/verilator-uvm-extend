@@ -8,6 +8,10 @@ The first table records the original three-test pull request #41 proof
 boundary. The current fifteen-test target is tracked separately below; its
 passing canonical job supplies the five required CI proof environments.
 
+See `PROGRESS.md` for the complete requirement dashboard, progress bars, open
+work, and estimates. This matrix remains the authority for accepted evidence
+and claim boundaries.
+
 | Evidence ID | Issue | Proof | Expected evidence | Local | CI |
 |---|---:|---|---|---|---|
 | HARNESS-FANOUT-0001 | #21, #39 | Named lane uses one test process and one generated-build job | `--jobs=1`, `--driver-build-jobs=1`, `--build-jobs 1`, `--output-groups 6` | Pass: three 3/0 runs plus parent-jobserver probe | Pass: canonical fifteen-test job retained 1/1 fanout and output groups 6 |

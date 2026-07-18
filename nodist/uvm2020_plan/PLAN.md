@@ -11,6 +11,10 @@ expansion also closes the tracker gates for issue #5 UVM phasing/process
 semantics and issue #7 config-DB virtual-interface/clocking flow. It does not
 establish complete UVM 2020 or IEEE 1800.2 parity.
 
+See `PROGRESS.md` for the full-program dashboard, all 21 criteria, all 20
+public milestones, all 46 atomic gates, all 40 public issues, open work, and
+engineering-time estimates. This file remains the authoritative lane contract.
+
 The package snapshots under `test_regress/t/uvm/` are produced by
 `nodist/uvm_pkg_packer`. The packer concatenates selected upstream files,
 mechanically normalizes the result, removes selected directives and preamble,
