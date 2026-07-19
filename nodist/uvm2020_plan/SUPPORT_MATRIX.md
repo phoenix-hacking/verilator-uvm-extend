@@ -1,3 +1,7 @@
+<!-- DESCRIPTION: Verilator: broad UVM 2020 support matrix
+     SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+     SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0 -->
+
 # UVM 2020 Support Matrix
 
 This matrix tracks support evidence for the UVM 2020 execution plan. It is

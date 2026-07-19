@@ -1,3 +1,7 @@
+<!-- DESCRIPTION: Verilator: broad UVM 2020 execution roadmap
+     SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+     SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0 -->
+
 # UVM 2020 Execution Plan
 
 This directory is a developer-only planning area for extending this checkout
