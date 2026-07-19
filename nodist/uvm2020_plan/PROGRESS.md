@@ -4,7 +4,7 @@
 
 # UVM 2020 program progress
 
-Snapshot date: **2026-07-18**
+Snapshot date: **2026-07-19**
 
 Repository: `phoenix-hacking/verilator-uvm-extend`
 
@@ -67,7 +67,7 @@ Anything less remains incomplete, even if a narrower test lane is green.
 | Effort-weighted program | `[###-------]` **about 30%** | Estimated 25-35% | The best single estimate of real engineering completion. |
 | Remaining engineering | `[#######---]` **about 70%** | Estimated 65-75% | Most integrated UVM verticals remain. |
 | PR #41 defined lane evidence | `[##########]` **100%** | 11/11 accepted | The defined lane proof is complete; this is not the same as current merge readiness. |
-| PR #41 implementation scope | `[##########]` **more than 95%** | One technical runtime defect, one refreshed golden, and human DCO remain | The Ubuntu 22 failure is release-critical despite the high implementation percentage. |
+| PR #41 implementation scope | `[##########]` **more than 95%** | Runtime fix, reducer, refreshed golden, SPDX corrections, and post-fix full-UVM proof are committed on the PR branch; fresh matrix CI and human DCO remain | Root cause and exact Jammy confirmation are closed; merge readiness is not. |
 | Expanded UVM lane | `[##########]` **100%** | 15/15 local and canonical Ubuntu 26 CI | The exact fixed lane passed before the broader Ubuntu 22 matrix exposed a teardown defect. |
 | Mixed compatibility corpus | `[#########-]` **92.6% verified** | 100/108 passed; 8 blocked | Compatibility inventory only, not IEEE/UVM conformance. |
 | Frozen 72-test selection | `[##########]` **100% dispositioned** | 64 pass, 1 environment block, 7 dependency skips | Every entry is classified, but only 64 are semantic passes. |
@@ -98,11 +98,11 @@ and correcting compiler/runtime semantics under realistic UVM pressure.
 
 | Order | Work | Bar | Current evidence | Open work | Remaining estimate |
 |---:|---|---:|---|---|---:|
-| 1 | Refresh `t_debug_emitv` generated golden | `[##########]` 100% local | Regenerated through the harness; focused rerun passes. | Commit, push, and prove in matrix CI. | <1 day |
-| 2 | Ubuntu 22 full-UVM heap corruption | `[######----]` about 60% diagnostic progress | First-bad commit identified; exact Jammy toolchain exists; three reduced Jammy tests pass. | Reproduce in a full sliced UVM build, obtain abort backtrace, reduce, fix root lifetime error, add regression. | 1-10 working days, high uncertainty |
-| 3 | PR #41 broader CI | `[#####-----]` blocked | Ubuntu 26 UVM lane and format pass; builds pass. | Clear Ubuntu 22 corruption and refreshed golden failures, then rerun all required checks. | 1-3 days after root fix |
+| 1 | Refresh `t_debug_emitv` generated golden | `[##########]` 100% implementation | Regenerated through the harness; focused rerun passes; committed as `a4f6a2c33`. | Prove in fresh matrix CI. | CI time |
+| 2 | Ubuntu 22 full-UVM heap corruption | `[##########]` 100% local closure | Exact Jammy failure/backtrace, minimal normal/ASan A/B, focused neighbors, and post-fix full factory UVM run all pass; committed as `0ee3d9843`. | Prove the supported-host matrix. | CI time |
+| 3 | PR #41 broader CI | `[########--]` technical fixes on branch | Ubuntu 26 UVM lane/builds pass; focused fixes for all observed technical cause classes and exact Jammy full-UVM confirmation are complete. | Rerun and clear every required check. | 1-3 days of CI and triage |
 | 4 | Contributor Agreement/DCO | `[----------]` external | Two checks request a human-signed `docs/CONTRIBUTORS` entry. | Human contributor must satisfy repository policy; agents must not edit `docs/CONTRIBUTORS`. | Usually <1 day of human time |
-| 5 | Align all planning artifacts | `[########--]` about 80% | Canonical PR files validate; broad pre-PR files are preserved. | Publish `PROGRESS.md`, align stale issue bodies, split over-broad gates, remove namespace ambiguity. | 2-5 days |
+| 5 | Align all planning artifacts | `[########--]` about 80% | Canonical PR files validate; broad pre-PR files and `PROGRESS.md` are published. | Align stale issue bodies, split over-broad gates, and remove namespace ambiguity. | 2-5 days |
 | 6 | M07 config/resource/component closure | `[####------]` about 35% engineering readiness; 0% formal | Local config object/VIF/resource/factory prototypes exist; canonical VIF test passes. | Consolidate hierarchy/config/resource semantics, eliminate raw `$stop` checks, prove report/timeout behavior, add to canonical lane. | 1-3 weeks |
 
 ## All 21 program criteria
@@ -146,7 +146,7 @@ Bars are exact passed-gate fractions. A milestone exits only at 100%.
 | M01 / [#2](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/2) | Existing UVM smoke baseline | `[##########]` 3/3, 100% | **Pass/exited** | Preserve on every supported host. | Maintenance only |
 | M02 / [#3](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/3) | IEEE 1800 P0 semantic audit | `[########--]` 3/4, 75% | In progress | Complete P0 clause matrix. | 2-4 weeks |
 | M03 / [#4](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/4) | UVM 1800.2 API audit | `[#######---]` 2/3, 66.7% | In progress | Complete every P0 UVM API category. | 2-4 weeks |
-| M04 / [#5](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/5) | Scheduler, process, and fork closure | `[#######---]` 4/6, 66.7% | In progress | Ubuntu 22 teardown root fix, event regions, RTL performance proof. | 1-3 weeks |
+| M04 / [#5](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/5) | Scheduler, process, and fork closure | `[#######---]` 4/6, 66.7% | In progress | Publish and prove the Ubuntu 22 teardown fix; event regions and RTL performance proof remain. | 1-3 weeks |
 | M05 / [#6](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/6) | Class, factory, and static initialization | `[###-------]` 1/3, 33.3% | In progress | Class identity/static initialization matrix and canonical CI. | 2-5 weeks |
 | M06 / [#7](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7) | Interfaces, VIFs, modports, clocking | `[########--]` 3/4, 75% | In progress | APB setup/access proof through driver and monitor. | 2-4 weeks |
 | M07 / [#8](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8) | Config/resource DB and component flow | `[----------]` 0/1, 0% | Not started formally | Consolidate existing local prototypes into one strict acceptance test and canonical lane. | 1-3 weeks |
@@ -270,24 +270,29 @@ for direct leaf acceptance.
 
 ## PR #41 and current CI state
 
-PR #41 is open, draft, and GitHub reports it as mergeable at source head
-`82d2af17be123095710b6ed19fbb0685e6fa3c8f`. It is not ready to merge while
-required checks are red.
+PR #41 is open, draft, and GitHub reports it as mergeable. The technical
+updates are commits `0ee3d9843` (runtime fix and regression) and `a4f6a2c33`
+(golden and SPDX corrections); this dashboard update follows those commits.
+The fresh supported-host matrix is required before merge readiness.
 
 | Area | Current state | Evidence | Open work |
 |---|---|---|---|
 | Format | Pass | Ubuntu 24 format job green | Preserve after edits. |
 | Builds | Pass | Ubuntu 22/24/26, macOS, and Windows build jobs green | Revalidate after runtime fix. |
-| Dedicated UVM 2020 lane | Pass | Ubuntu 26 GCC 15/15 in both push and PR contexts | Preserve exact lane contract. |
-| Broad `dist-vlt-2` | Fail at published head | Stale expected `t_debug_emitv` line on Ubuntu 22/24/26 GCC/Clang | Local golden regenerated through harness and focused rerun passes; publish and rerun. |
-| Ubuntu 22 broad UVM tests | Fail at published head | Successful UVM output followed by `corrupted double-linked list` or `malloc(): unsorted double linked list corrupted` | Root-cause coroutine/process/fork teardown; add a reduced regression; prove GCC 11/glibc 2.35 and newer hosts. |
+| Dedicated UVM 2020 lane | Pass | Published-head Ubuntu 26 GCC push and pull-request jobs both pass 15/15 | Preserve the exact lane contract in the fresh matrix. |
+| Broad distribution checks | Fail at pre-fix published head | Restored broad planning files lacked required SPDX headers | Commit `a4f6a2c33` passes `t_dist_copyright.py --dist`; prove in the fresh rerun. |
+| Broad `dist-vlt-2` | Fail at pre-fix published head | Stale expected `t_debug_emitv` line on Ubuntu 22/24/26 GCC and Clang shards | Commit `a4f6a2c33` contains the harness-regenerated golden and focused rerun proof; prove in the fresh rerun. |
+| Ubuntu 22 broad UVM tests | Fail at pre-fix published head | Successful UVM output followed by `corrupted double-linked list` or `malloc(): unsorted double linked list corrupted` | Commit `0ee3d9843` passes the exact stress A/B and full factory UVM run on GCC 11/glibc 2.35; prove in the fresh rerun. |
 | Contributor Agreement | Fail | Two checks request contributor signature | Human-only repository policy action; do not edit `docs/CONTRIBUTORS` as an agent. |
 | Review comments | None known | No actionable review thread was found in the latest audit | Recheck before final promotion. |
 
-The current published check list contains 18 failures across duplicate push
-and pull-request workflows: 16 broad test jobs and two Contributor Agreement
-jobs. The local golden change should remove the non-Ubuntu-22 `dist-vlt-2`
-failures. The Ubuntu 22 teardown corruption and DCO remain independent.
+At the latest audit, the duplicate pre-fix push and pull-request workflows had
+completed. Their technical failures reduce to three observed cause
+classes--missing SPDX headers, the stale generated golden, and the Ubuntu 22
+teardown corruption--plus two Contributor Agreement jobs. Focused local fixes
+and exact Jammy full-UVM confirmation now exist for all three technical cause
+classes; the fresh matrix remains pending. The human contributor action is
+independent.
 
 ## Ubuntu 22 defect investigation
 
@@ -299,11 +304,14 @@ failures. The Ubuntu 22 teardown corruption and DCO remain independent.
 | Constant-false wait reducer on Jammy | `[##########]` Complete | Passes, exit 0. |
 | Nested process-kill/wait-zero reducer on Jammy | `[##########]` Complete | Passes, exit 0. |
 | Process tree/RNG-context reducer on Jammy | `[##########]` Complete | Passes, exit 0. |
-| Full UVM reproduction on Jammy | `[#####-----]` In progress | First large aggregate build exceeded available WSL memory; generation is being re-sliced with many output groups and compiled `-j1`. |
-| Abort backtrace | `[----------]` Pending | Requires full Jammy reproduction. |
-| Minimal failing phase-teardown reduction | `[###-------]` In progress | Existing reducers exclude simple wait-zero, simple recursive kill, and isolated RNG restoration; nested UVM phase/fork teardown is the focus. |
-| Permanent root fix | `[----------]` Pending | Candidate lifetime areas include nested coroutine continuation destruction and saved process context; no change receives credit until A/B proof exists. |
-| Regression and supported-host validation | `[----------]` Pending | Add exact reduction, run focused neighbors, full UVM lane, Ubuntu 22, format/static, then CI. |
+| Full UVM reproduction on Jammy | `[##########]` Complete before fix | A sliced GCC 11 build prints the factory success sentinel, zero UVM errors/fatals, and `$finish`, then glibc 2.35 aborts during model teardown. |
+| Abort backtrace and ownership proof | `[##########]` Complete | GDB and ASan trace the failure to a lost `VlProcessRef` owner: two live references share a control block reporting `use_count == 1`; child destruction frees the parent before the saved process wrapper releases it. |
+| Minimal failing phase-teardown reduction | `[##########]` Complete | `t_process_phase_teardown` recreates the package NBA waits, detached phase worker, saved process wrapper, nested `join_any`/kill, constant-false wait, and final model teardown over 1,000 phases. |
+| Permanent root fix | `[##########]` Complete locally | `VlForever` held a `VlProcessRef` in an awaiter whose `await_suspend()` destroys its own coroutine frame; GCC 11 undercounted/released that nontrivial owner during self-destruction. It now retains only a non-owning `VlProcess*` used before `coro.destroy()`; the enclosing live owner guarantees lifetime to that point. Post-fix GDB reports the required `use_count == 2`. |
+| Exact Jammy A/B regression | `[##########]` Complete | Pre-fix GCC 11 normal and ASan builds reproduce allocator/UAF failures; the minimal fix passes both with the exact sentinel and no ASan diagnostic. |
+| Focused native validation | `[##########]` Complete | The 1,000-phase regression, process kill-self, kill/wait-zero, scheduler wait-zero, and process-task tests pass; the new regression simulates in about 8 ms. |
+| Post-fix full UVM validation | `[##########]` Complete | The rebuilt full factory test prints `UVM FACTORY BASIC PASSED`, zero UVM errors/fatals, and `$finish`, then exits 0 under Jammy GCC 11/glibc 2.35 with no allocator abort. |
+| Supported-host CI validation | `[----------]` Fresh matrix pending | Require the runtime fix, regression, golden, SPDX corrections, and dashboard to clear the complete matrix. |
 
 ## Test and corpus evidence
 
@@ -313,6 +321,7 @@ failures. The Ubuntu 22 teardown corruption and DCO remain independent.
 | L1 minimal UVM | `[##########]` 6/6, 100% | Six accepted local tests | Package smoke, factory, phasing, VIF/config slices | Full UVM 1800.2 API or integrated environments |
 | Mixed corpus | `[#########-]` 100/108, 92.6% | 100 pass, 8 blocked | Reproducible selected compatibility evidence | Full-program completion |
 | Expanded lane | `[##########]` 15/15, 100% historical accepted run | Local and Ubuntu 26 canonical pass | Exact PR lane contract and cleanup/fanout invariants | Ubuntu 22 teardown safety across all UVM tests |
+| Phase-teardown stress | `[##########]` 1/1 focused local plus exact Jammy A/B | 1,000 phase graphs pass natively and under GCC 11 normal/ASan after failing before the fix | The isolated process/coroutine lifetime defect and its teardown path | Full supported-host matrix closure until fresh CI finishes |
 
 The eight blocked L0 entries remain open:
 
@@ -334,7 +343,7 @@ reviewed, consolidated, run, tracked, and promoted:
 
 | Area | Local artifacts | Current value | Open decision/work |
 |---|---|---|---|
-| Broad roadmap | `ROADMAP.md`, `SUPPORT_MATRIX.md`, `roadmap-tracker.yaml` | Preserves pre-PR scope and historical evidence without replacing canonical files. | Validate, cross-link, and publish. |
+| Broad roadmap | `ROADMAP.md`, `SUPPORT_MATRIX.md`, `roadmap-tracker.yaml` | Published on the PR branch; preserves pre-PR scope and historical evidence without replacing canonical files. | Cross-link and reconcile its older namespace with the canonical tracker. |
 | Config object | `t_uvm_config_db_basic*` | Historical typed config object identity/build/report pass. | Fold into strict M07 canonical acceptance. |
 | Config DB VIF | `t_uvm_config_db_vif*` | Historical live VIF mutation pass. | Canonical VIF/clocking test largely supersedes it; preserve unique coverage. |
 | Resource DB | `t_uvm_resource_db_basic*` | Wildcard, override, negative scope, read/write intent exists. | Complete runtime proof, terminal markers, zero-error checks, and canonical integration. |
