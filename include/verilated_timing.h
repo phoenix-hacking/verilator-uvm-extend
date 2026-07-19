@@ -378,12 +378,18 @@ public:
 // wait statements.
 
 struct VlForever final {
-    VlProcessRef m_process;  // Data of the suspended process, null if not needed
+    // Owned by the surrounding coroutine frame. Keep this awaiter trivially destructible because
+    // await_suspend() destroys its own frame; use the pointer only before coro.destroy().
+    VlProcess* m_processp = nullptr;
+
+    VlForever() = default;
+    explicit VlForever(const VlProcessRef& process)
+        : m_processp{process.get()} {}
 
     bool await_ready() const { return false; }  // Always suspend
     template <typename T_Promise>
     void await_suspend(std::coroutine_handle<T_Promise> coro) const {
-        if (m_process) m_process->state(VlProcess::WAITING);
+        if (m_processp) m_processp->state(VlProcess::WAITING);
         coro.promise().suspendForever();
         coro.destroy();
     }
