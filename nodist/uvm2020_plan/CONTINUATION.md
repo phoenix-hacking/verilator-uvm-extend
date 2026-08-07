@@ -13,6 +13,186 @@ Do not commit extracted standards text, rendered standards pages, generated
 test objects, or temporary compiler trees. In particular, the repository-local
 `tmp/` directory is scratch material and is not part of any checkpoint.
 
+## 2026-08-07 two-phase fork-launch checkpoint
+
+Recorded at: 2026-08-07T13:17:29Z
+
+### Published state
+
+- Repository: `phoenix-hacking/verilator-uvm-extend`
+- Draft pull request: <https://github.com/phoenix-hacking/verilator-uvm-extend/pull/41>
+- Branch: `agent/uvm2020-clean-lane`
+- Parent: `f5d010120de4e62032c7378137250530c565878f`
+- Functional commit: `ab4abf18b32ff68941e3255c66239fc82d7a28ae`
+- Functional tree: `5374accca8f9abf30f478fd643ca9974622aa2e4`
+- Autoformat-only child: `881e7c075df2d2a7238036dfeef24a706fbee168`
+- Autoformatted tree: `9eefa37da928b2ddd3c759059e47cc3bbb265371`
+- Remote verification:
+  `git ls-remote origin refs/heads/agent/uvm2020-clean-lane` returned
+  `881e7c075df2d2a7238036dfeef24a706fbee168`.
+- The local functional commit was `974cb1271055f03864709613cf294f292e4f923a`
+  with the same functional tree. The connected GitHub app created the exact
+  three blobs and exact tree, parented it to the verified remote head, and
+  advanced the branch without force. GitHub's formatter child changes only C++
+  layout and the new Python driver's mode from `100644` to `100755`.
+
+### Scope and claim boundary
+
+The functional checkpoint contains three files and 336 insertions. It:
+
+- pre-allocates every process-backed branch handle before invoking any fork
+  coroutine, because timing coroutines start eagerly;
+- preserves the SystemVerilog process forest by using
+  `VlProcess::createChild(vlProcess)` when the enclosing process is represented,
+  and creates independent roots only where no source parent process exists;
+- hoists every compiler-generated named-disable queue registration so all named
+  fork branches are visible before any zero-time branch can drain the queue;
+- hoists every `join`/`join_any` kill hook after all registrations but before all
+  branch calls, and asserts that every blocking process-backed branch supplied a
+  hook;
+- guards branch coroutine entry so a process killed during setup cannot execute
+  declarations, user statements, or a second completion path; and
+- recognizes registration groups by the queue's semantic `processQueue` marker,
+  the producer/value dataflow, and the standard process class rather than by a
+  generated identifier.
+
+The compiler emits setup in this order: existing fork initialization, every
+process assignment, every named-disable registration, every kill hook, and only
+then the branch calls. No public runtime ABI or runtime file changes in this
+checkpoint.
+
+This closes the zero-time launch race for real fork branches, including named
+parallel blocks under `join`, `join_any`, and `join_none`. It does not implement
+general named sequential begin/task cancellation. Those bodies must remain in
+their source process and control-flow scope; a synthetic process wrapper is
+still rejected because it changes process identity/RNG/status/`wait fork` and
+strands outward `return`, `break`, and `continue` targets.
+
+### Build and test provenance
+
+The isolated incremental optimized compiler root was
+`/tmp/verilator-fork-launch-build`. It started as a reflink of the verified
+process-tree build at parent `f5d010120de4e62032c7378137250530c565878f`, then
+overlaid the changed files. The final rebuild used the exact autoformatted
+`V3SchedTiming.cpp` blob from tree `9eefa37da928b2ddd3c759059e47cc3bbb265371`.
+
+- Version:
+  `Verilator 5.051 devel rev vUNKNOWN-built20260807-20075c4 (mod)`
+- Final binary SHA-256:
+  `638064ca88f7c69212f7308f52e4a09b2228d0c2e14314b5bc21240da8442e21`
+- Rebuild command:
+
+```sh
+make -C src opt -j8 OBJCACHE= LDFLAGS= LIBS='-lpthread -latomic -lm'
+```
+
+This was an incremental rebuild of the changed compiler unit, not a clean
+current-head build. A clean exact-head compiler and the full regression remain
+required before promotion.
+
+The final self-checking regression was also compiled against the unpatched
+parent compiler:
+
+```sh
+fork_base_dir=$(mktemp -d /tmp/verilator-fork-baseline-final.XXXXXX)
+/tmp/verilator-process-forest-build/bin/verilator \
+  --binary --timing --debug-check --Mdir "$fork_base_dir" --top-module t \
+  test_regress/t/t_disable_fork_launch.v
+"$fork_base_dir/Vt"
+```
+
+That run exited 1 at the named-`join` conditional-entry assertion with
+`got=1 exp=0`: the first branch disabled the only registered process, then the
+old eager launch created and ran a later victim. This is the direct behavioral
+red for the patch.
+
+The exact autoformatted checkpoint passed the harness in debug-check mode:
+
+```sh
+cd /tmp/verilator-fork-launch-build/test_regress
+VERILATOR_ROOT=/tmp/verilator-fork-launch-build \
+PYTHONPATH=/tmp/uvm_run_shim \
+/workspace/scratch/965baf652559/artifacts/test-venv/bin/python \
+  t/t_disable_fork_launch.py --driver-build-jobs=1 \
+  --obj-suffix=-forklaunch-auto
+```
+
+It also passed a direct multithreaded-codegen run:
+
+```sh
+fork_mt_dir=$(mktemp -d /tmp/verilator-fork-auto-mt.XXXXXX)
+bin/verilator --binary --timing --threads 2 --debug-check \
+  --Mdir "$fork_mt_dir" --top-module t \
+  test_regress/t/t_disable_fork_launch.v
+"$fork_mt_dir/Vt"
+```
+
+Both runs printed `*-* All Finished *-*` at 2 ps; the latter reported two
+runtime threads. The focused matrix checks:
+
+- parent-side `disable fork` after a zero-time `join_any` winner;
+- child-side `disable fork` leaving its sibling alive;
+- named `join`, `join_any`, and `join_none` self-disable at time zero;
+- no entry after disable for delayed and zero-time victims;
+- no disabler fallthrough; and
+- correct parent resumption time and completion bookkeeping.
+
+The following fresh neighbor regressions passed on the functional sources; the
+formatter child is semantic-only formatting and the focused test was rerun on
+that exact child:
+
+- `t_disable`
+- `t_disable_inside`
+- `t_disable_fork1`
+- `t_disable_fork2`
+- `t_disable_fork3`
+- `t_disable_task_join`
+- `t_fork_join_none_stmt`
+- `t_timing_fork_join`
+- `t_process_fork_finished`
+- `t_process_phase_teardown`
+- `t_process_tree_ownership`
+
+Static/distribution evidence passed:
+
+- `git diff --check`
+- Python source compilation without writing bytecode
+- `t_dist_cppstyle`
+- `t_dist_whitespace`
+- `t_dist_copyright`
+- `t_dist_portability`
+- `t_dist_untracked`
+
+Local `nodist/verilog_format` could not start because
+`verible-verilog-format` is absent; GitHub's formatter subsequently formatted
+the published checkpoint. `make lint-py` and `make cppcheck` were attempted in
+the isolated configured build but its regenerated Makefile path requires the
+absent `autoconf`; the underlying `pylint`, `ruff`, `mypy`, and `cppcheck`
+binaries are also absent. These are environment blocks, not passes. Current-head
+GitHub Actions and the complete `uvm2020` lane are pending.
+
+### Standards anchor
+
+IEEE Std 1800-2012, 9.3.2, printed page 175, defines fork branch concurrency
+and the `join`, `join_any`, and `join_none` parent rules. In particular,
+`join_none` children do not start until the parent blocks or terminates. Clause
+9.6.2, printed pages 190-192, requires a named block disable to terminate the
+block and all activities enabled within it, then resume after the block. Clause
+9.6.3, printed page 192, limits `disable fork` to descendants of the calling
+process; it does not let one child kill a sibling. The regression keeps those
+two disable scopes distinct.
+
+### Next exact action
+
+Start from autoformatted head `881e7c075df2...`. First perform a clean optimized
+compiler build and rerun the focused and neighboring lanes from that exact
+source. Then implement dynamic activation tokens for named sequential tasks and
+begins without moving their bodies into synthetic fork processes. Required
+coverage remains concurrent and recursive activations, per-object/per-instance
+ownership, cancellation through delay/event/`wait(0)`, detached `join_none`
+children, outward task/function return and loop break/continue, and preserved
+process identity/RNG/status.
+
 ## 2026-08-07 process-tree ownership checkpoint
 
 Recorded at: 2026-08-07T12:27:57Z
