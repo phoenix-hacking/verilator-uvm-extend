@@ -432,12 +432,10 @@ class TransformForksVisitor final : public VNVisitor {
                       ? VN_CAST(selfCallp->funcp()->scopep()->modp(), ClassPackage)
                       : nullptr;
             const bool directResult
-                = selfOutputp && pushValuep
-                  && selfOutputp->varScopep() == pushValuep->varScopep();
-            const bool assignedResult
-                = selfOutputp && resultLhsp && resultRhsp && pushValuep
-                  && selfOutputp->varScopep() == resultRhsp->varScopep()
-                  && resultLhsp->varScopep() == pushValuep->varScopep();
+                = selfOutputp && pushValuep && selfOutputp->varScopep() == pushValuep->varScopep();
+            const bool assignedResult = selfOutputp && resultLhsp && resultRhsp && pushValuep
+                                        && selfOutputp->varScopep() == resultRhsp->varScopep()
+                                        && resultLhsp->varScopep() == pushValuep->varScopep();
             UASSERT_OBJ(selfCallp && selfCallp->funcp()->needProcess() && selfOutputp
                             && !selfCallp->processp() && !selfOutputp->nextp() && pushValuep
                             && !pushValuep->nextp() && (directResult || assignedResult)
