@@ -23,6 +23,14 @@
 
 #include "verilated_timing.h"
 
+namespace {
+
+// Process-tree transitions and fork callbacks share this lock.  Callbacks are always delivered
+// after releasing it, as they may synchronously resume generated code.
+VerilatedMutex s_processMutex;
+
+}  // namespace
+
 //======================================================================
 // VlCoroutineHandle:: Methods
 
@@ -285,24 +293,76 @@ void VlDynamicTriggerScheduler::dump() const {
 #endif
 
 //======================================================================
-// VlForkSync:: Methods
+// VlProcess:: Methods
 
-void VlProcess::collectChildren(std::vector<VlProcessRef>& processps) {
-    for (VlProcess* const childp : m_children) {
-        VlProcessRef childRefp = childp->shared_from_this();
-        processps.emplace_back(childRefp);
-        childp->collectChildren(processps);
+VlProcess::VlProcess(const VlProcessRef& parentp)
+    : m_state{RUNNING}
+    , m_parentp{parentp} {}
+
+VlProcessRef VlProcess::createChild(VlProcessRef parentp) {
+    if (!parentp) return std::make_shared<VlProcess>();
+    VlProcessRef processp{new VlProcess{parentp}};
+    const VerilatedLockGuard lock{s_processMutex};
+    VL_DEBUG_IFDEF(assert(!parentp->completed()););
+    parentp->attachLocked(processp);
+    return processp;
+}
+
+void VlProcess::attachLocked(const VlProcessRef& childp) {
+    VL_DEBUG_IFDEF(assert(!m_completedTree););
+    const auto inserted = m_children.emplace(childp.get(), childp);
+    VL_DEBUG_IFDEF(assert(inserted.second););
+}
+
+void VlProcess::detachLocked(VlProcess* const childp) {
+    const auto it = m_children.find(childp);
+    VL_DEBUG_IFDEF(assert(it != m_children.end()););
+    if (it != m_children.end()) m_children.erase(it);
+}
+
+void VlProcess::completeTreeLocked() {
+    VlProcessRef processp = shared_from_this();
+    while (processp && processp->completed() && processp->m_children.empty()
+           && !processp->m_completedTree) {
+        processp->m_completedTree = true;
+        const VlProcessRef parentp = processp->m_parentp.lock();
+        processp->m_parentp.reset();
+        if (parentp) parentp->detachLocked(processp.get());
+        processp = parentp;
     }
 }
 
-void VlProcess::disableProcesses(const std::vector<VlProcessRef>& processps) {
-    std::vector<std::shared_ptr<VlForkSyncState>> forkSyncps;
-    forkSyncps.reserve(processps.size());
+bool VlProcess::completedForkLocked() const {
+    for (const auto& child : m_children)
+        if (!child.second->completed()) return false;
+    return true;
+}
+
+bool VlProcess::completedFork() const {
+    const VerilatedLockGuard lock{s_processMutex};
+    return completedForkLocked();
+}
+
+void VlProcess::disableProcessesLocked(
+    const std::vector<VlProcessRef>& rootProcessps,
+    std::vector<VlProcessRef>& heldProcessps,
+    std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps) {
+    std::vector<VlProcessRef> pendingProcessps = rootProcessps;
+    std::set<VlProcess*> seenProcessps;
+    while (!pendingProcessps.empty()) {
+        VlProcessRef processp = std::move(pendingProcessps.back());
+        pendingProcessps.pop_back();
+        if (!processp || !seenProcessps.emplace(processp.get()).second) continue;
+        heldProcessps.emplace_back(processp);
+        for (const auto& child : processp->m_children) pendingProcessps.emplace_back(child.second);
+    }
+    forkSyncps.reserve(heldProcessps.size());
 
     // Mark the full tree before callbacks can resume or destroy any coroutine frames.
-    for (const VlProcessRef& processp : processps) {
-        if (processp->m_state == KILLED || processp->m_state == FINISHED) continue;
-        processp->m_state = KILLED;
+    for (const VlProcessRef& processp : heldProcessps) {
+        const int state = processp->m_state.load(std::memory_order_relaxed);
+        if (state == KILLED || state == FINISHED) continue;
+        processp->m_state.store(KILLED, std::memory_order_release);
         if (processp->m_forkSyncOnKillDone) continue;
         if (const std::shared_ptr<VlForkSyncState> forkSyncp
             = processp->m_forkSyncOnKillp.lock()) {
@@ -311,28 +371,48 @@ void VlProcess::disableProcesses(const std::vector<VlProcessRef>& processps) {
         }
     }
 
-    // Keep both the processes and callback states alive until every notification completes.
+    for (auto it = heldProcessps.rbegin(); it != heldProcessps.rend(); ++it) {
+        (*it)->completeTreeLocked();
+    }
+}
+
+void VlProcess::disableProcesses(const std::vector<VlProcessRef>& rootProcessps) {
+    std::vector<VlProcessRef> heldProcessps;
+    std::vector<std::shared_ptr<VlForkSyncState>> forkSyncps;
+    {
+        const VerilatedLockGuard lock{s_processMutex};
+        disableProcessesLocked(rootProcessps, heldProcessps, forkSyncps);
+    }
     for (const std::shared_ptr<VlForkSyncState>& forkSyncp : forkSyncps) forkSyncp->done();
 }
 
 void VlProcess::disable() {
-    std::vector<VlProcessRef> processps{shared_from_this()};
-    collectChildren(processps);
-    disableProcesses(processps);
+    disableProcesses({shared_from_this()});
 }
 
 void VlProcess::disableFork() {
-    std::vector<VlProcessRef> processps;
-    collectChildren(processps);
-    disableProcesses(processps);
+    std::vector<VlProcessRef> heldProcessps;
+    std::vector<std::shared_ptr<VlForkSyncState>> forkSyncps;
+    {
+        const VerilatedLockGuard lock{s_processMutex};
+        std::vector<VlProcessRef> processps;
+        processps.reserve(m_children.size());
+        for (const auto& child : m_children) processps.emplace_back(child.second);
+        disableProcessesLocked(processps, heldProcessps, forkSyncps);
+    }
+    for (const std::shared_ptr<VlForkSyncState>& forkSyncp : forkSyncps) forkSyncp->done();
 }
 
-void VlProcess::forkSyncOnKill(const std::shared_ptr<VlForkSyncState>& forkSyncp) {
+bool VlProcess::forkSyncOnKill(const std::shared_ptr<VlForkSyncState>& forkSyncp) {
+    const VerilatedLockGuard lock{s_processMutex};
+    if (completed()) return false;
     m_forkSyncOnKillp = forkSyncp;
     m_forkSyncOnKillDone = false;
+    return true;
 }
 
 void VlProcess::forkSyncOnKillClear(VlForkSyncState* forkSyncp) {
+    const VerilatedLockGuard lock{s_processMutex};
     const std::shared_ptr<VlForkSyncState> registeredp = m_forkSyncOnKillp.lock();
     if (registeredp && registeredp.get() != forkSyncp) return;
     m_forkSyncOnKillp.reset();
@@ -344,8 +424,18 @@ void VlProcess::state(int s) {
         disable();
         return;
     }
-    if (m_state == KILLED) return;
-    m_state = s;
+    if (s == FINISHED) {
+        const VerilatedLockGuard lock{s_processMutex};
+        const int oldState = m_state.load(std::memory_order_relaxed);
+        if (oldState == KILLED || oldState == FINISHED) return;
+        m_state.store(FINISHED, std::memory_order_release);
+        completeTreeLocked();
+        return;
+    }
+    int oldState = m_state.load(std::memory_order_acquire);
+    while (oldState != KILLED && oldState != FINISHED
+           && !m_state.compare_exchange_weak(oldState, s, std::memory_order_acq_rel,
+                                             std::memory_order_acquire)) {}
 }
 
 VlForkSyncState::~VlForkSyncState() {
@@ -354,8 +444,12 @@ VlForkSyncState::~VlForkSyncState() {
 
 void VlForkSync::onKill(VlProcessRef process) {
     if (!process) return;
-    m_state->m_onKillProcessps.emplace_back(process);
-    process->forkSyncOnKill(m_state);
+    const std::shared_ptr<VlForkSyncState> statep = m_state;
+    if (!process->forkSyncOnKill(statep)) {
+        statep->done();
+        return;
+    }
+    statep->m_onKillProcessps.emplace_back(process);
 }
 
 void VlForkSyncState::done(const char* filename, int lineno) {

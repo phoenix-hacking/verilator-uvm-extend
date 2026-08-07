@@ -436,7 +436,7 @@ public:
         m_state->m_inited = true;
     }
     // Register process kill callback so killed fork branches still decrement join counter
-    void onKill(VlProcessRef process);
+    void onKill(VlProcessRef process) VL_MT_UNSAFE;
     // Called whenever any of the forked processes finishes. If the join counter reaches 0, the
     // main process gets resumed
     void done(const char* filename = VL_UNKNOWN, int lineno = 0) {

@@ -391,7 +391,7 @@ void EmitCFunc::emitCCallArgs(const AstNodeCCall* nodep, const string& selfPoint
         } else if (VN_IS(nodep->backp(), CAwait) || !nodep->funcp()->isCoroutine()) {
             puts("vlProcess");
         } else if (inProcess) {
-            puts("std::make_shared<VlProcess>(vlProcess)");
+            puts("VlProcess::createChild(vlProcess)");
         } else {
             puts("std::make_shared<VlProcess>()");
         }

@@ -303,9 +303,10 @@ class VlForkSyncState;
 
 class VlProcess final : public std::enable_shared_from_this<VlProcess> {
     // MEMBERS
-    int m_state;  // Current state of the process
-    VlProcessRef m_parentp = nullptr;  // Parent process, if exists
-    std::set<VlProcess*> m_children;  // Active child processes
+    std::atomic<int> m_state;  // Current state of the process
+    std::weak_ptr<VlProcess> m_parentp;  // Parent process, if it still exists
+    std::map<VlProcess*, VlProcessRef> m_children;  // Child subtrees retained until completion
+    bool m_completedTree = false;  // This process and every descendant are terminal
     std::weak_ptr<VlForkSyncState> m_forkSyncOnKillp;  // Optional fork..join kill callback
     bool m_forkSyncOnKillDone = false;  // Ensure on-kill callback fires only once
     VlProcess* m_previousCurrentp = nullptr;  // Dynamic caller while this process executes
@@ -316,8 +317,17 @@ class VlProcess final : public std::enable_shared_from_this<VlProcess> {
     static thread_local VlProcess* t_currentp;
 
     // METHODS
-    void collectChildren(std::vector<VlProcessRef>& processps);
-    static void disableProcesses(const std::vector<VlProcessRef>& processps);
+    void attachLocked(const VlProcessRef& childp);
+    void detachLocked(VlProcess* childp);
+    void completeTreeLocked();
+    bool completedForkLocked() const;
+    static void disableProcessesLocked(
+        const std::vector<VlProcessRef>& rootProcessps,
+        std::vector<VlProcessRef>& heldProcessps,
+        std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps);
+    static void disableProcesses(const std::vector<VlProcessRef>& rootProcessps);
+
+    explicit VlProcess(const VlProcessRef& parentp);
 
 public:
     // TYPES
@@ -333,39 +343,28 @@ public:
     // Construct independent process
     VlProcess()
         : m_state{RUNNING} {}
-    // Construct child process of parent
-    explicit VlProcess(VlProcessRef parentp)
-        : m_state{RUNNING}
-        , m_parentp{parentp} {
-        m_parentp->attach(this);
-    }
+    /// Construct a child and retain it in its parent's semantic process tree.
+    static VlProcessRef createChild(VlProcessRef parentp) VL_MT_UNSAFE;
 
     ~VlProcess() {
         if (t_currentp == this) {
             if (m_contextActive) {
                 leave();
             } else {
-                t_currentp = m_parentp.get();
+                const VlProcessRef parentp = m_parentp.lock();
+                t_currentp = parentp.get();
             }
         }
-        if (m_parentp) m_parentp->detach(this);
     }
 
-    void attach(VlProcess* childp) { m_children.insert(childp); }
-    void detach(VlProcess* childp) { m_children.erase(childp); }
-
-    int state() const { return m_state; }
+    int state() const { return m_state.load(std::memory_order_acquire); }
     void state(int s);
     void disable();
     void disableFork();
-    void forkSyncOnKill(const std::shared_ptr<VlForkSyncState>& forkSyncp);
+    bool forkSyncOnKill(const std::shared_ptr<VlForkSyncState>& forkSyncp);
     void forkSyncOnKillClear(VlForkSyncState* forkSyncp);
     bool completed() const { return state() == FINISHED || state() == KILLED; }
-    bool completedFork() const {
-        for (const VlProcess* const childp : m_children)
-            if (!childp->completed()) return false;
-        return true;
-    }
+    bool completedFork() const;
 
     // Random state (IEEE 1800-2023 9.7, 18.14)
     void srandom(uint64_t seed) VL_MT_UNSAFE { m_rng.srandom(seed); }
