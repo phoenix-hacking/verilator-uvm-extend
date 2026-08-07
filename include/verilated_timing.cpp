@@ -343,10 +343,9 @@ bool VlProcess::completedFork() const {
     return completedForkLocked();
 }
 
-void VlProcess::disableProcessesLocked(
-    const std::vector<VlProcessRef>& rootProcessps,
-    std::vector<VlProcessRef>& heldProcessps,
-    std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps) {
+void VlProcess::disableProcessesLocked(const std::vector<VlProcessRef>& rootProcessps,
+                                       std::vector<VlProcessRef>& heldProcessps,
+                                       std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps) {
     std::vector<VlProcessRef> pendingProcessps = rootProcessps;
     std::set<VlProcess*> seenProcessps;
     while (!pendingProcessps.empty()) {
@@ -386,9 +385,7 @@ void VlProcess::disableProcesses(const std::vector<VlProcessRef>& rootProcessps)
     for (const std::shared_ptr<VlForkSyncState>& forkSyncp : forkSyncps) forkSyncp->done();
 }
 
-void VlProcess::disable() {
-    disableProcesses({shared_from_this()});
-}
+void VlProcess::disable() { disableProcesses({shared_from_this()}); }
 
 void VlProcess::disableFork() {
     std::vector<VlProcessRef> heldProcessps;

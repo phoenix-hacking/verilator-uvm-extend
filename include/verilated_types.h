@@ -321,10 +321,9 @@ class VlProcess final : public std::enable_shared_from_this<VlProcess> {
     void detachLocked(VlProcess* childp);
     void completeTreeLocked();
     bool completedForkLocked() const;
-    static void disableProcessesLocked(
-        const std::vector<VlProcessRef>& rootProcessps,
-        std::vector<VlProcessRef>& heldProcessps,
-        std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps);
+    static void disableProcessesLocked(const std::vector<VlProcessRef>& rootProcessps,
+                                       std::vector<VlProcessRef>& heldProcessps,
+                                       std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps);
     static void disableProcesses(const std::vector<VlProcessRef>& rootProcessps);
 
     explicit VlProcess(const VlProcessRef& parentp);

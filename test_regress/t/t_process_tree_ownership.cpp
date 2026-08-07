@@ -142,9 +142,8 @@ static bool checkProcessTree() {
     callbackSecondp.reset();
     callbackDescendantp.reset();
     callbackParentp.reset();
-    if (!weakParentp.expired() || !weakSecondParentp.expired()
-        || !weakThirdParentp.expired() || !weakFinishedParentp.expired()
-        || !weakCallbackParentp.expired()) {
+    if (!weakParentp.expired() || !weakSecondParentp.expired() || !weakThirdParentp.expired()
+        || !weakFinishedParentp.expired() || !weakCallbackParentp.expired()) {
         return fail("root release");
     }
     return true;
