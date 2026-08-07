@@ -36,8 +36,8 @@ VerilatedMutex s_processMutex;
 
 class VlNamedActivationRegistryState final {
 public:
-    std::map<uint64_t, std::shared_ptr<VlNamedActivationState>> m_activations
-        VL_GUARDED_BY(s_processMutex);
+    std::map<uint64_t, std::shared_ptr<VlNamedActivationState>>
+        m_activations VL_GUARDED_BY(s_processMutex);
     uint64_t m_nextId VL_GUARDED_BY(s_processMutex) = 0;
 };
 
@@ -126,14 +126,11 @@ void addNamedActivationMemberLocked(const std::shared_ptr<VlNamedActivationState
     if (!processp || !activationp->activeLocked()) return;
     const VlProcessWeak processWeak{processp};
     const auto inserted = activationp->m_memberProcessps.emplace(processWeak);
-    if (inserted.second) {
-        s_namedActivationsByProcess[processWeak].emplace(activationp);
-    }
+    if (inserted.second) { s_namedActivationsByProcess[processWeak].emplace(activationp); }
     if (childProcess) activationp->m_childProcessps.emplace(processWeak);
 }
 
-void detachNamedActivationProcessLocked(const VlProcessRef& processp)
-    VL_REQUIRES(s_processMutex) {
+void detachNamedActivationProcessLocked(const VlProcessRef& processp) VL_REQUIRES(s_processMutex) {
     const VlProcessWeak processWeak{processp};
     const auto processIt = s_namedActivationsByProcess.find(processWeak);
     if (processIt == s_namedActivationsByProcess.end()) return;
@@ -275,7 +272,8 @@ VlNamedActivationGuard::VlNamedActivationGuard(VlNamedActivationGuard&& moved) n
     : m_statep{std::move(moved.m_statep)}
     , m_token{std::move(moved.m_token)} {}
 
-VlNamedActivationGuard& VlNamedActivationGuard::operator=(VlNamedActivationGuard&& moved) noexcept {
+VlNamedActivationGuard&
+VlNamedActivationGuard::operator=(VlNamedActivationGuard&& moved) noexcept {
     if (this == &moved) return *this;
     leave();
     m_statep = std::move(moved.m_statep);

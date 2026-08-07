@@ -17,18 +17,18 @@
 #define TEST_USE_THREADS 1
 #endif
 
-static VlCoroutine observeCancellation(
-    VlForkSync& forkSync, VlNamedActivationRegistry& registry, const VlProcessRef& ownerp,
-    VlNamedActivationGuard& reentrantGuard, VlNamedActivationToken outerToken,
-    VlNamedActivationToken innerToken, VlProcessRef firstp, VlProcessRef secondp,
-    VlProcessRef descendantp, int& callbackCount, bool& aggregateStateSeen) {
+static VlCoroutine observeCancellation(VlForkSync& forkSync, VlNamedActivationRegistry& registry,
+                                       const VlProcessRef& ownerp,
+                                       VlNamedActivationGuard& reentrantGuard,
+                                       VlNamedActivationToken outerToken,
+                                       VlNamedActivationToken innerToken, VlProcessRef firstp,
+                                       VlProcessRef secondp, VlProcessRef descendantp,
+                                       int& callbackCount, bool& aggregateStateSeen) {
     co_await forkSync.join(nullptr);
     ++callbackCount;
     aggregateStateSeen
-        = outerToken.canceled() && innerToken.canceled()
-          && firstp->state() == VlProcess::KILLED
-          && secondp->state() == VlProcess::KILLED
-          && descendantp->state() == VlProcess::KILLED;
+        = outerToken.canceled() && innerToken.canceled() && firstp->state() == VlProcess::KILLED
+          && secondp->state() == VlProcess::KILLED && descendantp->state() == VlProcess::KILLED;
     reentrantGuard = registry.activate(ownerp);
 }
 
@@ -124,8 +124,7 @@ static bool checkNamedActivationRuntime() {
         const VlNamedActivationStats stats = cleanupRegistry.stats();
         return stats.m_activations == 1 && stats.m_parentActivations == 0
                && stats.m_childActivations == 0 && stats.m_processMembers == 1
-               && stats.m_childProcesses == 0
-               && stats.m_globalProcessMapEntries == 1
+               && stats.m_childProcesses == 0 && stats.m_globalProcessMapEntries == 1
                && stats.m_globalProcessMemberships == 1;
     };
     if (!cleanupAtBaseline()) return fail("cleanup baseline");
@@ -146,8 +145,7 @@ static bool checkNamedActivationRuntime() {
             VlNamedActivationGuard inner = cleanupInnerRegistry.activate(cleanupOwnerp);
             const VlNamedActivationStats liveStats = cleanupRegistry.stats();
             const VlNamedActivationStats innerStats = cleanupInnerRegistry.stats();
-            if (liveStats.m_childActivations != 1
-                || innerStats.m_parentActivations != 1
+            if (liveStats.m_childActivations != 1 || innerStats.m_parentActivations != 1
                 || liveStats.m_globalProcessMapEntries != 1
                 || liveStats.m_globalProcessMemberships != 2) {
                 return fail("live nested activation tracking");
@@ -176,8 +174,7 @@ static bool checkNamedActivationRuntime() {
         || cleanupChildp->state() != VlProcess::KILLED || cleanupRegistry.size() != 0
         || cleanupInnerRegistry.size() != 0 || cleanupAfterDisable.m_activations != 0
         || cleanupAfterDisable.m_parentActivations != 0
-        || cleanupAfterDisable.m_childActivations != 0
-        || cleanupAfterDisable.m_processMembers != 0
+        || cleanupAfterDisable.m_childActivations != 0 || cleanupAfterDisable.m_processMembers != 0
         || cleanupAfterDisable.m_childProcesses != 0
         || cleanupAfterDisable.m_globalProcessMapEntries != 0
         || cleanupAfterDisable.m_globalProcessMemberships != 0) {
@@ -254,8 +251,7 @@ static bool checkNamedActivationRuntime() {
     VlNamedActivationRegistry callbackInnerRegistry;
     VlProcessRef callbackOwnerp = std::make_shared<VlProcess>();
     VlNamedActivationGuard callbackGuard = callbackRegistry.activate(callbackOwnerp);
-    VlNamedActivationGuard callbackInnerGuard
-        = callbackInnerRegistry.activate(callbackOwnerp);
+    VlNamedActivationGuard callbackInnerGuard = callbackInnerRegistry.activate(callbackOwnerp);
     const VlNamedActivationToken callbackToken = callbackGuard.token();
     const VlNamedActivationToken callbackInnerToken = callbackInnerGuard.token();
     VlProcessRef callbackFirstp = VlProcess::createChild(callbackOwnerp);
@@ -270,11 +266,10 @@ static bool checkNamedActivationRuntime() {
     {
         VlForkSync callbackSync;
         callbackSync.init(1, nullptr);
-        VlCoroutine callbackObserver
-            = observeCancellation(callbackSync, callbackRegistry, callbackOwnerp, reentrantGuard,
-                                  callbackToken, callbackInnerToken, callbackFirstp,
-                                  callbackSecondp, callbackDescendantp, callbackCount,
-                                  aggregateStateSeen);
+        VlCoroutine callbackObserver = observeCancellation(
+            callbackSync, callbackRegistry, callbackOwnerp, reentrantGuard, callbackToken,
+            callbackInnerToken, callbackFirstp, callbackSecondp, callbackDescendantp,
+            callbackCount, aggregateStateSeen);
         callbackSync.onKill(callbackFirstp);
         callbackRegistry.disableAll();
     }
