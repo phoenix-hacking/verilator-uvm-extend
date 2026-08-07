@@ -13,6 +13,156 @@ Do not commit extracted standards text, rendered standards pages, generated
 test objects, or temporary compiler trees. In particular, the repository-local
 `tmp/` directory is scratch material and is not part of any checkpoint.
 
+## 2026-08-07 fork-registration hotfix checkpoint
+
+Recorded at: 2026-08-07T13:49:59Z
+
+### Published state
+
+- Repository: `phoenix-hacking/verilator-uvm-extend`
+- Draft pull request: <https://github.com/phoenix-hacking/verilator-uvm-extend/pull/41>
+- Branch: `agent/uvm2020-clean-lane`
+- Parent: `497c491645f1e91348d9a581c25dae763173b76b`
+- Functional hotfix: `9b914a223ea23650c51d699a2fef544d6c710d63`
+- Functional tree: `dd014e767b544ac2b5c7e3928a06ad2251388e7a`
+- Autoformat-only child: `7f58c75b65402287a7fcd8943e25b09becb8ed08`
+- Autoformatted tree: `0c6a891e3c833e08366d606f0664dc452312f88e`
+
+The connected GitHub app created the functional commit with the exact local
+functional tree and advanced the verified branch without force. GitHub's
+formatter child only wraps the new C++ conditions and assertions; it does not
+change their operands, control flow, or data flow. A local tree-equivalent
+formatter commit, `0546f03f4eb2be2e61b7640659f3e94e089e286d`, was used
+only to build the exact remote tree.
+
+### Failure found and hotfix scope
+
+A clean build of parent `497c491645f1e91348d9a581c25dae763173b76b`
+proved that the two-phase fork-launch checkpoint had one compiler-lowering
+regression. Existing tests `t_disable_task_join` and
+`t_disable_task_by_name` stopped in `V3SchedTiming` at the new
+"process registration is not at branch entry" invariant. Sixteen other
+focused regressions passed that parent.
+
+The failing timing tree showed the exact post-`V3Task` prefix:
+
+1. the fork kill hook;
+2. a generated `std::process::self()` call;
+3. one generated process-reference output-commit assignment;
+4. the semantically marked named-disable queue push; and
+5. the source branch body.
+
+The launch checkpoint had recognized only the direct call-output form. The
+hotfix accepts exactly one optional, non-timing output-commit assignment and
+validates that its source is the `self()` result and its destination is the
+sole process-reference argument to the marked queue push. It then hoists the
+comment, call, optional commit, and push together, rebinds the call to the
+precreated branch process, and preserves the invariant that no marked queue
+push remains in the child prefix. It deliberately does not accept a general
+alias chain or match generated identifier text.
+
+This is a one-file compiler hotfix in `src/V3SchedTiming.cpp`. It changes no
+runtime ABI and does not widen the named sequential task/begin claim. The
+remaining general sequential-disable work still requires source-process
+activation tokens rather than synthetic process wrappers.
+
+### Exact clean build and validation
+
+The exact autoformatted remote tree was archived before bootstrap:
+
+- Tree: `0c6a891e3c833e08366d606f0664dc452312f88e`
+- Source archive SHA-256:
+  `a176acd529f8946ababd12ccfbcc12f5e6b9376c9d098c552e06872501fe5045`
+- Pre-build object state: zero `.o`, `.d`, or `.gch` files
+- Build command: `make -C src opt -j8 OBJCACHE=`
+- Build result: pass, 163 objects
+- Wall/user/system: 121.129 s / 666.082 s / 43.843 s
+- Peak resident set: 619,984 KiB
+- Compiler version:
+  `Verilator 5.051 devel rev vUNKNOWN-built20260807-0546f03f4`
+- Compiler binary size: 18,912,416 bytes
+- Compiler SHA-256:
+  `052e5596bfcda17026dcd9748ae759ecc02de2aee1be0f579b6a17ffa77204ad`
+
+The version string names the local tree-equivalent commit; the archived tree
+hash, source archive hash, and binary hash are the exact source and compiler
+provenance. The build reused only generated configure/parser infrastructure
+because this container lacks `autoconf` and `flex`; every configure,
+Makefile, and generated-grammar input was first verified byte-identical to the
+source state that produced it. No compiled object was reused.
+
+All 20 requested harness checks passed against that from-zero compiler:
+
+- `t_disable_task_join`
+- `t_disable_task_by_name`
+- `t_disable_fork_launch`
+- `t_disable_fork1`
+- `t_disable_fork2`
+- `t_disable_fork3`
+- `t_disable_fork_nested`
+- `t_disable_inside`
+- `t_disable_outside`
+- `t_fork_join_none_stmt`
+- `t_process_tree_ownership`
+- `t_process_context_fork`
+- `t_process_fork_block`
+- `t_process_fork_finished`
+- `t_process_phase_teardown`
+- `t_timing_fork_join`
+- `t_wait_fork`
+- `t_dist_cppstyle`
+- `t_dist_whitespace`
+- `t_dist_copyright`
+
+A direct multithreaded-codegen/debug-check run also passed:
+
+```sh
+bin/verilator --binary --timing --threads 2 --debug-check \
+  --Mdir "$hotfix_mt_dir" --top-module t \
+  test_regress/t/t_disable_task_join.v
+"$hotfix_mt_dir/Vt"
+```
+
+It reported two runtime threads and reached `$finish` at 94 ps. The tracked
+tree stayed clean throughout bootstrap, build, and validation. Concise local
+evidence is retained under `/tmp/hotfix-tree-0c6a-evidence/`; generated objects
+and logs are not repository content.
+
+The semantic GitHub Actions run is
+<https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31183497819>.
+At this recording time, its Ubuntu 22/24/26 GCC builds, Ubuntu 24 clang build,
+Ubuntu 26 clang/ASAN build, macOS GCC and clang builds, and Python lint were
+green. The Linux regression shards and Windows build were still running or
+queued, so current-head CI is explicitly pending rather than claimed green.
+The separate Contributor Agreement failure is expected pending human DCO
+certification; the agent did not add a `Signed-off-by` line.
+
+### Standards anchor and claim boundary
+
+IEEE Std 1800-2012, 9.3.2, printed page 175, defines concurrent fork branch
+execution and the three join modes. Clause 9.6.2, printed pages 190-192,
+requires named parallel-block disable to terminate all activities enabled
+within the block. Precreating every real fork branch and preregistering it
+before any eager branch call is necessary to satisfy those rules at time zero.
+
+This hotfix proves that the preregistration transform also handles the
+one-assignment task-output form produced by the existing compiler pipeline. It
+does not prove general named sequential task/begin cancellation. In particular,
+IEEE 1800-2012 9.6.2 also makes a disable of an inactive sequential target a
+no-op, while 9.7, printed pages 193-194, and 18.14, printed pages 503-504,
+require preserving source process identity/status and per-thread RNG state.
+
+### Next exact action
+
+Start the runtime-only named-activation/cancelable-suspension foundation from
+autoformatted tree `0c6a891e3c83...`. Keep the existing compiler lowering
+unchanged in that checkpoint. First prove dynamic registry generations,
+recursive/concurrent activation records, aggregate mark-before-callback order,
+normal-exit unregister, source-process identity/RNG preservation, and active
+activation descendant ownership through a direct runtime regression. Then add
+the cancellation-aware one-shot coroutine state needed for delay, event, and
+`wait(0)` wake/unwind before replacing the synthetic sequential wrappers.
+
 ## 2026-08-07 two-phase fork-launch checkpoint
 
 Recorded at: 2026-08-07T13:17:29Z
