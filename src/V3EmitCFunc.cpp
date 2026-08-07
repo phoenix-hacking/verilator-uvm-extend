@@ -376,7 +376,19 @@ void EmitCFunc::emitCCallArgs(const AstNodeCCall* nodep, const string& selfPoint
     }
     if (nodep->funcp()->needProcess()) {
         if (comma) puts(", ");
-        if (VN_IS(nodep->backp(), CAwait) || !nodep->funcp()->isCoroutine()) {
+        if (AstNodeExpr* const processp = nodep->processp()) {
+            puts("(");
+            iterateConst(processp);
+            puts(" ? ");
+            iterateConst(processp);
+            puts(" : (");
+            iterateConst(processp);
+            puts(" = std::make_shared<VlProcess>()))");
+        } else if (nodep->newProcess()) {
+            // Scheduled procedures are independent root processes.  The process in their
+            // evaluator, if any, is an implementation detail rather than an SV parent.
+            puts("std::make_shared<VlProcess>()");
+        } else if (VN_IS(nodep->backp(), CAwait) || !nodep->funcp()->isCoroutine()) {
             puts("vlProcess");
         } else if (inProcess) {
             puts("std::make_shared<VlProcess>(vlProcess)");

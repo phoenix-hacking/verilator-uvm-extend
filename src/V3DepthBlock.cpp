@@ -75,6 +75,10 @@ class DepthBlockVisitor final : public VNVisitor {
         iterateChildren(nodep);
     }
     void visit(AstCFunc* nodep) override {
+        // A process cancellation guard returns from this C++ function.  Splitting a process-aware
+        // function would turn that into a return from only one chunk, after which its caller could
+        // execute later chunks from the killed process.
+        if (nodep->needProcess()) return;
         // We recurse into this.
         VL_RESTORER(m_depth);
         VL_RESTORER(m_cfuncp);

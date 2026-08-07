@@ -32,23 +32,22 @@ void VlCoroutineHandle::resume() {
     const std::coroutine_handle<> coro = std::exchange(m_coro, nullptr);
     if (VL_LIKELY(coro)) {
         const VlProcessRef process = m_process;
-        VlProcess* const previousProcessp = VlProcess::currentp();
         VL_DEBUG_IF(VL_DBG_MSGF("             Resuming: "); dump(););
         if (process) {  // If process state is managed with std::process
             if (process->state() == VlProcess::KILLED) {
                 coro.destroy();
             } else {
                 process->state(VlProcess::RUNNING);
-                VlProcess::currentp(process.get());
+                const bool contextOwner = process->enter();
                 coro();
+                if (contextOwner) process->leave();
             }
         } else {
+            VlProcess* const previousProcessp = VlProcess::currentp();
             VlProcess::currentp(nullptr);
             coro();
+            VlProcess::currentp(previousProcessp);
         }
-        // A resumed coroutine can synchronously resume another coroutine through a fork-sync
-        // callback. Restore the caller's process context instead of assuming this is top-level.
-        VlProcess::currentp(previousProcessp);
     }
 }
 

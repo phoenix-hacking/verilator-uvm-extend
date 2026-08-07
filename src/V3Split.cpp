@@ -425,6 +425,30 @@ private:
 using ColorSet = std::unordered_set<uint32_t>;
 using AlwaysVec = std::vector<AstAlways*>;
 
+// Return true if funcp, possibly through another CFunc, needs the caller's VlProcess.  V3Split
+// runs before V3Timing propagates this property to procedures, so inspect the already-lowered
+// CFunc call graph here.  Keeping such an always intact is required: splitting process::self()
+// or process::kill() away from the trigger-dependent statements changes the identity and lifetime
+// of the SystemVerilog process.
+bool cfuncNeedsProcess(const AstCFunc* funcp, std::unordered_set<const AstCFunc*>& visited) {
+    if (funcp->needProcess()) return true;
+    if (!visited.emplace(funcp).second) return false;
+    bool result = false;
+    funcp->foreach([&](const AstNodeCCall* callp) {
+        if (!result && cfuncNeedsProcess(callp->funcp(), visited)) result = true;
+    });
+    return result;
+}
+
+bool alwaysNeedsProcess(const AstAlways* nodep) {
+    std::unordered_set<const AstCFunc*> visited;
+    bool result = false;
+    nodep->foreach([&](const AstNodeCCall* callp) {
+        if (!result && cfuncNeedsProcess(callp->funcp(), visited)) result = true;
+    });
+    return result;
+}
+
 class IfColorVisitor final : public VNVisitorConst {
     // MEMBERS
     ColorSet m_colors;  // All colors in the original always block
@@ -757,6 +781,10 @@ protected:
     }
 
     void visit(AstAlways* nodep) override {
+        if (alwaysNeedsProcess(nodep)) {
+            UINFO(9, "  NoSplitBlock because process identity is observable");
+            return;
+        }
         // build the scoreboard
         scoreboardClear();
         scanBlock(nodep->stmtsp());

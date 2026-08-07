@@ -387,6 +387,10 @@ class InlineCFuncsVisitor final : public VNVisitor {
         if (!VN_IS(nodep->backp(), StmtExpr)) vtxp->setNoInline("Not in statement position");
         if (m_inExecGraph) vtxp->setNoInline("In ExecGraph");
         if (calleep->isVirtual()) vtxp->setNoInline("Virtual method");
+        // The hidden VlProcess argument is selected at the call boundary.  Inlining would erase
+        // that boundary and make independent procedures share the caller's process context.
+        if (nodep->newProcess()) vtxp->setNoInline("Starts a process");
+        if (nodep->processp()) vtxp->setNoInline("Uses persistent process storage");
 
         // Add caller/callee edges
         if (m_cfuncVtxp) m_graph.addEdge(*m_cfuncVtxp, *vtxp);

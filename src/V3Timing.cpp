@@ -781,6 +781,21 @@ class TimingControlVisitor final : public VNVisitor {
         return lastArgp && lastArgp->noCReset()
                && VString::endsWith(lastArgp->name(), "__Vfuncrtn");
     }
+    static AstNodeStmt* enclosingStmtp(AstNode* nodep) {
+        while (nodep && !VN_IS(nodep, NodeStmt)) nodep = nodep->backp();
+        return VN_CAST(nodep, NodeStmt);
+    }
+    void addProcessCancellationCheck(AstNode* const nodep, AstNodeStmt* const callStmtp,
+                                     AstNode* const outputCommitp = nullptr) const {
+        const std::string returnStmt = m_processCoroutine
+                                           ? "co_return;"
+                                           : (m_processReturnsVoid ? "return;" : "return {};");
+        auto* const checkp = new AstCStmt{
+            nodep->fileline(),
+            "if (VL_UNLIKELY(vlProcess->state() == VlProcess::KILLED)) " + returnStmt};
+        callStmtp->addNextHere(checkp);
+        if (outputCommitp) checkp->addNextHere(outputCommitp);
+    }
     // Add a done() call on the fork sync
     void addForkDone(AstBegin* const beginp, AstVarScope* const forkVscp) const {
         FileLine* const flp = beginp->fileline();
@@ -1052,9 +1067,7 @@ class TimingControlVisitor final : public VNVisitor {
             = hasFlags(funcp, T_MAY_KILL_PROC) && !m_deferProcessCancellation;
         if (needsProcess) m_hasProcess = true;
         const bool firstVisit = !nodep->user1SetOnce();
-        AstNode* callParentp = nodep->backp();
-        while (callParentp && !VN_IS(callParentp, NodeStmt)) callParentp = callParentp->backp();
-        AstNodeStmt* callStmtp = VN_CAST(callParentp, NodeStmt);
+        AstNodeStmt* callStmtp = enclosingStmtp(nodep);
         UASSERT_OBJ(!needsCancellationCheck || callStmtp, nodep,
                     "Process-aware call must be lowered into statement position");
         if (hasFlags(funcp, T_SUSPENDEE) && firstVisit) {  // If suspendable
@@ -1089,15 +1102,25 @@ class TimingControlVisitor final : public VNVisitor {
                 handle.relink(new AstVarRef{flp, resultVscp, VAccess::WRITE});
                 outputCommitp
                     = new AstAssign{flp, refp, new AstVarRef{flp, resultVscp, VAccess::READ}};
+            } else if (AstCNew* const cnewp = VN_CAST(nodep, CNew)) {
+                // Constructors return their class reference directly rather than through a
+                // synthetic output argument.  Stage a direct assignment so a self-kill in new()
+                // cannot overwrite the destination before cancellation is observed.
+                AstAssign* const assignp = VN_CAST(callStmtp, Assign);
+                if (assignp && assignp->rhsp() == cnewp
+                    && !VN_IS(cnewp->dtypep(), VoidDType)) {
+                    if (m_underJumpBlock) addCLocalScope(nodep->fileline(), assignp);
+                    FileLine* const flp = cnewp->fileline();
+                    AstNodeExpr* const commitLhsp = assignp->lhsp()->unlinkFrBack();
+                    AstVarScope* const resultVscp
+                        = createTemp(flp, m_processKillValueNames.get(cnewp), cnewp->dtypep(),
+                                     assignp);
+                    assignp->lhsp(new AstVarRef{flp, resultVscp, VAccess::WRITE});
+                    outputCommitp = new AstAssign{
+                        flp, commitLhsp, new AstVarRef{flp, resultVscp, VAccess::READ}};
+                }
             }
-            const std::string returnStmt = m_processCoroutine
-                                               ? "co_return;"
-                                               : (m_processReturnsVoid ? "return;" : "return {};");
-            auto* const checkp = new AstCStmt{
-                nodep->fileline(),
-                "if (VL_UNLIKELY(vlProcess->state() == VlProcess::KILLED)) " + returnStmt};
-            callStmtp->addNextHere(checkp);
-            if (outputCommitp) checkp->addNextHere(outputCommitp);
+            addProcessCancellationCheck(nodep, callStmtp, outputCommitp);
         }
         iterateChildren(nodep);
     }

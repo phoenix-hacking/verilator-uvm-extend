@@ -113,6 +113,8 @@ void AstNodeStmt::dumpJson(std::ostream& str) const { dumpJsonGen(str); }
 
 void AstNodeCCall::dump(std::ostream& str) const {
     this->AstNodeExpr::dump(str);
+    if (newProcess()) str << " [NEWPROC]";
+    if (processp()) str << " [PERSISTENTPROC]";
     if (funcp()) {
         str << " " << funcp()->name() << " => ";
         funcp()->dump(str);
@@ -122,6 +124,7 @@ void AstNodeCCall::dump(std::ostream& str) const {
 }
 void AstNodeCCall::dumpJson(std::ostream& str) const {
     if (funcp()) dumpJsonStr(str, "funcName", funcp()->name());
+    dumpJsonBoolFuncIf(str, newProcess);
     dumpJsonGen(str);
 }
 bool AstNodeCCall::isPure() { return funcp()->dpiPure(); }
@@ -1898,9 +1901,11 @@ void AstNodeProcedure::dumpJson(std::ostream& str) const {
 void AstAlways::dump(std::ostream& str) const {
     this->AstNodeProcedure::dump(str);
     if (keyword() != VAlwaysKwd::ALWAYS) str << " [" << keyword().ascii() << "]";
+    if (processVscp()) str << " [PERSISTENTPROC]";
 }
 void AstAlways::dumpJson(std::ostream& str) const {
     dumpJsonStr(str, "keyword", keyword().ascii());
+    dumpJsonPtrFunc(str, processVscp);
     dumpJsonGen(str);
 }
 AstAssertCtl::AstAssertCtl(FileLine* fl, VAssertCtlType ctlType, uint32_t assertType,

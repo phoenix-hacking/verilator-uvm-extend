@@ -55,7 +55,12 @@ class V3OrderCFuncEmitter final {
     // Function ordinals to ensure unique names
     std::map<std::pair<AstNodeModule*, std::string>, unsigned> m_funcNums;
     // The resulting ordered CFuncs with the trigger conditions needed to call them
-    std::vector<std::pair<AstCFunc*, AstSenTree*>> m_result;
+    struct Result final {
+        AstCFunc* const m_cfuncp;
+        AstSenTree* const m_senTreep;
+        AstVarScope* const m_processVscp;
+    };
+    std::vector<Result> m_result;
 
     // Create a unique name for a new function
     std::string cfuncName(FileLine* flp, AstScope* scopep, AstNodeModule* modp,
@@ -91,9 +96,9 @@ public:
         // Trigger conditoin of 'ifp'
         AstSenTree* pervSenTreep = nullptr;
         // Call each function under an AstIf that checks for the trigger condition
-        for (const auto& pair : m_result) {
-            AstCFunc* const cfuncp = pair.first;
-            AstSenTree* senTreep = pair.second;
+        for (const Result& result : m_result) {
+            AstCFunc* const cfuncp = result.m_cfuncp;
+            AstSenTree* const senTreep = result.m_senTreep;
             // Create a new AstIf if the trigger is different
             if (senTreep != pervSenTreep) {
                 pervSenTreep = senTreep;
@@ -103,6 +108,12 @@ public:
             // Call function when triggered
             AstCCall* const callp = new AstCCall{cfuncp->fileline(), cfuncp};
             callp->dtypeSetVoid();
+            if (result.m_processVscp) {
+                UASSERT_OBJ(!callp->newProcess(), callp,
+                            "Call cannot use both new and persistent process storage");
+                callp->processp(new AstVarRef{callp->fileline(), result.m_processVscp,
+                                              VAccess::READWRITE});
+            }
             ifp->addThensp(callp->makeStmt());
         }
         // Result is now spent, reset the emitter state
@@ -124,17 +135,24 @@ public:
         // Some properties to consider
         const bool suspendable = procp && procp->isSuspendable();
         const bool needProcess = procp && procp->needProcess();
+        AstVarScope* const processVscp
+            = VN_IS(procp, Always) ? VN_AS(procp, Always)->processVscp() : nullptr;
+        // A non-suspendable always is recurring but cannot be represented by a coroutine.  Its
+        // storage was allocated before scheduler replication, so all region clones use one handle.
+        const bool persistentProcess = processVscp;
+        UASSERT_OBJ(!persistentProcess || (needProcess && !suspendable), procp,
+                    "Invalid persistent process metadata");
         // TODO: This is a bit muddy: 'initial forever @(posedge clk) begin ... end' is a fancy
         //       way of saying always @(posedge clk), so it might be quite hot...
         //       Also, if m_funcp is slow, but this one isn't we should force a new function
         const bool slow = m_slow && !(suspendable && VN_IS(procp, Always));
 
-        // Put suspendable processes into individual functions on their own
-        if (suspendable) forceNewFunction();
+        // Put independently observable processes into individual functions on their own
+        if (suspendable || persistentProcess) forceNewFunction();
         // When profCFuncs, create a new function for each logic vertex
         if (v3Global.opt.profCFuncs()) forceNewFunction();
         // If the new domain is different, force a new function as it needs to be called separately
-        if (!m_result.empty() && m_result.back().second != domainp) forceNewFunction();
+        if (!m_result.empty() && m_result.back().m_senTreep != domainp) forceNewFunction();
 
         // Process procedures per statement, so we can split CFuncs within procedures.
         // Everything else is handled as a unit.
@@ -153,8 +171,8 @@ public:
             nextp = currp->nextp();
             // Unlink the current statement from the next statement (if any)
             if (nextp) nextp->unlinkFrBackWithNext();
-            // Split the function if too large, but don't split suspendable processes
-            if (!suspendable && m_size >= m_splitSize) forceNewFunction();
+            // Split the function if too large, but don't split observable processes
+            if (!suspendable && !persistentProcess && m_size >= m_splitSize) forceNewFunction();
             // Create a new function if we don't have a current one
             if (!m_funcp) {
                 UASSERT_OBJ(!m_size, currp, "Should have used forceNewFunction");
@@ -169,15 +187,15 @@ public:
                 m_funcp->slow(slow);
                 scopep->addBlocksp(m_funcp);
                 // Record function and sensitivity to call it with
-                m_result.emplace_back(m_funcp, domainp);
+                m_result.push_back({m_funcp, domainp, processVscp});
             }
             // Add the code to the current function
             m_funcp->addStmtsp(currp);
             // If splitting, add in the size of the code we just added
             if (m_split) m_size += currp->nodeCount();
         }
-        // Put suspendable processes into individual functions on their own
-        if (suspendable) forceNewFunction();
+        // Put independently observable processes into individual functions on their own
+        if (suspendable || persistentProcess) forceNewFunction();
     }
 };
 

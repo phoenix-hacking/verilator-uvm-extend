@@ -308,6 +308,8 @@ class VlProcess final : public std::enable_shared_from_this<VlProcess> {
     std::set<VlProcess*> m_children;  // Active child processes
     std::weak_ptr<VlForkSyncState> m_forkSyncOnKillp;  // Optional fork..join kill callback
     bool m_forkSyncOnKillDone = false;  // Ensure on-kill callback fires only once
+    VlProcess* m_previousCurrentp = nullptr;  // Dynamic caller while this process executes
+    bool m_contextActive = false;  // This process owns the thread-local execution context
     VlRNG m_rng;  // Per-process RNG (IEEE 1800-2023 18.14)
 
     // Thread-local current process pointer for hierarchical object seeding
@@ -339,8 +341,14 @@ public:
     }
 
     ~VlProcess() {
+        if (t_currentp == this) {
+            if (m_contextActive) {
+                leave();
+            } else {
+                t_currentp = m_parentp.get();
+            }
+        }
         if (m_parentp) m_parentp->detach(this);
-        if (t_currentp == this) t_currentp = m_parentp.get();
     }
 
     void attach(VlProcess* childp) { m_children.insert(childp); }
@@ -367,8 +375,43 @@ public:
     // Current process tracking for hierarchical object seeding
     static VlProcess* currentp() VL_MT_UNSAFE { return t_currentp; }
     static void currentp(VlProcess* processp) VL_MT_UNSAFE { t_currentp = processp; }
+    // Enter and leave this process's dynamic execution context.  A process may run underneath a
+    // child callback, so restore the dynamic caller rather than assuming the structural parent.
+    bool enter() VL_MT_UNSAFE {
+        if (t_currentp == this) return false;
+        VL_DEBUG_IFDEF(assert(!m_contextActive););
+        m_previousCurrentp = t_currentp;
+        m_contextActive = true;
+        t_currentp = this;
+        return true;
+    }
+    void leave() VL_MT_UNSAFE {
+        if (t_currentp != this) return;
+        VL_DEBUG_IFDEF(assert(m_contextActive););
+        t_currentp = m_previousCurrentp;
+        m_previousCurrentp = nullptr;
+        m_contextActive = false;
+    }
     // Return process RNG if in a process, else thread RNG
     static VlRNG& currentRng() VL_MT_SAFE;
+};
+
+// Restores the process context on ordinary C++ returns, including cancellation returns.  For a
+// coroutine this object remains in its frame; scheduler awaitables leave at suspension and the
+// scheduler re-enters on resumption.
+class VlProcessContext final {
+    VL_UNCOPYABLE(VlProcessContext);
+
+    VlProcess* const m_processp;
+    const bool m_owner;
+
+public:
+    explicit VlProcessContext(VlProcess* processp)
+        : m_processp{processp}
+        , m_owner{processp && processp->enter()} {}
+    ~VlProcessContext() {
+        if (m_owner) m_processp->leave();
+    }
 };
 
 inline std::string VL_TO_STRING(const VlProcessRef&) { return std::string("process"); }

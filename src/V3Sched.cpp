@@ -45,6 +45,7 @@
 #include "V3Order.h"
 #include "V3SenExprBuilder.h"
 #include "V3Stats.h"
+#include "V3UniqueNames.h"
 
 VL_DEFINE_DEBUG_FUNCTIONS;
 
@@ -296,12 +297,63 @@ LogicClasses gatherLogicClasses(AstNetlist* netlistp) {
     return result;
 }
 
+// Allocate one process handle for each non-suspendable recurring procedure before the scheduler
+// clones combinational logic into the settle and event regions.  AstAlways::processVscp is a
+// non-child link, so every clone retains the same source-process storage while separate source
+// procedures remain distinct.
+void preparePersistentProcesses(AstNetlist* netlistp, const LogicClasses& logicClasses) {
+    AstBasicDType* processDtp = nullptr;
+    V3UniqueNames processNames{"__Vprocess"};
+
+    const auto prepare = [&](const LogicByScope& lbs) {
+        for (const auto& pair : lbs) {
+            AstScope* const scopep = pair.first;
+            for (AstNode* logicp = pair.second->stmtsp(); logicp; logicp = logicp->nextp()) {
+                AstAlways* const alwaysp = VN_CAST(logicp, Always);
+                if (!alwaysp || !alwaysp->needProcess() || alwaysp->isSuspendable()) continue;
+                UASSERT_OBJ(!alwaysp->processVscp(), alwaysp,
+                            "Persistent process storage already allocated");
+
+                if (!processDtp) {
+                    processDtp = new AstBasicDType{alwaysp->fileline(),
+                                                   VBasicDTypeKwd::PROCESS_REFERENCE,
+                                                   VSigning::UNSIGNED};
+                    netlistp->typeTablep()->addTypesp(processDtp);
+                }
+                alwaysp->processVscp(
+                    scopep->createTemp(processNames.get(alwaysp), processDtp));
+
+                // The implicit event control of an always process leaves it waiting after each
+                // activation.  A killed process never reaches the epilogue and later triggers are
+                // ignored by the guard.
+                FileLine* const flp = alwaysp->fileline();
+                AstNode* const bodyp = alwaysp->stmtsp()->unlinkFrBackWithNext();
+                AstCStmt* const enterp = new AstCStmt{
+                    flp, "if (vlProcess->state() == VlProcess::KILLED) return;\n"
+                         "vlProcess->state(VlProcess::RUNNING);"};
+                AstNode::addNext<AstNode, AstNode>(enterp, bodyp);
+                alwaysp->addStmtsp(enterp);
+                alwaysp->addStmtsp(new AstCStmt{
+                    flp, "if (vlProcess->state() != VlProcess::KILLED) "
+                         "vlProcess->state(VlProcess::WAITING);"});
+            }
+        }
+    };
+
+    prepare(logicClasses.m_initial);
+    prepare(logicClasses.m_comb);
+    prepare(logicClasses.m_clocked);
+}
+
 //============================================================================
 // Simple ordering in source order
 
 void orderSequentially(AstCFunc* funcp, const LogicByScope& lbs) {
     // Create new subfunc for scope
-    const auto createNewSubFuncp = [&](AstScope* const scopep) {
+    const auto createNewSubFuncp = [&](AstScope* const scopep, bool newProcess,
+                                       AstVarScope* processVscp = nullptr) {
+        UASSERT(!newProcess || !processVscp,
+                "Call cannot use both new and persistent process storage");
         const string subName{funcp->name() + "__" + scopep->nameDotless()};
         AstCFunc* const subFuncp = new AstCFunc{scopep->fileline(), subName, scopep};
         subFuncp->isLoose(true);
@@ -310,29 +362,59 @@ void orderSequentially(AstCFunc* funcp, const LogicByScope& lbs) {
         subFuncp->slow(funcp->slow());
         scopep->addBlocksp(subFuncp);
         // Call it from the top function
-        funcp->addStmtsp(util::callVoidFunc(subFuncp));
+        AstCCall* const callp = new AstCCall{subFuncp->fileline(), subFuncp};
+        callp->dtypeSetVoid();
+        if (processVscp) {
+            callp->processp(
+                new AstVarRef{callp->fileline(), processVscp, VAccess::READWRITE});
+        } else {
+            callp->newProcess(newProcess);
+        }
+        funcp->addStmtsp(callp->makeStmt());
         return subFuncp;
     };
     const VNUser1InUse user1InUse;  // AstScope -> AstCFunc: the sub-function for the scope
     const VNUser2InUse user2InUse;  // AstScope -> int: sub-function counter used for names
+    std::unordered_set<const AstScope*> sharedSubFuncScopes;
     for (const auto& pair : lbs) {
         AstScope* const scopep = pair.first;
         AstActive* const activep = pair.second;
-        // Create a sub-function per scope so we can V3Combine them later
-        if (!scopep->user1p()) scopep->user1p(createNewSubFuncp(scopep));
+        const auto sharedSubFuncp = [&]() {
+            if (!scopep->user1p()) {
+                AstCFunc* const newp = createNewSubFuncp(scopep, false);
+                if (!sharedSubFuncScopes.emplace(scopep).second) {
+                    newp->name(newp->name() + "__Vsequent__" + cvtToStr(scopep->user2Inc()));
+                }
+                scopep->user1p(newp);
+            }
+            return VN_AS(scopep->user1p(), CFunc);
+        };
         // Add statements to sub-function
         for (AstNode *logicp = activep->stmtsp(), *nextp; logicp; logicp = nextp) {
-            auto* subFuncp = VN_AS(scopep->user1p(), CFunc);
             nextp = logicp->nextp();
             if (AstNodeProcedure* const procp = VN_CAST(logicp, NodeProcedure)) {
                 if (AstNode* bodyp = procp->stmtsp()) {
                     bodyp->unlinkFrBackWithNext();
-                    // If the process is suspendable, we need a separate function (a coroutine)
+                    // Process cancellation exits the containing C++ function.  Give every
+                    // process-aware procedure its own boundary so a self-kill cannot skip sibling
+                    // initial blocks or make multiple procedures share one VlProcess instance.
+                    const bool needsOwnFunc = procp->isSuspendable() || procp->needProcess();
+                    AstVarScope* const processVscp
+                        = VN_IS(procp, Always) ? VN_AS(procp, Always)->processVscp() : nullptr;
+                    AstCFunc* const subFuncp
+                        = needsOwnFunc
+                              ? createNewSubFuncp(scopep, !processVscp, processVscp)
+                              : sharedSubFuncp();
+                    if (needsOwnFunc) {
+                        subFuncp->name(subFuncp->name()
+                                       + (procp->isSuspendable() ? "__Vtiming__" : "__Vprocess__")
+                                       + cvtToStr(scopep->user2Inc()));
+                        // A following ordinary procedure needs a new call after this one to retain
+                        // source order rather than appending into an earlier shared function.
+                        scopep->user1p(nullptr);
+                    }
                     if (procp->isSuspendable()) {
                         funcp->slow(false);
-                        subFuncp = createNewSubFuncp(scopep);
-                        subFuncp->name(subFuncp->name() + "__Vtiming__"
-                                       + cvtToStr(scopep->user2Inc()));
                         subFuncp->rtnType("VlCoroutine");
                         if (VN_IS(procp, Always)) {
                             subFuncp->slow(false);
@@ -347,11 +429,14 @@ void orderSequentially(AstCFunc* funcp, const LogicByScope& lbs) {
                     }
                     subFuncp->addStmtsp(bodyp);
                     if (procp->needProcess()) subFuncp->setNeedProcess();
-                    util::splitCheck(subFuncp);
+                    // A cancellation guard returns from this C++ function.  Splitting a
+                    // process-aware procedure would turn that into a return from only one chunk,
+                    // after which the wrapper could execute later chunks from the killed process.
+                    if (!procp->needProcess()) util::splitCheck(subFuncp);
                 }
             } else {
                 logicp->unlinkFrBack();
-                subFuncp->addStmtsp(logicp);
+                sharedSubFuncp()->addStmtsp(logicp);
             }
         }
         if (activep->backp()) activep->unlinkFrBack();
@@ -946,6 +1031,9 @@ void schedule(AstNetlist* netlistp) {
 
     // Step 1. Gather and classify all logic in the design
     LogicClasses logicClasses = gatherLogicClasses(netlistp);
+
+    // Allocate source-process storage before settle/region replication clones the logic.
+    preparePersistentProcesses(netlistp, logicClasses);
 
     if (v3Global.opt.stats()) {
         V3Stats::statsStage("sched-gather");

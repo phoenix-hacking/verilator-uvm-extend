@@ -3076,6 +3076,7 @@ public:
 // === AstNodeProcedure ===
 class AstAlways final : public AstNodeProcedure {
     // @astgen op1 := sentreep : Optional[AstSenTree] // Sensitivity list iff clocked
+    // @astgen ptr := m_processVscp : Optional[AstVarScope]  // Persistent process storage
     const VAlwaysKwd m_keyword;
 
 public:
@@ -3089,7 +3090,13 @@ public:
     //
     void dump(std::ostream& str) const override;
     void dumpJson(std::ostream& str) const override;
+    bool sameNode(const AstNode* samep) const override {
+        const AstAlways* const asamep = VN_DBG_AS(samep, Always);
+        return keyword() == asamep->keyword() && processVscp() == asamep->processVscp();
+    }
     VAlwaysKwd keyword() const { return m_keyword; }
+    AstVarScope* processVscp() const { return m_processVscp; }
+    void processVscp(AstVarScope* vscp) { m_processVscp = vscp; }
 };
 class AstAlwaysObserved final : public AstNodeProcedure {
     // Like always but Observed scheduling region

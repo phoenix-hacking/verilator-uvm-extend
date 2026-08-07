@@ -65,6 +65,11 @@ UVM2020_REDUCED_TESTS := \
 	t/t_uvm_lrm_process_kill_self_zero.py \
 	t/t_uvm_lrm_process_kill_function.py \
 	t/t_uvm_lrm_process_kill_wait_zero.py \
+	t/t_process_context_fork.py \
+	t/t_process_fork_finished.py \
+	t/t_process_phase_teardown.py \
+	t/t_process_self_kill_ctor.py \
+	t/t_process_self_kill_initial.py \
 	t/t_timing_finish.py \
 	t/t_finish_stops_nonfinal.py \
 	t/t_clocking_virtual.py

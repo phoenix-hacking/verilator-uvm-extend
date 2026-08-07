@@ -446,8 +446,20 @@ class TransformForksVisitor final : public VNVisitor {
         // Propagate if needs process
         if (nodep->needProcess()) {
             newfuncp->setNeedProcess();
-            newfuncp->addStmtsp(new AstCStmt{flp, "if (vlProcess->state() != VlProcess::KILLED) "
-                                                  "vlProcess->state(VlProcess::FINISHED);"});
+            auto* const finishedp
+                = new AstCStmt{flp, "if (vlProcess->state() != VlProcess::KILLED) "
+                                    "vlProcess->state(VlProcess::FINISHED);"};
+            AstNode* tailp = newfuncp->stmtsp();
+            while (tailp && tailp->nextp()) tailp = tailp->nextp();
+            const AstStmtExpr* const stmtp = VN_CAST(tailp, StmtExpr);
+            const AstCMethodHard* const methodp
+                = stmtp ? VN_CAST(stmtp->exprp(), CMethodHard) : nullptr;
+            // done() can synchronously resume the joining parent, which must observe FINISHED.
+            if (methodp && methodp->method() == VCMethod::FORK_DONE) {
+                tailp->addHereThisAsNext(finishedp);
+            } else {
+                newfuncp->addStmtsp(finishedp);
+            }
         }
         remapLocals(newfuncp, callp);
     }

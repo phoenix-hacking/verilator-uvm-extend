@@ -65,6 +65,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 VL_DEFINE_DEBUG_FUNCTIONS;
@@ -234,6 +235,28 @@ public:
 //######################################################################
 // Reorder class functions
 
+// V3Reorder runs before V3Timing propagates needProcess to procedures, so inspect the lowered
+// CFunc call graph.  Process operations such as self-kill are control-flow barriers; moving a
+// later statement ahead of one would execute code after the process has terminated.
+bool cfuncNeedsProcess(const AstCFunc* funcp, std::unordered_set<const AstCFunc*>& visited) {
+    if (funcp->needProcess()) return true;
+    if (!visited.emplace(funcp).second) return false;
+    bool result = false;
+    funcp->foreach([&](const AstNodeCCall* callp) {
+        if (!result && cfuncNeedsProcess(callp->funcp(), visited)) result = true;
+    });
+    return result;
+}
+
+bool alwaysNeedsProcess(const AstAlways* nodep) {
+    std::unordered_set<const AstCFunc*> visited;
+    bool result = false;
+    nodep->foreach([&](const AstNodeCCall* callp) {
+        if (!result && cfuncNeedsProcess(callp->funcp(), visited)) result = true;
+    });
+    return result;
+}
+
 class ReorderVisitor final : public VNVisitor {
     // NODE STATE - Only under AstAlways
     // AstVarScope::user1p  -> Var ReorderVarStdVertex* for usage var, 0=not set yet
@@ -393,6 +416,10 @@ class ReorderVisitor final : public VNVisitor {
 
     // VISITORS
     void visit(AstAlways* nodep) override {
+        if (alwaysNeedsProcess(nodep)) {
+            UINFO(9, "  NoReorderBlock because process control flow is observable");
+            return;
+        }
         UASSERT_OBJ(!m_graphp, nodep, "AstAlways should not nest");
         VL_RESTORER(m_graphp);
         VL_RESTORER(m_impureVtxp);

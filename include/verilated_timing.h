@@ -121,7 +121,10 @@ public:
         : m_coro{coro}
         , m_process{process}
         , m_fileline{fileline} {
-        if (m_process) m_process->state(VlProcess::WAITING);
+        if (m_process) {
+            m_process->state(VlProcess::WAITING);
+            m_process->leave();
+        }
     }
     // Move the handle, leaving a nullptr
     // non-explicit:
@@ -389,7 +392,10 @@ struct VlForever final {
     bool await_ready() const { return false; }  // Always suspend
     template <typename T_Promise>
     void await_suspend(std::coroutine_handle<T_Promise> coro) const {
-        if (m_processp) m_processp->state(VlProcess::WAITING);
+        if (m_processp) {
+            m_processp->state(VlProcess::WAITING);
+            m_processp->leave();
+        }
         coro.promise().suspendForever();
         coro.destroy();
     }
@@ -449,7 +455,11 @@ public:
             void await_suspend(std::coroutine_handle<> coro) {
                 state->m_susp = {coro, process, fileline};
             }
-            void await_resume() const {}
+            void await_resume() const {
+                if (process && process->state() != VlProcess::KILLED) {
+                    process->state(VlProcess::RUNNING);
+                }
+            }
         };
         return Awaitable{process, m_state, VlFileLineDebug{filename, lineno}};
     }
