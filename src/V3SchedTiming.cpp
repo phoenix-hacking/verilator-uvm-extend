@@ -28,6 +28,7 @@
 
 #include "V3EmitCBase.h"
 #include "V3Sched.h"
+#include "V3UniqueNames.h"
 
 #include <unordered_map>
 
@@ -315,8 +316,15 @@ class TransformForksVisitor final : public VNVisitor {
     bool m_beginHasAwaits = false;  // Does the current begin have awaits?
     AstFork* m_forkp = nullptr;  // Current fork
     AstCFunc* m_funcp = nullptr;  // Current function
+    AstBasicDType* m_processDtp = nullptr;  // Process-reference type
+    V3UniqueNames m_processNames{"__VforkProcess"};  // Branch-process temporary names
+    std::vector<AstNode*> m_processSetups;  // Process creation before any branch starts
+    std::vector<AstNode*> m_registrationSetups;  // Named-disable registration before branch starts
+    std::vector<AstNode*> m_onKillSetups;  // Fork join kill hooks before branch starts
 
     // METHODS
+    // Timing coroutines start eagerly.  Collect every branch process, named-disable registration,
+    // and kill hook so the parent installs the complete fork topology before invoking any branch.
     // Remap local vars referenced by the given fork function
     // TODO: We should only pass variables to the fork that are
     // live in the fork body, but for that we need a proper data
@@ -360,10 +368,106 @@ class TransformForksVisitor final : public VNVisitor {
         });
     }
 
+    AstBasicDType* getCreateProcessDTypep(FileLine* const flp) {
+        if (m_processDtp) return m_processDtp;
+        m_processDtp = new AstBasicDType{flp, VBasicDTypeKwd::PROCESS_REFERENCE,
+                                         VSigning::UNSIGNED};
+        v3Global.rootp()->typeTablep()->addTypesp(m_processDtp);
+        return m_processDtp;
+    }
+
+    AstVarScope* createBranchProcess(AstBegin* const beginp) {
+        FileLine* const flp = beginp->fileline();
+        AstBasicDType* const processDtp = getCreateProcessDTypep(flp);
+        AstVar* const processVarp
+            = new AstVar{flp, VVarType::BLOCKTEMP, m_processNames.get("branch"), processDtp};
+        processVarp->funcLocal(true);
+        processVarp->noReset(true);
+        m_funcp->addVarsp(processVarp);
+        AstVarScope* const processVscp
+            = new AstVarScope{flp, m_funcp->scopep(), processVarp};
+        m_funcp->scopep()->addVarsp(processVscp);
+
+        const std::string createProcess
+            = m_funcp->needProcess() ? "VlProcess::createChild(vlProcess)"
+                                     : "std::make_shared<VlProcess>()";
+        AstCExpr* const createProcessp = new AstCExpr{flp, createProcess};
+        createProcessp->dtypep(processDtp);
+        AstAssign* const assignp
+            = new AstAssign{flp, new AstVarRef{flp, processVscp, VAccess::WRITE}, createProcessp};
+        m_processSetups.push_back(assignp);
+        return processVscp;
+    }
+
+    static bool isProcessQueuePush(const AstNode* const nodep) {
+        const AstStmtExpr* const stmtp = VN_CAST(nodep, StmtExpr);
+        const AstCMethodHard* const methodp
+            = stmtp ? VN_CAST(stmtp->exprp(), CMethodHard) : nullptr;
+        if (!methodp || methodp->method() != VCMethod::ARRAY_PUSH_BACK) return false;
+        const AstVarRef* const queueRefp = VN_CAST(methodp->fromp(), VarRef);
+        return queueRefp && queueRefp->varp()->processQueue();
+    }
+
+    void hoistProcessQueueRegistrations(AstBegin* const beginp,
+                                        AstVarScope* const processVscp) {
+        while (beginp->stmtsp()) {
+            AstComment* const commentp = VN_CAST(beginp->stmtsp(), Comment);
+            AstNode* const selfNodep = commentp ? commentp->nextp() : beginp->stmtsp();
+            AstNode* const pushNodep = selfNodep ? selfNodep->nextp() : nullptr;
+            if (!isProcessQueuePush(pushNodep)) break;
+
+            AstStmtExpr* const selfStmtp = VN_CAST(selfNodep, StmtExpr);
+            AstCCall* const selfCallp
+                = selfStmtp ? VN_CAST(selfStmtp->exprp(), CCall) : nullptr;
+            AstStmtExpr* const pushStmtp = VN_AS(pushNodep, StmtExpr);
+            AstCMethodHard* const pushMethodp = VN_AS(pushStmtp->exprp(), CMethodHard);
+            AstVarRef* const selfOutputp
+                = selfCallp ? VN_CAST(selfCallp->argsp(), VarRef) : nullptr;
+            AstVarRef* const pushValuep = VN_CAST(pushMethodp->pinsp(), VarRef);
+            const AstClassPackage* const classPackagep
+                = selfCallp && selfCallp->funcp()->scopep()
+                      ? VN_CAST(selfCallp->funcp()->scopep()->modp(), ClassPackage)
+                      : nullptr;
+            UASSERT_OBJ(selfCallp && selfCallp->funcp()->needProcess() && selfOutputp
+                            && !selfCallp->processp() && !selfOutputp->nextp() && pushValuep
+                            && !pushValuep->nextp()
+                            && selfOutputp->varScopep() == pushValuep->varScopep()
+                            && classPackagep
+                            && classPackagep->classp()
+                                   == v3Global.rootp()->stdPackageProcessp(),
+                        pushStmtp, "Malformed compiler-generated process registration");
+
+            selfCallp->processp(
+                new AstVarRef{selfCallp->fileline(), processVscp, VAccess::READWRITE});
+            if (commentp) m_registrationSetups.push_back(commentp->unlinkFrBack());
+            m_registrationSetups.push_back(selfStmtp->unlinkFrBack());
+            m_registrationSetups.push_back(pushStmtp->unlinkFrBack());
+        }
+        for (AstNode* stmtp = beginp->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
+            UASSERT_OBJ(!isProcessQueuePush(stmtp), stmtp,
+                        "Compiler-generated process registration is not at branch entry");
+        }
+    }
+
+    bool hoistForkOnKill(AstBegin* const beginp, AstVarScope* const processVscp) {
+        AstStmtExpr* const stmtp = VN_CAST(beginp->stmtsp(), StmtExpr);
+        AstCMethodHard* const methodp
+            = stmtp ? VN_CAST(stmtp->exprp(), CMethodHard) : nullptr;
+        if (!methodp || methodp->method() != VCMethod::FORK_ON_KILL) return false;
+        if (AstNode* const pinsp = methodp->pinsp()) {
+            VL_DO_DANGLING(pushDeletep(pinsp->unlinkFrBackWithNext()), pinsp);
+        }
+        methodp->addPinsp(new AstVarRef{methodp->fileline(), processVscp, VAccess::READ});
+        m_onKillSetups.push_back(stmtp->unlinkFrBack());
+        return true;
+    }
+
     // VISITORS
     void visit(AstNodeModule* nodep) override {
         VL_RESTORER(m_inClass);
+        VL_RESTORER(m_processNames);
         m_inClass = VN_IS(nodep, Class);
+        m_processNames.reset();
         iterateChildren(nodep);
     }
     void visit(AstCFunc* nodep) override {
@@ -377,7 +481,13 @@ class TransformForksVisitor final : public VNVisitor {
     void visit(AstFork* nodep) override {
         if (m_forkp) return;  // Handle forks in forks after moving them to new functions
         VL_RESTORER(m_forkp);
+        VL_RESTORER(m_processSetups);
+        VL_RESTORER(m_registrationSetups);
+        VL_RESTORER(m_onKillSetups);
         m_forkp = nodep;
+        m_processSetups.clear();
+        m_registrationSetups.clear();
+        m_onKillSetups.clear();
         iterateChildrenConst(nodep);  // Const, so we don't iterate the calls twice
         // Replace self with the function calls (no co_await, as we don't want the main
         // process to suspend whenever any of the children do)
@@ -390,6 +500,9 @@ class TransformForksVisitor final : public VNVisitor {
         if (AstNode* const stmtsp = nodep->stmtsp()) {
             resp = AstNode::addNext(resp, stmtsp->unlinkFrBackWithNext());
         }
+        for (AstNode* const setupp : m_processSetups) resp = AstNode::addNext(resp, setupp);
+        for (AstNode* const setupp : m_registrationSetups) resp = AstNode::addNext(resp, setupp);
+        for (AstNode* const setupp : m_onKillSetups) resp = AstNode::addNext(resp, setupp);
         while (AstBegin* const beginp = nodep->forksp()) {
             if (AstNode* const declsp = beginp->declsp()) {
                 resp = AstNode::addNext(resp, declsp->unlinkFrBackWithNext());
@@ -428,11 +541,25 @@ class TransformForksVisitor final : public VNVisitor {
         // Create the call to the function
         AstCCall* const callp = new AstCCall{flp, newfuncp};
         callp->dtypeSetVoid();
+        AstVarScope* const processVscp
+            = nodep->needProcess() ? createBranchProcess(nodep) : nullptr;
+        if (processVscp) {
+            const bool hasOnKill = hoistForkOnKill(nodep, processVscp);
+            UASSERT_OBJ(m_forkp->joinType().joinNone() || hasOnKill, nodep,
+                        "Process-backed blocking fork branch has no kill hook");
+            hoistProcessQueueRegistrations(nodep, processVscp);
+            callp->processp(new AstVarRef{flp, processVscp, VAccess::READWRITE});
+        }
         // If we're in a class, add a vlSymsp arg
         if (m_inClass) {
             newfuncp->addStmtsp(new AstCStmt{flp, "VL_KEEP_THIS;"});
             newfuncp->argTypes(EmitCUtil::symClassVar());
             callp->argTypes("vlSymsp");
+        }
+        if (processVscp) {
+            newfuncp->addStmtsp(new AstCStmt{
+                flp,
+                "if (VL_UNLIKELY(vlProcess->state() == VlProcess::KILLED)) co_return;"});
         }
         // Put the begin's statements in the function
         if (AstNode* const declsp = nodep->declsp()) {
