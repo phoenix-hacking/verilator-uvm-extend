@@ -1905,7 +1905,6 @@ void AstAlways::dump(std::ostream& str) const {
 }
 void AstAlways::dumpJson(std::ostream& str) const {
     dumpJsonStr(str, "keyword", keyword().ascii());
-    dumpJsonPtrFunc(str, processVscp);
     dumpJsonGen(str);
 }
 AstAssertCtl::AstAssertCtl(FileLine* fl, VAssertCtlType ctlType, uint32_t assertType,
