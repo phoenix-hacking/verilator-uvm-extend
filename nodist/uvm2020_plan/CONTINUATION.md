@@ -13,6 +13,170 @@ Do not commit extracted standards text, rendered standards pages, generated
 test objects, or temporary compiler trees. In particular, the repository-local
 `tmp/` directory is scratch material and is not part of any checkpoint.
 
+## 2026-08-07 process-tree ownership checkpoint
+
+Recorded at: 2026-08-07T12:27:57Z
+
+### Published state
+
+- Repository: `phoenix-hacking/verilator-uvm-extend`
+- Draft pull request: <https://github.com/phoenix-hacking/verilator-uvm-extend/pull/41>
+- Branch: `agent/uvm2020-clean-lane`
+- Parent: `fb04ec4b9959fc9295d3806770d1ff35dc50cf1a`
+- Functional commit: `8b8ccbd28efe2168a32ae3a17dac940cf6aaa28b`
+- Functional tree: `755028cc9a1edf39e29b2bd7ac7f898a22e5399b`
+- Autoformat-only child: `5fc3a9265928a892b5530e16cf26b722be5a4d11`
+- Autoformatted tree: `13edf0b01f3968400ca4ab1ee6fee283c008da09`
+- Remote verification:
+  `git ls-remote origin refs/heads/agent/uvm2020-clean-lane` returned
+  `5fc3a9265928a892b5530e16cf26b722be5a4d11`.
+- The local implementation commit was `b928a306e...` with tree
+  `755028cc9a1e...`. The connected GitHub app created `8b8ccbd28e...` with
+  that exact tree and parent, then advanced the branch without force. GitHub's
+  formatter created `5fc3a92659...`; its diff contains formatting plus the
+  executable-bit correction for the new Python driver. The direct regression
+  passed again against the autoformatted runtime sources.
+
+### Scope and claim boundary
+
+This checkpoint contains seven files, 376 insertions, and 49 deletions before
+the formatter-only child. It:
+
+- makes each process own its child subtrees strongly while children reference
+  parents weakly, avoiding both premature destruction and ownership cycles;
+- retains a terminal immediate child until its whole subtree is terminal;
+- keeps `wait fork` based on immediate-child state while recursive disable still
+  traverses through a finished child to live descendants;
+- marks the full disabled forest before releasing the topology lock or invoking
+  any fork-sync callback;
+- retains process and callback state through callback delivery;
+- makes terminal state win over later nonterminal state transitions; and
+- emits `VlProcess::createChild(vlProcess)` for generated child coroutines.
+
+`VlProcess::createChild` and `VlForkSync::onKill` setup are explicitly
+`VL_MT_UNSAFE`: generated scheduling must not overlap child/hook setup with
+kill or completion on the same structures. The mutex and atomics protect tree
+transitions and callback ordering; this checkpoint does not claim arbitrary
+host-thread mutation safety. Moving the internal child constructor behind the
+factory is an intentional source-API change to compiler-internal runtime
+machinery.
+
+Named fork registration and named sequential begin/task cancellation are not in
+this checkpoint.
+
+### Build and test provenance
+
+The clean optimized compiler build root was
+`/tmp/verilator-process-forest-build`. Its functional source tree was
+`755028cc9a1edf39e29b2bd7ac7f898a22e5399b`; the later autoformat child does not
+change compiler semantics.
+
+- Version:
+  `Verilator 5.051 devel rev vUNKNOWN-built20260807-20075c4 (mod)`
+- Binary SHA-256:
+  `e37ff6ddc840e927e0f22facda67453a2222ae54deda2f6aaf7cbbf39e989bc5`
+- Build command:
+
+```sh
+make -C src/obj_opt -f ../Makefile_obj clean
+make -C src opt -j8 OBJCACHE= LDFLAGS= LIBS='-lpthread -latomic -lm'
+```
+
+As in the preceding checkpoint, the five generated parser/lexer files were
+copied from the exact configured parent build and timestamp-refreshed after
+`clean`, because the isolated configure state uses `LEX=true` and `YACC=true`
+without flex or bison installed.
+
+The focused regression command was:
+
+```sh
+cd /tmp/verilator-process-forest-build/test_regress
+VERILATOR_ROOT=/tmp/verilator-process-forest-build \
+PYTHONPATH=/tmp/uvm_run_shim \
+/workspace/scratch/965baf652559/artifacts/test-venv/bin/python \
+  t/t_process_tree_ownership.py --driver-build-jobs=1 \
+  --obj-suffix=-forest-autoformat
+```
+
+It passed with `PROCESS_TREE_OWNERSHIP_SENTINEL pass=1`. The direct C++ portion
+proves:
+
+- retention and release of a `wait(0)` child after its local handle is gone;
+- immediate-child completion with a live grandchild;
+- bottom-up release without a shared-pointer cycle;
+- recursive disable through both running and finished ancestors;
+- KILLED state on the descendant below a finished ancestor;
+- all targets marked before the first kill callback resumes; and
+- exactly one completion when a kill hook is installed after termination.
+
+The SystemVerilog portion is behavioral compiler evidence. An automatic task
+launches a `join_none` child that blocks in `wait(0)` and returns, destroying
+the task-local fork state; its caller then executes `wait fork`. The previous
+published compiler/runtime exited at the test's `$stop` because `wait fork`
+returned. The ownership build kept the child alive, observed
+`waiter_started == 1`, and correctly left the caller blocked.
+
+The following fresh neighbor tests passed against the ownership build:
+
+- `t_wait_fork`
+- `t_disable_fork1`
+- `t_disable_fork2`
+- `t_disable_fork_nested`
+- `t_process_fork_finished`
+- `t_process_context_fork`
+- `t_process_self_kill_initial`
+- `t_process_phase_teardown`
+
+Static/distribution evidence also passed:
+
+- `git diff --check`
+- Python source compilation without writing bytecode
+- a direct C++14/no-timing compile of `include/verilated.cpp`
+- `t_dist_cppstyle`
+- `t_dist_whitespace`
+- `t_dist_header_cc`
+
+Current-head GitHub Actions and the complete `uvm2020` lane are pending. Do not
+attribute the preceding head's CI results to this checkpoint.
+
+### Standards anchor
+
+IEEE Std 1800-2012, 9.6.1, printed page 189, specifies that `wait fork` waits
+for all immediate child subprocesses, excluding descendants. IEEE Std
+1800-2012, 9.3.2, printed page 175, owns fork/join process creation and
+completion. This checkpoint separates that immediate-child completion rule
+from the runtime ownership needed to retain a finished child's live subtree.
+
+### Remaining named-disable design
+
+Do not revive the transparent synthetic-process wrapper for sequential named
+begins or tasks. It changes source process identity, RNG, status, `wait fork`,
+and `disable fork`, and it strands legal `return`, `break`, and `continue`
+targets across generated coroutine CFuncs. The sequential design needs one
+dynamic activation token per invocation while the source body stays in its
+original process and control-flow scope.
+
+Named fork remains process-based, but branch-local registration is too late.
+Fork coroutines start eagerly and serially, so a zero-time first branch can
+execute `disable fork` or disable the named fork before later branch processes
+exist. The next compiler checkpoint must use two-phase launch: create all branch
+processes, register tree roots and kill callbacks, then invoke the branch
+coroutines with killed-entry guards.
+
+Required sequential-activation coverage includes concurrent and recursive
+automatic-task activations, two module/class instances, cancellation through
+delay/event/`wait(0)`, live `join_none` descendants, outward task/function
+return, enclosing-loop break/continue, process identity/RNG/status, and local
+disable canceling all concurrent activations of the same named begin.
+
+### Next exact action
+
+Start from autoformatted head `5fc3a9265928...`. Add the zero-time fork-launch
+matrix first, covering plain `disable fork` and named fork under `join`,
+`join_any`, and `join_none`. Implement and publish the two-phase real-branch
+launch independently. Then introduce the sequential activation-token runtime
+and compiler markers without moving begin/task bodies into synthetic processes.
+
 ## 2026-08-07 process-lifecycle checkpoint
 
 Recorded at: 2026-08-07T11:27:28Z
