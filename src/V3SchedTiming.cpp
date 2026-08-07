@@ -370,8 +370,8 @@ class TransformForksVisitor final : public VNVisitor {
 
     AstBasicDType* getCreateProcessDTypep(FileLine* const flp) {
         if (m_processDtp) return m_processDtp;
-        m_processDtp = new AstBasicDType{flp, VBasicDTypeKwd::PROCESS_REFERENCE,
-                                         VSigning::UNSIGNED};
+        m_processDtp
+            = new AstBasicDType{flp, VBasicDTypeKwd::PROCESS_REFERENCE, VSigning::UNSIGNED};
         v3Global.rootp()->typeTablep()->addTypesp(m_processDtp);
         return m_processDtp;
     }
@@ -384,13 +384,12 @@ class TransformForksVisitor final : public VNVisitor {
         processVarp->funcLocal(true);
         processVarp->noReset(true);
         m_funcp->addVarsp(processVarp);
-        AstVarScope* const processVscp
-            = new AstVarScope{flp, m_funcp->scopep(), processVarp};
+        AstVarScope* const processVscp = new AstVarScope{flp, m_funcp->scopep(), processVarp};
         m_funcp->scopep()->addVarsp(processVscp);
 
-        const std::string createProcess
-            = m_funcp->needProcess() ? "VlProcess::createChild(vlProcess)"
-                                     : "std::make_shared<VlProcess>()";
+        const std::string createProcess = m_funcp->needProcess()
+                                              ? "VlProcess::createChild(vlProcess)"
+                                              : "std::make_shared<VlProcess>()";
         AstCExpr* const createProcessp = new AstCExpr{flp, createProcess};
         createProcessp->dtypep(processDtp);
         AstAssign* const assignp
@@ -408,8 +407,7 @@ class TransformForksVisitor final : public VNVisitor {
         return queueRefp && queueRefp->varp()->processQueue();
     }
 
-    void hoistProcessQueueRegistrations(AstBegin* const beginp,
-                                        AstVarScope* const processVscp) {
+    void hoistProcessQueueRegistrations(AstBegin* const beginp, AstVarScope* const processVscp) {
         while (beginp->stmtsp()) {
             AstComment* const commentp = VN_CAST(beginp->stmtsp(), Comment);
             AstNode* const selfNodep = commentp ? commentp->nextp() : beginp->stmtsp();
@@ -417,8 +415,7 @@ class TransformForksVisitor final : public VNVisitor {
             if (!isProcessQueuePush(pushNodep)) break;
 
             AstStmtExpr* const selfStmtp = VN_CAST(selfNodep, StmtExpr);
-            AstCCall* const selfCallp
-                = selfStmtp ? VN_CAST(selfStmtp->exprp(), CCall) : nullptr;
+            AstCCall* const selfCallp = selfStmtp ? VN_CAST(selfStmtp->exprp(), CCall) : nullptr;
             AstStmtExpr* const pushStmtp = VN_AS(pushNodep, StmtExpr);
             AstCMethodHard* const pushMethodp = VN_AS(pushStmtp->exprp(), CMethodHard);
             AstVarRef* const selfOutputp
@@ -431,10 +428,8 @@ class TransformForksVisitor final : public VNVisitor {
             UASSERT_OBJ(selfCallp && selfCallp->funcp()->needProcess() && selfOutputp
                             && !selfCallp->processp() && !selfOutputp->nextp() && pushValuep
                             && !pushValuep->nextp()
-                            && selfOutputp->varScopep() == pushValuep->varScopep()
-                            && classPackagep
-                            && classPackagep->classp()
-                                   == v3Global.rootp()->stdPackageProcessp(),
+                            && selfOutputp->varScopep() == pushValuep->varScopep() && classPackagep
+                            && classPackagep->classp() == v3Global.rootp()->stdPackageProcessp(),
                         pushStmtp, "Malformed compiler-generated process registration");
 
             selfCallp->processp(
@@ -451,8 +446,7 @@ class TransformForksVisitor final : public VNVisitor {
 
     bool hoistForkOnKill(AstBegin* const beginp, AstVarScope* const processVscp) {
         AstStmtExpr* const stmtp = VN_CAST(beginp->stmtsp(), StmtExpr);
-        AstCMethodHard* const methodp
-            = stmtp ? VN_CAST(stmtp->exprp(), CMethodHard) : nullptr;
+        AstCMethodHard* const methodp = stmtp ? VN_CAST(stmtp->exprp(), CMethodHard) : nullptr;
         if (!methodp || methodp->method() != VCMethod::FORK_ON_KILL) return false;
         if (AstNode* const pinsp = methodp->pinsp()) {
             VL_DO_DANGLING(pushDeletep(pinsp->unlinkFrBackWithNext()), pinsp);
@@ -558,8 +552,7 @@ class TransformForksVisitor final : public VNVisitor {
         }
         if (processVscp) {
             newfuncp->addStmtsp(new AstCStmt{
-                flp,
-                "if (VL_UNLIKELY(vlProcess->state() == VlProcess::KILLED)) co_return;"});
+                flp, "if (VL_UNLIKELY(vlProcess->state() == VlProcess::KILLED)) co_return;"});
         }
         // Put the begin's statements in the function
         if (AstNode* const declsp = nodep->declsp()) {
