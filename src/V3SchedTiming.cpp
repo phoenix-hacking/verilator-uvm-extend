@@ -411,7 +411,9 @@ class TransformForksVisitor final : public VNVisitor {
         while (beginp->stmtsp()) {
             AstComment* const commentp = VN_CAST(beginp->stmtsp(), Comment);
             AstNode* const selfNodep = commentp ? commentp->nextp() : beginp->stmtsp();
-            AstNode* const pushNodep = selfNodep ? selfNodep->nextp() : nullptr;
+            AstNode* const resultNodep = selfNodep ? selfNodep->nextp() : nullptr;
+            AstAssign* const resultAssignp = VN_CAST(resultNodep, Assign);
+            AstNode* const pushNodep = resultAssignp ? resultAssignp->nextp() : resultNodep;
             if (!isProcessQueuePush(pushNodep)) break;
 
             AstStmtExpr* const selfStmtp = VN_CAST(selfNodep, StmtExpr);
@@ -421,14 +423,25 @@ class TransformForksVisitor final : public VNVisitor {
             AstVarRef* const selfOutputp
                 = selfCallp ? VN_CAST(selfCallp->argsp(), VarRef) : nullptr;
             AstVarRef* const pushValuep = VN_CAST(pushMethodp->pinsp(), VarRef);
+            AstVarRef* const resultLhsp
+                = resultAssignp ? VN_CAST(resultAssignp->lhsp(), VarRef) : nullptr;
+            AstVarRef* const resultRhsp
+                = resultAssignp ? VN_CAST(resultAssignp->rhsp(), VarRef) : nullptr;
             const AstClassPackage* const classPackagep
                 = selfCallp && selfCallp->funcp()->scopep()
                       ? VN_CAST(selfCallp->funcp()->scopep()->modp(), ClassPackage)
                       : nullptr;
+            const bool directResult
+                = selfOutputp && pushValuep
+                  && selfOutputp->varScopep() == pushValuep->varScopep();
+            const bool assignedResult
+                = selfOutputp && resultLhsp && resultRhsp && pushValuep
+                  && selfOutputp->varScopep() == resultRhsp->varScopep()
+                  && resultLhsp->varScopep() == pushValuep->varScopep();
             UASSERT_OBJ(selfCallp && selfCallp->funcp()->needProcess() && selfOutputp
                             && !selfCallp->processp() && !selfOutputp->nextp() && pushValuep
-                            && !pushValuep->nextp()
-                            && selfOutputp->varScopep() == pushValuep->varScopep() && classPackagep
+                            && !pushValuep->nextp() && (directResult || assignedResult)
+                            && (resultAssignp != nullptr) == assignedResult && classPackagep
                             && classPackagep->classp() == v3Global.rootp()->stdPackageProcessp(),
                         pushStmtp, "Malformed compiler-generated process registration");
 
@@ -436,6 +449,7 @@ class TransformForksVisitor final : public VNVisitor {
                 new AstVarRef{selfCallp->fileline(), processVscp, VAccess::READWRITE});
             if (commentp) m_registrationSetups.push_back(commentp->unlinkFrBack());
             m_registrationSetups.push_back(selfStmtp->unlinkFrBack());
+            if (resultAssignp) m_registrationSetups.push_back(resultAssignp->unlinkFrBack());
             m_registrationSetups.push_back(pushStmtp->unlinkFrBack());
         }
         for (AstNode* stmtp = beginp->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
