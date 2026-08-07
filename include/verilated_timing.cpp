@@ -32,6 +32,275 @@ VerilatedMutex s_processMutex;
 }  // namespace
 
 //======================================================================
+// Named activation runtime state
+
+class VlNamedActivationRegistryState final {
+public:
+    std::map<uint64_t, std::shared_ptr<VlNamedActivationState>> m_activations
+        VL_GUARDED_BY(s_processMutex);
+    uint64_t m_nextId VL_GUARDED_BY(s_processMutex) = 0;
+};
+
+using VlNamedActivationWeak = std::weak_ptr<VlNamedActivationState>;
+using VlNamedActivationWeakSet
+    = std::set<VlNamedActivationWeak, std::owner_less<VlNamedActivationWeak>>;
+using VlProcessWeak = std::weak_ptr<VlProcess>;
+using VlProcessWeakSet = std::set<VlProcessWeak, std::owner_less<VlProcessWeak>>;
+
+class VlNamedActivationState final {
+public:
+    std::weak_ptr<VlNamedActivationRegistryState> m_registryp;
+    const std::shared_ptr<std::atomic<bool>> m_canceledp;
+    const uint64_t m_id;
+    VlNamedActivationWeakSet m_parentActivations VL_GUARDED_BY(s_processMutex);
+    VlNamedActivationWeakSet m_childActivations VL_GUARDED_BY(s_processMutex);
+    VlProcessWeakSet m_childProcessps VL_GUARDED_BY(s_processMutex);
+    VlProcessWeakSet m_memberProcessps VL_GUARDED_BY(s_processMutex);
+    bool m_active VL_GUARDED_BY(s_processMutex) = true;
+
+    VlNamedActivationState(const std::shared_ptr<VlNamedActivationRegistryState>& registryp,
+                           std::shared_ptr<std::atomic<bool>> canceledp, uint64_t id)
+        : m_registryp{registryp}
+        , m_canceledp{std::move(canceledp)}
+        , m_id{id} {}
+
+    bool activeLocked() const VL_REQUIRES(s_processMutex) { return m_active; }
+};
+
+namespace {
+
+using VlNamedActivationProcessMap
+    = std::map<VlProcessWeak, VlNamedActivationWeakSet, std::owner_less<VlProcessWeak>>;
+VlNamedActivationProcessMap s_namedActivationsByProcess VL_GUARDED_BY(s_processMutex);
+
+void detachNamedActivationLocked(const std::shared_ptr<VlNamedActivationState>& activationp)
+    VL_REQUIRES(s_processMutex) {
+    activationp->m_active = false;
+    const VlNamedActivationWeak activationWeak{activationp};
+    for (const VlProcessWeak& member : activationp->m_memberProcessps) {
+        const auto processIt = s_namedActivationsByProcess.find(member);
+        if (processIt == s_namedActivationsByProcess.end()) continue;
+        VlNamedActivationWeakSet& processActivations = processIt->second;
+        processActivations.erase(activationWeak);
+        if (processActivations.empty()) s_namedActivationsByProcess.erase(processIt);
+    }
+    for (const VlNamedActivationWeak& parent : activationp->m_parentActivations) {
+        if (const std::shared_ptr<VlNamedActivationState> parentp = parent.lock()) {
+            parentp->m_childActivations.erase(activationWeak);
+        }
+    }
+    for (const VlNamedActivationWeak& child : activationp->m_childActivations) {
+        if (const std::shared_ptr<VlNamedActivationState> childp = child.lock()) {
+            childp->m_parentActivations.erase(activationWeak);
+        }
+    }
+    activationp->m_parentActivations.clear();
+    activationp->m_childActivations.clear();
+    activationp->m_childProcessps.clear();
+    activationp->m_memberProcessps.clear();
+}
+
+std::vector<std::shared_ptr<VlNamedActivationState>>
+activeNamedActivationsLocked(const VlProcessRef& processp) VL_REQUIRES(s_processMutex) {
+    std::vector<std::shared_ptr<VlNamedActivationState>> result;
+    if (!processp) return result;
+    const auto processIt = s_namedActivationsByProcess.find(VlProcessWeak{processp});
+    if (processIt == s_namedActivationsByProcess.end()) return result;
+    VlNamedActivationWeakSet& processActivations = processIt->second;
+    for (auto it = processActivations.begin(); it != processActivations.end();) {
+        const std::shared_ptr<VlNamedActivationState> activationp = it->lock();
+        if (!activationp || !activationp->activeLocked()) {
+            it = processActivations.erase(it);
+            continue;
+        }
+        result.emplace_back(activationp);
+        ++it;
+    }
+    if (processActivations.empty()) s_namedActivationsByProcess.erase(processIt);
+    return result;
+}
+
+void addNamedActivationMemberLocked(const std::shared_ptr<VlNamedActivationState>& activationp,
+                                    const VlProcessRef& processp, bool childProcess)
+    VL_REQUIRES(s_processMutex) {
+    if (!processp || !activationp->activeLocked()) return;
+    const VlProcessWeak processWeak{processp};
+    const auto inserted = activationp->m_memberProcessps.emplace(processWeak);
+    if (inserted.second) {
+        s_namedActivationsByProcess[processWeak].emplace(activationp);
+    }
+    if (childProcess) activationp->m_childProcessps.emplace(processWeak);
+}
+
+void detachNamedActivationProcessLocked(const VlProcessRef& processp)
+    VL_REQUIRES(s_processMutex) {
+    const VlProcessWeak processWeak{processp};
+    const auto processIt = s_namedActivationsByProcess.find(processWeak);
+    if (processIt == s_namedActivationsByProcess.end()) return;
+    const VlNamedActivationWeakSet processActivations = processIt->second;
+    s_namedActivationsByProcess.erase(processIt);
+    for (const VlNamedActivationWeak& activation : processActivations) {
+        if (const std::shared_ptr<VlNamedActivationState> activationp = activation.lock()) {
+            activationp->m_memberProcessps.erase(processWeak);
+            activationp->m_childProcessps.erase(processWeak);
+        }
+    }
+}
+
+}  // namespace
+
+//======================================================================
+// VlNamedActivationRegistry/VlNamedActivationGuard:: Methods
+
+VlNamedActivationRegistry::VlNamedActivationRegistry()
+    : m_statep{std::make_shared<VlNamedActivationRegistryState>()} {}
+
+VlNamedActivationRegistry::~VlNamedActivationRegistry() {
+    const VerilatedLockGuard lock{s_processMutex};
+    std::vector<std::shared_ptr<VlNamedActivationState>> activationps;
+    activationps.reserve(m_statep->m_activations.size());
+    for (const auto& activation : m_statep->m_activations) {
+        activationps.emplace_back(activation.second);
+    }
+    m_statep->m_activations.clear();
+    for (const std::shared_ptr<VlNamedActivationState>& activationp : activationps) {
+        detachNamedActivationLocked(activationp);
+    }
+}
+
+VlNamedActivationGuard VlNamedActivationRegistry::activate(const VlProcessRef& ownerp) VL_MT_SAFE {
+    const VerilatedLockGuard lock{s_processMutex};
+    VL_DEBUG_IFDEF(assert(!ownerp || !ownerp->completed()););
+    const std::vector<std::shared_ptr<VlNamedActivationState>> parentActivations
+        = activeNamedActivationsLocked(ownerp);
+    const std::shared_ptr<std::atomic<bool>> canceledp
+        = std::make_shared<std::atomic<bool>>(false);
+    const std::shared_ptr<VlNamedActivationState> activationp
+        = std::make_shared<VlNamedActivationState>(m_statep, canceledp, m_statep->m_nextId++);
+    const auto inserted = m_statep->m_activations.emplace(activationp->m_id, activationp);
+    VL_DEBUG_IFDEF(assert(inserted.second););
+    for (const std::shared_ptr<VlNamedActivationState>& parentp : parentActivations) {
+        parentp->m_childActivations.emplace(activationp);
+        activationp->m_parentActivations.emplace(parentp);
+    }
+    addNamedActivationMemberLocked(activationp, ownerp, false);
+    return VlNamedActivationGuard{activationp};
+}
+
+void VlNamedActivationRegistry::disableAll() VL_MT_UNSAFE {
+    const std::shared_ptr<VlNamedActivationRegistryState> replacementp
+        = std::make_shared<VlNamedActivationRegistryState>();
+    std::vector<std::shared_ptr<VlNamedActivationState>> activationps;
+    std::vector<VlProcessRef> rootProcessps;
+    std::vector<VlProcessRef> heldProcessps;
+    std::vector<std::shared_ptr<VlForkSyncState>> forkSyncps;
+    {
+        const VerilatedLockGuard lock{s_processMutex};
+        const std::shared_ptr<VlNamedActivationRegistryState> drainedp
+            = std::exchange(m_statep, replacementp);
+        replacementp->m_nextId = drainedp->m_nextId;
+        std::vector<std::shared_ptr<VlNamedActivationState>> pendingActivationps;
+        pendingActivationps.reserve(drainedp->m_activations.size());
+        for (const auto& activation : drainedp->m_activations) {
+            pendingActivationps.emplace_back(activation.second);
+        }
+        std::set<VlNamedActivationState*> seenActivationps;
+        while (!pendingActivationps.empty()) {
+            std::shared_ptr<VlNamedActivationState> activationp
+                = std::move(pendingActivationps.back());
+            pendingActivationps.pop_back();
+            if (!activationp || !activationp->activeLocked()
+                || !seenActivationps.emplace(activationp.get()).second) {
+                continue;
+            }
+            activationps.emplace_back(activationp);
+            for (const VlNamedActivationWeak& child : activationp->m_childActivations) {
+                if (const std::shared_ptr<VlNamedActivationState> childp = child.lock()) {
+                    pendingActivationps.emplace_back(childp);
+                }
+            }
+        }
+
+        // Every activation observes cancellation before a killed child can resume generated code.
+        for (const std::shared_ptr<VlNamedActivationState>& activationp : activationps) {
+            activationp->m_canceledp->store(true, std::memory_order_release);
+            if (const std::shared_ptr<VlNamedActivationRegistryState> registryp
+                = activationp->m_registryp.lock()) {
+                registryp->m_activations.erase(activationp->m_id);
+            }
+            for (const VlProcessWeak& child : activationp->m_childProcessps) {
+                if (const VlProcessRef childp = child.lock()) {
+                    rootProcessps.emplace_back(childp);
+                }
+            }
+        }
+        for (const std::shared_ptr<VlNamedActivationState>& activationp : activationps) {
+            detachNamedActivationLocked(activationp);
+        }
+        VlProcess::disableProcessesLocked(rootProcessps, heldProcessps, forkSyncps);
+    }
+    // Process-tree marking and activation cancellation are complete before any callback runs.
+    for (const std::shared_ptr<VlForkSyncState>& forkSyncp : forkSyncps) forkSyncp->done();
+}
+
+size_t VlNamedActivationRegistry::size() const VL_MT_SAFE {
+    const VerilatedLockGuard lock{s_processMutex};
+    return m_statep->m_activations.size();
+}
+
+VlNamedActivationStats VlNamedActivationRegistry::stats() const VL_MT_SAFE {
+    const VerilatedLockGuard lock{s_processMutex};
+    VlNamedActivationStats result;
+    result.m_activations = m_statep->m_activations.size();
+    for (const auto& activation : m_statep->m_activations) {
+        const std::shared_ptr<VlNamedActivationState>& activationp = activation.second;
+        result.m_parentActivations += activationp->m_parentActivations.size();
+        result.m_childActivations += activationp->m_childActivations.size();
+        result.m_processMembers += activationp->m_memberProcessps.size();
+        result.m_childProcesses += activationp->m_childProcessps.size();
+    }
+    result.m_globalProcessMapEntries = s_namedActivationsByProcess.size();
+    for (const auto& process : s_namedActivationsByProcess) {
+        result.m_globalProcessMemberships += process.second.size();
+    }
+    return result;
+}
+
+VlNamedActivationGuard::VlNamedActivationGuard(
+    const std::shared_ptr<VlNamedActivationState>& statep)
+    : m_statep{statep}
+    , m_token{statep->m_canceledp} {}
+
+VlNamedActivationGuard::VlNamedActivationGuard(VlNamedActivationGuard&& moved) noexcept
+    : m_statep{std::move(moved.m_statep)}
+    , m_token{std::move(moved.m_token)} {}
+
+VlNamedActivationGuard& VlNamedActivationGuard::operator=(VlNamedActivationGuard&& moved) noexcept {
+    if (this == &moved) return *this;
+    leave();
+    m_statep = std::move(moved.m_statep);
+    m_token = std::move(moved.m_token);
+    return *this;
+}
+
+VlNamedActivationGuard::~VlNamedActivationGuard() { leave(); }
+
+void VlNamedActivationGuard::leave() {
+    const std::shared_ptr<VlNamedActivationState> statep = m_statep.lock();
+    m_statep.reset();
+    if (!statep) return;
+    const VerilatedLockGuard lock{s_processMutex};
+    if (!statep->activeLocked()) return;
+    if (const std::shared_ptr<VlNamedActivationRegistryState> registryp
+        = statep->m_registryp.lock()) {
+        registryp->m_activations.erase(statep->m_id);
+    }
+    detachNamedActivationLocked(statep);
+}
+
+bool VlNamedActivationGuard::canceled() const VL_MT_SAFE { return m_token.canceled(); }
+
+//======================================================================
 // VlCoroutineHandle:: Methods
 
 void VlCoroutineHandle::resume() {
@@ -305,6 +574,11 @@ VlProcessRef VlProcess::createChild(VlProcessRef parentp) {
     const VerilatedLockGuard lock{s_processMutex};
     VL_DEBUG_IFDEF(assert(!parentp->completed()););
     parentp->attachLocked(processp);
+    const std::vector<std::shared_ptr<VlNamedActivationState>> activationps
+        = activeNamedActivationsLocked(parentp);
+    for (const std::shared_ptr<VlNamedActivationState>& activationp : activationps) {
+        addNamedActivationMemberLocked(activationp, processp, true);
+    }
     return processp;
 }
 
@@ -370,6 +644,10 @@ void VlProcess::disableProcessesLocked(const std::vector<VlProcessRef>& rootProc
         }
     }
 
+    for (const VlProcessRef& processp : heldProcessps) {
+        detachNamedActivationProcessLocked(processp);
+    }
+
     for (auto it = heldProcessps.rbegin(); it != heldProcessps.rend(); ++it) {
         (*it)->completeTreeLocked();
     }
@@ -426,6 +704,7 @@ void VlProcess::state(int s) {
         const int oldState = m_state.load(std::memory_order_relaxed);
         if (oldState == KILLED || oldState == FINISHED) return;
         m_state.store(FINISHED, std::memory_order_release);
+        detachNamedActivationProcessLocked(shared_from_this());
         completeTreeLocked();
         return;
     }

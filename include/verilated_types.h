@@ -300,8 +300,102 @@ public:
 using VlProcessRef = std::shared_ptr<VlProcess>;
 class VlForkSync;
 class VlForkSyncState;
+class VlNamedActivationGuard;
+class VlNamedActivationState;
+class VlNamedActivationRegistryState;
+
+/// Internal cardinalities used to validate named-activation runtime cleanup.
+struct VlNamedActivationStats final {
+    size_t m_activations = 0;  ///< Active dynamic activation records
+    size_t m_parentActivations = 0;  ///< Parent activation edges
+    size_t m_childActivations = 0;  ///< Nested activation edges
+    size_t m_processMembers = 0;  ///< Process-to-activation memberships
+    size_t m_childProcesses = 0;  ///< Child process roots subject to cancellation
+    size_t m_globalProcessMapEntries = 0;  ///< Raw global process-map keys
+    size_t m_globalProcessMemberships = 0;  ///< Raw global weak activation memberships
+};
+
+/// Copyable cancellation state for one dynamic named task or block activation.
+class VlNamedActivationToken final {
+    friend class VlNamedActivationGuard;
+    friend class VlNamedActivationRegistry;
+
+    // MEMBERS
+    std::shared_ptr<std::atomic<bool>> m_canceledp;
+
+    // CONSTRUCTORS
+    explicit VlNamedActivationToken(std::shared_ptr<std::atomic<bool>> canceledp)
+        : m_canceledp{std::move(canceledp)} {}
+
+public:
+    // CONSTRUCTORS
+    VlNamedActivationToken() = default;
+
+    // METHODS
+    /// Return true after the owning activation has been canceled.
+    bool canceled() const VL_MT_SAFE {
+        return m_canceledp && m_canceledp->load(std::memory_order_acquire);
+    }
+};
+
+/// Registry of dynamic activations for one named sequential task or block declaration.  This is
+/// runtime infrastructure; compiler lowering is added separately after cancellation-aware
+/// coroutine suspension is available.
+class VlNamedActivationRegistry final {
+    VL_UNCOPYABLE(VlNamedActivationRegistry);
+
+    // MEMBERS
+    std::shared_ptr<VlNamedActivationRegistryState> m_statep;
+
+public:
+    // CONSTRUCTORS
+    VlNamedActivationRegistry();
+    ~VlNamedActivationRegistry();
+
+    // METHODS
+    /// Register one dynamic activation owned by the given source process.
+    VlNamedActivationGuard activate(const VlProcessRef& ownerp) VL_MT_SAFE;
+    /// Cancel every activation present at entry, without canceling reentrant activations.
+    void disableAll() VL_MT_UNSAFE;
+    /// Return the number of active records in the current registry generation.
+    size_t size() const VL_MT_SAFE;
+    /// Return internal tracking cardinalities for runtime diagnostics.
+    VlNamedActivationStats stats() const VL_MT_SAFE;
+};
+
+/// Move-only RAII record for one dynamic named task or block activation.
+class VlNamedActivationGuard final {
+    VL_UNCOPYABLE(VlNamedActivationGuard);
+
+    friend class VlNamedActivationRegistry;
+
+    // MEMBERS
+    std::weak_ptr<VlNamedActivationState> m_statep;
+    VlNamedActivationToken m_token;
+
+    // CONSTRUCTORS
+    explicit VlNamedActivationGuard(const std::shared_ptr<VlNamedActivationState>& statep);
+
+    // METHODS
+    void leave() VL_MT_UNSAFE;
+
+public:
+    // CONSTRUCTORS
+    VlNamedActivationGuard() = default;
+    VlNamedActivationGuard(VlNamedActivationGuard&& moved) noexcept;
+    VlNamedActivationGuard& operator=(VlNamedActivationGuard&& moved) noexcept;
+    ~VlNamedActivationGuard();
+
+    // METHODS
+    /// Return true after this activation has been canceled.
+    bool canceled() const VL_MT_SAFE;
+    /// Copy the persistent cancellation token for this activation.
+    VlNamedActivationToken token() const VL_MT_UNSAFE { return m_token; }
+};
 
 class VlProcess final : public std::enable_shared_from_this<VlProcess> {
+    friend class VlNamedActivationRegistry;
+
     // MEMBERS
     std::atomic<int> m_state;  // Current state of the process
     std::weak_ptr<VlProcess> m_parentp;  // Parent process, if it still exists
