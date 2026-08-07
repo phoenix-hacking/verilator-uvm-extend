@@ -442,8 +442,7 @@ public:
 
         // Instantiate a process class if it's going to be needed somewhere later
         nodep->forall([&](const AstNodeCCall* ccallp) -> bool {
-            if (ccallp->funcp()->needProcess() && !ccallp->newProcess()
-                && !ccallp->processp()
+            if (ccallp->funcp()->needProcess() && !ccallp->newProcess() && !ccallp->processp()
                 && (ccallp->funcp()->isCoroutine() == VN_IS(ccallp->backp(), CAwait))) {
                 if (!nodep->needProcess() && !m_instantiatesOwnProcess) {
                     m_instantiatesOwnProcess = true;

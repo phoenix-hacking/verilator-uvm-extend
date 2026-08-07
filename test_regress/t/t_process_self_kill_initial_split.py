@@ -12,9 +12,8 @@ import vltest_bootstrap
 test.scenarios('simulator')
 test.top_filename = 't_process_self_kill_initial.v'
 
-test.compile(verilator_flags2=[
-    '--binary', '--timing', '--output-split-cfuncs 1', '-fno-inline-cfuncs'
-])
+test.compile(
+    verilator_flags2=['--binary', '--timing', '--output-split-cfuncs 1', '-fno-inline-cfuncs'])
 
 test.execute()
 

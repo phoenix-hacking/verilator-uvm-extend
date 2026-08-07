@@ -11,9 +11,7 @@ import vltest_bootstrap
 
 test.scenarios('simulator')
 
-test.compile(verilator_flags2=[
-    '--binary', '--comp-limit-blocks', '3', '-fno-inline-cfuncs'
-])
+test.compile(verilator_flags2=['--binary', '--comp-limit-blocks', '3', '-fno-inline-cfuncs'])
 
 test.execute()
 

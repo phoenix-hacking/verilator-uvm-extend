@@ -1107,17 +1107,15 @@ class TimingControlVisitor final : public VNVisitor {
                 // synthetic output argument.  Stage a direct assignment so a self-kill in new()
                 // cannot overwrite the destination before cancellation is observed.
                 AstAssign* const assignp = VN_CAST(callStmtp, Assign);
-                if (assignp && assignp->rhsp() == cnewp
-                    && !VN_IS(cnewp->dtypep(), VoidDType)) {
+                if (assignp && assignp->rhsp() == cnewp && !VN_IS(cnewp->dtypep(), VoidDType)) {
                     if (m_underJumpBlock) addCLocalScope(nodep->fileline(), assignp);
                     FileLine* const flp = cnewp->fileline();
                     AstNodeExpr* const commitLhsp = assignp->lhsp()->unlinkFrBack();
-                    AstVarScope* const resultVscp
-                        = createTemp(flp, m_processKillValueNames.get(cnewp), cnewp->dtypep(),
-                                     assignp);
+                    AstVarScope* const resultVscp = createTemp(
+                        flp, m_processKillValueNames.get(cnewp), cnewp->dtypep(), assignp);
                     assignp->lhsp(new AstVarRef{flp, resultVscp, VAccess::WRITE});
-                    outputCommitp = new AstAssign{
-                        flp, commitLhsp, new AstVarRef{flp, resultVscp, VAccess::READ}};
+                    outputCommitp = new AstAssign{flp, commitLhsp,
+                                                  new AstVarRef{flp, resultVscp, VAccess::READ}};
                 }
             }
             addProcessCancellationCheck(nodep, callStmtp, outputCommitp);

@@ -111,8 +111,8 @@ public:
             if (result.m_processVscp) {
                 UASSERT_OBJ(!callp->newProcess(), callp,
                             "Call cannot use both new and persistent process storage");
-                callp->processp(new AstVarRef{callp->fileline(), result.m_processVscp,
-                                              VAccess::READWRITE});
+                callp->processp(
+                    new AstVarRef{callp->fileline(), result.m_processVscp, VAccess::READWRITE});
             }
             ifp->addThensp(callp->makeStmt());
         }

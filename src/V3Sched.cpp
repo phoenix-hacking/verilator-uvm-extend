@@ -315,27 +315,26 @@ void preparePersistentProcesses(AstNetlist* netlistp, const LogicClasses& logicC
                             "Persistent process storage already allocated");
 
                 if (!processDtp) {
-                    processDtp = new AstBasicDType{alwaysp->fileline(),
-                                                   VBasicDTypeKwd::PROCESS_REFERENCE,
-                                                   VSigning::UNSIGNED};
+                    processDtp
+                        = new AstBasicDType{alwaysp->fileline(), VBasicDTypeKwd::PROCESS_REFERENCE,
+                                            VSigning::UNSIGNED};
                     netlistp->typeTablep()->addTypesp(processDtp);
                 }
-                alwaysp->processVscp(
-                    scopep->createTemp(processNames.get(alwaysp), processDtp));
+                alwaysp->processVscp(scopep->createTemp(processNames.get(alwaysp), processDtp));
 
                 // The implicit event control of an always process leaves it waiting after each
                 // activation.  A killed process never reaches the epilogue and later triggers are
                 // ignored by the guard.
                 FileLine* const flp = alwaysp->fileline();
                 AstNode* const bodyp = alwaysp->stmtsp()->unlinkFrBackWithNext();
-                AstCStmt* const enterp = new AstCStmt{
-                    flp, "if (vlProcess->state() == VlProcess::KILLED) return;\n"
-                         "vlProcess->state(VlProcess::RUNNING);"};
+                AstCStmt* const enterp
+                    = new AstCStmt{flp, "if (vlProcess->state() == VlProcess::KILLED) return;\n"
+                                        "vlProcess->state(VlProcess::RUNNING);"};
                 AstNode::addNext<AstNode, AstNode>(enterp, bodyp);
                 alwaysp->addStmtsp(enterp);
-                alwaysp->addStmtsp(new AstCStmt{
-                    flp, "if (vlProcess->state() != VlProcess::KILLED) "
-                         "vlProcess->state(VlProcess::WAITING);"});
+                alwaysp->addStmtsp(new AstCStmt{flp,
+                                                "if (vlProcess->state() != VlProcess::KILLED) "
+                                                "vlProcess->state(VlProcess::WAITING);"});
             }
         }
     };
@@ -365,8 +364,7 @@ void orderSequentially(AstCFunc* funcp, const LogicByScope& lbs) {
         AstCCall* const callp = new AstCCall{subFuncp->fileline(), subFuncp};
         callp->dtypeSetVoid();
         if (processVscp) {
-            callp->processp(
-                new AstVarRef{callp->fileline(), processVscp, VAccess::READWRITE});
+            callp->processp(new AstVarRef{callp->fileline(), processVscp, VAccess::READWRITE});
         } else {
             callp->newProcess(newProcess);
         }
@@ -402,9 +400,8 @@ void orderSequentially(AstCFunc* funcp, const LogicByScope& lbs) {
                     AstVarScope* const processVscp
                         = VN_IS(procp, Always) ? VN_AS(procp, Always)->processVscp() : nullptr;
                     AstCFunc* const subFuncp
-                        = needsOwnFunc
-                              ? createNewSubFuncp(scopep, !processVscp, processVscp)
-                              : sharedSubFuncp();
+                        = needsOwnFunc ? createNewSubFuncp(scopep, !processVscp, processVscp)
+                                       : sharedSubFuncp();
                     if (needsOwnFunc) {
                         subFuncp->name(subFuncp->name()
                                        + (procp->isSuspendable() ? "__Vtiming__" : "__Vprocess__")
