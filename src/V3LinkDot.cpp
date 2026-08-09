@@ -4516,12 +4516,10 @@ class LinkDotResolveVisitor final : public VNVisitor {
 
                     VL_DO_DANGLING(pushDeletep(nodep), nodep);
                 } else if (allowVar
-                           || (m_ds.m_disablep && m_ds.m_dotp && m_ds.m_dotPos == DP_FIRST
-                               && varp->subDTypep()
-                               && VN_IS(varp->subDTypep()->skipRefp(), ClassRefDType))) {
-                    // Only a dotted class handle is a valid variable-shaped disable prefix.  Do
-                    // not relax ordinary block/task lookup: keeping other variables ineligible
-                    // preserves its precise "found VAR, expected block/task" diagnostic.
+                           || (m_ds.m_disablep && m_ds.m_dotp && m_ds.m_dotPos == DP_FIRST)) {
+                    // A dotted variable may be the receiver of an object-qualified task disable.
+                    // Preserve it until DP_MEMBER can validate its class-handle type and issue a
+                    // receiver-specific diagnostic.  Undotted variables remain ineligible here.
                     AstNode* newp;
                     if (m_ds.m_dotText != "") {
                         AstVarXRef* const refp
