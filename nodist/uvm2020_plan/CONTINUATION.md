@@ -13,12 +13,18 @@ Do not commit extracted standards text, rendered standards pages, generated
 test objects, or temporary compiler trees. In particular, the repository-local
 `tmp/` directory is scratch material and is not part of any checkpoint.
 
-## 2026-08-09 sequential named-activation closure candidate
+## 2026-08-09 sequential named-activation technical closure
 
 This section supersedes the open-design instructions in the older dated
-checkpoints below. It records the candidate scope and the passing focused local
-aggregate. The 20-test UVM local aggregate also passed; new-head CI is still
-pending.
+checkpoints below. It records the implementation scope and the passing focused
+local aggregate. The 20-test UVM local aggregate also passed. The
+implementation is published at source head
+`ea172f63c5ddab12a5ca032e119b2f1a95b4e71e` with tree
+`469066ed27dc53a0977f7131a6ffd0d30ce71879`; GitHub's pull-request workflow
+tests synthetic merge
+`19ca7867bdff8fc60c35e11132d37b88ab2df1c5`. Push `build-test` run
+31311244235, pull-request `build-test` run 31311246321, and push `format` run
+31311244123 succeeded. Both build-test runs passed 46/46 jobs.
 
 The focused Makefile target is now `make -C test_regress named-disable`. Its
 fixed order contains 15 tests: 11 runtime/process predecessors plus the named
@@ -28,7 +34,7 @@ executions, 30 independently suffixed object directories, and 30 seeded cleanup
 sentinels. This lane remains independent of the ordered 20-test `uvm2020`
 integration target.
 
-The candidate replaces synthetic sequential process wrappers with dynamic
+The implementation replaces synthetic sequential process wrappers with dynamic
 activation ownership while retaining the source process. It covers active and
 completed targets, concurrent and recursive activations, scalar hierarchical
 module paths, scalar class-object receivers, constant-false `wait(0)`, live
@@ -97,17 +103,36 @@ seconds. The clean-before symlink-safety preflight passed, all 20 seeded
 SHA-256
 `e52a7a32fe54127f6a4a37cb315bfd2d1e6b1c998d2180184f02c2b357073e62`.
 
-Do not convert these local passes into a completion percentage. Focused
-technical closure still requires exact-head CI. The broader UVM program
-independently remains 0/21, and human DCO/review remain outside technical
-closure.
+### Recorded exact-head CI
 
-### Next exact validation action
+- Format run 31311244123 succeeded for source head `ea172f63`.
+- Push `build-test` run 31311244235 passed 46/46 jobs. Focused job
+  93239581011 passed 30/0 in 1:36 with cleanup; UVM job 93239580961 passed
+  20/0 in 13:12 with symlink preflight, one 1,000-phase teardown stress run
+  (`phases=1000`, `winners=1000`, `cleanups=1000`), and cleanup.
+- Pull-request `build-test` run 31311246321 passed 46/46 jobs against
+  synthetic merge `19ca7867`. Focused job 93239545832 passed 30/0 in 1:37
+  with cleanup; UVM job 93239545848 passed 20/0 in 13:03 with symlink
+  preflight, one 1,000-phase teardown stress run (`phases=1000`,
+  `winners=1000`, `cleanups=1000`), and cleanup.
+- All 25 shards that were red on earlier heads recovered, and all five
+  `dist-vlt-0` jobs passed.
 
-1. Publish without making the draft ready, then require exact-head
-   `named-disable`, `uvm2020`, build, format, distribution, and regression
-   checks to settle green. Record source-head and synthetic-merge identities
-   separately.
+Focused technical closure is therefore recorded. Do not convert it into a
+full-program completion percentage: the broader UVM program independently
+remains 0/21. Pull request #41 remains draft and in progress because human
+review and Contributor Agreement/DCO remain outside technical closure. Runs
+31311244130 and 31311246183 require that human-only action; an agent must not
+edit `docs/CONTRIBUTORS` or certify it.
+
+### Next action
+
+1. Commit this evidence-only tracker update with `[ci skip]`, keep the pull
+   request draft, and preserve source-head versus synthetic-merge identities.
+   The recording child is documentation-only and is not itself claimed as the
+   tested implementation head. Human review and Contributor Agreement/DCO are
+   the remaining PR actions; the independent 0/21 broader-program result does
+   not change.
 
 ## 2026-08-07 fork-registration hotfix checkpoint
 

@@ -9,10 +9,14 @@ concatenated UVM 2020.3.1 package. It advances issue #21 package-elaboration
 smoke and issue #39 `UVM_NO_DPI` command-flow evidence. Two independent current
 Makefile contracts gate this PR: 15 focused named-disable tests run in both
 `vlt` and `vltmt`, and 20 ordered UVM integration tests run in `vlt`. Their
-validation remains independent: the focused local target passed, while its CI
-proof is pending; the current UVM local target also passed, while its CI proof
-is pending. The accepted older 15-test UVM results below are historical.
-Neither lane establishes complete UVM 2020 or IEEE 1800.2 parity.
+validation remains independent: the focused and UVM targets passed locally and
+in exact-head push and pull-request CI. The accepted exact-head scope is source
+revision
+`ea172f63c5ddab12a5ca032e119b2f1a95b4e71e` (tree
+`469066ed27dc53a0977f7131a6ffd0d30ce71879`) and GitHub synthetic merge
+`19ca7867bdff8fc60c35e11132d37b88ab2df1c5`. The accepted older 15-test UVM
+results below are historical. Neither lane establishes complete UVM 2020 or
+IEEE 1800.2 parity.
 
 See `PROGRESS.md` for the full-program dashboard, all 21 criteria, all 20
 public milestones, all 46 atomic gates, all 40 public issues, open work, and
@@ -36,8 +40,8 @@ combined into one percentage:
 | Public capability milestones | `M00` through `M19` (20) | A milestone exits only when every required gate has accepted evidence. |
 | Atomic milestone gates | 46 required gates | Engineering progress counts each required gate with accepted evidence; this diagnostic does not substitute for milestone exits. |
 | Historical pull request #41 evidence slice | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs were accepted at the recorded revisions: 11/11. This does not validate the current 20-test contract. |
-| Current focused named-disable lane | 15 tests in two scenarios | `check_tracker.py` derives the ordered 15-test contract from `NAMED_DISABLE_EXISTING_TESTS` followed by `NAMED_DISABLE_COMPILER_TESTS`. Every test runs under both `vlt` and `vltmt`, for 30 scenario executions and 30 cleanup sentinels. Local passed 30/30; CI is pending. |
-| Current Makefile lane contract | 20 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Local passed 20/20; CI is pending. |
+| Current focused named-disable lane | 15 tests in two scenarios | `check_tracker.py` derives the ordered 15-test contract from `NAMED_DISABLE_EXISTING_TESTS` followed by `NAMED_DISABLE_COMPILER_TESTS`. Every test runs under both `vlt` and `vltmt`, for 30 scenario executions and 30 cleanup sentinels. Local and exact-head push/PR CI passed. |
+| Current Makefile lane contract | 20 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Local and exact-head push/PR CI passed. |
 | Test corpora | Per-corpus planned-test count | Report implementation, execution, pass, and verified rates separately as described below. |
 
 Full-program `C01`-`C21` completion cannot be inferred from a lane evidence
@@ -81,8 +85,8 @@ program criteria: 0/21 (0.0%)
 public milestone exits: 2/20 (10.0%)
 atomic milestone gates: 24/46 (52.2%)
 historical original PR #41 evidence slice: 11/11 accepted at recorded revisions
-current focused lane contract: 15 tests x 2 scenarios; local pass, CI pending
-current Makefile lane contract: 20 ordered tests; local pass, CI pending
+current focused lane contract: 15 tests x 2 scenarios; local and CI pass
+current Makefile lane contract: 20 ordered tests; local and CI pass
 mixed corpus: planned=108 implemented=108 executed=100 passed=100 failed=0 blocked=8
 mixed corpus rates: execution=92.6% pass/executed=100.0% verified=92.6%
 issue #5 mapped gates: 4/6 (66.7%)
@@ -172,9 +176,11 @@ time was 22:03; `time -p` reported 1324.11 real, 1051.40 user, and 241.91
 system seconds. The run seeded and removed 30/30 `interrupted.gch` sentinels,
 reported a passing cleanup postcheck, and left the validation worktree clean.
 
-This satisfies the focused local gate only. The Ubuntu 26 GCC `named-disable`
-job, the 20-test UVM CI job, and the other required exact-head workflow checks
-remain pending, so focused technical closure is not yet recorded.
+This satisfies the focused local gate. Exact-head Ubuntu 26 GCC CI also passed:
+push job 93239581011 ran 30/0 in 1:36, and pull-request job 93239545832 ran
+30/0 in 1:37. Both cleanup postchecks passed. Format run 31311244123 and both
+46-job `build-test` runs, 31311244235 and 31311246321, succeeded, so focused
+technical closure is recorded for this source head and synthetic merge.
 
 ## UVM integration lane contract
 
@@ -269,11 +275,14 @@ seconds. The clean-before symlink-safety preflight passed, the run seeded and
 removed 20/20 `interrupted.gch` sentinels, and the postcheck printed
 `uvm2020: stale-artifact cleanup PASSED`.
 
-The current UVM local gate is therefore satisfied, but its CI proof remains
-pending. The historical 15-test target passed locally in 14:27, and a
-historical canonical Ubuntu 26.04 GCC job passed that older target 15/0 in
-6:00. Those dated runs remain accepted only for their recorded proof slice and
-do not close the broader 0/21 UVM program.
+The current UVM local gate and its exact-head CI proof are satisfied. Push job
+93239580961 passed 20/0 in 13:12, and pull-request job 93239545848 passed 20/0
+in 13:03. Each job passed symlink preflight, one 1,000-phase teardown stress
+run (`phases=1000`, `winners=1000`, `cleanups=1000`), and cleanup. The
+historical 15-test target passed locally in 14:27, and a historical canonical
+Ubuntu 26.04 GCC job passed that older target 15/0 in 6:00. Those dated runs
+remain accepted only for their recorded proof slice and do not close the
+broader 0/21 UVM program.
 
 ## Frozen repo-native compatibility corpus
 

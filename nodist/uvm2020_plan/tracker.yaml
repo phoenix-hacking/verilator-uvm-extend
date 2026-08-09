@@ -24,13 +24,89 @@ pull_request:
   number: 41
   url: https://github.com/phoenix-hacking/verilator-uvm-extend/pull/41
   status: in_progress
+  draft: true
+  source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+  source_head_tree: 469066ed27dc53a0977f7131a6ffd0d30ce71879
+  tested_synthetic_merge_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
   claim: clean_checkout_resource_capped_uvm2020_lane
   technical_scope: focused_named_disable_process_and_uvm_lane
   technical_closure:
-    status: pending
+    status: pass
     required: >-
       complete_current_fifteen_test_focused_lane_in_vlt_and_vltmt,
       current_twenty_test_uvm_lane,_and_exact_head_ci
+    ci:
+      status: pass
+      source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+      source_head_tree: 469066ed27dc53a0977f7131a6ffd0d30ce71879
+      tested_synthetic_merge_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+      required_events: [push, pull_request]
+      required_scope:
+        - format
+        - supported_host_build_matrices
+        - focused_named_disable_lane
+        - twenty_test_uvm_lane
+        - distribution_and_regression_jobs
+      workflow_runs:
+        format_push:
+          status: pass
+          conclusion: success
+          event: push
+          workflow: format
+          workflow_run_id: 31311244123
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244123
+          tested_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+        build_test_push:
+          status: pass
+          conclusion: success
+          event: push
+          workflow: build-test
+          workflow_run_id: 31311244235
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235
+          tested_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          jobs:
+            passed: 46
+            failed: 0
+            total: 46
+        build_test_pull_request:
+          status: pass
+          conclusion: success
+          event: pull_request
+          workflow: build-test
+          workflow_run_id: 31311246321
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321
+          source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          tested_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+          jobs:
+            passed: 46
+            failed: 0
+            total: 46
+      note: >-
+        Exact-head format and both build-test runs passed. All 25 shards that
+        were red at earlier source heads recovered, including all five
+        dist-vlt-0 jobs. This technical closure is independent of the broader
+        UVM program and the human Contributor Agreement gate.
+  contributor_agreement:
+    status: pending
+    classification: external_human_only
+    responsibility: human_contributor
+    workflow_runs:
+      push:
+        status: pending
+        workflow: Contributor Agreement
+        workflow_run_id: 31311244130
+        workflow_run_url: >-
+          https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244130
+      pull_request:
+        status: pending
+        workflow: Contributor Agreement
+        workflow_run_id: 31311246183
+        workflow_run_url: >-
+          https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246183
+    note: agents_must_not_sign_or_edit_docs_contributors
   broader_program_relation: independent_from_zero_of_twenty_one_program_criteria
 
 issues:
@@ -154,7 +230,7 @@ focused_lane:
     - test_regress/t/t_disable_named_interface_unsup.py
     - test_regress/t/t_disable_named_recursive.py
   current_validation:
-    status: pending
+    status: pass
     local:
       status: pass
       command: >-
@@ -188,8 +264,64 @@ focused_lane:
         sentinels_seeded: 30
         sentinels_removed: 30
     ci:
-      status: pending
-      note: exact_head_named_disable_job_not_yet_recorded
+      status: pass
+      source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+      source_head_tree: 469066ed27dc53a0977f7131a6ffd0d30ce71879
+      tested_synthetic_merge_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+      required_events: [push, pull_request]
+      runs:
+        push:
+          status: pass
+          event: push
+          workflow: build-test
+          workflow_run_id: 31311244235
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235
+          tested_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          job_id: 93239581011
+          job_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235/job/93239581011
+          context: Test | ubuntu-26.04 | gcc | named-disable
+          command: make -C test_regress named-disable
+          result:
+            tests: 15
+            scenarios: [vlt, vltmt]
+            passed: 30
+            failed: 0
+            total: 30
+            elapsed: "1:36"
+          cleanup:
+            status: pass
+            sentinels_seeded: 30
+            sentinels_removed: 30
+            postcheck: pass
+        pull_request:
+          status: pass
+          event: pull_request
+          workflow: build-test
+          workflow_run_id: 31311246321
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321
+          source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          tested_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+          job_id: 93239545832
+          job_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321/job/93239545832
+          context: Test | ubuntu-26.04 | gcc | named-disable
+          command: make -C test_regress named-disable
+          result:
+            tests: 15
+            scenarios: [vlt, vltmt]
+            passed: 30
+            failed: 0
+            total: 30
+            elapsed: "1:37"
+          cleanup:
+            status: pass
+            sentinels_seeded: 30
+            sentinels_removed: 30
+            postcheck: pass
+      note: exact_head_push_and_pull_request_named_disable_jobs_passed
   support_envelope:
     supported:
       - scalar_hierarchical_module_paths_and_class_object_receivers
@@ -242,7 +374,7 @@ expanded_lane:
     - test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py
     - test_regress/t/t_uvm_dpi_v2020_3_1.py
   current_validation:
-    status: pending
+    status: pass
     local:
       status: pass
       command: >-
@@ -281,8 +413,78 @@ expanded_lane:
         preflight_symlink_safety: pass
         postcheck: "uvm2020: stale-artifact cleanup PASSED"
     ci:
-      status: pending
-      note: exact_head_twenty_test_job_not_yet_recorded
+      status: pass
+      source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+      source_head_tree: 469066ed27dc53a0977f7131a6ffd0d30ce71879
+      tested_synthetic_merge_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+      required_events: [push, pull_request]
+      runs:
+        push:
+          status: pass
+          event: push
+          workflow: build-test
+          workflow_run_id: 31311244235
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235
+          tested_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          job_id: 93239580961
+          job_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235/job/93239580961
+          context: Test | ubuntu-26.04 | gcc | uvm2020
+          command: make -C test_regress uvm2020
+          result:
+            tests: 20
+            scenarios: [vlt]
+            passed: 20
+            failed: 0
+            total: 20
+            elapsed: "13:12"
+          phase_teardown_stress:
+            status: pass
+            executions: 1
+            phases: 1000
+            winners: 1000
+            cleanups: 1000
+          cleanup:
+            status: pass
+            preflight_symlink_safety: pass
+            sentinels_seeded: 20
+            sentinels_removed: 20
+            postcheck: pass
+        pull_request:
+          status: pass
+          event: pull_request
+          workflow: build-test
+          workflow_run_id: 31311246321
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321
+          source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          tested_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+          job_id: 93239545848
+          job_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321/job/93239545848
+          context: Test | ubuntu-26.04 | gcc | uvm2020
+          command: make -C test_regress uvm2020
+          result:
+            tests: 20
+            scenarios: [vlt]
+            passed: 20
+            failed: 0
+            total: 20
+            elapsed: "13:03"
+          phase_teardown_stress:
+            status: pass
+            executions: 1
+            phases: 1000
+            winners: 1000
+            cleanups: 1000
+          cleanup:
+            status: pass
+            preflight_symlink_safety: pass
+            sentinels_seeded: 20
+            sentinels_removed: 20
+            postcheck: pass
+      note: exact_head_push_and_pull_request_twenty_test_jobs_passed
   historical_fifteen_test_evidence:
     scope: historical_only_not_the_current_makefile_contract
     local_result:
