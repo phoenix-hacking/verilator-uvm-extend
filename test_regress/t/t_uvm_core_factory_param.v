@@ -5,6 +5,8 @@
 // SPDX-FileCopyrightText: 2026 Wilson Snyder
 // SPDX-License-Identifier: CC0-1.0
 
+// verilator lint_off DECLFILENAME
+
 // Test requires command line be passed uvm_pkg.sv before this filename
 
 module t_uvm_core_factory_param;
