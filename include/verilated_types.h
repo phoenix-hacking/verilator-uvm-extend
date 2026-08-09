@@ -300,19 +300,131 @@ public:
 using VlProcessRef = std::shared_ptr<VlProcess>;
 class VlForkSync;
 class VlForkSyncState;
+class VlCoroutineHandleState;
+class VlNamedActivationGuard;
+class VlNamedActivationState;
+class VlNamedActivationRegistryState;
 
-class VlProcess final {
+/// Internal cardinalities used to validate named-activation runtime cleanup.
+struct VlNamedActivationStats final {
+    size_t m_activations = 0;  ///< Active dynamic activation records
+    size_t m_parentActivations = 0;  ///< Parent activation edges
+    size_t m_childActivations = 0;  ///< Nested activation edges
+    size_t m_processMembers = 0;  ///< Process-to-activation memberships
+    size_t m_childProcesses = 0;  ///< Child process roots subject to cancellation
+    size_t m_suspensions = 0;  ///< Live cancellation-aware suspension records
+    size_t m_globalProcessMapEntries = 0;  ///< Raw global process-map keys
+    size_t m_globalProcessMemberships = 0;  ///< Raw global weak activation memberships
+};
+
+/// Copyable cancellation state for one dynamic named task or block activation.
+class VlNamedActivationToken final {
+    friend class VlNamedActivationGuard;
+    friend class VlNamedActivationRegistry;
+
     // MEMBERS
-    int m_state;  // Current state of the process
-    VlProcessRef m_parentp = nullptr;  // Parent process, if exists
-    std::set<VlProcess*> m_children;  // Active child processes
-    VlForkSyncState* m_forkSyncOnKillp
-        = nullptr;  // Optional fork..join counter to decrement on kill
+    std::shared_ptr<std::atomic<bool>> m_canceledp;
+
+    // CONSTRUCTORS
+    explicit VlNamedActivationToken(std::shared_ptr<std::atomic<bool>> canceledp)
+        : m_canceledp{std::move(canceledp)} {}
+
+public:
+    // CONSTRUCTORS
+    VlNamedActivationToken() = default;
+
+    // METHODS
+    /// Return true after the owning activation has been canceled.
+    bool canceled() const VL_MT_SAFE {
+        return m_canceledp && m_canceledp->load(std::memory_order_acquire);
+    }
+};
+
+/// Registry of dynamic activations for one named sequential task or block declaration.  This is
+/// runtime infrastructure; compiler lowering is added separately after cancellation-aware
+/// coroutine suspension is available.
+class VlNamedActivationRegistry final {
+    // MEMBERS
+    std::shared_ptr<VlNamedActivationRegistryState> m_statep;
+
+public:
+    // CONSTRUCTORS
+    VlNamedActivationRegistry();
+    /// A cloned SystemVerilog object receives an independent, initially empty registry.
+    VlNamedActivationRegistry(const VlNamedActivationRegistry&);
+    VlNamedActivationRegistry& operator=(const VlNamedActivationRegistry&) = delete;
+    ~VlNamedActivationRegistry();
+
+    // METHODS
+    /// Register one dynamic activation owned by the given source process.
+    VlNamedActivationGuard activate(const VlProcessRef& ownerp) VL_MT_SAFE;
+    /// Cancel every activation present at entry, without canceling reentrant activations.
+    void disableAll() VL_MT_UNSAFE;
+    /// Return the number of externally disable-addressable active records.
+    size_t size() const VL_MT_SAFE;
+    /// Return internal tracking cardinalities for runtime diagnostics.
+    VlNamedActivationStats stats() const VL_MT_SAFE;
+};
+
+/// Move-only RAII record for one dynamic named task or block activation.
+class VlNamedActivationGuard final {
+    VL_UNCOPYABLE(VlNamedActivationGuard);
+
+    friend class VlNamedActivationRegistry;
+
+    // MEMBERS
+    std::weak_ptr<VlNamedActivationState> m_statep;
+    VlNamedActivationToken m_token;
+
+    // CONSTRUCTORS
+    explicit VlNamedActivationGuard(const std::shared_ptr<VlNamedActivationState>& statep);
+
+    // METHODS
+    void leave() VL_MT_UNSAFE;
+
+public:
+    // CONSTRUCTORS
+    VlNamedActivationGuard() = default;
+    VlNamedActivationGuard(VlNamedActivationGuard&& moved) noexcept;
+    VlNamedActivationGuard& operator=(VlNamedActivationGuard&& moved) noexcept;
+    ~VlNamedActivationGuard();
+
+    // METHODS
+    /// Return true after this activation has been canceled.
+    bool canceled() const VL_MT_SAFE;
+    /// Copy the persistent cancellation token for this activation.
+    VlNamedActivationToken token() const VL_MT_UNSAFE { return m_token; }
+};
+
+class VlProcess final : public std::enable_shared_from_this<VlProcess> {
+    friend class VlNamedActivationRegistry;
+
+    // MEMBERS
+    std::atomic<int> m_state;  // Current state of the process
+    std::weak_ptr<VlProcess> m_parentp;  // Parent process, if it still exists
+    std::map<VlProcess*, VlProcessRef> m_children;  // Child subtrees retained until completion
+    bool m_completedTree = false;  // This process and every descendant are terminal
+    std::weak_ptr<VlForkSyncState> m_forkSyncOnKillp;  // Optional fork..join kill callback
     bool m_forkSyncOnKillDone = false;  // Ensure on-kill callback fires only once
+    VlProcess* m_previousCurrentp = nullptr;  // Dynamic caller while this process executes
+    bool m_contextActive = false;  // This process owns the thread-local execution context
     VlRNG m_rng;  // Per-process RNG (IEEE 1800-2023 18.14)
 
     // Thread-local current process pointer for hierarchical object seeding
     static thread_local VlProcess* t_currentp;
+
+    // METHODS
+    void attachLocked(const VlProcessRef& childp);
+    void detachLocked(VlProcess* childp);
+    void completeTreeLocked();
+    bool completedForkLocked() const;
+    static void disableProcessesLocked(
+        const std::vector<VlProcessRef>& rootProcessps, std::vector<VlProcessRef>& heldProcessps,
+        std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps,
+        std::vector<std::shared_ptr<VlCoroutineHandleState>>& releasedForeverSuspensionps);
+    static void disableProcesses(const std::vector<VlProcessRef>& rootProcessps);
+
+    explicit VlProcess(const VlProcessRef& parentp);
 
 public:
     // TYPES
@@ -328,40 +440,28 @@ public:
     // Construct independent process
     VlProcess()
         : m_state{RUNNING} {}
-    // Construct child process of parent
-    explicit VlProcess(VlProcessRef parentp)
-        : m_state{RUNNING}
-        , m_parentp{parentp} {
-        m_parentp->attach(this);
-    }
+    /// Construct a child and retain it in its parent's semantic process tree.
+    static VlProcessRef createChild(VlProcessRef parentp) VL_MT_UNSAFE;
 
     ~VlProcess() {
-        if (m_parentp) m_parentp->detach(this);
-        if (t_currentp == this) t_currentp = m_parentp.get();
+        if (t_currentp == this) {
+            if (m_contextActive) {
+                leave();
+            } else {
+                const VlProcessRef parentp = m_parentp.lock();
+                t_currentp = parentp.get();
+            }
+        }
     }
 
-    void attach(VlProcess* childp) { m_children.insert(childp); }
-    void detach(VlProcess* childp) { m_children.erase(childp); }
-
-    int state() const { return m_state; }
+    int state() const { return m_state.load(std::memory_order_acquire); }
     void state(int s);
-    void disable() {
-        state(KILLED);
-        disableFork();
-    }
-    void disableFork() {
-        // childp->disable() may resume coroutines and mutate m_children
-        const std::set<VlProcess*> children = m_children;
-        for (VlProcess* childp : children) childp->disable();
-    }
-    void forkSyncOnKill(VlForkSyncState* forkSyncp);
+    void disable();
+    void disableFork();
+    bool forkSyncOnKill(const std::shared_ptr<VlForkSyncState>& forkSyncp);
     void forkSyncOnKillClear(VlForkSyncState* forkSyncp);
     bool completed() const { return state() == FINISHED || state() == KILLED; }
-    bool completedFork() const {
-        for (const VlProcess* const childp : m_children)
-            if (!childp->completed()) return false;
-        return true;
-    }
+    bool completedFork() const;
 
     // Random state (IEEE 1800-2023 9.7, 18.14)
     void srandom(uint64_t seed) VL_MT_UNSAFE { m_rng.srandom(seed); }
@@ -371,8 +471,43 @@ public:
     // Current process tracking for hierarchical object seeding
     static VlProcess* currentp() VL_MT_UNSAFE { return t_currentp; }
     static void currentp(VlProcess* processp) VL_MT_UNSAFE { t_currentp = processp; }
+    // Enter and leave this process's dynamic execution context.  A process may run underneath a
+    // child callback, so restore the dynamic caller rather than assuming the structural parent.
+    bool enter() VL_MT_UNSAFE {
+        if (t_currentp == this) return false;
+        VL_DEBUG_IFDEF(assert(!m_contextActive););
+        m_previousCurrentp = t_currentp;
+        m_contextActive = true;
+        t_currentp = this;
+        return true;
+    }
+    void leave() VL_MT_UNSAFE {
+        if (t_currentp != this) return;
+        VL_DEBUG_IFDEF(assert(m_contextActive););
+        t_currentp = m_previousCurrentp;
+        m_previousCurrentp = nullptr;
+        m_contextActive = false;
+    }
     // Return process RNG if in a process, else thread RNG
     static VlRNG& currentRng() VL_MT_SAFE;
+};
+
+// Restores the process context on ordinary C++ returns, including cancellation returns.  For a
+// coroutine this object remains in its frame; scheduler awaitables leave at suspension and the
+// scheduler re-enters on resumption.
+class VlProcessContext final {
+    VL_UNCOPYABLE(VlProcessContext);
+
+    VlProcess* const m_processp;
+    const bool m_owner;
+
+public:
+    explicit VlProcessContext(VlProcess* processp)
+        : m_processp{processp}
+        , m_owner{processp && processp->enter()} {}
+    ~VlProcessContext() {
+        if (m_owner) m_processp->leave();
+    }
 };
 
 inline std::string VL_TO_STRING(const VlProcessRef&) { return std::string("process"); }

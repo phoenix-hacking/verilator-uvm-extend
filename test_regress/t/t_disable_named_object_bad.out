@@ -1,0 +1,15 @@
+%Error: t/t_disable_named_object_bad.v:16:20: Could not find task 'missing' in class object used by disable
+   16 |     disable worker.missing;
+      |                    ^~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error-UNSUPPORTED: t/t_disable_named_object_bad.v:16:5: Node of type MEMBERSEL 'missing' referenced by disable
+   16 |     disable worker.missing;
+      |     ^~~~~~~
+                    ... For error description see https://verilator.org/warn/UNSUPPORTED?v=latest
+%Error: t/t_disable_named_object_bad.v:17:20: Object-qualified disable requires a class-handle receiver
+   17 |     disable scalar.missing;
+      |                    ^~~~~~~
+%Error-UNSUPPORTED: t/t_disable_named_object_bad.v:17:5: Node of type MEMBERSEL 'missing' referenced by disable
+   17 |     disable scalar.missing;
+      |     ^~~~~~~
+%Error: Exiting due to

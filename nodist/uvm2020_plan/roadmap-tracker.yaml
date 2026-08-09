@@ -1,0 +1,1290 @@
+# DESCRIPTION: Verilator: broad UVM 2020 execution tracker
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+metadata:
+  project: verilator_uvm_2020_execution
+  repository_commit: f82f59a02
+  snapshot_date: "2026-07-03"
+  status: internal_planning_only
+  record_scope: historical_snapshot_not_current_program_or_pr_status
+  current_state_sources: [tracker.yaml, PROGRESS.md, PLAN.md]
+  artifact_note: >-
+    Referenced ledger and run-log paths describe the historical workspace and
+    may not exist in the current checkout.
+  claim_policy: "No user-facing support claim without passing tests and documented limits."
+  top_level_objective: "Evidence-backed UVM 2020 support suitable for complex SoC verification."
+  competitive_target: "C3 SoC competitive: UVM 2020 SoC-style verification with documented SystemVerilog parity limits."
+  overall_completion_estimate: 15
+  overall_completion_bar: "[##--------]"
+  overall_completion_basis: "Tracking is mostly complete, C1 usable-core proof is about 40%, and protocol/SoC/RAL/coverage/performance work is mostly unstarted."
+  ledger_file: nodist/uvm2020_plan/changes.log
+  ledger_rule: "Every meaningful file edit, GitHub issue update, build/test command, failure classification, validation pass, and next-step decision must be recorded in changes.log before a work segment is complete."
+
+stages:
+  - {id: S0, title: "Reproducible baseline", milestones: [M00, M01]}
+  - {id: S1, title: "Language semantics", milestones: [M02, M04, M05, M06, M09, M10, M14, M15]}
+  - {id: S2, title: "UVM API correctness", milestones: [M03, M07, M08, M09, M10]}
+  - {id: S3, title: "UVM testbench patterns", milestones: [M07, M08, M09, M10, M13]}
+  - {id: S4, title: "Protocol environments", milestones: [M11, M12, M15]}
+  - {id: S5, title: "SoC verification pressure", milestones: [M13, M14, M16]}
+  - {id: S6, title: "Professional support envelope", milestones: [M17, M18, M19]}
+
+competitive_claims:
+  - id: C0
+    title: "Tracked competitive envelope"
+    progress: 100
+    bar: "[##########]"
+    result: PASS
+    acceptance: "PLAN.md, MATRIX.md, tracker.yaml, issue tree, and GitHub issues define the competitive support envelope."
+  - id: C1
+    title: "Usable UVM core"
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    acceptance: "UVM package/API tests plus scheduler, class, VIF, randomize, and coverage reduced tests pass or have documented limits."
+    evidence:
+      - "UVM 2020.3.1 no-DPI hello, DPI hello, and DPI HDL smoke capabilities pass under manual low-pressure commands."
+      - "C1 class/factory-adjacent reduced shard passed across parameterized classes, inheritance, virtual dispatch, polymorphic copy, static functions, and dynamic casts."
+      - "Minimal UVM 2020.3.1 no-DPI factory API test passed for object utils, type_id::create, type override, base-handle cast, and create_object_by_name."
+      - "Minimal UVM 2020.3.1 no-DPI config DB/component-flow test passed for typed config object set/get into a child component during build/report."
+      - "Minimal UVM 2020.3.1 no-DPI virtual interface config DB test passed for VIF set/get and live field read/write through the retrieved handle."
+      - "Scheduler, clocking, randomize, coverage, resource precedence, TLM, and sequence API suites remain open, so C1 is not yet a usable-core claim."
+  - id: C2
+    title: "Protocol competitive"
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "APB and AXI-lite UVM environments pass with scoreboards, coverage, assertions, and RAL frontdoor."
+  - id: C3
+    title: "SoC competitive"
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Synthetic SoC regression passes with multi-agent random traffic, reset/IRQ/DMA/RAL/DPI/coverage/performance."
+
+advanced_parity_policy:
+  statement: "Literal full IEEE 1800 parity is tracked, but it does not block the first competitive UVM support claim unless the target UVM/SoC workload depends on it."
+  areas:
+    - gate_udp_specify_sdf_timing_checks
+    - full_pli_vpi_debug_database
+    - four_state_commercial_simulator_parity
+    - complete_sva_language_api
+    - coverage_api_ucis
+    - exotic_constraint_forms
+    - transaction_recording_database
+
+validation_runs:
+  - id: VAL-0001
+    timestamp: "2026-07-03 16:21 MDT"
+    scope: "Ledger initialization validation"
+    commands:
+      - "python3 YAML/ASCII validation for nodist/uvm2020_plan"
+      - "git diff --check -- nodist/uvm2020_plan"
+      - "gh repo view phoenix-hacking/verilator-uvm-extend --json hasIssuesEnabled,issues"
+      - "gh issue view 20 --repo phoenix-hacking/verilator-uvm-extend --json number,title,state"
+    result: PASS
+    evidence: "tracker YAML parsed, all planning files decoded as ASCII, diff check was clean, GitHub issues enabled with 40 total issues, issue #20 open."
+  - id: VAL-0002
+    timestamp: "2026-07-03 16:40 MDT"
+    scope: "M00 build baseline, ledger helper, and issue-update validation"
+    commands:
+      - "python3 YAML/ASCII validation for nodist/uvm2020_plan"
+      - "bash -n nodist/uvm2020_plan/run_logged.sh"
+      - "git diff --check -- nodist/uvm2020_plan"
+      - "gh issue view 1 --repo phoenix-hacking/verilator-uvm-extend --json number,state,title,comments"
+      - "gh issue view 40 --repo phoenix-hacking/verilator-uvm-extend --json number,state,title,comments"
+    result: PASS
+    evidence: "tracker YAML parsed, all planning files decoded as ASCII, run_logged.sh syntax passed, diff check was clean, and issues #1/#40 are open with one comment each."
+  - id: VAL-0003
+    timestamp: "2026-07-03 17:05 MDT"
+    scope: "M01 UVM 2020.3.1 smoke baseline validation"
+    commands:
+      - "python3 YAML/ASCII validation for nodist/uvm2020_plan"
+      - "python3 NUL-byte scan for nodist/uvm2020_plan"
+      - "bash -n nodist/uvm2020_plan/run_logged.sh"
+      - "git diff --check -- nodist/uvm2020_plan"
+      - "gh issue view 2/15/18/21/39 --repo phoenix-hacking/verilator-uvm-extend"
+    result: PASS
+    evidence: "tracker YAML parsed, all planning files decoded as ASCII, no NUL bytes remain in run logs, run_logged.sh syntax passed, diff check was clean, and issues #2/#15/#18/#21/#39 are open with one comment each."
+  - id: VAL-0004
+    timestamp: "2026-07-03 17:18 MDT"
+    scope: "C1 class reduced shard tracking validation"
+    commands:
+      - "python3 YAML/ASCII/NUL validation for nodist/uvm2020_plan"
+      - "bash -n nodist/uvm2020_plan/run_logged.sh"
+      - "bash -n nodist/uvm2020_plan/run_c1_class_core.sh"
+      - "git diff --check -- nodist/uvm2020_plan"
+      - "git status --short nodist/uvm2020_plan"
+      - "gh issue view 3/6/24/25/27/28/29 --repo phoenix-hacking/verilator-uvm-extend"
+    result: PASS
+    evidence: "tracker YAML parsed, all planning files decoded as ASCII, no NUL bytes were found, helper scripts passed Bash syntax checks, diff check was clean, planning directory remains untracked, and issues #3/#6/#24/#25/#27/#28/#29 are open with the C1-CLASS-0001 comments visible."
+  - id: VAL-0005
+    timestamp: "2026-07-03 17:32 MDT"
+    scope: "UVM factory API shard validation"
+    commands:
+      - "python3 YAML/ASCII/NUL/trailing-whitespace validation for nodist/uvm2020_plan and new UVM factory test files"
+      - "bash -n nodist/uvm2020_plan/run_logged.sh"
+      - "bash -n nodist/uvm2020_plan/run_c1_class_core.sh"
+      - "python3 -m py_compile test_regress/t/t_uvm_factory_basic_v2020_3_1_nodpi.py"
+      - "git diff --check -- nodist/uvm2020_plan"
+      - "grep UVM FACTORY BASIC PASSED/Self PASSED/EXIT_CODE from LEDGER-0026"
+      - "gh issue view 4/6/18/21/39 --repo phoenix-hacking/verilator-uvm-extend"
+    result: PASS
+    evidence: "tracker YAML parsed, all planning files and new tests decoded as ASCII with no NUL bytes, new tests have no trailing whitespace, helper scripts and Python driver syntax passed, planning diff check was clean, LEDGER-0026 contains the factory pass markers and EXIT_CODE: 0, and issues #4/#6/#18/#21/#39 are open with the UVM-FACTORY-0001 comments visible."
+  - id: VAL-0006
+    timestamp: "2026-07-03 17:34 MDT"
+    scope: "UVM factory dashboard consistency validation"
+    commands:
+      - "python3 YAML/ASCII/NUL validation for nodist/uvm2020_plan and new UVM factory test files"
+      - "bash -n helper scripts and python3 -m py_compile new UVM factory driver"
+      - "git diff --check -- nodist/uvm2020_plan"
+    result: PASS
+    evidence: "Final consistency cleanup kept tracker YAML parseable, planning/test files ASCII with no NUL bytes, helper and Python syntax clean, and planning diff check clean."
+  - id: VAL-0007
+    timestamp: "2026-07-03 21:30 MDT"
+    scope: "UVM config DB API shard validation"
+    commands:
+      - "python3 YAML/ASCII/NUL/trailing-whitespace validation for nodist/uvm2020_plan and new UVM factory/config DB test files"
+      - "bash -n nodist/uvm2020_plan/run_logged.sh"
+      - "bash -n nodist/uvm2020_plan/run_c1_class_core.sh"
+      - "python3 -m py_compile test_regress/t/t_uvm_factory_basic_v2020_3_1_nodpi.py test_regress/t/t_uvm_config_db_basic_v2020_3_1_nodpi.py"
+      - "grep UVM CONFIG DB BASIC PASSED/Self PASSED/EXIT_CODE from LEDGER-0033"
+      - "grep UVM FACTORY BASIC PASSED/Self PASSED/EXIT_CODE from LEDGER-0026"
+      - "git diff --check -- nodist/uvm2020_plan"
+      - "literal gh issue view commands for #4/#6/#8/#18/#21/#22/#39"
+    result: PASS
+    evidence: "tracker YAML parsed, 37 planning/test files decoded as ASCII with no NUL bytes or trailing whitespace, helper scripts and Python drivers passed syntax checks, factory/config DB pass logs contain pass markers and EXIT_CODE: 0, planning diff check is clean, and issues #4/#6/#8/#18/#21/#22/#39 are open with UVM-CONFIG-0001 comments visible."
+  - id: VAL-0008
+    timestamp: "2026-07-03 21:47 MDT"
+    scope: "UVM config DB virtual interface shard validation"
+    commands:
+      - "python3 YAML/ASCII/NUL/trailing-whitespace validation for nodist/uvm2020_plan and new UVM factory/config DB/VIF test files"
+      - "bash -n nodist/uvm2020_plan/run_logged.sh"
+      - "bash -n nodist/uvm2020_plan/run_c1_class_core.sh"
+      - "python3 -m py_compile UVM factory/config DB/VIF Python drivers"
+      - "grep UVM CONFIG DB VIF PASSED/Self PASSED/EXIT_CODE from LEDGER-0039"
+      - "grep UVM CONFIG DB BASIC PASSED/Self PASSED/EXIT_CODE from LEDGER-0033"
+      - "grep UVM FACTORY BASIC PASSED/Self PASSED/EXIT_CODE from LEDGER-0026"
+      - "git diff --check -- nodist/uvm2020_plan"
+      - "literal gh issue view commands for #4/#7/#8/#18/#21/#22/#23/#39"
+    result: PASS
+    evidence: "tracker YAML parsed, 49 planning/test files decoded as ASCII with no NUL bytes or trailing whitespace, helper scripts and Python drivers passed syntax checks, factory/config DB/VIF pass logs contain pass markers and EXIT_CODE: 0, planning diff check is clean, and issues #4/#7/#8/#18/#21/#22/#23/#39 are open with UVM-CONFIG-VIF-0001 comments visible."
+
+build_baselines:
+  - id: BUILD-0001
+    timestamp: "2026-07-03 16:38 MDT"
+    milestone: M00
+    command: "autoconf && ./configure --enable-ccwarn && make -j8"
+    result: PASS
+    log: nodist/uvm2020_plan/run_logs/LEDGER-0008-build-m00-captured-20260703.log
+    binary_version: "Verilator 5.051 devel rev vUNKNOWN-built20260703-f82f59a02"
+    compiler: "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+    configure_flags:
+      - "--enable-ccwarn"
+    solver: "z3 --in"
+    notes:
+      - "A live direct build completed first at 16:24 MDT, but the tee wrapper returned code 1 and produced no durable log."
+      - "The captured rerun used the same build command through nodist/uvm2020_plan/run_logged.sh and exited 0."
+
+smoke_baselines:
+  - id: SMOKE-0001
+    timestamp: "2026-07-03 16:57 MDT"
+    milestone: M01
+    test: test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py
+    workload: "UVM 2020.3.1 hello, no-DPI package"
+    result: PASS
+    mode: "Manual equivalent with --build-jobs 1 --output-groups 6"
+    build_log: nodist/uvm2020_plan/run_logs/LEDGER-0014-uvm2020-nodpi-manual-buildjobs1-20260703.log
+    run_log: nodist/uvm2020_plan/run_logs/LEDGER-0015-uvm2020-nodpi-manual-run-20260703.log
+    evidence:
+      - "Generated executable printed `** UVM TEST PASSED **` and exited 0."
+      - "Default harness attempts with 8 build jobs were interrupted by WSL restart/resource failure before an EXIT_CODE was written."
+    classification: "Capability PASS; default local harness path needs resource/CI policy."
+    owners:
+      - M01
+      - A01
+      - A19
+      - M17
+  - id: SMOKE-0002
+    timestamp: "2026-07-03 17:01 MDT"
+    milestone: M01
+    test: test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py
+    workload: "UVM 2020.3.1 hello, DPI/VPI package"
+    result: PASS
+    mode: "Manual equivalent with --build-jobs 1 --output-groups 6"
+    build_log: nodist/uvm2020_plan/run_logs/LEDGER-0016-uvm2020-dpi-hello-manual-buildjobs1-20260703.log
+    run_log: nodist/uvm2020_plan/run_logs/LEDGER-0017-uvm2020-dpi-hello-manual-run-20260703.log
+    evidence:
+      - "Generated executable printed `** UVM TEST PASSED **` and exited 0."
+      - "DPI-enabled run produced zero UVM warnings, errors, or fatals."
+    classification: "Capability PASS; rerun under managed CI resources for default harness proof."
+    owners:
+      - M01
+      - A01
+      - M14
+  - id: SMOKE-0003
+    timestamp: "2026-07-03 17:02 MDT"
+    milestone: M01
+    test: test_regress/t/t_uvm_dpi_v2020_3_1.py
+    workload: "UVM 2020.3.1 DPI HDL API smoke"
+    result: PASS
+    mode: "Manual equivalent with --build-jobs 1 --output-groups 6"
+    build_log: nodist/uvm2020_plan/run_logs/LEDGER-0018-uvm2020-dpi-hdl-manual-buildjobs1-20260703.log
+    run_log: nodist/uvm2020_plan/run_logs/LEDGER-0019-uvm2020-dpi-hdl-manual-run-20260703.log
+    evidence:
+      - "Executable exited 0 and reached `*-* All Finished *-*`."
+      - "Covers uvm_hdl_check_path, uvm_hdl_read, uvm_hdl_deposit, uvm_hdl_force, uvm_hdl_release, and release_and_read paths."
+    classification: "Capability PASS; golden comparison should be rerun through the Python harness in CI."
+    owners:
+      - M01
+      - M14
+
+c1_reduced_shards:
+  - id: C1-CLASS-0001
+    timestamp: "2026-07-03 17:10 MDT"
+    title: "Class/factory-adjacent reduced semantic shard"
+    milestone: M05
+    result: PASS
+    progress_credit: 25
+    helper: nodist/uvm2020_plan/run_c1_class_core.sh
+    log: nodist/uvm2020_plan/run_logs/LEDGER-0020-c1-class-core-shard-20260703.log
+    tests:
+      - test_regress/t/t_uvm_return_type.py
+      - test_regress/t/t_uvm_return_type2.py
+      - test_regress/t/t_uvm_return_type3.py
+      - test_regress/t/t_class_default_type_param.py
+      - test_regress/t/t_class_extends_param.py
+      - test_regress/t/t_class_param_extends_static_func.py
+      - test_regress/t/t_class_new_copy_polymorphism.py
+      - test_regress/t/t_class_virtual.py
+      - test_regress/t/t_castdyn.py
+    evidence:
+      - "All nine tests reported Self PASSED and run_logged.sh recorded EXIT_CODE: 0."
+      - "Covers parameterized class self-return types, explicit ranged value parameters, default type-parameter identity, parameterized inheritance, static functions, polymorphic copy/runtime type preservation, virtual dispatch, and dynamic cast smoke."
+    owners:
+      - M02
+      - M05
+      - A04
+      - A05
+      - A07
+      - A08
+      - A09
+    caveats:
+      - "This is reduced SystemVerilog class proof, not yet a UVM factory API proof."
+      - "nodist/uvm2020_plan/run_logs/LEDGER-0019-c1-class-core-shard-20260703.log was a malformed wrapper attempt and is not evidence."
+
+uvm_api_shards:
+  - id: UVM-FACTORY-0001
+    timestamp: "2026-07-03 17:26 MDT"
+    title: "UVM 2020.3.1 no-DPI factory basic API"
+    milestone: M05
+    result: PASS
+    progress_credit: 40
+    test: test_regress/t/t_uvm_factory_basic_v2020_3_1_nodpi.py
+    source: test_regress/t/t_uvm_factory_basic.v
+    log: nodist/uvm2020_plan/run_logs/LEDGER-0026-uvm-factory-basic-v2020-nodpi-clean-20260703.log
+    failed_attempt_logs:
+      - nodist/uvm2020_plan/run_logs/LEDGER-0024-uvm-factory-basic-v2020-nodpi-20260703.log
+      - nodist/uvm2020_plan/run_logs/LEDGER-0025-uvm-factory-basic-v2020-nodpi-rerun-20260703.log
+    evidence:
+      - "Clean rerun printed `** UVM FACTORY BASIC PASSED **`, reported `Self PASSED`, and recorded EXIT_CODE: 0."
+      - "Covers `uvm_object_utils`, `type_id::create`, `set_type_override`, derived-object creation through a base handle, `$cast`, and `uvm_factory::get().create_object_by_name`."
+      - "The first attempt reset WSL during generated C++ build; the immediate rerun failed on stale/corrupt PCH; deleting only the generated object directory and rerunning clean passed."
+    owners:
+      - M03
+      - M05
+      - A01
+      - A19
+      - M17
+    caveats:
+      - "No-DPI object factory proof only; component factory, config DB, phasing, TLM, sequences, and protocol use remain open."
+      - "Local UVM package build remains resource sensitive even with --build-jobs 1."
+  - id: UVM-CONFIG-0001
+    timestamp: "2026-07-03 21:25 MDT"
+    title: "UVM 2020.3.1 no-DPI config DB typed object flow"
+    milestone: M07
+    result: PASS
+    progress_credit: 40
+    test: test_regress/t/t_uvm_config_db_basic_v2020_3_1_nodpi.py
+    source: test_regress/t/t_uvm_config_db_basic.v
+    log: nodist/uvm2020_plan/run_logs/LEDGER-0033-uvm-config-db-basic-v2020-nodpi-clean-20260704.log
+    failed_attempt_logs:
+      - nodist/uvm2020_plan/run_logs/LEDGER-0031-uvm-config-db-basic-v2020-nodpi-20260703.log
+      - nodist/uvm2020_plan/run_logs/LEDGER-0032-uvm-config-db-basic-v2020-nodpi-rerun-20260703.log
+    evidence:
+      - "Clean rerun printed `** UVM CONFIG DB BASIC PASSED **`, reported `Self PASSED`, and recorded EXIT_CODE: 0."
+      - "Covers `uvm_object_utils`, `uvm_component_utils`, `type_id::create` for object and component types, `uvm_config_db#(cfg_object)::set`, typed `get`, child build_phase access, and report_phase confirmation."
+      - "The first attempt failed on Verilator `UNUSEDSIGNAL` lint warnings for intentionally checked config object fields; scoped lint waivers fixed the reducer."
+      - "The second attempt reached generated C++ compilation and then WSL returned filesystem I/O errors; sanitized log is classified as resource instability, not a UVM semantic failure."
+    owners:
+      - M03
+      - M05
+      - M07
+      - A01
+      - A02
+      - A19
+      - M17
+    issue_comments:
+      - {issue: 4, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/4#issuecomment-4880498544"}
+      - {issue: 6, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/6#issuecomment-4880498538"}
+      - {issue: 8, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8#issuecomment-4880498543"}
+      - {issue: 18, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18#issuecomment-4880498540"}
+      - {issue: 21, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/21#issuecomment-4880499049"}
+      - {issue: 22, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/22#issuecomment-4880499050"}
+      - {issue: 39, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/39#issuecomment-4880499044"}
+    caveats:
+      - "No-DPI typed object config proof only; virtual interface config, resource DB precedence/wildcards, connect_phase ordering, TLM, sequences, and protocol use remain open."
+      - "Local UVM package build remains resource sensitive even with --build-jobs 1."
+  - id: UVM-CONFIG-VIF-0001
+    timestamp: "2026-07-03 21:42 MDT"
+    title: "UVM 2020.3.1 no-DPI config DB virtual interface flow"
+    milestone: M06
+    result: PASS
+    progress_credit: 40
+    test: test_regress/t/t_uvm_config_db_vif_v2020_3_1_nodpi.py
+    source: test_regress/t/t_uvm_config_db_vif.v
+    log: nodist/uvm2020_plan/run_logs/LEDGER-0039-uvm-config-db-vif-v2020-nodpi-rerun-20260703.log
+    failed_attempt_logs:
+      - nodist/uvm2020_plan/run_logs/LEDGER-0038-uvm-config-db-vif-v2020-nodpi-20260703.log
+    evidence:
+      - "Clean rerun printed `** UVM CONFIG DB VIF PASSED **`, reported `Self PASSED`, and recorded EXIT_CODE: 0."
+      - "Covers `uvm_component_utils`, component `type_id::create`, `uvm_config_db#(virtual cfg_vif)::set`, typed VIF `get`, child build_phase access, report_phase confirmation, and live interface field read/write through the retrieved handle."
+      - "The first attempt failed on a reducer-only `UNUSEDSIGNAL` warning for an extra `valid` field; trimming the unused field kept the proof focused on the VIF handle."
+    owners:
+      - M03
+      - M06
+      - M07
+      - A02
+      - A03
+      - A19
+      - M17
+    issue_comments:
+      - {issue: 4, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/4#issuecomment-4880539031"}
+      - {issue: 7, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7#issuecomment-4880539030"}
+      - {issue: 8, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8#issuecomment-4880539029"}
+      - {issue: 18, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18#issuecomment-4880539039"}
+      - {issue: 21, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/21#issuecomment-4880539490"}
+      - {issue: 22, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/22#issuecomment-4880539485"}
+      - {issue: 23, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/23#issuecomment-4880539495"}
+      - {issue: 39, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/39#issuecomment-4880539494"}
+    caveats:
+      - "No-DPI VIF handle proof only; modports, clocking blocks, resource DB precedence/wildcards, protocol driver/monitor access, and APB/AXI-lite agents remain open."
+      - "Generated C++ build took 3:43 locally with --build-jobs 1, so CI/performance policy remains relevant."
+
+progress_scale:
+  - percent: 0
+    bar: "[----------]"
+    meaning: "Not baselined or no passing proof."
+  - percent: 10
+    bar: "[#---------]"
+    meaning: "Reduced test or harness stub exists."
+  - percent: 25
+    bar: "[###-------]"
+    meaning: "Reduced IEEE 1800 semantic test passes locally."
+  - percent: 40
+    bar: "[####------]"
+    meaning: "Minimal UVM API test passes locally."
+  - percent: 60
+    bar: "[######----]"
+    meaning: "Cookbook or protocol workload passes locally."
+  - percent: 80
+    bar: "[########--]"
+    meaning: "SoC, performance, or CI shard passes."
+  - percent: 100
+    bar: "[##########]"
+    meaning: "Full acceptance proof, documented limits, and regression coverage."
+
+result_states:
+  - NOT_RUN
+  - COMPILE_FAIL
+  - ELAB_FAIL
+  - VERILATE_FAIL
+  - BUILD_FAIL
+  - RUN_FAIL
+  - TIMEOUT
+  - OUTPUT_MISMATCH
+  - REFERENCE_MISMATCH
+  - PASS
+  - XFAIL_KNOWN
+  - WAIVED_DOCUMENTED
+
+repository_scan:
+  clean_worktree_at_scan: true
+  configured_makefile_present: true
+  note: "PowerShell had no git on PATH during the initial scan; WSL git was used. Source-tree Verilator now builds as 5.051 devel at f82f59a02 with --enable-ccwarn."
+  existing_uvm_artifacts:
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    files:
+      - test_regress/t/uvm/uvm_pkg_all_v2017_1_0_dpi.svh
+      - test_regress/t/uvm/uvm_pkg_all_v2017_1_0_nodpi.svh
+      - test_regress/t/uvm/uvm_pkg_all_v2020_3_1_dpi.svh
+      - test_regress/t/uvm/uvm_pkg_all_v2020_3_1_nodpi.svh
+      - test_regress/t/t_uvm_hello.v
+      - test_regress/t/t_uvm_dpi.v
+  keyword_inventory:
+    uvm: 22
+    class: 608
+    random: 227
+    covergroup: 122
+    cover: 309
+    clocking: 76
+    interface: 513
+    dpi: 233
+    vpi: 152
+    fork: 128
+    process: 47
+    queue: 96
+    assoc: 59
+    dynamic: 13
+    assert: 195
+    timing: 218
+    semaphore: 21
+    mailbox: 21
+
+github_issue_coverage:
+  repository: phoenix-hacking/verilator-uvm-extend
+  creation_attempt_date: "2026-07-03"
+  creation_status: CREATED
+  repository_has_issues: true
+  github_error: null
+  issue_tree_file: nodist/uvm2020_plan/github_issues/ISSUE_TREE.md
+  coverage_model: "One unified GitHub issue tree: M00-M19 capability/evidence milestones plus leaf issues A01-A20. Every leaf has owning milestones and points toward a harder proof stage."
+  issues:
+    - {id: M00, status: OPEN, number: 1, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/1"}
+    - {id: M01, status: OPEN, number: 2, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/2"}
+    - {id: M02, status: OPEN, number: 3, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/3"}
+    - {id: M03, status: OPEN, number: 4, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/4"}
+    - {id: M04, status: OPEN, number: 5, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/5"}
+    - {id: M05, status: OPEN, number: 6, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/6"}
+    - {id: M06, status: OPEN, number: 7, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7"}
+    - {id: M07, status: OPEN, number: 8, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8"}
+    - {id: M08, status: OPEN, number: 9, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/9"}
+    - {id: M09, status: OPEN, number: 10, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10"}
+    - {id: M10, status: OPEN, number: 11, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11"}
+    - {id: M11, status: OPEN, number: 12, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/12"}
+    - {id: M12, status: OPEN, number: 13, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/13"}
+    - {id: M13, status: OPEN, number: 14, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/14"}
+    - {id: M14, status: OPEN, number: 15, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/15"}
+    - {id: M15, status: OPEN, number: 16, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16"}
+    - {id: M16, status: OPEN, number: 17, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/17"}
+    - {id: M17, status: OPEN, number: 18, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18"}
+    - {id: M18, status: OPEN, number: 19, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/19"}
+    - {id: M19, status: OPEN, number: 20, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/20"}
+    - {id: A01, parent: M19, owners: [M01, M03], status: OPEN, number: 21, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/21"}
+    - {id: A02, parent: M19, owners: [M03, M07, M08, M13], status: OPEN, number: 22, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/22"}
+    - {id: A03, parent: M19, owners: [M06], status: OPEN, number: 23, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/23"}
+    - {id: A04, parent: M19, owners: [M05], status: OPEN, number: 24, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/24"}
+    - {id: A05, parent: M19, owners: [M05], status: OPEN, number: 25, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/25"}
+    - {id: A06, parent: M19, owners: [M05], status: OPEN, number: 26, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/26"}
+    - {id: A07, parent: M19, owners: [M05], status: OPEN, number: 27, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/27"}
+    - {id: A08, parent: M19, owners: [M05], status: OPEN, number: 28, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/28"}
+    - {id: A09, parent: M19, owners: [M02, M05], status: OPEN, number: 29, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/29"}
+    - {id: A10, parent: M19, owners: [M02, M05], status: OPEN, number: 30, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/30"}
+    - {id: A11, parent: M19, owners: [M09], status: OPEN, number: 31, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/31"}
+    - {id: A12, parent: M19, owners: [M09], status: OPEN, number: 32, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/32"}
+    - {id: A13, parent: M19, owners: [M09], status: OPEN, number: 33, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/33"}
+    - {id: A14, parent: M19, owners: [M05, M09], status: OPEN, number: 34, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/34"}
+    - {id: A15, parent: M19, owners: [M09], status: OPEN, number: 35, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/35"}
+    - {id: A16, parent: M19, owners: [M09], status: OPEN, number: 36, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/36"}
+    - {id: A17, parent: M19, owners: [M10], status: OPEN, number: 37, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/37"}
+    - {id: A18, parent: M19, owners: [M04], status: OPEN, number: 38, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/38"}
+    - {id: A19, parent: M19, owners: [M01, M14, M17], status: OPEN, number: 39, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/39"}
+    - {id: A20, parent: M19, owners: [M00, M17, M19], status: OPEN, number: 40, url: "https://github.com/phoenix-hacking/verilator-uvm-extend/issues/40"}
+
+milestones:
+  - id: M00
+    title: "Source-tree build and reproducible baseline"
+    priority: P0
+    layer: L5
+    progress: 100
+    bar: "[##########]"
+    result: PASS
+    last_command: "autoconf && ./configure --enable-ccwarn && make -j8"
+    last_run: "2026-07-03 16:38 MDT"
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0008-build-m00-captured-20260703.log
+    binary_version: "Verilator 5.051 devel rev vUNKNOWN-built20260703-f82f59a02"
+    next_command: "test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py"
+    acceptance: "Build metadata and first dashboard are recorded."
+  - id: M01
+    title: "Existing UVM smoke baseline"
+    priority: P0
+    layer: L1
+    progress: 80
+    bar: "[########--]"
+    result: PASS
+    tests:
+      - test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py
+      - test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py
+      - test_regress/t/t_uvm_dpi_v2020_3_1.py
+    last_run: "2026-07-03 17:02 MDT"
+    evidence:
+      - "All three UVM 2020.3.1 smoke capabilities passed through manual equivalent commands with --build-jobs 1."
+      - "Default local harness no-DPI attempts using 8 build jobs reset/interrupted WSL during generated C++ compilation; classify as resource/CI policy gap, not a UVM semantic failure."
+    next_command: "Run the three Python harness tests under a managed resource cap or CI worker that can survive the default generated C++ build fanout."
+    acceptance: "All existing UVM smoke tests have classified results."
+  - id: M02
+    title: "IEEE 1800 P0 semantic audit"
+    priority: P0
+    layer: L0
+    progress: 10
+    bar: "[#---------]"
+    result: PASS
+    evidence:
+      - "First P0 class/expression reduced shard passed as C1-CLASS-0001."
+    next_command: "Continue P0 semantic audit with scheduler/process, VIF/clocking, randomize, coverage, and package/source-location shards."
+    acceptance: "Every P0 clause has reduced tests and result state."
+  - id: M03
+    title: "UVM 1800.2 API audit"
+    priority: P0
+    layer: L1
+    progress: 20
+    bar: "[##--------]"
+    result: PASS
+    evidence:
+      - "First minimal UVM API shard passed as UVM-FACTORY-0001."
+      - "Second minimal UVM API shard passed as UVM-CONFIG-0001 for typed config object propagation into a component."
+      - "Third minimal UVM API shard passed as UVM-CONFIG-VIF-0001 for virtual interface propagation into a component."
+    next_command: "Add resource precedence, phasing, TLM, sequence, and reporting API shards."
+    acceptance: "Every UVM category has a minimal test and result state."
+  - id: M04
+    title: "Scheduler/process/fork closure"
+    priority: P0
+    layer: L0-L2
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "UVM phasing, objections, kill, and time advancement are deterministic."
+  - id: M05
+    title: "Class/factory/static initialization closure"
+    priority: P0
+    layer: L0-L2
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    last_run: "2026-07-03 17:26 MDT"
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0026-uvm-factory-basic-v2020-nodpi-clean-20260703.log
+    tests:
+      - test_regress/t/t_uvm_return_type.py
+      - test_regress/t/t_uvm_return_type2.py
+      - test_regress/t/t_uvm_return_type3.py
+      - test_regress/t/t_class_default_type_param.py
+      - test_regress/t/t_class_extends_param.py
+      - test_regress/t/t_class_param_extends_static_func.py
+      - test_regress/t/t_class_new_copy_polymorphism.py
+      - test_regress/t/t_class_virtual.py
+      - test_regress/t/t_castdyn.py
+      - test_regress/t/t_uvm_factory_basic_v2020_3_1_nodpi.py
+      - test_regress/t/t_uvm_config_db_basic_v2020_3_1_nodpi.py
+    evidence:
+      - "Reduced class/factory-adjacent shard passed with parameterized class defaults, type parameters, parameterized inheritance, static functions, virtual dispatch, polymorphic copy, and dynamic casts."
+      - "UVM 2020.3.1 no-DPI factory basic API test passed for object utils, type_id::create, type override, base-handle cast, and create_object_by_name."
+      - "UVM 2020.3.1 no-DPI config DB basic API test passed for component utils, component type_id::create, typed config object set/get, and build/report flow."
+      - "Virtual interface config, deeper component-agent hierarchy, sequences, and RAL classes remain open."
+    next_command: "Extend from object config to virtual interface config and component-agent hierarchy, then link to M06/M07/A02."
+    acceptance: "Factory create/override/base-handle usage and minimal component/config object usage work unmodified."
+  - id: M06
+    title: "Interfaces/VIF/modports/clocking closure"
+    priority: P0
+    layer: L0-L3
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    last_run: "2026-07-03 21:42 MDT"
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0039-uvm-config-db-vif-v2020-nodpi-rerun-20260703.log
+    tests:
+      - test_regress/t/t_uvm_config_db_vif_v2020_3_1_nodpi.py
+    evidence:
+      - "Virtual interface handle propagation through UVM config DB passed with live read/write of 33-bit and 7-bit fields."
+      - "Modports, clocking blocks, and protocol driver/monitor timing remain open."
+    next_command: "Add VIF clocking drive/sample reducer and modport access through UVM component fields."
+    acceptance: "Minimal VIF config and live access pass; clocking/modport closure remains open."
+  - id: M07
+    title: "Config/resource DB and component flow"
+    priority: P0
+    layer: L1-L2
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    last_run: "2026-07-03 21:25 MDT"
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0033-uvm-config-db-basic-v2020-nodpi-clean-20260704.log
+    tests:
+      - test_regress/t/t_uvm_config_db_basic_v2020_3_1_nodpi.py
+      - test_regress/t/t_uvm_config_db_vif_v2020_3_1_nodpi.py
+    evidence:
+      - "Typed config object set/get passed from `cfg_test` to child component `env` during build_phase."
+      - "Virtual interface set/get passed from top-level module into a child component, with live field read/write through the retrieved handle."
+      - "The test confirms child report_phase ran and preserved object identity back to the parent test."
+      - "Resource DB precedence, wildcard matching, connect_phase ordering, and agent hierarchy depth remain open."
+    next_command: "Add resource DB precedence/wildcard shard and connect_phase ordering reducer."
+    acceptance: "Minimal typed object and VIF config propagation pass; full build/connect/resource scope remains open."
+  - id: M08
+    title: "TLM and sequence flow"
+    priority: P0
+    layer: L1-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Driver/sequencer/sequence handshake works."
+  - id: M09
+    title: "Constrained-random sequence items"
+    priority: P0
+    layer: L0-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Sequence items randomize with seed replay and useful diagnostics."
+  - id: M10
+    title: "Functional coverage from UVM classes"
+    priority: P0
+    layer: L0-L4
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Subscriber covergroups sample and report usable coverage."
+  - id: M11
+    title: "APB protocol environment"
+    priority: P0
+    layer: L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Active/passive APB agent, scoreboard, coverage, assertions, and RAL frontdoor pass."
+  - id: M12
+    title: "AXI-lite protocol environment"
+    priority: P0
+    layer: L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Ready/valid, interleaving smoke, coverage, assertions, and RAL frontdoor pass."
+  - id: M13
+    title: "RAL frontdoor and predictor"
+    priority: P1
+    layer: L2-L4
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Frontdoor read/write/mirror/update and predictor pass."
+  - id: M14
+    title: "DPI/reference model and minimal VPI strategy"
+    priority: P1
+    layer: L1-L5
+    progress: 25
+    bar: "[###-------]"
+    result: PASS
+    evidence:
+      - "UVM 2020.3.1 DPI hello passes under manual --build-jobs 1."
+      - "UVM 2020.3.1 DPI HDL smoke covers uvm_hdl_check_path/read/deposit/force/release and exits 0."
+    next_command: "Rerun through Python harness in resource-managed CI and extend into RAL backdoor policy."
+    acceptance: "C scoreboard path works; backdoor limits are explicit."
+  - id: M15
+    title: "SVA protocol profile"
+    priority: P1
+    layer: L0-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Protocol assertions agree with monitor behavior."
+  - id: M16
+    title: "Synthetic SoC regression"
+    priority: P1
+    layer: L4
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "CSR/RAL, DMA, IRQ, reset, clocks, coverage, DPI, and seed replay pass."
+  - id: M17
+    title: "Packaging, CI, performance"
+    priority: P1
+    layer: L5
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "Clean checkout flow and performance dashboard exist."
+  - id: M18
+    title: "Advanced parity limits"
+    priority: P2
+    layer: L5
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    acceptance: "VPI/backdoor/four-state/UCIS/debug gaps are documented or tested."
+  - id: M19
+    title: "Competitive coverage closure and issue hygiene"
+    priority: P0/P1
+    layer: L0-L5
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    issue: 20
+    evidence_sources:
+      - "https://antmicro.com/blog/2025/10/support-for-upstream-uvm-2017-in-verilator"
+    leaf_items:
+      - "Upstream UVM 2017-1.0 elaborates unmodified."
+      - "UVM Cookbook sample support."
+      - "Generic interfaces."
+      - "Parameterized class default parameter resolution."
+      - "Parameter-dependent type linking."
+      - "Typedef linking."
+      - "Passing type as a class parameter."
+      - "Nested classes."
+      - "Expression purity for dynamic casts and select-expression side effects."
+      - "randomize() with complex/member-select expressions."
+      - "$countones in constraints."
+      - "randomize() with aliased types and parameterized classes."
+      - "Size constraints."
+      - "Rand dynamic arrays, null handles, and arrays of objects."
+      - "Covergroup parsing and initial elaboration behavior."
+      - "Disable-by-label with forks."
+      - "UVM_NO_DPI tutorial flow."
+      - "Verification dashboard and SystemVerilog test-suite alignment."
+    acceptance: "Each requirement maps to an owning milestone, leaf issue, reduced test, UVM/Cookbook/protocol/SoC proof, or documented limitation."
+
+workstreams:
+  - id: A
+    title: "Packages, macros, source locations"
+    priority: P0
+    layer: L0-L1
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - verilog.l
+      - verilog.y
+      - V3LinkParse
+      - V3LinkDot
+      - FileLine
+    first_tests:
+      - sv_pkg_import_source_line_001
+      - uvm_pkg_compile_source_map_001
+    acceptance: "UVM package compiles with source locations preserved."
+  - id: B
+    title: "Scheduler, event regions, wait, finish"
+    priority: P0
+    layer: L0-L1
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - V3Sched
+      - V3Timing
+      - V3Delayed
+      - include/verilated_timing.h
+    first_tests:
+      - sv_sched_wait_zero_001
+      - sv_sched_finish_terminates_001
+      - uvm_phase_objection_order_001
+    acceptance: "UVM phase and objection scheduling are deterministic."
+  - id: C
+    title: "Processes, fork, disable, process kill"
+    priority: P0
+    layer: L0-L2
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - V3Timing
+      - V3Fork
+      - include/verilated_timing.h
+    first_tests:
+      - sv_process_self_kill_001
+      - sv_fork_join_any_disable_001
+      - uvm_sequence_stop_kill_001
+    acceptance: "UVM sequence stop/kill and phase kill pass."
+  - id: D
+    title: "Classes, object model, factory base"
+    priority: P0
+    layer: L0-L2
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    verilator_subsystem:
+      - V3Class
+      - V3Width
+      - V3LinkDot
+      - V3EmitC
+    first_tests:
+      - sv_class_virtual_dispatch_001
+      - sv_class_param_identity_001
+      - uvm_factory_basic_001
+    acceptance: "UVM factory type/name override and base-handle create pass."
+  - id: E
+    title: "Containers and strings"
+    priority: P0
+    layer: L0-L1
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - V3Width
+      - V3EmitC
+      - runtime containers
+    first_tests:
+      - sv_queue_methods_001
+      - sv_assoc_array_methods_001
+      - sv_string_methods_001
+    acceptance: "UVM resource/config DB containers work."
+  - id: F
+    title: "Interfaces, virtual interfaces, modports"
+    priority: P0
+    layer: L0-L2
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    verilator_subsystem:
+      - V3LinkDotIfaceCapture
+      - V3SchedVirtIface
+      - V3SchedTrigger
+      - V3Width
+    first_tests:
+      - sv_vif_basic_001
+      - sv_vif_member_trigger_001
+      - uvm_config_db_vif_001
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0039-uvm-config-db-vif-v2020-nodpi-rerun-20260703.log
+    acceptance: "Virtual interfaces flow through UVM config into a component; modport/clocking/agent use remains open."
+  - id: G
+    title: "Clocking blocks and class task access"
+    priority: P0
+    layer: L0-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - V3AssertPre
+      - V3Width
+      - V3Sched
+    first_tests:
+      - sv_clocking_input_output_skew_001
+      - sv_vif_clocking_drive_sample_001
+      - uvm_apb_agent_clocking_smoke_001
+    acceptance: "Protocol drivers and monitors use VIF clocking blocks correctly."
+  - id: H
+    title: "IPC primitives"
+    priority: P0
+    layer: L0-L2
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - parser
+      - V3LinkDot
+      - runtime IPC
+    first_tests:
+      - sv_event_trigger_wait_001
+      - sv_mailbox_basic_001
+      - sv_semaphore_basic_001
+    acceptance: "UVM events and sequencer waits are reliable."
+  - id: I
+    title: "UVM config/resource DB"
+    priority: P0
+    layer: L1-L2
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    verilator_subsystem:
+      - classes
+      - containers
+      - packages
+      - virtual interfaces
+    first_tests:
+      - uvm_config_db_object_001
+      - uvm_config_db_virtual_interface_001
+      - uvm_resource_db_precedence_001
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0033-uvm-config-db-basic-v2020-nodpi-clean-20260704.log
+    additional_evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0039-uvm-config-db-vif-v2020-nodpi-rerun-20260703.log
+    acceptance: "Typed object and virtual interface config DB propagation pass; resource DB precedence and Cookbook agent configuration remain open."
+  - id: J
+    title: "Components, build/connect/reporting"
+    priority: P0
+    layer: L1-L2
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    verilator_subsystem:
+      - classes
+      - source locations
+      - scheduler
+    first_tests:
+      - uvm_component_hierarchy_001
+      - uvm_build_connect_order_001
+      - uvm_report_verbosity_001
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0033-uvm-config-db-basic-v2020-nodpi-clean-20260704.log
+    acceptance: "Minimal parent test to child component build/report flow passes; Cookbook env/agent build/connect remains open."
+  - id: K
+    title: "Phasing and objections"
+    priority: P0
+    layer: L1-L2
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - scheduler
+      - process
+      - class dispatch
+    first_tests:
+      - uvm_phase_objection_001
+      - uvm_phase_ready_to_end_001
+      - uvm_phase_kill_001
+    acceptance: "End-of-test is deterministic."
+  - id: L
+    title: "TLM 1 and analysis flow"
+    priority: P0
+    layer: L1-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - classes
+      - queues
+      - virtual dispatch
+    first_tests:
+      - uvm_tlm_analysis_port_001
+      - uvm_tlm_analysis_fifo_001
+      - uvm_tlm_monitor_scoreboard_001
+    acceptance: "Monitor to scoreboard and predictor paths pass."
+  - id: M
+    title: "Sequences, sequencers, drivers"
+    priority: P0
+    layer: L1-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - classes
+      - scheduler
+      - IPC
+    first_tests:
+      - uvm_sequence_driver_handshake_001
+      - uvm_sequence_stop_001
+      - uvm_virtual_sequence_smoke_001
+    acceptance: "APB and AXI-lite agents can run active sequences."
+  - id: N
+    title: "Constrained randomization"
+    priority: P0
+    layer: L0-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - V3Randomize
+      - include/verilated_random.h
+      - include/verilated_random.cpp
+    first_tests:
+      - sv_randomize_basic_001
+      - sv_randomize_dynamic_array_001
+      - uvm_sequence_item_randomize_001
+    acceptance: "Random sequence items pass with deterministic seed replay."
+  - id: O
+    title: "Functional coverage"
+    priority: P0
+    layer: L0-L4
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - V3Covergroup
+      - include/verilated_covergroup.h
+      - verilator_coverage
+    first_tests:
+      - sv_covergroup_class_001
+      - uvm_coverage_subscriber_001
+      - uvm_coverage_merge_001
+    acceptance: "UVM subscribers sample and coverage reports/merge work."
+  - id: P
+    title: "RAL frontdoor and predictor"
+    priority: P1
+    layer: L2-L4
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - classes
+      - TLM
+      - sequences
+      - APB/AXI-lite agents
+    first_tests:
+      - uvm_ral_simple_reg_block_build_001
+      - uvm_ral_frontdoor_write_read_apb_001
+      - uvm_ral_predictor_write_001
+    acceptance: "Frontdoor RAL and predictor pass."
+  - id: Q
+    title: "APB agent"
+    priority: P0
+    layer: L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - VIF
+      - clocking
+      - sequences
+      - TLM
+      - coverage
+    first_tests:
+      - uvm_apb_compile_agent_001
+      - uvm_apb_single_write_001
+      - uvm_apb_ral_frontdoor_001
+    acceptance: "APB active/passive agent, coverage, scoreboard, assertions, and RAL pass."
+  - id: R
+    title: "AXI-lite agent"
+    priority: P0
+    layer: L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - VIF
+      - scheduler
+      - sequences
+      - TLM
+      - coverage
+    first_tests:
+      - uvm_axi_lite_compile_agent_001
+      - uvm_axi_lite_single_write_001
+      - uvm_axi_lite_ral_frontdoor_001
+    acceptance: "AXI-lite active/passive environment and RAL pass."
+  - id: S
+    title: "SVA protocol profile"
+    priority: P1
+    layer: L0-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - V3Assert
+      - V3AssertPre
+      - V3AssertNfa
+    first_tests:
+      - sv_assert_implication_001
+      - sv_assert_disable_iff_001
+      - uvm_apb_protocol_assertions_001
+    acceptance: "APB and AXI-lite assertion subsets pass."
+  - id: T
+    title: "DPI, VPI, backdoor, debug"
+    priority: P1
+    layer: L1-L5
+    progress: 25
+    bar: "[###-------]"
+    result: PASS
+    verilator_subsystem:
+      - DPI runtime
+      - VPI runtime
+      - source locations
+      - UVM reports
+    first_tests:
+      - uvm_dpi_no_dpi_hello_001
+      - uvm_dpi_scoreboard_calls_c_model_001
+      - uvm_hdl_check_path_001
+    acceptance: "C scoreboard path works and backdoor limitations are explicit."
+  - id: U
+    title: "Synthetic digital SoC"
+    priority: P1
+    layer: L4
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - all P0/P1 dependencies
+    first_tests:
+      - soc_boot_reset_to_idle_001
+      - soc_csr_read_write_sweep_001
+      - soc_dma_single_memcopy_001
+    acceptance: "CSR/RAL, DMA, IRQ, reset, clocks, coverage, DPI, and seed replay pass."
+  - id: V
+    title: "Packaging, CI, performance"
+    priority: P1
+    layer: L5
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - options
+      - test harness
+      - CI
+      - performance stats
+    first_tests:
+      - pkg_uvm_2020_switch_hello_001
+      - perf_uvm_hello_compile_001
+      - nightly_uvm_2020
+    acceptance: "Clean checkout user flow and reproducible dashboards exist."
+  - id: W
+    title: "Advanced commercial parity limits"
+    priority: P2
+    layer: L5
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    verilator_subsystem:
+      - VPI
+      - debug database
+      - UCIS/coverage export
+      - four-state semantics
+    first_tests:
+      - uvm_ral_backdoor_read_optional_001
+      - uvm_transaction_recording_limit_001
+      - uvm_four_state_limit_001
+    acceptance: "Advanced gaps are implemented or documented as non-blocking limits."
+
+first_tasks:
+  - id: UVM-BASE-001
+    title: "Configure and build checkout"
+    priority: P0
+    layer: L5
+    progress: 100
+    bar: "[##########]"
+    result: PASS
+    commands:
+      - "autoconf"
+      - "./configure --enable-ccwarn"
+      - "make -j8"
+    acceptance: "Source-tree Verilator build exists and metadata is recorded."
+  - id: UVM-BASE-002
+    title: "Run UVM 2020.3.1 hello nodpi"
+    priority: P0
+    layer: L1
+    progress: 80
+    bar: "[########--]"
+    result: PASS
+    commands:
+      - "test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py"
+    acceptance: "Result state is recorded and any failure is classified."
+  - id: UVM-BASE-003
+    title: "Run UVM 2020.3.1 hello DPI"
+    priority: P0
+    layer: L1
+    progress: 80
+    bar: "[########--]"
+    result: PASS
+    commands:
+      - "test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py"
+    acceptance: "Result state is recorded and any failure is classified."
+  - id: UVM-BASE-004
+    title: "Run UVM 2020.3.1 DPI HDL API smoke"
+    priority: P1
+    layer: L1
+    progress: 80
+    bar: "[########--]"
+    result: PASS
+    commands:
+      - "test_regress/t/t_uvm_dpi_v2020_3_1.py"
+    acceptance: "uvm_hdl_check_path/read/deposit status is recorded."
+  - id: UVM-BASE-005
+    title: "Create first executable dashboard script"
+    priority: P0
+    layer: L5
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    commands:
+      - "python3 test_regress/uvm_support/scripts/run_matrix.py --shard existing_uvm_smoke"
+    acceptance: "Dashboard emits allowed result states only."
+  - id: SV-SCHED-001
+    title: "Reduced scheduler proof for UVM phases"
+    priority: P0
+    layer: L0
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    reduced_test: sv_sched_wait_zero_001
+    uvm_test: uvm_phase_objection_order_001
+    acceptance: "Zero delay, wait, finish, and UVM objection ordering match expected behavior."
+  - id: SV-CLASS-001
+    title: "Reduced class/factory proof"
+    priority: P0
+    layer: L0-L1
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    reduced_test: sv_class_param_identity_001
+    uvm_test: uvm_factory_basic_001
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0026-uvm-factory-basic-v2020-nodpi-clean-20260703.log
+    acceptance: "Reduced class identity and minimal UVM object factory create/override through base handles pass; component/config usage remains next."
+  - id: SV-VIF-CLK-001
+    title: "Virtual interface clocking drive/sample"
+    priority: P0
+    layer: L0-L3
+    progress: 10
+    bar: "[#---------]"
+    result: PARTIAL
+    reduced_test: sv_vif_clocking_drive_sample_001
+    uvm_test: uvm_config_db_virtual_interface_001
+    protocol_or_soc_test: uvm_apb_agent_clocking_smoke_001
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0039-uvm-config-db-vif-v2020-nodpi-rerun-20260703.log
+    acceptance: "VIF handle propagation passes; APB setup/access cycles through VIF clocking block remain open."
+  - id: UVM-CONFIG-001
+    title: "UVM config DB object and VIF propagation"
+    priority: P0
+    layer: L1-L2
+    progress: 40
+    bar: "[####------]"
+    result: PASS
+    reduced_test: sv_vif_basic_001
+    uvm_test: uvm_config_db_object_001
+    protocol_or_soc_test: uvm_apb_config_db_vif_001
+    evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0033-uvm-config-db-basic-v2020-nodpi-clean-20260704.log
+    additional_evidence_log: nodist/uvm2020_plan/run_logs/LEDGER-0039-uvm-config-db-vif-v2020-nodpi-rerun-20260703.log
+    acceptance: "Typed object and virtual interface propagation into child components pass; resource DB and APB agent config integration remain open."
+  - id: UVM-SEQ-001
+    title: "Sequencer/driver handshake"
+    priority: P0
+    layer: L1-L3
+    progress: 0
+    bar: "[----------]"
+    result: NOT_RUN
+    reduced_test: sv_mailbox_or_process_wait_001
+    uvm_test: uvm_sequence_driver_handshake_001
+    protocol_or_soc_test: uvm_apb_single_write_001
+    acceptance: "start_item/finish_item and get_next_item/item_done complete."
+
+definition_of_done:
+  - {id: DOD-01, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "UVM 2020.3.1 compiles unmodified."}
+  - {id: DOD-02, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "UVM 2020.3.1 runs unmodified."}
+  - {id: DOD-03, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "UVM core tests pass or have documented zero-blocker exceptions."}
+  - {id: DOD-04, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "P0 IEEE 1800 reduced tests pass."}
+  - {id: DOD-05, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "P0 UVM API tests pass."}
+  - {id: DOD-06, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Cookbook build/connect/config/factory/agent examples pass."}
+  - {id: DOD-07, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "APB active/passive agent passes."}
+  - {id: DOD-08, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "AXI-lite active/passive agent passes."}
+  - {id: DOD-09, progress: 40, bar: "[####------]", result: PASS, requirement: "Virtual interfaces work through config DB and config objects.", evidence: "UVM-CONFIG-0001 and UVM-CONFIG-VIF-0001 pass reduced object and VIF config DB propagation; protocol agent config remains open."}
+  - {id: DOD-10, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Clocking blocks work through virtual interfaces."}
+  - {id: DOD-11, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "UVM phasing, objections, phase kill, and phase_ready_to_end pass."}
+  - {id: DOD-12, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Sequencer/driver handshakes pass."}
+  - {id: DOD-13, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Sequence stop/kill tests pass."}
+  - {id: DOD-14, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Constrained-random sequence items pass."}
+  - {id: DOD-15, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Fixed seed replay passes."}
+  - {id: DOD-16, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Functional coverage samples from UVM subscribers."}
+  - {id: DOD-17, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Coverage report works."}
+  - {id: DOD-18, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Coverage merge works."}
+  - {id: DOD-19, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "RAL frontdoor read/write/mirror/update passes."}
+  - {id: DOD-20, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "RAL predictor passes."}
+  - {id: DOD-21, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Built-in RAL reset/access/bit-bash smoke passes."}
+  - {id: DOD-22, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "DPI C scoreboard path passes."}
+  - {id: DOD-23, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "UVM_NO_DPI path is tested."}
+  - {id: DOD-24, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "DPI-enabled path is tested or limitation documented."}
+  - {id: DOD-25, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "APB/AXI-lite assertion profile passes."}
+  - {id: DOD-26, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Synthetic SoC boot/reset passes."}
+  - {id: DOD-27, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Synthetic SoC CSR/RAL passes."}
+  - {id: DOD-28, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Synthetic SoC DMA passes."}
+  - {id: DOD-29, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Synthetic SoC interrupt tests pass."}
+  - {id: DOD-30, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Synthetic SoC multi-clock tests pass."}
+  - {id: DOD-31, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Synthetic SoC reset-mid-traffic tests pass."}
+  - {id: DOD-32, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Synthetic SoC coverage tests pass."}
+  - {id: DOD-33, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Synthetic SoC fixed-seed replay passes."}
+  - {id: DOD-34, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Diagnostics show useful SystemVerilog/UVM file/line/context."}
+  - {id: DOD-35, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Performance dashboard exists."}
+  - {id: DOD-36, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "No unacceptable RTL fast-path regression exists."}
+  - {id: DOD-37, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Standard UVM 2020 user flow exists."}
+  - {id: DOD-38, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "Known limitations are documented."}
+  - {id: DOD-39, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "User guide exists after support is real."}
+  - {id: DOD-40, progress: 0, bar: "[----------]", result: NOT_RUN, requirement: "CI dashboard is reproducible from a clean checkout."}
+
+update_protocol:
+  required_for_each_task:
+    - "Update progress, bar, result, and evidence links."
+    - "Keep UVM failures reduced to lower-layer tests."
+    - "Never mark PASS for compile-only or elaborate-only success."
+    - "Use WAIVED_DOCUMENTED only when the limitation entry exists."
+    - "Move user documentation to docs only after implementation is stable."

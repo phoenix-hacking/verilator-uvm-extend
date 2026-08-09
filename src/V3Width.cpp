@@ -2449,6 +2449,12 @@ class WidthVisitor final : public VNVisitor {
         if (nodep->didWidthAndSet()) return;  // This node is a dtype & not both PRELIMed+FINALed
         nodep->dtypep(nodep);
     }
+    void visit(AstCDType* nodep) override {
+        // Raw C++ types normally appear only after widthing.  Named-activation registry members
+        // are introduced earlier, and have no SystemVerilog width work to perform.
+        if (nodep->didWidthAndSet()) return;
+        nodep->dtypep(nodep);
+    }
     void visit(AstDynArrayDType* nodep) override {
         if (nodep->didWidthAndSet()) return;  // This node is a dtype & not both PRELIMed+FINALed
         // Iterate into subDTypep() to resolve that type and update pointer.
@@ -7835,10 +7841,14 @@ class WidthVisitor final : public VNVisitor {
                     v3Global.rootp()->typeTablep()->addTypesp(newdtypep);
                     varp->dtypep(newdtypep);
                 }
-                // Mark that self requires process instance
-                if (AstNodeFTask* const ftaskp
-                    = VN_CAST(m_memberMap.findMember(nodep, "self"), NodeFTask)) {
-                    ftaskp->setNeedProcess();
+                // Mark methods that need the caller's process instance.  self() stores it in the
+                // returned handle.  kill() needs it propagated through the call graph so a caller
+                // that belongs to the killed subtree can stop immediately without exceptions.
+                for (const char* const namep : {"self", "kill"}) {
+                    if (AstNodeFTask* const ftaskp
+                        = VN_CAST(m_memberMap.findMember(nodep, namep), NodeFTask)) {
+                        ftaskp->setNeedProcess();
+                    }
                 }
             }
         }

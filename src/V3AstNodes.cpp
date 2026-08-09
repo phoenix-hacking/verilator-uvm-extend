@@ -113,6 +113,8 @@ void AstNodeStmt::dumpJson(std::ostream& str) const { dumpJsonGen(str); }
 
 void AstNodeCCall::dump(std::ostream& str) const {
     this->AstNodeExpr::dump(str);
+    if (newProcess()) str << " [NEWPROC]";
+    if (processp()) str << " [PERSISTENTPROC]";
     if (funcp()) {
         str << " " << funcp()->name() << " => ";
         funcp()->dump(str);
@@ -122,6 +124,7 @@ void AstNodeCCall::dump(std::ostream& str) const {
 }
 void AstNodeCCall::dumpJson(std::ostream& str) const {
     if (funcp()) dumpJsonStr(str, "funcName", funcp()->name());
+    dumpJsonBoolFuncIf(str, newProcess);
     dumpJsonGen(str);
 }
 bool AstNodeCCall::isPure() { return funcp()->dpiPure(); }
@@ -1432,6 +1435,9 @@ bool AstJumpBlock::isPure() {
     return m_purity.get();
 }
 bool AstJumpBlock::getPurityRecurse() const {
+    // Activation entry/leave is emitted implicitly around this block.  Treat the boundary as
+    // impure even when its visible statement list is empty or otherwise side-effect free.
+    if (namedActivationRegistryp()) return false;
     for (AstNode* stmtp = this->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
         if (!stmtp->isPure()) return false;
     }
@@ -1898,6 +1904,7 @@ void AstNodeProcedure::dumpJson(std::ostream& str) const {
 void AstAlways::dump(std::ostream& str) const {
     this->AstNodeProcedure::dump(str);
     if (keyword() != VAlwaysKwd::ALWAYS) str << " [" << keyword().ascii() << "]";
+    if (processVscp()) str << " [PERSISTENTPROC]";
 }
 void AstAlways::dumpJson(std::ostream& str) const {
     dumpJsonStr(str, "keyword", keyword().ascii());

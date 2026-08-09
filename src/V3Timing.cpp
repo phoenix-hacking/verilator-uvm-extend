@@ -72,6 +72,7 @@
 #include "V3SenExprBuilder.h"
 #include "V3SenTree.h"
 #include "V3Stats.h"
+#include "V3String.h"
 #include "V3UniqueNames.h"
 
 #include <limits>
@@ -81,13 +82,16 @@ VL_DEFINE_DEBUG_FUNCTIONS;
 
 // ######################################################################
 
-enum NodeFlag : uint8_t {
+enum NodeFlag : uint16_t {
     T_SUSPENDEE = 1 << 0,  // Suspendable (due to dependence on another suspendable)
     T_SUSPENDER = 1 << 1,  // Suspendable (has timing control)
     T_ALLOCS_PROC = 1 << 2,  // Can allocate VlProcess
     T_FORCES_PROC = 1 << 3,  // Forces VlProcess allocation
     T_NEEDS_PROC = 1 << 4,  // Needs access to VlProcess if it's allocated
     T_HAS_PROC = 1 << 5,  // Has VlProcess argument in the signature
+    T_MAY_KILL_PROC = 1 << 6,  // Can kill the caller's current process
+    T_DEFER_KILL_PROC = 1 << 7,  // Defers cancellation until a batch helper returns
+    T_MAY_CANCEL_NAMED = 1 << 8,  // Can cancel a caller's named activation
 };
 
 enum ForkType : uint8_t {
@@ -103,9 +107,22 @@ enum PropagationType : uint8_t {
 };
 
 // Add timing flag to a node
-static void addFlags(AstNode* const nodep, uint8_t flags) { nodep->user2Or(flags); }
+static void addFlags(AstNode* const nodep, uint16_t flags) { nodep->user2Or(flags); }
 // Check if a node has ALL of the expected flags set
-static bool hasFlags(AstNode* const nodep, uint8_t flags) { return !(~nodep->user2() & flags); }
+static bool hasFlags(AstNode* const nodep, uint16_t flags) { return !(~nodep->user2() & flags); }
+// Check for an intrinsic method on the built-in std::process class
+static bool isStdProcessMethod(const AstClass* const classp, const AstCFunc* const funcp,
+                               const string& name) {
+    const AstClass* methodClassp = classp;
+    if (!methodClassp && funcp->scopep()) {
+        if (const AstClassPackage* const classPackagep
+            = VN_CAST(funcp->scopep()->modp(), ClassPackage)) {
+            methodClassp = classPackagep->classp();
+        }
+    }
+    return methodClassp == v3Global.rootp()->stdPackageProcessp()
+           && (funcp->name() == name || funcp->name() == "__VnoInFunc_" + name);
+}
 
 // ######################################################################
 //  Detect nodes affected by timing and/or requiring a process
@@ -302,9 +319,27 @@ class TimingSuspendableVisitor final : public VNVisitor {
         if (m_procp) addFlags(m_procp, T_SUSPENDEE | T_SUSPENDER | T_NEEDS_PROC);
         iterateChildren(nodep);
     }
+    void visit(AstJumpBlock* nodep) override {
+        if (nodep->namedActivationRegistryp() && m_procp) {
+            // Named activation guards/tokens use the timing runtime even for source with no
+            // explicit delay, event, or wait construct.
+            v3Global.setUsesTiming();
+            addFlags(m_procp, T_FORCES_PROC | T_NEEDS_PROC);
+        }
+        iterateChildren(nodep);
+    }
+    void visit(AstCStmt* nodep) override {
+        if (nodep->stmtType() == VCStmtType::NAMED_DISABLE && m_procp) {
+            v3Global.setUsesTiming();
+            addFlags(m_procp, T_NEEDS_PROC | T_MAY_CANCEL_NAMED);
+        }
+        iterateChildren(nodep);
+    }
     void visit(AstCFunc* nodep) override {
         VL_RESTORER(m_procp);
         m_procp = nodep;
+        if (isStdProcessMethod(m_classp, nodep, "kill")) addFlags(nodep, T_MAY_KILL_PROC);
+        if (isStdProcessMethod(m_classp, nodep, "killQueue")) addFlags(nodep, T_DEFER_KILL_PROC);
         iterateChildren(nodep);
         if (nodep->needProcess()) addFlags(nodep, T_FORCES_PROC | T_NEEDS_PROC);
         DepVtx* const sVxp = getSuspendDepVtx(nodep);
@@ -364,7 +399,7 @@ class TimingSuspendableVisitor final : public VNVisitor {
                             m_underFork ? P_FORK : P_CALL};
 
         new V3GraphEdge{&m_procGraph, getNeedsProcDepVtx(nodep), getNeedsProcDepVtx(m_procp),
-                        P_CALL};
+                        m_underFork ? P_FORK : P_CALL};
 
         if (m_underFork) addFlags(nodep, T_NEEDS_PROC | T_ALLOCS_PROC);
 
@@ -424,7 +459,8 @@ public:
             // Find processes that'll allocate VlProcess
             if (hasFlags(depVtx.nodep(), T_FORCES_PROC)) {
                 propagateFlagsIf(&depVtx, T_FORCES_PROC, [&](const V3GraphEdge* e) -> bool {
-                    return !hasFlags(static_cast<DepVtx*>(e->fromp())->nodep(), T_ALLOCS_PROC);
+                    return e->weight() == P_FORK
+                           || !hasFlags(static_cast<DepVtx*>(e->fromp())->nodep(), T_ALLOCS_PROC);
                 });
             }
             // Mark nodes on paths between processes and statements that use VlProcess
@@ -441,6 +477,27 @@ public:
                 addFlags(depVtx.nodep(), T_HAS_PROC);
                 propagateFlagsReversedIf(&depVtx, T_HAS_PROC, [&](const V3GraphEdge* e) -> bool {
                     return hasFlags(static_cast<DepVtx*>(e->fromp())->nodep(), T_NEEDS_PROC);
+                });
+            }
+        }
+        // Named cancellation follows synchronous/same-process calls, but never crosses a fork
+        // edge where the callee receives a fresh activation token.
+        for (V3GraphVertex& vtx : m_procGraph.vertices()) {
+            DepVtx& depVtx = static_cast<DepVtx&>(vtx);
+            if (hasFlags(depVtx.nodep(), T_MAY_CANCEL_NAMED)) {
+                propagateFlagsIf(&depVtx, T_MAY_CANCEL_NAMED, [&](const V3GraphEdge* e) -> bool {
+                    return e->weight() != P_FORK
+                           && hasFlags(static_cast<DepVtx*>(e->top())->nodep(), T_HAS_PROC);
+                });
+            }
+        }
+        // Propagate cancellation only while callers share the same VlProcess. A helper that
+        // allocates its own process is a cancellation boundary for its caller.
+        for (V3GraphVertex& vtx : m_procGraph.vertices()) {
+            DepVtx& depVtx = static_cast<DepVtx&>(vtx);
+            if (hasFlags(depVtx.nodep(), T_MAY_KILL_PROC)) {
+                propagateFlagsIf(&depVtx, T_MAY_KILL_PROC, [&](const V3GraphEdge* e) -> bool {
+                    return hasFlags(static_cast<DepVtx*>(e->top())->nodep(), T_HAS_PROC);
                 });
             }
         }
@@ -479,6 +536,10 @@ class TimingControlVisitor final : public VNVisitor {
     AstActive* m_activep = nullptr;  // Current active
     AstNode* m_procp = nullptr;  // NodeProcedure/CFunc/Begin we're under
     bool m_hasProcess = false;  // True if current scope has a VlProcess handle available
+    bool m_processCoroutine = false;  // True if process cancellation needs a co_return
+    bool m_processReturnsVoid = true;  // True if a non-coroutine cancellation uses return
+    bool m_deferProcessCancellation = false;  // True while draining process::killQueue
+    AstJumpBlock* m_activationJumpBlockp = nullptr;  // Same-process named unwind boundary
     int m_forkCnt = 0;  // Number of forks inside a module
     bool m_underJumpBlock = false;  // True if we are inside of a jump-block
     bool m_underProcedure = false;  // True if we are under an always or initial
@@ -495,6 +556,7 @@ class TimingControlVisitor final : public VNVisitor {
     V3UniqueNames m_intraLsbNames{"__Vintralsb"};  // Intra assign delay LSB var names
     V3UniqueNames m_trigSchedNames{"__VtrigSched"};  // Trigger scheduler name generator
     V3UniqueNames m_dynTrigNames{"__VdynTrigger"};  // Dynamic trigger name generator
+    V3UniqueNames m_processKillValueNames{"__VprocessKillValue"};  // Call result temp names
 
     // DTypes
     AstBasicDType* m_forkDtp = nullptr;  // Fork variable type
@@ -740,6 +802,54 @@ class TimingControlVisitor final : public VNVisitor {
         m_scopep->addVarsp(vscp);
         return vscp;
     }
+    // Non-inlined SystemVerilog functions carry their return value as the last output argument.
+    static bool hasSyntheticReturnOutput(const AstCFunc* const funcp) {
+        const AstVar* lastArgp = nullptr;
+        for (const AstVar* argp = funcp->argsp(); argp; argp = VN_AS(argp->nextp(), Var)) {
+            lastArgp = argp;
+        }
+        return lastArgp && lastArgp->noCReset()
+               && VString::endsWith(lastArgp->name(), "__Vfuncrtn");
+    }
+    static AstNodeStmt* enclosingStmtp(AstNode* nodep) {
+        while (nodep && !VN_IS(nodep, NodeStmt)) nodep = nodep->backp();
+        return VN_CAST(nodep, NodeStmt);
+    }
+    void addCancellationChecks(AstNode* const nodep, AstNodeStmt* const callStmtp,
+                               bool checkProcess, bool checkActivation,
+                               AstNode* const outputCommitp = nullptr,
+                               AstJumpBlock* const activationBoundaryp = nullptr) const {
+        const std::string returnStmt = m_processCoroutine
+                                           ? "co_return;"
+                                           : (m_processReturnsVoid ? "return;" : "return {};");
+        AstNode* tailp = callStmtp;
+        if (checkProcess) {
+            auto* const checkp = new AstCStmt{
+                nodep->fileline(),
+                "if (VL_UNLIKELY(vlProcess->state() == VlProcess::KILLED)) " + returnStmt};
+            tailp->addNextHere(checkp);
+            tailp = checkp;
+        }
+        if (checkActivation) {
+            AstJumpBlock* const boundaryp
+                = activationBoundaryp ? activationBoundaryp : m_activationJumpBlockp;
+            if (boundaryp) {
+                AstCExpr* const canceledp
+                    = new AstCExpr{nodep->fileline(), "vlActivation.canceled()", 1};
+                AstIf* const checkp
+                    = new AstIf{nodep->fileline(), canceledp,
+                                new AstJumpGo{nodep->fileline(), boundaryp}, nullptr};
+                tailp->addNextHere(checkp);
+                tailp = checkp;
+            } else {
+                AstCStmt* const checkp = new AstCStmt{
+                    nodep->fileline(), "if (VL_UNLIKELY(vlActivation.canceled())) " + returnStmt};
+                tailp->addNextHere(checkp);
+                tailp = checkp;
+            }
+        }
+        if (outputCommitp) tailp->addNextHere(outputCommitp);
+    }
     // Add a done() call on the fork sync
     void addForkDone(AstBegin* const beginp, AstVarScope* const forkVscp) const {
         FileLine* const flp = beginp->fileline();
@@ -895,8 +1005,12 @@ class TimingControlVisitor final : public VNVisitor {
     void visit(AstNodeProcedure* nodep) override {
         VL_RESTORER(m_procp);
         VL_RESTORER(m_hasProcess);
+        VL_RESTORER(m_processCoroutine);
+        VL_RESTORER(m_processReturnsVoid);
         m_procp = nodep;
         m_hasProcess = hasFlags(nodep, T_HAS_PROC);
+        m_processCoroutine = hasFlags(nodep, T_SUSPENDEE);
+        m_processReturnsVoid = true;
         VL_RESTORER(m_underProcedure);
         m_underProcedure = true;
         iterateChildren(nodep);
@@ -906,21 +1020,57 @@ class TimingControlVisitor final : public VNVisitor {
     void visit(AstInitial* nodep) override {
         visit(static_cast<AstNodeProcedure*>(nodep));
         if (nodep->needProcess() && !nodep->user1SetOnce()) {
-            nodep->addStmtsp(
-                new AstCStmt{nodep->fileline(), "vlProcess->state(VlProcess::FINISHED);"});
+            nodep->addStmtsp(new AstCStmt{nodep->fileline(),
+                                          "if (vlProcess->state() != VlProcess::KILLED) "
+                                          "vlProcess->state(VlProcess::FINISHED);"});
         }
     }
     void visit(AstJumpBlock* nodep) override {
-        VL_RESTORER(m_underJumpBlock);
-        m_underJumpBlock = true;
-        visit(static_cast<AstNodeStmt*>(nodep));
+        AstJumpBlock* const outerActivationp = m_activationJumpBlockp;
+        {
+            VL_RESTORER(m_underJumpBlock);
+            VL_RESTORER(m_activationJumpBlockp);
+            m_underJumpBlock = true;
+            if (nodep->namedActivationRegistryp()) {
+                m_activationJumpBlockp = nodep;
+                m_hasProcess = true;
+            }
+            visit(static_cast<AstNodeStmt*>(nodep));
+        }
+        if (nodep->namedActivationRegistryp()) {
+            const std::string returnStmt = m_processCoroutine
+                                               ? "co_return;"
+                                               : (m_processReturnsVoid ? "return;" : "return {};");
+            if (outerActivationp) {
+                AstCExpr* const canceledp
+                    = new AstCExpr{nodep->fileline(), "vlActivation.canceled()", 1};
+                nodep->addNextHere(new AstIf{nodep->fileline(), canceledp,
+                                             new AstJumpGo{nodep->fileline(), outerActivationp},
+                                             nullptr});
+            } else {
+                nodep->addNextHere(new AstCStmt{
+                    nodep->fileline(), "if (VL_UNLIKELY(vlActivation.canceled())) " + returnStmt});
+            }
+        }
+    }
+    void visit(AstCStmt* nodep) override {
+        iterateChildren(nodep);
+        // An external disabler may have no process/token arguments and cannot cancel itself.
+        if (nodep->stmtType() == VCStmtType::NAMED_DISABLE && !nodep->user1SetOnce()
+            && m_hasProcess) {
+            addCancellationChecks(nodep, nodep, true, true);
+        }
     }
     void visit(AstAlways* nodep) override {
         if (nodep->user1SetOnce()) return;
         VL_RESTORER(m_procp);
         VL_RESTORER(m_hasProcess);
+        VL_RESTORER(m_processCoroutine);
+        VL_RESTORER(m_processReturnsVoid);
         m_procp = nodep;
         m_hasProcess = hasFlags(nodep, T_HAS_PROC);
+        m_processCoroutine = hasFlags(nodep, T_SUSPENDEE);
+        m_processReturnsVoid = true;
         VL_RESTORER(m_underProcedure);
         m_underProcedure = true;
         // Workaround for killing `always` processes (doing that is pretty much UB)
@@ -930,6 +1080,7 @@ class TimingControlVisitor final : public VNVisitor {
         if (hasFlags(nodep, T_HAS_PROC)
             && !(m_activep && m_activep->sentreep() && m_activep->sentreep()->hasCombo()))
             addFlags(nodep, T_SUSPENDEE);
+        m_processCoroutine = hasFlags(nodep, T_SUSPENDEE);
 
         iterateChildren(nodep);
         if (hasFlags(nodep, T_HAS_PROC)) nodep->setNeedProcess();
@@ -953,8 +1104,16 @@ class TimingControlVisitor final : public VNVisitor {
     void visit(AstCFunc* nodep) override {
         VL_RESTORER(m_procp);
         VL_RESTORER(m_hasProcess);
+        VL_RESTORER(m_processCoroutine);
+        VL_RESTORER(m_processReturnsVoid);
+        VL_RESTORER(m_deferProcessCancellation);
         m_procp = nodep;
         m_hasProcess = hasFlags(nodep, T_HAS_PROC);
+        m_processCoroutine = hasFlags(nodep, T_SUSPENDEE);
+        m_processReturnsVoid = nodep->rtnTypeVoid() == "void";
+        // Named disable batches process handles through killQueue.  Drain the entire queue before
+        // its caller observes that the current process was killed and unwinds.
+        m_deferProcessCancellation = hasFlags(nodep, T_DEFER_KILL_PROC);
         iterateChildren(nodep);
         if (hasFlags(nodep, T_HAS_PROC)) nodep->setNeedProcess();
         if (!(hasFlags(nodep, T_SUSPENDEE))) return;
@@ -988,12 +1147,66 @@ class TimingControlVisitor final : public VNVisitor {
             return;
         }
 
-        if (funcp->needProcess()) m_hasProcess = true;
-        if (hasFlags(funcp, T_SUSPENDEE) && !nodep->user1SetOnce()) {  // If suspendable
+        const bool needsProcess = funcp->needProcess() || hasFlags(funcp, T_HAS_PROC);
+        const bool needsProcessCancellation
+            = hasFlags(funcp, T_MAY_KILL_PROC) && !m_deferProcessCancellation;
+        const bool needsNamedCancellation = hasFlags(funcp, T_MAY_CANCEL_NAMED);
+        const bool needsCancellationCheck = needsProcessCancellation || needsNamedCancellation;
+        if (needsProcess) m_hasProcess = true;
+        const bool firstVisit = !nodep->user1SetOnce();
+        AstNodeStmt* callStmtp = enclosingStmtp(nodep);
+        UASSERT_OBJ(!needsCancellationCheck || callStmtp, nodep,
+                    "Process-aware call must be lowered into statement position");
+        if (hasFlags(funcp, T_SUSPENDEE) && firstVisit) {  // If suspendable
             // Calls to suspendables are always void return type, hence parent must be StmtExpr
             AstStmtExpr* const stmtp = VN_AS(nodep->backp(), StmtExpr);
-            stmtp->replaceWith(new AstCAwait{nodep->fileline(), nodep->unlinkFrBack()});
+            auto* const awaitp = new AstCAwait{nodep->fileline(), nodep->unlinkFrBack()};
+            stmtp->replaceWith(awaitp);
+            callStmtp = awaitp;
             VL_DO_DANGLING(pushDeletep(stmtp), stmtp);
+        }
+        if (needsCancellationCheck && callStmtp && firstVisit) {
+            // A non-inlined SystemVerilog function return is emitted as a writable C++ argument.
+            // Redirect it through a temporary so a self-kill can be observed before the call
+            // commits its return value to the assignment target.
+            AstNode* outputCommitp = nullptr;
+            if (hasSyntheticReturnOutput(funcp)) {
+                // A jump block may branch past this call.  Keep the non-trivial temporary and
+                // every use of it in a nested C++ scope so such a branch cannot cross its
+                // initialization.
+                if (m_underJumpBlock) addCLocalScope(nodep->fileline(), callStmtp);
+                AstNodeExpr* returnArgp = nodep->argsp();
+                UASSERT_OBJ(returnArgp, nodep, "Function-return call is missing arguments");
+                while (returnArgp->nextp()) returnArgp = VN_AS(returnArgp->nextp(), NodeExpr);
+                AstNodeVarRef* const refp = VN_CAST(returnArgp, NodeVarRef);
+                UASSERT_OBJ(refp && refp->access().isWriteOnly(), nodep,
+                            "Function-return output must be a writable variable reference");
+                FileLine* const flp = refp->fileline();
+                AstVarScope* const resultVscp = createTemp(flp, m_processKillValueNames.get(refp),
+                                                           refp->dtypep(), callStmtp);
+                VNRelinker handle;
+                refp->unlinkFrBack(&handle);
+                handle.relink(new AstVarRef{flp, resultVscp, VAccess::WRITE});
+                outputCommitp
+                    = new AstAssign{flp, refp, new AstVarRef{flp, resultVscp, VAccess::READ}};
+            } else if (AstCNew* const cnewp = VN_CAST(nodep, CNew)) {
+                // Constructors return their class reference directly rather than through a
+                // synthetic output argument.  Stage a direct assignment so a self-kill in new()
+                // cannot overwrite the destination before cancellation is observed.
+                AstAssign* const assignp = VN_CAST(callStmtp, Assign);
+                if (assignp && assignp->rhsp() == cnewp && !VN_IS(cnewp->dtypep(), VoidDType)) {
+                    if (m_underJumpBlock) addCLocalScope(nodep->fileline(), assignp);
+                    FileLine* const flp = cnewp->fileline();
+                    AstNodeExpr* const commitLhsp = assignp->lhsp()->unlinkFrBack();
+                    AstVarScope* const resultVscp = createTemp(
+                        flp, m_processKillValueNames.get(cnewp), cnewp->dtypep(), assignp);
+                    assignp->lhsp(new AstVarRef{flp, resultVscp, VAccess::WRITE});
+                    outputCommitp = new AstAssign{flp, commitLhsp,
+                                                  new AstVarRef{flp, resultVscp, VAccess::READ}};
+                }
+            }
+            addCancellationChecks(nodep, callStmtp, needsProcessCancellation,
+                                  needsNamedCancellation, outputCommitp);
         }
         iterateChildren(nodep);
     }
@@ -1384,7 +1597,8 @@ class TimingControlVisitor final : public VNVisitor {
             if (constp->isZero()) {
                 // We have to await forever instead of simply returning in case we're deep in a
                 // callstack
-                AstCExpr* const foreverp = new AstCExpr{flp, "VlForever{}"};
+                AstCExpr* const foreverp
+                    = new AstCExpr{flp, m_hasProcess ? "VlForever{vlProcess}" : "VlForever{}"};
                 AstCAwait* const awaitp = new AstCAwait{flp, foreverp};
                 nodep->replaceWith(awaitp);
                 if (stmtsp) VL_DO_DANGLING(stmtsp->deleteTree(), stmtsp);
@@ -1425,7 +1639,10 @@ class TimingControlVisitor final : public VNVisitor {
     void visit(AstBegin* nodep) override {
         VL_RESTORER(m_procp);
         VL_RESTORER(m_hasProcess);
+        VL_RESTORER(m_processCoroutine);
+        VL_RESTORER(m_processReturnsVoid);
         m_hasProcess |= hasFlags(nodep, T_HAS_PROC);
+        if (hasFlags(nodep, T_ALLOCS_PROC)) m_processCoroutine = true;
         m_procp = nodep;
         if (m_hasProcess) nodep->setNeedProcess();
         iterateChildren(nodep);
@@ -1445,7 +1662,11 @@ class TimingControlVisitor final : public VNVisitor {
         size_t idx = 0;  // Index for naming begins
         for (AstBegin *itemp = nodep->forksp(), *nextp; itemp; itemp = nextp) {
             nextp = VN_AS(itemp->nextp(), Begin);
-            iterate(itemp);
+            {
+                VL_RESTORER(m_activationJumpBlockp);
+                m_activationJumpBlockp = nullptr;
+                iterate(itemp);
+            }
             // Note: Even if we do not find any awaits, we cannot simply inline
             // the process here, as new awaits could be added later.
 
@@ -1488,6 +1709,84 @@ public:
     }
 };
 
+// Add a named-activation cancellation edge after every suspension produced by timing lowering.
+// A same-process named boundary uses its existing JumpBlock label; helpers unwind to their caller.
+class NamedActivationAwaitVisitor final : public VNVisitor {
+    bool m_canCheck = false;
+    bool m_coroutine = false;
+    bool m_returnsVoid = true;
+    AstJumpBlock* m_activationJumpBlockp = nullptr;
+
+    void visit(AstCFunc* nodep) override {
+        VL_RESTORER(m_canCheck);
+        VL_RESTORER(m_coroutine);
+        VL_RESTORER(m_returnsVoid);
+        VL_RESTORER(m_activationJumpBlockp);
+        m_canCheck = nodep->needProcess();
+        m_coroutine = nodep->isCoroutine();
+        m_returnsVoid = nodep->rtnTypeVoid() == "void";
+        m_activationJumpBlockp = nullptr;
+        iterateChildren(nodep);
+    }
+    void visit(AstNodeProcedure* nodep) override {
+        VL_RESTORER(m_canCheck);
+        VL_RESTORER(m_coroutine);
+        VL_RESTORER(m_returnsVoid);
+        VL_RESTORER(m_activationJumpBlockp);
+        m_canCheck = nodep->needProcess();
+        m_coroutine = nodep->isSuspendable();
+        m_returnsVoid = true;
+        m_activationJumpBlockp = nullptr;
+        iterateChildren(nodep);
+    }
+    void visit(AstJumpBlock* nodep) override {
+        VL_RESTORER(m_activationJumpBlockp);
+        if (nodep->namedActivationRegistryp()) {
+            m_activationJumpBlockp = nodep;
+            m_canCheck = true;
+        }
+        iterateChildren(nodep);
+    }
+    void visit(AstFork* nodep) override {
+        iterateAndNextNull(nodep->declsp());
+        iterateAndNextNull(nodep->stmtsp());
+        for (AstBegin* beginp = nodep->forksp(); beginp; beginp = VN_AS(beginp->nextp(), Begin)) {
+            VL_RESTORER(m_canCheck);
+            VL_RESTORER(m_coroutine);
+            VL_RESTORER(m_returnsVoid);
+            VL_RESTORER(m_activationJumpBlockp);
+            // V3SchedTiming extracts any fork branch containing an await into a VlCoroutine.
+            // Establish that future helper's context while examining the branch. It receives a
+            // fresh activation token; a named JumpBlock in the branch enables local checks again.
+            m_canCheck = false;
+            m_coroutine = true;
+            m_returnsVoid = true;
+            m_activationJumpBlockp = nullptr;
+            iterate(beginp);
+        }
+    }
+    void visit(AstCAwait* nodep) override {
+        iterateChildren(nodep);
+        if (!m_canCheck) return;
+        if (m_activationJumpBlockp) {
+            AstCExpr* const canceledp
+                = new AstCExpr{nodep->fileline(), "vlActivation.canceled()", 1};
+            nodep->addNextHere(new AstIf{nodep->fileline(), canceledp,
+                                         new AstJumpGo{nodep->fileline(), m_activationJumpBlockp},
+                                         nullptr});
+        } else {
+            const std::string returnStmt
+                = m_coroutine ? "co_return;" : (m_returnsVoid ? "return;" : "return {};");
+            nodep->addNextHere(new AstCStmt{
+                nodep->fileline(), "if (VL_UNLIKELY(vlActivation.canceled())) " + returnStmt});
+        }
+    }
+    void visit(AstNode* nodep) override { iterateChildren(nodep); }
+
+public:
+    explicit NamedActivationAwaitVisitor(AstNetlist* nodep) { iterate(nodep); }
+};
+
 //######################################################################
 // Timing class functions
 
@@ -1497,7 +1796,10 @@ void V3Timing::timingAll(AstNetlist* nodep) {
         const VNUser1InUse m_user1InUse;
         const VNUser2InUse m_user2InUse;
         { TimingSuspendableVisitor{nodep}; }
-        if (v3Global.usesTiming()) TimingControlVisitor{nodep};
+        if (v3Global.usesTiming()) {
+            TimingControlVisitor{nodep};
+            NamedActivationAwaitVisitor{nodep};
+        }
     }
     V3Global::dumpCheckGlobalTree("timing", 0, dumpTreeEitherLevel() >= 3);
 }

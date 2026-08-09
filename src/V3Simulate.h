@@ -1057,7 +1057,15 @@ private:
 
     void visit(AstJumpBlock* nodep) override {
         if (jumpingOver()) return;
-        iterateChildrenConst(nodep);
+        // Constant-function emulation models the source control flow, not the hidden runtime
+        // registry attached to a named activation.  A constant function has no concurrent
+        // runtime activations for that registry to cancel, and visiting the internal CDType
+        // reference would incorrectly make an otherwise valid local disable non-constant.
+        if (m_params) {
+            iterateAndNextConstNull(nodep->stmtsp());
+        } else {
+            iterateChildrenConst(nodep);
+        }
         if (m_jumptargetp == nodep) {
             UINFO(5, "   JUMP DONE " << nodep);
             m_jumptargetp = nullptr;
@@ -1358,6 +1366,19 @@ private:
     }
 
     void visit(AstCoverInc* /*nodep*/) override { m_isCoverage = true; }
+
+    void visit(AstCStmt* nodep) override {
+        if (jumpingOver()) return;
+        // LinkJump lowers an in-scope named disable to a hidden registry cancellation followed by
+        // the source-equivalent JumpGo.  During constant-function emulation there can be no
+        // competing runtime activation, so only the jump affects the result.  Keep external and
+        // forked cancellation unoptimizable: those forms have no following local JumpGo.
+        if (m_params && nodep->stmtType() == VCStmtType::NAMED_DISABLE
+            && VN_IS(nodep->nextp(), JumpGo)) {
+            return;
+        }
+        badNodeType(nodep);
+    }
 
     // ====
     // Known Bad

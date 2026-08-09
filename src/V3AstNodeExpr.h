@@ -187,10 +187,12 @@ public:
 class AstNodeCCall VL_NOT_FINAL : public AstNodeExpr {
     // A call of a C++ function, perhaps a AstCFunc or perhaps globally named
     // @astgen op2 := argsp : List[AstNodeExpr]  // Note: op1 used by some sub-types only
+    // @astgen op3 := processp : Optional[AstNodeExpr]  // Persistent process storage
     //
     // @astgen ptr := m_funcp : AstCFunc  // Function being called
     string m_argTypes;
     bool m_superReference = false;  // Called with super reference
+    bool m_newProcess = false;  // Call starts a distinct SystemVerilog process
 
 protected:
     AstNodeCCall(VNType t, FileLine* fl, AstCFunc* funcp, AstNodeExpr* argsp = nullptr)
@@ -206,7 +208,8 @@ public:
     int instrCount() const override { return INSTR_COUNT_CALL; }
     bool sameNode(const AstNode* samep) const override {
         const AstNodeCCall* const asamep = VN_DBG_AS(samep, NodeCCall);
-        return (funcp() == asamep->funcp() && argTypes() == asamep->argTypes());
+        return (funcp() == asamep->funcp() && argTypes() == asamep->argTypes()
+                && newProcess() == asamep->newProcess());
     }
     bool isGateOptimizable() const override { return false; }
     bool isPredictOptimizable() const override { return false; }
@@ -222,6 +225,12 @@ public:
     bool cleanOut() const final override { return true; }
     bool superReference() const { return m_superReference; }
     void superReference(bool flag) { m_superReference = flag; }
+    bool newProcess() const { return m_newProcess; }
+    void newProcess(bool flag) {
+        UASSERT_OBJ(!flag || !processp(), this,
+                    "Call cannot use both new and persistent process storage");
+        m_newProcess = flag;
+    }
 };
 class AstNodeFTaskRef VL_NOT_FINAL : public AstNodeExpr {
     // A reference to a task (or function)

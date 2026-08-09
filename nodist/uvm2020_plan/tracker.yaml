@@ -1,0 +1,2097 @@
+# DESCRIPTION: Verilator: UVM 2020.3.1 evidence and capability tracker
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 2
+updated: 2026-08-09
+objective: evidence-backed UVM 2020 support for complex SoC verification
+repository: phoenix-hacking/verilator-uvm-extend
+
+accounting_policy:
+  primary_unit: fully_verified_atomic_gate
+  complete_status: pass
+  percent_rounding_digits: 1
+  repeated_runs_add_credit: false
+  blocked_items_remain_in_denominator: true
+  local_proof_is_not_ci_proof: true
+  smoke_is_not_conformance: true
+  public_capability_milestones: M00-M19
+  dependency_sequence: >-
+    The Library M0-M17 sequence orders implementation dependencies; it is not
+    a second capability milestone set or completion denominator.
+
+pull_request:
+  number: 41
+  url: https://github.com/phoenix-hacking/verilator-uvm-extend/pull/41
+  status: in_progress
+  draft: true
+  source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+  source_head_tree: 469066ed27dc53a0977f7131a6ffd0d30ce71879
+  tested_synthetic_merge_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+  claim: clean_checkout_resource_capped_uvm2020_lane
+  technical_scope: focused_named_disable_process_and_uvm_lane
+  technical_closure:
+    status: pass
+    required: >-
+      complete_current_fifteen_test_focused_lane_in_vlt_and_vltmt,
+      current_twenty_test_uvm_lane,_and_exact_head_ci
+    ci:
+      status: pass
+      source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+      source_head_tree: 469066ed27dc53a0977f7131a6ffd0d30ce71879
+      tested_synthetic_merge_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+      required_events: [push, pull_request]
+      required_scope:
+        - format
+        - supported_host_build_matrices
+        - focused_named_disable_lane
+        - twenty_test_uvm_lane
+        - distribution_and_regression_jobs
+      workflow_runs:
+        format_push:
+          status: pass
+          conclusion: success
+          event: push
+          workflow: format
+          workflow_run_id: 31311244123
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244123
+          tested_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+        build_test_push:
+          status: pass
+          conclusion: success
+          event: push
+          workflow: build-test
+          workflow_run_id: 31311244235
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235
+          tested_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          jobs:
+            passed: 46
+            failed: 0
+            total: 46
+        build_test_pull_request:
+          status: pass
+          conclusion: success
+          event: pull_request
+          workflow: build-test
+          workflow_run_id: 31311246321
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321
+          source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          tested_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+          jobs:
+            passed: 46
+            failed: 0
+            total: 46
+      note: >-
+        Exact-head format and both build-test runs passed. All 25 shards that
+        were red at earlier source heads recovered, including all five
+        dist-vlt-0 jobs. This technical closure is independent of the broader
+        UVM program and the human Contributor Agreement gate.
+  contributor_agreement:
+    status: pending
+    classification: external_human_only
+    responsibility: human_contributor
+    workflow_runs:
+      push:
+        status: pending
+        workflow: Contributor Agreement
+        workflow_run_id: 31311244130
+        workflow_run_url: >-
+          https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244130
+      pull_request:
+        status: pending
+        workflow: Contributor Agreement
+        workflow_run_id: 31311246183
+        workflow_run_url: >-
+          https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246183
+    note: agents_must_not_sign_or_edit_docs_contributors
+  broader_program_relation: independent_from_zero_of_twenty_one_program_criteria
+
+issues:
+  5:
+    id: M04
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/5
+    title: Scheduler, process, and fork closure
+    status: in_progress
+    claim: local_semantic_slices_with_event_region_and_performance_gates_open
+    milestones: [M04]
+    progress_basis: accepted_required_gates_in_owned_milestones
+    progress:
+      complete: 4
+      total: 6
+      percent: 66.7
+  7:
+    id: M06
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7
+    title: Interfaces, virtual interfaces, modports, and clocking closure
+    status: in_progress
+    claim: local_vif_clocking_and_neighbor_slices_with_apb_gate_open
+    milestones: [M06]
+    progress_basis: accepted_required_gates_in_owned_milestones
+    progress:
+      complete: 3
+      total: 4
+      percent: 75.0
+  21:
+    id: A01
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/21
+    title: Prove upstream UVM package elaborates unmodified
+    status: in_progress
+    claim: vendored_concatenated_package_smoke_only
+    milestones: [M01, M03]
+    progress_basis: accepted_required_gates_in_owned_milestones
+    progress:
+      complete: 5
+      total: 6
+      percent: 83.3
+  39:
+    id: A19
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/39
+    title: Prove UVM_NO_DPI tutorial flow
+    status: in_progress
+    claim: basic_no_dpi_run_test_flow_only
+    milestones: [M01, M14, M17]
+    progress_basis: accepted_required_gates_in_owned_milestones
+    progress:
+      complete: 6
+      total: 9
+      percent: 66.7
+  40:
+    id: A20
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/40
+    title: Align verification dashboard and SystemVerilog test-suite coverage
+    status: in_progress
+    claim: compatibility_inventory_not_uvm_conformance
+
+lane:
+  id: uvm2020
+  command: make -C test_regress uvm2020
+  ci_suite: uvm2020
+  object_suffix: -uvm2020
+  scope: historical_original_pr_41_evidence_accounting
+  controls:
+    test_jobs: 1
+    build_jobs: 1
+    output_groups: 6
+    clean_before: complete_test_object_directory
+    inherited_jobserver: ignored_when_build_jobs_explicit
+    stale_seed_name: interrupted.gch
+    stale_seed_directories: 3
+    defaults_changed: false
+  tests:
+    - test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py
+    - test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py
+    - test_regress/t/t_uvm_dpi_v2020_3_1.py
+  evidence:
+    - HARNESS-FANOUT-0001
+    - HARNESS-CLEAN-0001
+    - UVM-PKG-NODPI-0001
+    - UVM-PKG-DPI-0001
+    - UVM-DPI-HDL-0001
+    - HARNESS-DEFAULT-0001
+  progress:
+    complete: 11
+    total: 11
+    percent: 100.0
+
+focused_lane:
+  id: named-disable-current
+  command: make -C test_regress named-disable
+  ci_suite: named-disable
+  object_suffix: -named-disable
+  scope: focused_named_disable_process_technical_closure
+  contract_source:
+    - test_regress/Makefile::NAMED_DISABLE_EXISTING_TESTS
+    - test_regress/Makefile::NAMED_DISABLE_COMPILER_TESTS
+  controls:
+    test_jobs: 1
+    build_jobs: 1
+    clean_before: atomic_quarantine_of_complete_test_object_directory
+    stale_seed_name: interrupted.gch
+    scenarios: [vlt, vltmt]
+    stale_seed_directories: 30
+    defaults_changed: false
+  tests:
+    - test_regress/t/t_disable_fork_launch.py
+    - test_regress/t/t_disable_fork_nested.py
+    - test_regress/t/t_disable_task_by_name.py
+    - test_regress/t/t_disable_task_join.py
+    - test_regress/t/t_disable_task_simple.py
+    - test_regress/t/t_named_activation_forever.py
+    - test_regress/t/t_named_activation_runtime.py
+    - test_regress/t/t_named_activation_suspension.py
+    - test_regress/t/t_process_context_fork.py
+    - test_regress/t/t_process_tree_ownership.py
+    - test_regress/t/t_uvm_lrm_process_kill_self_tree.py
+    - test_regress/t/t_disable_named_activation.py
+    - test_regress/t/t_disable_named_control.py
+    - test_regress/t/t_disable_named_interface_unsup.py
+    - test_regress/t/t_disable_named_recursive.py
+  current_validation:
+    status: pass
+    local:
+      status: pass
+      command: >-
+        time -p env VERILATOR_ROOT=/tmp/pr41-exact-build.eR6mjg/repo
+        PYTHONPATH=/tmp/uvm_run_shim
+        PATH=/tmp/uvm_run_shim:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        PYTHONUNBUFFERED=1 make -C test_regress named-disable
+      lane_command: make -C test_regress named-disable
+      validation_worktree_revision: c1dab4a4f5961fe5e6c61ed57d539d576cecca0d
+      validation_src_tree: e071957ca32d0b2c0a8210747bdc4d1faa818d91
+      compiler_source_revision: c1dab4a4f5961fe5e6c61ed57d539d576cecca0d
+      compiler_source_src_tree: e071957ca32d0b2c0a8210747bdc4d1faa818d91
+      compiler_source_matches_validation_src: true
+      worktree_clean: true
+      compiler:
+        path: /tmp/pr41-exact-build.eR6mjg/repo/bin/verilator_bin
+        version: Verilator 5.051 devel rev vUNKNOWN-built20260809-c1dab4a4f
+        sha256: 37551f1957a2a31f5f321ad69cdb39e05e97c1f4d2583834a33528d9714302bb
+      result:
+        tests: 15
+        scenarios: [vlt, vltmt]
+        passed: 30
+        failed: 0
+        total: 30
+        driver_elapsed: "22:03"
+        real_seconds: 1324.11
+        user_seconds: 1051.40
+        system_seconds: 241.91
+      cleanup:
+        status: pass
+        sentinels_seeded: 30
+        sentinels_removed: 30
+    ci:
+      status: pass
+      source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+      source_head_tree: 469066ed27dc53a0977f7131a6ffd0d30ce71879
+      tested_synthetic_merge_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+      required_events: [push, pull_request]
+      runs:
+        push:
+          status: pass
+          event: push
+          workflow: build-test
+          workflow_run_id: 31311244235
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235
+          tested_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          job_id: 93239581011
+          job_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235/job/93239581011
+          context: Test | ubuntu-26.04 | gcc | named-disable
+          command: make -C test_regress named-disable
+          result:
+            tests: 15
+            scenarios: [vlt, vltmt]
+            passed: 30
+            failed: 0
+            total: 30
+            elapsed: "1:36"
+          cleanup:
+            status: pass
+            sentinels_seeded: 30
+            sentinels_removed: 30
+            postcheck: pass
+        pull_request:
+          status: pass
+          event: pull_request
+          workflow: build-test
+          workflow_run_id: 31311246321
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321
+          source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          tested_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+          job_id: 93239545832
+          job_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321/job/93239545832
+          context: Test | ubuntu-26.04 | gcc | named-disable
+          command: make -C test_regress named-disable
+          result:
+            tests: 15
+            scenarios: [vlt, vltmt]
+            passed: 30
+            failed: 0
+            total: 30
+            elapsed: "1:37"
+          cleanup:
+            status: pass
+            sentinels_seeded: 30
+            sentinels_removed: 30
+            postcheck: pass
+      note: exact_head_push_and_pull_request_named_disable_jobs_passed
+  support_envelope:
+    supported:
+      - scalar_hierarchical_module_paths_and_class_object_receivers
+      - ordinary_virtual_class_task_families
+      - pure_virtual_class_task_families
+      - parameterized_virtual_class_task_families
+    explicit_unsupported:
+      - interface_class_task_disable
+    pre_existing_unsupported:
+      - generate_scope_paths
+      - instance_and_cell_array_paths
+    claim_boundary: >-
+      The focused lane validates sequential named begin/task cancellation inside
+      this envelope; it does not establish complete IEEE 1800 or UVM support.
+
+expanded_lane:
+  id: uvm2020-current
+  command: make -C test_regress uvm2020
+  object_suffix: -uvm2020
+  scope: current_twenty_test_makefile_contract
+  contract_source: test_regress/Makefile::UVM2020_TESTS
+  controls:
+    test_jobs: 1
+    build_jobs: 1
+    output_groups: 6
+    clean_before: atomic_quarantine_of_complete_test_object_directory
+    inherited_jobserver: ignored_when_build_jobs_explicit
+    stale_seed_name: interrupted.gch
+    stale_seed_directories: 20
+    defaults_changed: false
+  tests:
+    - test_regress/t/t_uvm_lrm_sched_wait_zero.py
+    - test_regress/t/t_uvm_lrm_process_kill_tree.py
+    - test_regress/t/t_uvm_lrm_process_kill_self_tree.py
+    - test_regress/t/t_uvm_lrm_process_kill_self_zero.py
+    - test_regress/t/t_uvm_lrm_process_kill_function.py
+    - test_regress/t/t_uvm_lrm_process_kill_wait_zero.py
+    - test_regress/t/t_process_context_fork.py
+    - test_regress/t/t_process_fork_finished.py
+    - test_regress/t/t_process_phase_teardown.py
+    - test_regress/t/t_process_self_kill_ctor.py
+    - test_regress/t/t_process_self_kill_initial.py
+    - test_regress/t/t_timing_finish.py
+    - test_regress/t/t_finish_stops_nonfinal.py
+    - test_regress/t/t_clocking_virtual.py
+    - test_regress/t/t_uvm_core_factory_basic.py
+    - test_regress/t/t_uvm_config_vif_clocking.py
+    - test_regress/t/t_uvm_core_phasing.py
+    - test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py
+    - test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py
+    - test_regress/t/t_uvm_dpi_v2020_3_1.py
+  current_validation:
+    status: pass
+    local:
+      status: pass
+      command: >-
+        time -p env VERILATOR_ROOT=/tmp/pr41-validated.zZ2zfS/repo
+        VERILATOR_BIN=/tmp/pr41-coroutine-return.JfE1Cy/verilator_bin_fixed
+        PYTHONPATH=/tmp/uvm_run_shim
+        PATH=/tmp/uvm_run_shim:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        make -C test_regress uvm2020
+      lane_command: make -C test_regress uvm2020
+      validation_worktree_revision: c1dab4a4f5961fe5e6c61ed57d539d576cecca0d
+      environment:
+        VERILATOR_ROOT: /tmp/pr41-validated.zZ2zfS/repo
+        VERILATOR_BIN: /tmp/pr41-coroutine-return.JfE1Cy/verilator_bin_fixed
+        PYTHONPATH: /tmp/uvm_run_shim
+        PATH: /tmp/uvm_run_shim:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      compiler:
+        path: /tmp/pr41-coroutine-return.JfE1Cy/verilator_bin_fixed
+        version: >-
+          Verilator 5.051 devel rev
+          vUNKNOWN-built20260809-fa6fd2c68 (mod)
+        sha256: e52a7a32fe54127f6a4a37cb315bfd2d1e6b1c998d2180184f02c2b357073e62
+      result:
+        tests: 20
+        scenarios: [vlt]
+        passed: 20
+        failed: 0
+        total: 20
+        driver_elapsed: "80:15"
+        real_seconds: 4819.25
+        user_seconds: 3761.18
+        system_seconds: 998.74
+      cleanup:
+        status: pass
+        sentinels_seeded: 20
+        sentinels_removed: 20
+        preflight_symlink_safety: pass
+        postcheck: "uvm2020: stale-artifact cleanup PASSED"
+    ci:
+      status: pass
+      source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+      source_head_tree: 469066ed27dc53a0977f7131a6ffd0d30ce71879
+      tested_synthetic_merge_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+      required_events: [push, pull_request]
+      runs:
+        push:
+          status: pass
+          event: push
+          workflow: build-test
+          workflow_run_id: 31311244235
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235
+          tested_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          job_id: 93239580961
+          job_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311244235/job/93239580961
+          context: Test | ubuntu-26.04 | gcc | uvm2020
+          command: make -C test_regress uvm2020
+          result:
+            tests: 20
+            scenarios: [vlt]
+            passed: 20
+            failed: 0
+            total: 20
+            elapsed: "13:12"
+          phase_teardown_stress:
+            status: pass
+            executions: 1
+            phases: 1000
+            winners: 1000
+            cleanups: 1000
+          cleanup:
+            status: pass
+            preflight_symlink_safety: pass
+            sentinels_seeded: 20
+            sentinels_removed: 20
+            postcheck: pass
+        pull_request:
+          status: pass
+          event: pull_request
+          workflow: build-test
+          workflow_run_id: 31311246321
+          workflow_run_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321
+          source_head_revision: ea172f63c5ddab12a5ca032e119b2f1a95b4e71e
+          tested_revision: 19ca7867bdff8fc60c35e11132d37b88ab2df1c5
+          job_id: 93239545848
+          job_url: >-
+            https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31311246321/job/93239545848
+          context: Test | ubuntu-26.04 | gcc | uvm2020
+          command: make -C test_regress uvm2020
+          result:
+            tests: 20
+            scenarios: [vlt]
+            passed: 20
+            failed: 0
+            total: 20
+            elapsed: "13:03"
+          phase_teardown_stress:
+            status: pass
+            executions: 1
+            phases: 1000
+            winners: 1000
+            cleanups: 1000
+          cleanup:
+            status: pass
+            preflight_symlink_safety: pass
+            sentinels_seeded: 20
+            sentinels_removed: 20
+            postcheck: pass
+      note: exact_head_push_and_pull_request_twenty_test_jobs_passed
+  historical_fifteen_test_evidence:
+    scope: historical_only_not_the_current_makefile_contract
+    local_result:
+      status: pass
+      passed: 15
+      failed: 0
+      elapsed: "14:27"
+      sentinels_removed: 15
+      ref: validation.local.runs.historical_fifteen_test_lane
+    ci_result:
+      status: pass
+      passed: 15
+      failed: 0
+      elapsed: "6:00"
+      ref: validation.ci.runs.historical_fifteen_test_lane
+
+evidence:
+  HARNESS-FANOUT-0001:
+    claim: explicit test and generated-build fanout remain one
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.integrated_seeded_lane
+          - validation.local.runs.parent_jobserver
+      ci:
+        required: true
+        status: pass
+        refs:
+          - validation.ci.runs.historical_fifteen_test_lane
+  HARNESS-CLEAN-0001:
+    claim: complete suffixed object directories are removed before attempts
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.integrated_seeded_lane
+      ci:
+        required: true
+        status: pass
+        refs:
+          - validation.ci.runs.historical_fifteen_test_lane
+  UVM-PKG-NODPI-0001:
+    claim: vendored concatenated UVM 2020.3.1 no-DPI package hello
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.integrated_seeded_lane
+      ci:
+        required: true
+        status: pass
+        refs:
+          - validation.ci.runs.historical_fifteen_test_lane
+  UVM-PKG-DPI-0001:
+    claim: vendored concatenated UVM 2020.3.1 DPI package hello
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.integrated_seeded_lane
+      ci:
+        required: true
+        status: pass
+        refs:
+          - validation.ci.runs.historical_fifteen_test_lane
+  UVM-DPI-HDL-0001:
+    claim: UVM 2020.3.1 DPI HDL API smoke
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.integrated_seeded_lane
+      ci:
+        required: true
+        status: pass
+        refs:
+          - validation.ci.runs.historical_fifteen_test_lane
+  HARNESS-DEFAULT-0001:
+    claim: omitting the new options preserves automatic fanout and object reuse
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.default_policy
+      ci:
+        required: false
+        status: not_required
+        refs: []
+  LOCAL-SOURCE-BUILD-0001:
+    claim: full source build and exact final changed-translation-unit relink completed
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.source_build
+          - validation.local.runs.current_exact_head_build
+          - validation.local.runs.post_review_timing_translation_unit
+  LOCAL-TRACKER-MANIFEST-0001:
+    claim: tracker schema, frozen manifest, and checker-derived dashboard validate locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.tracker_and_manifest
+  LOCAL-UVM-SMOKE-0001:
+    claim: three existing package and DPI smoke tests pass locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.integrated_seeded_lane
+  LOCAL-WAIT-ZERO-0001:
+    claim: wait-zero reduction and eleven named scheduler neighbors pass locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.wait_zero_slice
+          - validation.local.runs.final_boundary_smoke
+  LOCAL-FIRST-BLOCKERS-0001:
+    claim: three finish tests and the reduced virtual-clocking test pass locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.first_blocker_slice
+  LOCAL-PROCESS-KILL-0001:
+    claim: recursive, self, wait-zero, and function kill reductions plus neighbors pass locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.process_kill_focused
+          - validation.local.runs.process_kill_neighbors
+          - validation.local.runs.process_kill_notiming
+          - validation.local.runs.process_kill_function
+          - validation.local.runs.process_kill_wait_zero
+          - validation.local.runs.final_boundary_smoke
+          - validation.local.runs.process_return_commit_focused
+          - validation.local.runs.post_review_kill_boundaries
+  LOCAL-FACTORY-0001:
+    claim: expanded UVM factory override, creation, and type API test passes locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.factory_expanded
+          - validation.local.runs.process_return_jump_scope_focused
+  LOCAL-UVM-VIF-CLOCKING-0001:
+    claim: UVM config DB propagates typed driver and monitor virtual interfaces through clocking blocks
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.uvm_vif_clocking
+          - validation.local.runs.historical_fifteen_test_lane
+  LOCAL-UVM-PHASING-0001:
+    claim: UVM phasing, objections, and phase-process cleanup pass locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.uvm_core_phasing
+          - validation.local.runs.historical_fifteen_test_lane
+  LOCAL-VIF-NEIGHBORS-0001:
+    claim: sub-interface and virtual-interface member-trigger neighbors pass locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.vif_process_neighbors
+  LOCAL-CLEAN-SYMLINK-SAFETY-0001:
+    claim: clean-before rejects symlinked ancestors and seed files without modifying targets
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.clean_before_symlink_safety
+  LOCAL-LANE-CONTRACT-0001:
+    claim: historical clean and capped fifteen-test lane contract passed locally
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.historical_fifteen_test_lane
+          - validation.local.runs.default_policy
+  FULL-BASELINE-0001:
+    claim: all 72 frozen entries receive reproducible dispositions in one capped clean run
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.full_baseline
+  EXPANDED-UVM-LANE-0001:
+    claim: historical fifteen-test semantic and minimal-UVM lane passed locally and in CI
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - validation.local.runs.historical_fifteen_test_lane
+      ci:
+        required: true
+        status: pass
+        refs:
+          - validation.ci.runs.historical_fifteen_test_lane
+
+milestones:
+  M00:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/1
+    title: Source-tree build and reproducible baseline
+    status: pass
+    gates:
+      M00-G01-SOURCE-BUILD:
+        title: Source-tree build completes
+        status: pass
+        evidence: [LOCAL-SOURCE-BUILD-0001]
+      M00-G02-TRACKER-MANIFEST:
+        title: Tracker schema and compatibility manifest validate
+        status: pass
+        evidence: [LOCAL-TRACKER-MANIFEST-0001]
+      M00-G03-FULL-BASELINE:
+        title: Full frozen compatibility inventory receives reproducible dispositions
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      M00-G04-DASHBOARD:
+        title: Allowed-state dashboard is reproducible
+        status: pass
+        evidence: [LOCAL-TRACKER-MANIFEST-0001]
+  M01:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/2
+    title: Existing UVM smoke baseline
+    status: pass
+    gates:
+      M01-G01-LOCAL-SMOKE:
+        title: Existing three-test UVM smoke passes locally
+        status: pass
+        evidence: [LOCAL-UVM-SMOKE-0001]
+      M01-G02-PR-CI:
+        title: Original clean lane passes canonical CI
+        status: pass
+        evidence:
+          - HARNESS-FANOUT-0001
+          - HARNESS-CLEAN-0001
+          - UVM-PKG-NODPI-0001
+          - UVM-PKG-DPI-0001
+          - UVM-DPI-HDL-0001
+      M01-G03-EXPANDED-LANE:
+        title: Expanded lane completes locally without unresolved failures
+        status: pass
+        evidence: [LOCAL-LANE-CONTRACT-0001]
+  M02:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/3
+    title: IEEE 1800 P0 semantic audit
+    status: in_progress
+    gates:
+      M02-G01-WAIT-ZERO:
+        title: Constant-false wait and scheduler neighbors pass
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      M02-G02-FINISH-CLOCKING:
+        title: Finish audit and reduced virtual clocking pass
+        status: pass
+        evidence: [LOCAL-FIRST-BLOCKERS-0001]
+      M02-G03-PROCESS-KILL:
+        title: Recursive process kill and confirmed neighbors pass
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      M02-G04-P0-MATRIX:
+        title: Every P0 clause has a reduced result and reference disposition
+        status: pending
+        evidence: []
+  M03:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/4
+    title: UVM 1800.2 API audit
+    status: in_progress
+    gates:
+      M03-G01-PACKAGE-SMOKE:
+        title: Existing package and DPI smokes pass locally
+        status: pass
+        evidence: [LOCAL-UVM-SMOKE-0001]
+      M03-G02-FACTORY-API:
+        title: Expanded factory API reduction passes locally
+        status: pass
+        evidence: [LOCAL-FACTORY-0001]
+      M03-G03-P0-API-INVENTORY:
+        title: Every P0 UVM API category has a minimal result state
+        status: pending
+        evidence: []
+  M04:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/5
+    title: Scheduler, process, and fork closure
+    status: in_progress
+    gates:
+      M04-G01-WAIT:
+        title: Constant-false wait semantics pass
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      M04-G02-FINISH:
+        title: Finish termination audit passes
+        status: pass
+        evidence: [LOCAL-FIRST-BLOCKERS-0001]
+      M04-G03-KILL:
+        title: Recursive process kill slice passes
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      M04-G04-UVM-PHASING:
+        title: UVM phasing, objections, and phase kill close
+        status: pass
+        evidence: [LOCAL-UVM-PHASING-0001]
+      M04-G05-EVENT-REGIONS:
+        title: Required event-region semantics receive closure evidence
+        status: pending
+        evidence: []
+      M04-G06-RTL-PERFORMANCE:
+        title: RTL fast-path performance is preserved against a reproducible baseline
+        status: pending
+        evidence: []
+  M05:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/6
+    title: Class, factory, and static initialization closure
+    status: in_progress
+    gates:
+      M05-G01-FACTORY:
+        title: Expanded factory override and creation API passes
+        status: pass
+        evidence: [LOCAL-FACTORY-0001]
+      M05-G02-CLASS-STATIC-CLOSURE:
+        title: Class identity and static initialization closure completes
+        status: pending
+        evidence: []
+      M05-G03-CANONICAL-CI:
+        title: Factory and class closure pass canonical CI
+        status: pending
+        evidence: [EXPANDED-UVM-LANE-0001]
+        note: >-
+          The factory slice passes the canonical lane, but class/static
+          closure remains open in M05-G02 and has no canonical-CI proof.
+  M06:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7
+    title: Interfaces, virtual interfaces, modports, and clocking closure
+    status: in_progress
+    gates:
+      M06-G01-REDUCED-CLOCKING:
+        title: Reduced virtual clocking drive/sample test passes
+        status: pass
+        evidence: [LOCAL-FIRST-BLOCKERS-0001]
+      M06-G02-UVM-VIF:
+        title: UVM config DB virtual-interface clocking flow passes
+        status: pass
+        evidence: [LOCAL-UVM-VIF-CLOCKING-0001]
+      M06-G03-SUBINTERFACE-TRIGGERS:
+        title: Sub-interface access and virtual-interface member triggers pass
+        status: pass
+        evidence: [LOCAL-VIF-NEIGHBORS-0001]
+      M06-G04-APB-CYCLES:
+        title: APB setup/access cycles pass through protocol drivers and monitors
+        status: pending
+        evidence: []
+  M07:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8
+    title: Config/resource DB and component flow
+    status: not_started
+    gates:
+      M07-G01-CLOSURE:
+        title: Config/resource DB and component flow acceptance passes
+        status: pending
+        evidence: []
+  M08:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/9
+    title: TLM and sequence flow
+    status: not_started
+    gates:
+      M08-G01-CLOSURE:
+        title: TLM and sequence handshake acceptance passes
+        status: pending
+        evidence: []
+  M09:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10
+    title: Constrained-random sequence items
+    status: not_started
+    gates:
+      M09-G01-CLOSURE:
+        title: Deterministic constrained-random sequence-item acceptance passes
+        status: pending
+        evidence: []
+  M10:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11
+    title: Functional coverage from UVM classes
+    status: not_started
+    gates:
+      M10-G01-CLOSURE:
+        title: UVM class coverage, report, and merge acceptance passes
+        status: pending
+        evidence: []
+  M11:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/12
+    title: APB protocol environment
+    status: not_started
+    gates:
+      M11-G01-CLOSURE:
+        title: Active/passive APB environment acceptance passes
+        status: pending
+        evidence: []
+  M12:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/13
+    title: AXI-lite protocol environment
+    status: not_started
+    gates:
+      M12-G01-CLOSURE:
+        title: Active/passive AXI-lite environment acceptance passes
+        status: pending
+        evidence: []
+  M13:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/14
+    title: RAL frontdoor and predictor
+    status: not_started
+    gates:
+      M13-G01-CLOSURE:
+        title: RAL frontdoor, predictor, and built-in smoke acceptance passes
+        status: pending
+        evidence: []
+  M14:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/15
+    title: DPI/reference model and minimal VPI strategy
+    status: in_progress
+    gates:
+      M14-G01-LOCAL-DPI-SMOKE:
+        title: Existing DPI/no-DPI/HDL-DPI smokes pass locally
+        status: pass
+        evidence: [LOCAL-UVM-SMOKE-0001]
+      M14-G02-C-REFERENCE:
+        title: C reference-model scoreboard path passes
+        status: pending
+        evidence: []
+      M14-G03-VPI-BACKDOOR:
+        title: Minimal VPI/backdoor support or limitation is accepted
+        status: pending
+        evidence: []
+  M15:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16
+    title: SVA protocol profile
+    status: not_started
+    gates:
+      M15-G01-CLOSURE:
+        title: Practical APB and AXI-lite assertion profile passes
+        status: pending
+        evidence: []
+  M16:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/17
+    title: Synthetic SoC regression
+    status: not_started
+    gates:
+      M16-G01-CLOSURE:
+        title: Synthetic SoC acceptance regression passes
+        status: pending
+        evidence: []
+  M17:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18
+    title: Packaging, CI, and performance
+    status: in_progress
+    gates:
+      M17-G01-LOCAL-LANE:
+        title: Clean and capped original lane passes locally
+        status: pass
+        evidence: [LOCAL-LANE-CONTRACT-0001]
+      M17-G02-CANONICAL-CI:
+        title: Clean-checkout canonical CI lane passes
+        status: pass
+        evidence:
+          - HARNESS-FANOUT-0001
+          - HARNESS-CLEAN-0001
+      M17-G03-PERFORMANCE:
+        title: Reproducible performance dashboard is established
+        status: pending
+        evidence: []
+  M18:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/19
+    title: Advanced parity limits
+    status: not_started
+    gates:
+      M18-G01-DISPOSITION:
+        title: Advanced gaps are implemented or accepted as non-blocking limits
+        status: pending
+        evidence: []
+  M19:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/20
+    title: Competitive coverage closure and issue hygiene
+    status: in_progress
+    gates:
+      M19-G01-TRACKER-SCHEMA:
+        title: Machine-checked tracker and manifest validate
+        status: pass
+        evidence: [LOCAL-TRACKER-MANIFEST-0001]
+      M19-G02-ROADMAP-ALIGNMENT:
+        title: All public trackers and leaf issues are aligned
+        status: pending
+        evidence: []
+      M19-G03-CLAIM-LEVELS:
+        title: C0-C3 claim levels have complete proof paths
+        status: pending
+        evidence: []
+
+program:
+  criteria:
+    C01:
+      title: Unmodified Accellera UVM 2020.3.1 source flow
+      status: in_progress
+      milestones: [M01, M03]
+      evidence: [LOCAL-UVM-SMOKE-0001]
+    C02:
+      title: Tracker reaches complete or documented zero-blocker state
+      status: in_progress
+      milestones: [M00, M19]
+      evidence: [LOCAL-TRACKER-MANIFEST-0001]
+    C03:
+      title: All P0 IEEE 1800 reduced tests pass
+      status: in_progress
+      milestones: [M02]
+      evidence:
+        - LOCAL-WAIT-ZERO-0001
+        - LOCAL-FIRST-BLOCKERS-0001
+        - LOCAL-PROCESS-KILL-0001
+    C04:
+      title: Core UVM factory, reporting, phasing, DB, TLM, and sequence APIs pass
+      status: in_progress
+      milestones: [M03, M04, M05, M07, M08]
+      evidence:
+        - LOCAL-UVM-SMOKE-0001
+        - LOCAL-FACTORY-0001
+        - LOCAL-UVM-PHASING-0001
+        - LOCAL-UVM-VIF-CLOCKING-0001
+    C05:
+      title: Virtual interfaces propagate through config DB and config objects
+      status: in_progress
+      milestones: [M06, M07]
+      evidence: [LOCAL-FIRST-BLOCKERS-0001, LOCAL-UVM-VIF-CLOCKING-0001]
+    C06:
+      title: Clocking blocks work through virtual interfaces
+      status: in_progress
+      milestones: [M06]
+      evidence: [LOCAL-FIRST-BLOCKERS-0001, LOCAL-UVM-VIF-CLOCKING-0001]
+    C07:
+      title: Active and passive APB agent passes
+      status: not_started
+      milestones: [M11]
+      evidence: []
+    C08:
+      title: Active and passive AXI-lite agent passes
+      status: not_started
+      milestones: [M12]
+      evidence: []
+    C09:
+      title: Scalable AXI-style synthetic SoC smoke passes
+      status: not_started
+      milestones: [M16]
+      evidence: []
+    C10:
+      title: RAL frontdoor mirror and update pass
+      status: not_started
+      milestones: [M13]
+      evidence: []
+    C11:
+      title: RAL predictor passes
+      status: not_started
+      milestones: [M13]
+      evidence: []
+    C12:
+      title: Built-in RAL reset, access, and bit-bash smokes pass
+      status: not_started
+      milestones: [M13]
+      evidence: []
+    C13:
+      title: Constrained-random fixed-seed replay passes
+      status: not_started
+      milestones: [M09, M16]
+      evidence: []
+    C14:
+      title: Functional coverage from UVM classes passes
+      status: not_started
+      milestones: [M10]
+      evidence: []
+    C15:
+      title: Coverage report and merge pass
+      status: not_started
+      milestones: [M10, M17]
+      evidence: []
+    C16:
+      title: APB and AXI-lite protocol assertions pass
+      status: not_started
+      milestones: [M15]
+      evidence: []
+    C17:
+      title: DPI and no-DPI flows are tested and documented
+      status: in_progress
+      milestones: [M14]
+      evidence: [LOCAL-UVM-SMOKE-0001]
+    C18:
+      title: VPI and backdoor strategy is implemented or documented
+      status: not_started
+      milestones: [M14, M18]
+      evidence: []
+    C19:
+      title: Diagnostics provide useful source file, line, and context
+      status: not_started
+      milestones: [M17]
+      evidence: []
+    C20:
+      title: UVM 2020 user-facing selection flow exists
+      status: not_started
+      milestones: [M17]
+      evidence: []
+    C21:
+      title: Nightly synthetic SoC regression passes reproducibly
+      status: not_started
+      milestones: [M16, M17]
+      evidence: []
+
+baseline_inventory:
+  manifest: nodist/uvm2020_plan/baseline-tests.txt
+  status: pass
+  total_entries: 72
+  package_smoke_entries: 3
+  selected_language_regressions: 69
+  claim: mixed_compatibility_inventory_not_uvm_conformance
+  full_run_complete: true
+  result:
+    passed: 64
+    environment_failed: 1
+    dependency_skipped: 7
+    elapsed: "9:44"
+    semantic_pass_claim: false
+
+corpus:
+  L0:
+    title: Reduced SystemVerilog compatibility inventory
+    claim: selected_language_regressions_not_uvm_conformance
+    tests:
+      t_array_index_side:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_assigndly_dynamic:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_cast_stream:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_cast_string:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_class:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_class_extends:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_dead_varscope_uaf:
+        implemented: true
+        status: blocked
+        evidence: [FULL-BASELINE-0001]
+      t_class_extends:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_extends_param_scope:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_extern_typeref:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_func_arg_unused:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_init_order:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_member_shadow_type:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_method_str_literal:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_param_comparator:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_param_static:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_param_typedef:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_param_typedef2:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_static_member_sel:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_typedef:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_unsup_bad:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_class_virtual:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_constraint_global_nested_member:
+        implemented: true
+        status: blocked
+        evidence: [FULL-BASELINE-0001]
+      t_constraint_global_randMode:
+        implemented: true
+        status: blocked
+        evidence: [FULL-BASELINE-0001]
+      t_constraint_global_randmode_subobj:
+        implemented: true
+        status: blocked
+        evidence: [FULL-BASELINE-0001]
+      t_covergroup_embedded_unsup:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_display_class:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_display_enum_format:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_dpi_class_param:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_enum_param_class2:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_foreach_delete:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_foreach_sideeff_uvm:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_fork_none_var:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_func_arg_complex:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_func_no_paren:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_func_task_bad2:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_impure_cond_empty_if:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_opt_ifjumpgo:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_package_import_param:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_param_default_2:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_paramgraph_cloned_refdtype:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_preproc:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_process:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_queue_arg:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_queue_inherit_call:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_randc_extends:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_randomize:
+        implemented: true
+        status: blocked
+        evidence: [FULL-BASELINE-0001]
+      t_randomize_class_inherit_size_foreach:
+        implemented: true
+        status: blocked
+        evidence: [FULL-BASELINE-0001]
+      t_randomize_local_param:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_randomize_method_param:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_randomize_prepost_alone:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_randomize_prepost_super:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_randomize_shift_distribution:
+        implemented: true
+        status: blocked
+        evidence: [FULL-BASELINE-0001]
+      t_randomize_std_param_extends:
+        implemented: true
+        status: blocked
+        evidence: [FULL-BASELINE-0001]
+      t_randstate_func:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_recursive_definition:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_semaphore:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_sequence_unused:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_static_init_pkg_order:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_struct_cons_cast:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_time_passed:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_timing_nested_assignment_on_lhs:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_urandom:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_uvm_return_type:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_uvm_return_type2:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_uvm_return_type3:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_uvm_static_func1:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_uvm_typeof_type:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_virtual_interface_gen_for_ref:
+        implemented: true
+        status: pass
+        evidence: [FULL-BASELINE-0001]
+      t_uvm_lrm_sched_wait_zero:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_timing_wait1:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_timing_wait2:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_timing_wait3:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_wait:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_wait_const:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_wait_fork:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_interface_virtual_func_wait:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_fork_join_none_virtual:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_fork_join_none_wait_ev:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001]
+      t_timing_finish3:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001, LOCAL-FIRST-BLOCKERS-0001]
+      t_finish_stops_nonfinal:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-WAIT-ZERO-0001, LOCAL-FIRST-BLOCKERS-0001]
+      t_timing_finish:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-FIRST-BLOCKERS-0001]
+      t_clocking_virtual:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-FIRST-BLOCKERS-0001]
+      t_uvm_lrm_process_kill_tree:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_uvm_lrm_process_kill_self_tree:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_uvm_lrm_process_kill_self_zero:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_uvm_lrm_process_kill_function:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_uvm_lrm_process_kill_wait_zero:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_process_finished:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_process_fork:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_process_fork_block:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_process_kill:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_process_propagation:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_process_task:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_disable_fork1:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_disable_fork2:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_disable_fork3:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_disable_fork_nested:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_disable_task_join:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_fork_join_none_waiters:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_timing_fork_join:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+      t_process_notiming:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-PROCESS-KILL-0001]
+  L1:
+    title: Minimal UVM and package smoke inventory
+    claim: local_smoke_and_reduced_api_only
+    tests:
+      t_uvm_hello_all_v2020_3_1_nodpi:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-UVM-SMOKE-0001]
+      t_uvm_hello_all_v2020_3_1_dpi:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-UVM-SMOKE-0001]
+      t_uvm_dpi_v2020_3_1:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-UVM-SMOKE-0001]
+      t_uvm_core_factory_basic:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-FACTORY-0001]
+      t_uvm_config_vif_clocking:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-UVM-VIF-CLOCKING-0001]
+      t_uvm_core_phasing:
+        implemented: true
+        status: pass
+        evidence: [LOCAL-UVM-PHASING-0001]
+
+progress:
+  program:
+    complete: 0
+    total: 21
+    percent: 0.0
+  milestones:
+    complete: 2
+    total: 20
+    percent: 10.0
+  gates:
+    complete: 24
+    total: 46
+    percent: 52.2
+  lane:
+    complete: 11
+    total: 11
+    percent: 100.0
+  corpus:
+    planned: 108
+    implemented: 108
+    executed: 100
+    passed: 100
+    failed: 0
+    blocked: 8
+    execution_percent: 92.6
+    pass_percent: 100.0
+    verified_percent: 92.6
+
+validation:
+  scope: historical_records_only_not_current_head_validation
+  local:
+    date: 2026-07-16
+    timezone: America/Los_Angeles
+    base_revision: 703bb474d9ea45bff246fec43397cd7c7acaa0fa
+    source_state: shared_worktree_with_uncommitted_proposed_changes
+    environment:
+      os: Ubuntu 24.04.3 LTS
+      kernel: Linux 6.12.47 x86_64
+      compiler: g++ 13.3.0
+      python: 3.12.13
+      verilator: 5.051 devel
+    multiprocessing:
+      context: fork
+      status: pass
+      caveat: >-
+        The local sandbox blocks the AF_UNIX socket required by forkserver, so
+        an untracked sitecustomize shim selected fork. Canonical CI must use
+        the committed driver's normal forkserver context.
+    runs:
+      source_build:
+        status: pass
+        command: make -C src/obj_opt TGT=../../bin/verilator_bin -f ../Makefile_obj
+        target: bin/verilator_bin
+        top_level_diagnostic: >-
+          The optional debug build remains blocked in this image because the
+          system FlexLexer.h header is unavailable; the optimized compiler
+          used for every accepted run rebuilt successfully.
+      current_exact_head_build:
+        status: pass
+        revision: 703bb474d9ea45bff246fec43397cd7c7acaa0fa
+        source_tree: /tmp/verilator-head-703bb474
+        target: /tmp/verilator-head-703bb474/bin/verilator_bin
+        version: vUNKNOWN-built20260716-703bb474d
+        toolchain_prefix: /tmp/uvm-tools
+        checks:
+          - configured_with_autoconf_2_72_bison_3_8_2_and_flex_2_6_4
+          - complete_optimized_compiler_build
+          - exact_head_binary_used_for_focused_and_lane_runs
+        debug_build: not_run
+      post_review_timing_translation_unit:
+        status: pass
+        source: src/V3Timing.cpp
+        object: src/obj_opt/V3Timing.o
+        target: bin/verilator_bin
+        method: >-
+          Compiled the final V3Timing-only review edit with the established
+          optimized-object compiler flags, then relinked bin/verilator_bin
+          with the exact link command emitted by the optimized make recipe.
+        checks:
+          - final_translation_unit_compiled
+          - optimized_binary_relinked
+          - jump_block_return_temporary_scoped
+        full_regeneration_after_final_edit:
+          status: blocked
+          reason: local image lacks flex and the system FlexLexer.h header
+        relation_to_source_build: >-
+          The complete optimized source build above passed before this final
+          V3Timing-only edit; this record proves the exact edited translation
+          unit and relink without claiming a second complete regeneration.
+      tracker_and_manifest:
+        status: pass
+        commands:
+          - python3 -m py_compile nodist/uvm2020_plan/check_tracker.py
+          - python3 -m py_compile nodist/uvm2020_plan/baseline_runner.py
+          - python3 nodist/uvm2020_plan/baseline_runner.py validate
+          - python3 nodist/uvm2020_plan/check_tracker.py --format text
+        manifest_result: full=72 reduced=69 quick=8
+      static_checks:
+        status: pass
+        commands:
+          - python3 -m py_compile test_regress/driver.py
+          - python3 -m py_compile nodist/uvm2020_plan/check_cleanup_safety.py
+          - python3 -m py_compile test_regress/t/t_uvm_config_vif_clocking.py test_regress/t/t_uvm_core_phasing.py
+          - python3 nodist/uvm2020_plan/check_cleanup_safety.py
+          - python3 -m py_compile nodist/uvm2020_plan/baseline_runner.py
+          - python3 -m py_compile nodist/uvm2020_plan/check_tracker.py
+          - python3 nodist/uvm2020_plan/baseline_runner.py validate
+          - python3 nodist/uvm2020_plan/check_tracker.py --format text
+          - git diff --check
+        parser_rejections:
+          driver_build_jobs_zero: exit_2
+          seed_without_clean: exit_2
+          seed_not_basename: exit_2
+        safety_rejections:
+          symlinked_object_directory_ancestor: rejected
+          symlinked_seed_file: rejected
+          external_ancestor_target_preserved: true
+          external_seed_target_preserved: true
+      clean_before_symlink_safety:
+        status: pass
+        command: python3 nodist/uvm2020_plan/check_cleanup_safety.py
+        source_sha256: 577e8b4e17913e11fb3b330c891552f5d2e40760a7640d96fd7a5395525d4259
+        threat_model: preexisting_symlinks_not_concurrent_path_swaps_or_hard_links
+        checks:
+          - symlinked_object_directory_ancestor_rejected
+          - symlinked_seed_file_rejected
+          - external_ancestor_target_preserved
+          - external_seed_target_preserved
+          - dangling_seed_symlink_detected_by_make_postcheck
+      integrated_seeded_lane:
+        command: make -j8 -C test_regress uvm2020
+        status: pass
+        passed: 3
+        failed: 0
+        elapsed: "4:44"
+        seeded_directories: 3
+        sentinels_removed: 3
+        observed_build_jobs: 1
+        observed_output_groups: 6
+      default_policy:
+        test: test_regress/t/t_math_arith.py
+        invocations: 2
+        status: pass
+        automatic_build_jobs: 9
+        sentinel_retained: true
+      parent_jobserver:
+        parent_make_jobs: 8
+        requested_build_jobs: 1
+        observed_gmake_jobs: 1
+        status: pass
+      wait_zero_slice:
+        status: pass
+        passed: 12
+        failed: 0
+        scope: one_new_reduction_plus_eleven_named_neighbors
+        object_suffix: -uvm-wait-neighbors
+      first_blocker_slice:
+        status: pass
+        passed: 4
+        failed: 0
+        elapsed: "0:06"
+        tests:
+          - t_timing_finish.py
+          - t_timing_finish3.py
+          - t_finish_stops_nonfinal.py
+          - t_clocking_virtual.py
+      process_kill_focused:
+        status: pass
+        passed: 1
+        failed: 0
+        elapsed: "0:06"
+        test: t_uvm_lrm_process_kill_tree.py
+        pre_fix_reproduction: failed_as_expected_before_fix
+      process_kill_neighbors:
+        status: pass
+        passed: 25
+        failed: 0
+        skipped: 3
+        elapsed: "2:39"
+        test_jobs: 1
+        build_jobs: 1
+        clean_before: true
+        skip_reason: no_constraint_solver
+      process_kill_notiming:
+        status: pass
+        passed: 1
+        failed: 0
+        elapsed: "0:00"
+        test: t_process_notiming.py
+        expected_diagnostic_preserved: process::kill() requires --timing
+      process_kill_function:
+        status: pass
+        passed: 1
+        failed: 0
+        test: t_uvm_lrm_process_kill_function.py
+        checks: noncoroutine_void_and_value_return_unwind
+      process_kill_wait_zero:
+        status: pass
+        passed: 1
+        failed: 0
+        test: t_uvm_lrm_process_kill_wait_zero.py
+        checks: waiting_status_before_recursive_kill
+      final_boundary_smoke:
+        status: pass
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim python3 driver.py --jobs=1
+          --driver-build-jobs=1 --driver-clean-before
+          --obj-suffix=-final-review --vlt
+          t/t_uvm_lrm_process_kill_function.py
+          t/t_uvm_lrm_process_kill_wait_zero.py
+          t/t_uvm_lrm_sched_wait_zero.py
+        passed: 3
+        failed: 0
+        elapsed: "0:19"
+      process_rng_context_pre_fix:
+        status: fail
+        scope: nested_kill_callback_process_rng_context
+        observed: killer_process_rng_not_advanced
+        disposition: fixed_by_saving_and_restoring_current_process
+      process_return_commit_pre_fix:
+        status: fail
+        scope: self_kill_in_value_function_direct_assignment
+        observed: assignment_target_changed_before_cancellation_guard
+        disposition: >-
+          Fixed by staging the synthetic function return until after the
+          post-call killed check.
+      process_return_commit_focused:
+        status: pass
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim python3 driver.py --jobs=1
+          --driver-build-jobs=1 --driver-clean-before
+          --obj-suffix=-kill-ref-green --vlt
+          t/t_uvm_lrm_process_kill_function.py
+        passed: 1
+        failed: 0
+        elapsed: "0:07"
+        checks:
+          - synthetic_return_commit_deferred_until_post_call_killed_check
+          - assignment_condition_and_tail_side_effects_suppressed_after_self_kill
+          - real_ref_write_before_kill_preserved
+      post_review_kill_boundaries:
+        status: pass
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim python3 driver.py --jobs=1
+          --driver-build-jobs=1 --driver-clean-before
+          --obj-suffix=-post-review-final --vlt
+          t/t_uvm_lrm_process_kill_tree.py
+          t/t_uvm_lrm_process_kill_function.py
+        passed: 2
+        failed: 0
+        elapsed: "0:16"
+        checks:
+          - recursive_kill_restores_caller_process_rng
+          - noninlined_void_and_value_function_unwind
+          - synthetic_return_commit_deferred_until_post_call_killed_check
+          - assignment_condition_and_tail_side_effects_suppressed_after_self_kill
+          - real_ref_write_before_kill_preserved
+      process_return_jump_scope_pre_fix:
+        status: fail
+        scope: uvm_reg_frontdoor_atomic_unlock_in_full_lane
+        observed: generated_cpp_goto_crossed_nontrivial_return_temp_initialization
+        disposition: >-
+          Fixed by placing the temporary, redirected call, killed check, and
+          output commit inside an AstCLocalScope before the outer jump label.
+      process_return_jump_scope_focused:
+        status: pass
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim python3 driver.py --jobs=1
+          --driver-build-jobs=1 --driver-clean-before
+          --obj-suffix=-uvm-jump-scope-final --vlt
+          t/t_uvm_core_factory_basic.py
+        passed: 1
+        failed: 0
+        elapsed: "2:24"
+        checks:
+          - uvm_reg_frontdoor_atomic_unlock_cpp_compiles
+          - return_temp_call_check_and_commit_nested_before_jump_label
+          - factory_simulation_passes
+      factory_expanded:
+        status: pass
+        passed: 1
+        failed: 0
+        elapsed: "2:22"
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim python3 driver.py --jobs=1
+          --driver-build-jobs=1 --driver-clean-before
+          --obj-suffix=-uvm-factory-expanded --vlt
+          t/t_uvm_core_factory_basic.py
+      uvm_vif_clocking:
+        status: pass
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim python3 driver.py --jobs=1
+          --driver-build-jobs=1 --driver-clean-before
+          --obj-suffix=-uvm-reviewed --vlt
+          t/t_uvm_config_vif_clocking.py
+        passed: 1
+        failed: 0
+        elapsed: "3:01"
+        compiler: /tmp/verilator-head-703bb474/bin/verilator_bin
+        environment_ref: validation.local.runs.current_exact_head_build
+        checks:
+          - typed_driver_and_monitor_modports_propagate_through_uvm_config_db
+          - clocking_input_and_output_skews_preserve_exact_five_event_sequence
+          - three_exact_drive_and_sample_values
+          - zero_uvm_errors_or_fatals
+      uvm_core_phasing:
+        status: pass
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim python3 driver.py --jobs=1
+          --driver-build-jobs=1 --driver-clean-before
+          --obj-suffix=-phasing-order-safety-final --vlt
+          t/t_uvm_core_phasing.py
+        execution_root: /tmp/uvm2020-lane-703bb474-20260716a/test_regress
+        passed: 1
+        failed: 0
+        elapsed: "2:35"
+        compiler: /tmp/verilator-head-703bb474/bin/verilator_bin
+        environment_ref: validation.local.runs.current_exact_head_build
+        checks:
+          - build_connect_end_of_elaboration_start_run_extract_check_report_final_order
+          - run_ready_to_end_precedes_run_ended_callback
+          - objection_lifetime_from_0_to_10
+          - nested_background_descendant_executed_before_phase_cleanup
+          - recursive_phase_process_cleanup_prevented_later_side_effects
+          - zero_uvm_errors_or_fatals
+      vif_process_neighbors:
+        status: pass
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim python3 driver.py --jobs=1
+          --driver-build-jobs=1 --driver-clean-before
+          --obj-suffix=-uvm-new-neighbors --vlt <the tests listed below>
+        scope: >-
+          Twenty-eight process, fork, and named-disable tests plus nine
+          virtual-interface and clocking neighbors.
+        vif_clocking_tests:
+          - t_clocking_inout.py
+          - t_clocking_sched_timing.py
+          - t_clocking_virtual.py
+          - t_interface_modport.py
+          - t_interface_virtual_func_wait.py
+          - t_interface_virtual_modport_sel.py
+          - t_interface_virtual_sub_iface.py
+          - t_interface_virtual_timing.py
+          - t_virtual_interface_member_trigger.py
+        passed: 34
+        failed: 0
+        skipped: 3
+        elapsed: "4:12"
+        test_jobs: 1
+        build_jobs: 1
+        clean_before: true
+        skip_reason: no_constraint_solver
+      full_baseline:
+        status: pass
+        command: >-
+          PYTHONPATH=/tmp/uvm_run_shim
+          nodist/uvm2020_plan/baseline_runner.py run full
+        passed: 64
+        raw_failed: 1
+        skipped: 7
+        elapsed: "9:44"
+        test_jobs: 1
+        build_jobs: 1
+        clean_before: true
+        environment_blocked:
+          - t_class_dead_varscope_uaf: missing bin/verilator_bin_dbg and system FlexLexer.h
+        dependency_blocked:
+          count: 7
+          reason: no_constraint_solver
+        classification: >-
+          The accepted result is a complete per-test disposition baseline,
+          not a 72/72 semantic-pass claim. A diagnostic optimized-binary retry
+          of t_class_dead_varscope_uaf passed 1/1 but is not counted here.
+      stale_cleanup_hardening:
+        status: pass
+        initial_policy: delete_and_recreate
+        accepted_policy: atomic_rename_to_unique_quarantine_then_recreate
+        fail_closed_attempts:
+          - passed: 13
+            failed: 0
+            elapsed: "8:17"
+            cleanup_result: fail
+          - passed: 13
+            failed: 0
+            elapsed: "8:11"
+            cleanup_result: fail
+          - passed: 13
+            failed: 0
+            elapsed: "8:10"
+            cleanup_result: fail
+        disposition: >-
+          Each semantic attempt passed, but no cleanup credit was accepted
+          until child-local seeding and atomic quarantine made the active
+          object-directory assertion pass.
+      managed_workspace_rejections:
+        status: fail
+        attempts:
+          - result: fail
+            object_suffix: -uvm2020
+            observed: >-
+              The managed workspace restored 317 old generated files after
+              the clean-before empty-directory assertion. A restored PCH
+              dependency named obsolete uvm_shared specialization Tz23 while
+              every fresh generated source consistently named Tz36.
+          - result: fail
+            object_suffix: -uvm2020-accepted-20260716a
+            observed: >-
+              The managed workspace changed a freshly linked simulator from
+              mode 0755 to 0644 before execution.
+        credit: none
+        disposition: >-
+          Run the exact fixed-suffix Make target from an isolated /tmp
+          execution root whose test sources resolve to this proposed tree;
+          keep every generated object, PCH, dependency, and executable outside
+          the managed workspace overlay.
+      historical_thirteen_test_lane:
+        status: pass
+        command: PYTHONPATH=/tmp/uvm_run_shim make -j8 -C test_regress uvm2020
+        passed: 13
+        failed: 0
+        elapsed: "8:23"
+        test_jobs: 1
+        build_jobs: 1
+        output_groups: 6
+        seeded_directories: 13
+        sentinels_removed: 13
+        post_run_assertion: pass
+        cleanup_policy: atomic_quarantine
+      historical_fifteen_test_lane:
+        status: pass
+        command: PYTHONPATH=/tmp/uvm_run_shim make uvm2020
+        execution_root: /tmp/uvm2020-lane-703bb474-20260716a/test_regress
+        compiler_source_revision: 703bb474d9ea45bff246fec43397cd7c7acaa0fa
+        test_source_state: uncommitted_proposed_worktree_changes
+        test_source_files:
+          - test_regress/Makefile
+          - test_regress/driver.py
+          - test_regress/t/t_uvm_config_vif_clocking.py
+          - test_regress/t/t_uvm_config_vif_clocking.v
+          - test_regress/t/t_uvm_core_phasing.py
+          - test_regress/t/t_uvm_core_phasing.v
+        test_source_sha256:
+          test_regress/Makefile: c00daaf803d088537b8672a936ed6f9a26881ecfa4320130303d61512e1ceea0
+          test_regress/driver.py: df8336674ea8086b252f82483988960dd5399f5203e7c1532bb580a2cefb4b75
+          test_regress/t/t_uvm_config_vif_clocking.py: 514f35aa62d34ec5dc9e38ede0f2cb10fa9a08edb1f3cf18c07dfa4d35efb78c
+          test_regress/t/t_uvm_config_vif_clocking.v: e81f16affcbca37d934ebf0dfbdde1a45065413817a341678a9bc2f75123ad72
+          test_regress/t/t_uvm_core_phasing.py: 2bde3b69ef77f5b6d3d852fa67baba866a810e86b07c876c3a8974f739dc91b1
+          test_regress/t/t_uvm_core_phasing.v: 4eaa1632b291efb21209e3007ed0617526075d266a1a460069a42bf55d68e1bc
+        cleanup_safety_revalidated_after_dependency_hardening:
+          ref: validation.local.runs.clean_before_symlink_safety
+          status: pass
+        compiler: /tmp/verilator-head-703bb474/bin/verilator_bin
+        compiler_version: vUNKNOWN-built20260716-703bb474d
+        passed: 15
+        failed: 0
+        elapsed: "14:27"
+        test_jobs: 1
+        build_jobs: 1
+        output_groups: 6
+        object_suffix: -uvm2020
+        seeded_directories: 15
+        sentinels_removed: 15
+        post_run_assertion: pass
+        cleanup_policy: atomic_quarantine
+        generated_state_location: isolated_tmp_execution_root
+  ci:
+    scope: historical_fifteen_test_job_not_current_head_ci
+    status: pass
+    context: Test | ubuntu-26.04 | gcc | uvm2020
+    target_seeded_directories: 15
+    runs:
+      historical_fifteen_test_lane:
+        status: pass
+        workflow: build-test
+        workflow_run_id: 29489670514
+        workflow_run_url: >-
+          https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/29489670514
+        job_id: 87592850312
+        job_url: >-
+          https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/29489670514/job/87592850312
+        context: Test | ubuntu-26.04 | gcc | uvm2020
+        command: make -C test_regress uvm2020
+        tested_merge_revision: 80ca22d72275f3e1bd865c460b7a99868b88a38e
+        source_head_revision: 7170338f85745a68eeec557e6eb7e88f63a281fc
+        autoformat_child_revision: e887b700dcd7a3d1169f4d20bb5ac7bcc4d3967c
+        head_relation: source_head_to_direct_autoformat_only_child
+        recording_commit_policy: tracker_only_ci_skip
+        passed: 15
+        failed: 0
+        elapsed: "6:00"
+        test_jobs: 1
+        build_jobs: 1
+        output_groups: 6
+        seeded_directories: 15
+        sentinels_removed: 15
+        post_run_assertion: pass
+        workflow_run_status_at_record: in_progress
+        note: >-
+          The job ran GitHub's synthetic merge of source head 7170338f into
+          base f82f59a0. Implementation head e887b700 is its direct automatic
+          make-format child and changes only Python line wrapping; e887b700
+          itself is not claimed as tested. The following tracker-recording
+          commit changes evidence documentation only.
+
+dpi_boundary:
+  no_dpi_defines:
+    - UVM_HDL_NO_DPI
+    - UVM_REGEX_NO_DPI
+    - UVM_CMDLINE_NO_DPI
+  excluded_claims:
+    - hdl_backdoor
+    - c_reference_models
+    - full_regex
+    - full_command_line_helpers
+    - dpi_parity

@@ -99,58 +99,43 @@ public:
 // cleared, as we assume that either the coroutine has finished and deleted itself, or, if it got
 // suspended, another VlCoroutineHandle was created to manage it.
 
+class VlCoroutineHandleState;
+
 class VlCoroutineHandle final {
     VL_UNCOPYABLE(VlCoroutineHandle);
 
     // MEMBERS
     std::coroutine_handle<> m_coro;  // The wrapped coroutine handle
+    // Shared one-shot state only while a named activation can cancel this suspension.  Ordinary
+    // scheduler waits retain the raw-handle fast path above.
+    std::shared_ptr<VlCoroutineHandleState> m_statep;
     VlProcessRef m_process;  // Data of the suspended process, null if not needed
     VlFileLineDebug m_fileline;
+
+    // METHODS
+    void reset();
 
 public:
     // CONSTRUCTORS
     // Construct
     // non-explicit:
     // cppcheck-suppress noExplicitConstructor
-    VlCoroutineHandle(VlProcessRef process)
-        : m_coro{nullptr}
-        , m_process{process} {
-        if (m_process) m_process->state(VlProcess::WAITING);
-    }
-    VlCoroutineHandle(std::coroutine_handle<> coro, VlProcessRef process, VlFileLineDebug fileline)
-        : m_coro{coro}
-        , m_process{process}
-        , m_fileline{fileline} {
-        if (m_process) m_process->state(VlProcess::WAITING);
-    }
+    VlCoroutineHandle(VlProcessRef process);
+    VlCoroutineHandle(std::coroutine_handle<> coro, VlProcessRef process,
+                      VlFileLineDebug fileline);
     // Move the handle, leaving a nullptr
     // non-explicit:
     // cppcheck-suppress noExplicitConstructor
-    VlCoroutineHandle(VlCoroutineHandle&& moved)
-        : m_coro{std::exchange(moved.m_coro, nullptr)}
-        , m_process{std::exchange(moved.m_process, nullptr)}
-        , m_fileline{moved.m_fileline} {}
+    VlCoroutineHandle(VlCoroutineHandle&& moved);
     // Destroy if the handle isn't null
-    ~VlCoroutineHandle() {
-        // Usually these coroutines should get resumed; we only need to clean up if we destroy a
-        // model with some coroutines suspended
-        if (VL_UNLIKELY(m_coro)) {
-            m_coro.destroy();
-            if (m_process && m_process->state() != VlProcess::KILLED) {
-                m_process->state(VlProcess::FINISHED);
-            }
-        }
-    }
+    ~VlCoroutineHandle();
     // METHODS
     // Move the handle, leaving a null handle
-    auto& operator=(VlCoroutineHandle&& moved) {
-        m_coro = std::exchange(moved.m_coro, nullptr);
-        m_process = std::exchange(moved.m_process, nullptr);
-        m_fileline = moved.m_fileline;
-        return *this;
-    }
+    VlCoroutineHandle& operator=(VlCoroutineHandle&& moved);
+    // True if this scheduler entry still owns a live coroutine rather than a canceled tombstone.
+    bool pending() const;
     // Resume the coroutine if the handle isn't null and the process isn't killed
-    void resume();
+    bool resume();
 #ifdef VL_DEBUG
     void dump() const;
 #endif
@@ -186,8 +171,17 @@ public:
     // Returns the simulation time of the next time slot (aborts if there are no delayed
     // coroutines)
     uint64_t nextTimeSlot() const;
-    // Are there no delayed coroutines awaiting?
-    bool empty() const { return m_queue.empty() && m_zeroDelayed.empty(); }
+    // Are there no live delayed coroutines awaiting?  Canceled named activations leave shared
+    // one-shot tombstones in these containers until a later scheduler pass or model teardown.
+    bool empty() const {
+        for (const auto& delayed : m_queue) {
+            if (delayed.second.pending()) return false;
+        }
+        for (const VlCoroutineHandle& handle : m_zeroDelayed) {
+            if (handle.pending()) return false;
+        }
+        return true;
+    }
     // Are there coroutines to resume at the current simulation time?
     bool awaitingCurrentTime() const {
         return !m_context.gotFinish()
@@ -264,8 +258,17 @@ public:
     void moveToResumeQueue(const char* eventDescription = VL_UNKNOWN);
     // Moves all coroutines from m_awaiting to m_fired
     void ready(const char* eventDescription = VL_UNKNOWN);
-    // Are there no coroutines awaiting?
-    bool empty() const { return m_fired.empty() && m_awaiting.empty(); }
+    // Are there no live coroutines awaiting?  Canceled named activations can leave tombstones in
+    // either stage until the trigger naturally advances its queues.
+    bool empty() const {
+        for (const VlCoroutineHandle& handle : m_fired) {
+            if (handle.pending()) return false;
+        }
+        for (const VlCoroutineHandle& handle : m_awaiting) {
+            if (handle.pending()) return false;
+        }
+        return true;
+    }
 #ifdef VL_DEBUG
     void dump(const char* eventDescription) const;
 #endif
@@ -376,8 +379,33 @@ public:
 // wait statements.
 
 struct VlForever final {
+    // Owned by the surrounding coroutine frame.  Keep only a non-owning pointer here: either the
+    // registered suspension owns the process, or await_suspend() destroys the frame immediately.
+    VlProcess* m_processp = nullptr;
+
+    static bool suspendIfNamedActivation(std::coroutine_handle<> coro, VlProcess* processp,
+                                         void (*suspendForever)(std::coroutine_handle<>));
+
+    VlForever() = default;
+    explicit VlForever(const VlProcessRef& process)
+        : m_processp{process.get()} {}
+
     bool await_ready() const { return false; }  // Always suspend
-    void await_suspend(std::coroutine_handle<> coro) const { coro.destroy(); }
+    template <typename T_Promise>
+    void await_suspend(std::coroutine_handle<T_Promise> coro) const {
+        if (m_processp) {
+            m_processp->state(VlProcess::WAITING);
+            m_processp->leave();
+        }
+        const auto suspendForever = [](std::coroutine_handle<> erasedCoro) {
+            const std::coroutine_handle<T_Promise> typedCoro
+                = std::coroutine_handle<T_Promise>::from_address(erasedCoro.address());
+            typedCoro.promise().suspendForever();
+        };
+        if (suspendIfNamedActivation(coro, m_processp, suspendForever)) return;
+        coro.promise().suspendForever();
+        coro.destroy();
+    }
     void await_resume() const {}
 };
 
@@ -415,7 +443,7 @@ public:
         m_state->m_inited = true;
     }
     // Register process kill callback so killed fork branches still decrement join counter
-    void onKill(VlProcessRef process);
+    void onKill(VlProcessRef process) VL_MT_UNSAFE;
     // Called whenever any of the forked processes finishes. If the join counter reaches 0, the
     // main process gets resumed
     void done(const char* filename = VL_UNKNOWN, int lineno = 0) {
@@ -434,7 +462,11 @@ public:
             void await_suspend(std::coroutine_handle<> coro) {
                 state->m_susp = {coro, process, fileline};
             }
-            void await_resume() const {}
+            void await_resume() const {
+                if (process && process->state() != VlProcess::KILLED) {
+                    process->state(VlProcess::RUNNING);
+                }
+            }
         };
         return Awaitable{process, m_state, VlFileLineDebug{filename, lineno}};
     }
@@ -449,6 +481,9 @@ private:
     // TYPES
     struct VlPromise final {
         std::coroutine_handle<> m_continuation;  // Coroutine to resume after this one finishes
+        // Type-erased promise callback used to propagate a constant-false wait through an already
+        // suspended coroutine call chain before its frames are destroyed.
+        void (*m_suspendContinuationForever)(std::coroutine_handle<>) = nullptr;
         VlCoroutine* m_corop = nullptr;  // Pointer to the coroutine return object
 
         ~VlPromise();
@@ -464,10 +499,12 @@ private:
 
         void unhandled_exception() const { std::abort(); }
         void return_void() const {}
+        void suspendForever();
     };
 
     // MEMBERS
     VlPromise* m_promisep;  // The promise created for this coroutine
+    bool m_suspendedForever = false;  // Coroutine ended at a constant-false wait
 
 public:
     // TYPES
@@ -483,7 +520,8 @@ public:
     // Move. Update the pointers each time the return object is moved
     // cppcheck-suppress noExplicitConstructor
     VlCoroutine(VlCoroutine&& other)
-        : m_promisep{std::exchange(other.m_promisep, nullptr)} {
+        : m_promisep{std::exchange(other.m_promisep, nullptr)}
+        , m_suspendedForever{std::exchange(other.m_suspendedForever, false)} {
         if (m_promisep) m_promisep->m_corop = this;
     }
     ~VlCoroutine() {
@@ -493,9 +531,22 @@ public:
 
     // METHODS
     // Suspend the awaiter if the coroutine is suspended (the promise exists)
-    bool await_ready() const noexcept { return !m_promisep; }
+    bool await_ready() const noexcept { return !m_promisep && !m_suspendedForever; }
     // Set the awaiting coroutine as the continuation of the current coroutine
-    void await_suspend(std::coroutine_handle<> coro) { m_promisep->m_continuation = coro; }
+    template <typename T_Promise>
+    void await_suspend(std::coroutine_handle<T_Promise> coro) {
+        if (m_suspendedForever) {
+            coro.promise().suspendForever();
+            coro.destroy();
+        } else {
+            m_promisep->m_continuation = coro;
+            m_promisep->m_suspendContinuationForever = [](std::coroutine_handle<> erasedCoro) {
+                const std::coroutine_handle<T_Promise> typedCoro
+                    = std::coroutine_handle<T_Promise>::from_address(erasedCoro.address());
+                typedCoro.promise().suspendForever();
+            };
+        }
+    }
     void await_resume() const noexcept {}
 };
 

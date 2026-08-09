@@ -579,7 +579,9 @@ public:
 };
 class AstDisable final : public AstNodeStmt {
     // @astgen op1 := targetRefp : Optional[AstNodeExpr]  // Reference to link in V3LinkDot
+    // @astgen op2 := receiverp : Optional[AstNodeExpr]  // Object receiver for method task
     // @astgen ptr := m_targetp : Optional[AstNode]  // Task or block after V3LinkDot
+    string m_dotted;  // Hierarchical module-instance receiver of the target registry
 public:
     AstDisable(FileLine* fl, AstNodeExpr* targetRefp)
         : ASTGEN_SUPER_Disable(fl) {
@@ -590,6 +592,8 @@ public:
     void dump(std::ostream& str) const override;
     void targetp(AstNode* nodep) { m_targetp = nodep; }
     AstNode* targetp() const { return m_targetp; }
+    string dotted() const { return m_dotted; }
+    void dotted(const string& text) { m_dotted = text; }
     bool isBrancher() const override { V3ERROR_NA_RETURN(true); }  // Node removed early
 };
 class AstDisableFork final : public AstNodeStmt {
@@ -827,6 +831,7 @@ class AstJumpBlock final : public AstNodeStmt {
     // Parents:  {statement list}
     // Children: {statement list, with JumpGo below}
     // @astgen op1 := stmtsp : List[AstNode]
+    // @astgen op2 := namedActivationRegistryp : Optional[AstNodeExpr]
     VIsCached m_purity;  // Pure state
 public:
     // After construction must call ->labelp to associate with appropriate label

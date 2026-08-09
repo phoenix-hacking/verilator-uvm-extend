@@ -272,7 +272,7 @@ public:
     }
     template <typename T>
     string optionalProcArg(const T* const nodep) {
-        return (nodep && constructorNeedsProcess(nodep)) ? "vlProcess, " : "";
+        return (nodep && constructorNeedsProcess(nodep)) ? "vlProcess, vlActivation, " : "";
     }
     const AstCNew* getSuperNewCallRecursep(AstNode* const nodep) {
         // Get the super.new call
@@ -380,7 +380,7 @@ public:
             puts(EmitCUtil::prefixNameProtect(extp->classp()));
             puts("::init");
             if (constructorNeedsProcess(extp->classp())) {
-                puts("(vlProcess, vlSymsp");
+                puts("(vlProcess, vlActivation, vlSymsp");
             } else {
                 puts("(vlSymsp");
             }
@@ -442,7 +442,7 @@ public:
 
         // Instantiate a process class if it's going to be needed somewhere later
         nodep->forall([&](const AstNodeCCall* ccallp) -> bool {
-            if (ccallp->funcp()->needProcess()
+            if (ccallp->funcp()->needProcess() && !ccallp->newProcess() && !ccallp->processp()
                 && (ccallp->funcp()->isCoroutine() == VN_IS(ccallp->backp(), CAwait))) {
                 if (!nodep->needProcess() && !m_instantiatesOwnProcess) {
                     m_instantiatesOwnProcess = true;
@@ -454,12 +454,13 @@ public:
         if (m_instantiatesOwnProcess) {
             AstCStmt* const vlprocp = new AstCStmt{nodep->fileline()};
             vlprocp->add("VlProcessRef vlProcess = std::make_shared<VlProcess>();\n");
-            vlprocp->add("VlProcess::currentp(vlProcess.get());");
+            vlprocp->add("VlNamedActivationToken vlActivation;\n");
+            vlprocp->add("VlProcessContext __VprocessContext{vlProcess.get()};");
             nodep->stmtsp()->addHereThisAsNext(vlprocp);
         } else if (nodep->needProcess() && nodep->stmtsp()) {
             // Set current process so VlRNG() constructors in this function seed from it
             AstCStmt* const setProcessp = new AstCStmt{nodep->fileline()};
-            setProcessp->add("VlProcess::currentp(vlProcess.get());");
+            setProcessp->add("VlProcessContext __VprocessContext{vlProcess.get()};");
             nodep->stmtsp()->addHereThisAsNext(setProcessp);
         }
 
@@ -773,7 +774,8 @@ public:
             }
             putns(nodep, funcp->nameProtect());
         }
-        emitCCallArgs(nodep, nodep->selfPointerProtect(m_useSelfForThis), m_cfuncp->needProcess());
+        emitCCallArgs(nodep, nodep->selfPointerProtect(m_useSelfForThis),
+                      m_cfuncp->needProcess() || m_instantiatesOwnProcess);
     }
     void visit(AstCMethodCall* nodep) override {
         const AstCFunc* const funcp = nodep->funcp();
@@ -781,7 +783,7 @@ public:
         iterateConst(nodep->fromp());
         putnbs(nodep, "->");
         putns(funcp, funcp->nameProtect());
-        emitCCallArgs(nodep, "", m_cfuncp->needProcess());
+        emitCCallArgs(nodep, "", m_cfuncp->needProcess() || m_instantiatesOwnProcess);
     }
     void visit(AstCAwait* nodep) override {
         putns(nodep, "co_await ");
@@ -1244,7 +1246,14 @@ public:
         // Emit
         putns(nodep, "{\n");  // Make it visually obvious label jumps outside these
         VL_RESTORER(m_createdScopeHash);
+        if (nodep->namedActivationRegistryp()) {
+            puts("VlNamedActivationGuard __VactivationGuard = ");
+            iterateConst(nodep->namedActivationRegistryp());
+            puts(".activate(vlProcess);\n");
+            puts("VlNamedActivationToken vlActivation = __VactivationGuard.token();\n");
+        }
         iterateAndNextConstNull(nodep->stmtsp());
+        if (nodep->namedActivationRegistryp()) puts("[[maybe_unused]] ");
         puts("__Vlabel" + std::to_string(n) + ": ;\n");
         puts("}\n");
     }

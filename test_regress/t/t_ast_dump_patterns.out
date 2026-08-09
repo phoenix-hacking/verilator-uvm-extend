@@ -44,11 +44,11 @@ AST patterns with depth 1
             3 (CRESET):(w64)u[1:0]
             3 (NOT _:a/1):a/1
             3 (OR (CONST #A):a/a _:a/a):a/a
-            2 (CCALL [(VARREF):(w64)u[0:0], (VARREF):(w64)u[0:0]]):a/a
-            2 (CCALL [(VARREF):(w64)u[0:0]]):a/1
-            2 (CCALL [(VARREF):(w64)u[1:0], (VARREF):(w64)u[1:0]]):a/a
-            2 (CCALL [(VARREF):(w64)u[1:0]]):a/1
-            2 (CCALL []):a/1
+            2 (CCALL [(VARREF):(w64)u[0:0], (VARREF):(w64)u[0:0]] nil):a/a
+            2 (CCALL [(VARREF):(w64)u[0:0]] nil):a/1
+            2 (CCALL [(VARREF):(w64)u[1:0], (VARREF):(w64)u[1:0]] nil):a/a
+            2 (CCALL [(VARREF):(w64)u[1:0]] nil):a/1
+            2 (CCALL [] nil):a/1
             2 (CRESET):(G/str)
             2 (GT (CONST #A):a/a (VARREF):a/a):a/1
             2 (LT (CONST #A):a/a (VARREF):a/a):a/1
@@ -120,8 +120,8 @@ AST patterns with depth 2
             1 (CCAST (ARRAYSEL (VARREF):(w64)u[0:0] (CONST ZERO):a/a):b/b):a/1
             1 (CCAST (ARRAYSEL (VARREF):(w64)u[1:0] (CONST #A):a/a):b/b):a/1
             1 (CCAST (ARRAYSEL (VARREF):(w64)u[1:0] (CONST ZERO):a/a):b/b):a/1
-            1 (CCAST (CCALL [(VARREF):(w64)u[0:0]]):a/1):a/1
-            1 (CCAST (CCALL [(VARREF):(w64)u[1:0]]):a/1):a/1
+            1 (CCAST (CCALL [(VARREF):(w64)u[0:0]] nil):a/1):a/1
+            1 (CCAST (CCALL [(VARREF):(w64)u[1:0]] nil):a/1):a/1
             1 (CCAST (CCAST (VARREF):a/1):a/1):b/b
             1 (CCAST (CCAST _:a/b):a/b):c/c
             1 (CCAST (OR _:a/a _:a/b):a/c):a/c
@@ -186,8 +186,8 @@ AST patterns with depth 3
             1 (AND (CONST #A):a/a (NOT (CCAST (VARREF):a/1):a/1):a/1):a/1
             1 (CCAST (CCAST (OR _:a/a _:a/b):a/c):a/c):d/d
             1 (CCAST (OR (SHIFTL _:a/b (CONST #A):a/a):a/a (OR _:a/a _:a/1):a/b):a/c):a/c
-            1 (NOT (CCAST (CCALL [(VARREF):(w64)u[0:0]]):a/1):a/1):a/1
-            1 (NOT (CCAST (CCALL [(VARREF):(w64)u[1:0]]):a/1):a/1):a/1
+            1 (NOT (CCAST (CCALL [(VARREF):(w64)u[0:0]] nil):a/1):a/1):a/1
+            1 (NOT (CCAST (CCALL [(VARREF):(w64)u[1:0]] nil):a/1):a/1):a/1
             1 (OR (AND (CONST #A):a/a (ARRAYSEL (VARREF):(w64)u[0:0] (CONST ZERO):b/b):a/a):a/a (CCAST (CCAST (VARREF):b/1):b/1):a/a):a/a
             1 (OR (SHIFTL (NEQ _:a/b _:a/b):a/1 (CONST #A):a/a):a/a (NEQ (CCAST (VARREF):a/b):a/b (CCAST (VARREF):a/b):a/b):a/1):a/c
             1 (OR (SHIFTL (NEQ _:a/b _:a/b):a/c (CONST #A):a/a):a/a (OR (SHIFTL _:a/1 (CONST #B):a/a):a/a (NEQ _:a/b _:a/b):a/1):a/c):a/b
@@ -242,8 +242,8 @@ AST patterns with depth 4
             2 (SHIFTL (REDXOR (NEGATE (CCAST _:a/1):b/1):b/b):a/1 (CONST #A):a/a):a/a
             1 (AND (CONST #A):a/a (CCAST (SHIFTR (ARRAYSEL (VARREF):(w64)u[1:0] (CONST ZERO):a/a):b/b (CONST #A):a/a):b/b):a/1):a/1
             1 (AND (CONST #A):a/a (CCAST (SHIFTR (ARRAYSEL (VARREF):(w64)u[1:0] (CONST ZERO):a/a):b/b (CONST #B):a/a):b/b):a/1):a/1
-            1 (AND (CONST #A):a/a (NOT (CCAST (CCALL [(VARREF):(w64)u[0:0]]):a/1):a/1):a/1):a/1
-            1 (AND (CONST #A):a/a (NOT (CCAST (CCALL [(VARREF):(w64)u[1:0]]):a/1):a/1):a/1):a/1
+            1 (AND (CONST #A):a/a (NOT (CCAST (CCALL [(VARREF):(w64)u[0:0]] nil):a/1):a/1):a/1):a/1
+            1 (AND (CONST #A):a/a (NOT (CCAST (CCALL [(VARREF):(w64)u[1:0]] nil):a/1):a/1):a/1):a/1
             1 (CCAST (CCAST (OR (SHIFTL _:a/b (CONST #A):a/a):a/a (OR _:a/a _:a/1):a/b):a/c):a/c):d/d
             1 (CCAST (OR (SHIFTL (NEQ _:a/b _:a/b):a/c (CONST #A):a/a):a/a (OR (SHIFTL _:a/1 (CONST #B):a/a):a/a (NEQ _:a/b _:a/b):a/1):a/c):a/b):a/b
             1 (OR (SHIFTL (NEQ (CCAST (VARREF):a/b):a/b (CCAST (VARREF):a/b):a/b):a/1 (CONST #A):a/a):a/a (NEQ (CCAST (VARREF):a/b):a/b (CCAST (VARREF):a/b):a/b):a/1):a/c

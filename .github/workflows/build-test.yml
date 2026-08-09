@@ -196,6 +196,8 @@ jobs:
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: dist-vlt-1}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: dist-vlt-2}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: dist-vlt-3}
+          - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: named-disable}
+          - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: uvm2020}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: vltmt-0}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: vltmt-1}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: vltmt-2}
