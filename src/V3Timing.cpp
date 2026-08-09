@@ -382,7 +382,7 @@ class TimingSuspendableVisitor final : public VNVisitor {
                             m_underFork ? P_FORK : P_CALL};
 
         new V3GraphEdge{&m_procGraph, getNeedsProcDepVtx(nodep), getNeedsProcDepVtx(m_procp),
-                        P_CALL};
+                        m_underFork ? P_FORK : P_CALL};
 
         if (m_underFork) addFlags(nodep, T_NEEDS_PROC | T_ALLOCS_PROC);
 
@@ -442,7 +442,8 @@ public:
             // Find processes that'll allocate VlProcess
             if (hasFlags(depVtx.nodep(), T_FORCES_PROC)) {
                 propagateFlagsIf(&depVtx, T_FORCES_PROC, [&](const V3GraphEdge* e) -> bool {
-                    return !hasFlags(static_cast<DepVtx*>(e->fromp())->nodep(), T_ALLOCS_PROC);
+                    return e->weight() == P_FORK
+                           || !hasFlags(static_cast<DepVtx*>(e->fromp())->nodep(), T_ALLOCS_PROC);
                 });
             }
             // Mark nodes on paths between processes and statements that use VlProcess
