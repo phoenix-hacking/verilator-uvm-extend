@@ -330,25 +330,25 @@ module t;
 
     top_component = uvm_root::get().find("uvm_test_top");
     if (!$cast(top_test, top_component) || top_test == null)
-      $fatal(1, "could not recover the completed UVM TLM test")
+      $fatal(1, "could not recover the completed UVM TLM test");
     if (!top_test.check_seen || !top_test.report_seen)
-      $fatal(1, "mandatory check/report sentinels did not fire")
+      $fatal(1, "mandatory check/report sentinels did not fire");
     if (top_test.env.blocker.returned)
-      $fatal(1, "blocked empty-FIFO get survived run-phase teardown")
+      $fatal(1, "blocked empty-FIFO get survived run-phase teardown");
 
     recovery_item = new("recovery_item");
     recovery_item.item_id = 99;
     recovery_item.payload = 199;
     top_test.env.empty_fifo.write(recovery_item);
     if (!top_test.env.empty_fifo.can_get())
-      $fatal(1, "killed blocked-get registration was not reclaimed")
+      $fatal(1, "killed blocked-get registration was not reclaimed");
     if (!top_test.env.empty_fifo.try_get(recovered_item)
         || recovered_item != recovery_item)
-      $fatal(1, "empty FIFO was not reusable after blocked-get teardown")
+      $fatal(1, "empty FIFO was not reusable after blocked-get teardown");
 
     #5;
     if (top_test.env.blocker.returned)
-      $fatal(1, "blocked empty-FIFO get resumed after phase teardown")
+      $fatal(1, "blocked empty-FIFO get resumed after phase teardown");
 
     report_server = uvm_report_server::get_server();
     `checkd(report_server.get_severity_count(UVM_ERROR), 0)
