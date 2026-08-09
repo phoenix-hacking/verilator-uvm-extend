@@ -162,8 +162,7 @@ activeNamedActivationsLocked(const VlProcessRef& processp) VL_REQUIRES(s_process
 
 std::shared_ptr<VlCoroutineHandleState>
 registerNamedActivationSuspensionLocked(std::coroutine_handle<> coro, const VlProcessRef& processp,
-                                        VlFileLineDebug fileline)
-    VL_REQUIRES(s_processMutex) {
+                                        VlFileLineDebug fileline) VL_REQUIRES(s_processMutex) {
     const std::vector<std::shared_ptr<VlNamedActivationState>> activationps
         = activeNamedActivationsLocked(processp);
     if (activationps.empty()) return nullptr;
@@ -330,8 +329,7 @@ void VlNamedActivationRegistry::disableAll() VL_MT_UNSAFE {
         }
         VlProcess::disableProcessesLocked(rootProcessps, heldProcessps, forkSyncps);
         for (const std::shared_ptr<VlCoroutineHandleState>& suspensionp : suspensionps) {
-            VlCoroutineHandleContent content
-                = takeNamedActivationSuspensionLocked(suspensionp);
+            VlCoroutineHandleContent content = takeNamedActivationSuspensionLocked(suspensionp);
             if (!content.m_coro) continue;
             if (content.m_process && content.m_process->state() == VlProcess::KILLED) {
                 killedSuspensions.emplace_back(std::move(content));
@@ -340,9 +338,9 @@ void VlNamedActivationRegistry::disableAll() VL_MT_UNSAFE {
             }
         }
     }
-    // A killed frame can own the last fork-sync reference and must be gone before callbacks inspect
-    // the completed forest.  Callbacks may reenter generated code; canceled surviving owners resume
-    // only after every callback observes the aggregate killed state.
+    // A killed frame can own the last fork-sync reference and must be gone before callbacks
+    // inspect the completed forest.  Callbacks may reenter generated code; canceled surviving
+    // owners resume only after every callback observes the aggregate killed state.
     for (VlCoroutineHandleContent& content : killedSuspensions) {
         destroyCoroutine(std::move(content));
     }
@@ -421,9 +419,7 @@ void destroyCoroutine(VlCoroutineHandleContent content) {
     const std::coroutine_handle<> coro = std::exchange(content.m_coro, nullptr);
     const VlProcessRef process = std::move(content.m_process);
     coro.destroy();
-    if (process && process->state() != VlProcess::KILLED) {
-        process->state(VlProcess::FINISHED);
-    }
+    if (process && process->state() != VlProcess::KILLED) { process->state(VlProcess::FINISHED); }
 }
 
 bool resumeCoroutine(VlCoroutineHandleContent content) {
@@ -526,8 +522,8 @@ bool VlCoroutineHandle::resume() {
         }
         return resumeCoroutine(std::move(content));
     }
-    return resumeCoroutine(VlCoroutineHandleContent{std::exchange(m_coro, nullptr),
-                                                     std::exchange(m_process, nullptr), m_fileline});
+    return resumeCoroutine(VlCoroutineHandleContent{
+        std::exchange(m_coro, nullptr), std::exchange(m_process, nullptr), m_fileline});
 }
 
 #ifdef VL_DEBUG
@@ -556,7 +552,8 @@ void VlDelayScheduler::resume() {
         VlCoroutineHandle handle = std::move(m_queue.begin()->second);
         m_queue.erase(m_queue.begin());
         // A canceled entry may legitimately remain as an overdue tombstone.  Discard it before
-        // checking the next entry, but never let it hide a live process whose time slot was missed.
+        // checking the next entry, but never let it hide a live process whose time slot was
+        // missed.
         if (resumeTime < m_context.time() && handle.pending()) {
             VL_FATAL_MT(__FILE__, __LINE__, "",
                         "%Error: Encountered process that should've been resumed at an "

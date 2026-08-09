@@ -135,8 +135,8 @@ bool checkNamedActivationSuspension() {
         int liveCount = 0;
         bool canceledSeen = false;
         bool liveCanceledSeen = true;
-        VlCoroutine canceledWaiter = waitDelay(scheduler, 5, canceledOwnerp, guard.token(),
-                                               canceledCount, canceledSeen);
+        VlCoroutine canceledWaiter
+            = waitDelay(scheduler, 5, canceledOwnerp, guard.token(), canceledCount, canceledSeen);
         VlCoroutine liveWaiter = waitDelay(scheduler, 6, liveOwnerp, VlNamedActivationToken{},
                                            liveCount, liveCanceledSeen);
         registry.disableAll();
@@ -171,8 +171,8 @@ bool checkNamedActivationSuspension() {
     }
 
     // All three dynamic-trigger suspension stages use the same cancellation one-shot state.
-    for (const DynamicPhase phase : {DynamicPhase::EVALUATION, DynamicPhase::POST_UPDATE,
-                                     DynamicPhase::RESUMPTION}) {
+    for (const DynamicPhase phase :
+         {DynamicPhase::EVALUATION, DynamicPhase::POST_UPDATE, DynamicPhase::RESUMPTION}) {
         VlDynamicTriggerScheduler scheduler;
         VlNamedActivationRegistry registry;
         const VlProcessRef ownerp = std::make_shared<VlProcess>();
@@ -206,16 +206,15 @@ bool checkNamedActivationSuspension() {
         int ownerResumeCount = 0;
         bool destructionOrderSeen = false;
         bool canceledSeen = false;
-        VlCoroutine childWaiter
-            = waitKilledChild(childScheduler, childp, childFrameDestroyed);
+        VlCoroutine childWaiter = waitKilledChild(childScheduler, childp, childFrameDestroyed);
         VlCoroutine ownerWaiter = waitJoin(forkSync, ownerp, guard.token(), childFrameDestroyed,
                                            ownerResumeCount, destructionOrderSeen, canceledSeen);
         if (registry.stats().m_suspensions != 2) return fail("fork suspension registration");
         registry.disableAll();
-        if (!childFrameDestroyed || ownerResumeCount != 1 || !destructionOrderSeen
-            || !canceledSeen || childp->state() != VlProcess::KILLED
-            || ownerp->state() != VlProcess::RUNNING || registry.size() != 0
-            || registry.stats().m_suspensions != 0 || !childScheduler.empty()) {
+        if (!childFrameDestroyed || ownerResumeCount != 1 || !destructionOrderSeen || !canceledSeen
+            || childp->state() != VlProcess::KILLED || ownerp->state() != VlProcess::RUNNING
+            || registry.size() != 0 || registry.stats().m_suspensions != 0
+            || !childScheduler.empty()) {
             return fail("killed frame callback owner order");
         }
         context.time(100);
@@ -235,10 +234,9 @@ bool checkNamedActivationSuspension() {
         VlNamedActivationGuard innerGuard = innerRegistry.activate(ownerp);
         int resumeCount = 0;
         bool innerCanceledSeen = false;
-        VlCoroutine waiter = waitDelay(scheduler, 20, ownerp, innerGuard.token(), resumeCount,
-                                       innerCanceledSeen);
-        if (outerRegistry.stats().m_suspensions != 1
-            || innerRegistry.stats().m_suspensions != 1) {
+        VlCoroutine waiter
+            = waitDelay(scheduler, 20, ownerp, innerGuard.token(), resumeCount, innerCanceledSeen);
+        if (outerRegistry.stats().m_suspensions != 1 || innerRegistry.stats().m_suspensions != 1) {
             return fail("nested suspension registration");
         }
         innerRegistry.disableAll();
@@ -266,8 +264,8 @@ bool checkNamedActivationSuspension() {
         VlCoroutine waiter
             = waitDelay(scheduler, 30, ownerp, innerGuard.token(), resumeCount, canceledSeen);
         registry.disableAll();
-        if (resumeCount != 1 || !canceledSeen || !outerGuard.canceled()
-            || !innerGuard.canceled() || registry.size() != 0) {
+        if (resumeCount != 1 || !canceledSeen || !outerGuard.canceled() || !innerGuard.canceled()
+            || registry.size() != 0) {
             return fail("recursive activation cancellation");
         }
         context.time(30);
@@ -294,7 +292,6 @@ int main(int argc, char** argv) {
         contextp->time(topp->nextTimeSlot());
     }
 
-    std::printf("NAMED_ACTIVATION_SUSPENSION_SENTINEL pass=1 threads=%u\n",
-                contextp->threads());
+    std::printf("NAMED_ACTIVATION_SUSPENSION_SENTINEL pass=1 threads=%u\n", contextp->threads());
     return 0;
 }
