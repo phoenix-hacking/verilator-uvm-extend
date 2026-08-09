@@ -30,13 +30,13 @@ module t_uvm_resource_numeric_precedence;
 
     high_resource = new("numeric_precedence", "uvm_test_top.env");
     high_resource.write(200);
-    high_resource.precedence = 200;
     pool.set(high_resource);
+    high_resource.precedence = 200;
 
     low_resource = new("numeric_precedence", "uvm_test_top.env");
     low_resource.write(100);
-    low_resource.precedence = 100;
     pool.set(low_resource);
+    low_resource.precedence = 100;
 
     matches = pool.lookup_name(
         "uvm_test_top.env", "numeric_precedence",
