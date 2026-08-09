@@ -617,7 +617,8 @@ bool VlProcess::completedFork() const {
 
 void VlProcess::disableProcessesLocked(const std::vector<VlProcessRef>& rootProcessps,
                                        std::vector<VlProcessRef>& heldProcessps,
-                                       std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps) {
+                                       std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps)
+    VL_REQUIRES(s_processMutex) {
     std::vector<VlProcessRef> pendingProcessps = rootProcessps;
     std::set<VlProcess*> seenProcessps;
     while (!pendingProcessps.empty()) {
