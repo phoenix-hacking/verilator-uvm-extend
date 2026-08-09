@@ -406,14 +406,14 @@ module t;
         "uvm_test_top.other.*", "isolated_resource", 77);
 
     pool = uvm_resource_pool::get();
-    numeric_high = new("numeric_precedence", "uvm_test_top.env");
-    numeric_high.write(200);
-    pool.set(numeric_high);
-    numeric_high.precedence = 200;
     numeric_low = new("numeric_precedence", "uvm_test_top.env");
     numeric_low.write(100);
     pool.set(numeric_low);
     numeric_low.precedence = 100;
+    numeric_high = new("numeric_precedence", "uvm_test_top.env");
+    numeric_high.write(200);
+    pool.set(numeric_high);
+    numeric_high.precedence = 200;
     numeric_matches = pool.lookup_name(
         "uvm_test_top.env", "numeric_precedence",
         uvm_resource#(int)::get_type(), 0);
@@ -436,14 +436,14 @@ module t;
 
     top_component = uvm_root::get().find("uvm_test_top");
     if (!$cast(top_test, top_component) || top_test == null)
-      $fatal(1, "could not recover the completed UVM test")
+      $fatal(1, "could not recover the completed UVM test");
     if (!top_test.check_seen || !top_test.report_seen)
-      $fatal(1, "mandatory check/report sentinels did not fire")
+      $fatal(1, "mandatory check/report sentinels did not fire");
     if (top_test.env.active_cfg != active_cfg_h
         || top_test.env.passive_cfg != passive_cfg_h)
-      $fatal(1, "module-to-environment config handle identity was not preserved")
+      $fatal(1, "module-to-environment config handle identity was not preserved");
     if (!(numeric_direct_fixed ^ numeric_direct_xfail))
-      $fatal(1, "numeric direct-path disposition was not exclusive")
+      $fatal(1, "numeric direct-path disposition was not exclusive");
 
     report_server = uvm_report_server::get_server();
     `checkd(report_server.get_severity_count(UVM_ERROR), 0)
