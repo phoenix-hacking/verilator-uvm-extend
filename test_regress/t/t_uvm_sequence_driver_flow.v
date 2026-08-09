@@ -343,14 +343,14 @@ module t;
 
     top_component = uvm_root::get().find("uvm_test_top");
     if (!$cast(top_test, top_component) || top_test == null)
-      $fatal(1, "could not recover the completed sequence-flow test")
+      $fatal(1, "could not recover the completed sequence-flow test");
     if (!top_test.check_seen || !top_test.report_seen)
-      $fatal(1, "mandatory check/report sentinels did not fire")
+      $fatal(1, "mandatory check/report sentinels did not fire");
     handled_at_phase_end = top_test.env.driver.handled;
     #5;
     if (top_test.env.driver.handled != handled_at_phase_end
         || !top_test.env.driver.waiting)
-      $fatal(1, "driver did not remain quiescent after phase teardown")
+      $fatal(1, "driver did not remain quiescent after phase teardown");
 
     report_server = uvm_report_server::get_server();
     `checkd(report_server.get_severity_count(UVM_ERROR), 0)
