@@ -658,8 +658,8 @@ class LinkJumpVisitor final : public VNVisitor {
         }
         if (AstTask* const taskp = VN_CAST(targetp, Task)) {
             AstTask* const rootp = activationFamilyRootp(taskp);
-            if (AstClass* const rootClassp = VN_CAST(ownerModulep(rootp), Class);
-                rootClassp && rootClassp->isInterfaceClass()) {
+            AstClass* const rootClassp = VN_CAST(ownerModulep(rootp), Class);
+            if (rootClassp && rootClassp->isInterfaceClass()) {
                 nodep->v3warn(E_UNSUPPORTED,
                               "Unsupported: disabling an interface class task through an interface"
                               " class receiver");
