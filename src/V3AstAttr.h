@@ -1061,6 +1061,7 @@ public:
     enum en : uint8_t {
         NONE,  // Unknown or not applicable
         CTOR_VAR_RESET_CALL,
+        NAMED_DISABLE,
         _ENUM_MAX  // Leave last
     };
 
@@ -1082,7 +1083,7 @@ public:
         : m_e(static_cast<en>(_e)) {}  // Need () or GCC 4.8 false warning
     constexpr operator en() const { return m_e; }
     const char* ascii() const VL_PURE {
-        static const char* const names[] = {"none", "ctor_var_reset_call"};
+        static const char* const names[] = {"none", "ctor_var_reset_call", "named_disable"};
         return names[m_e];
     }
     bool isNone() const { return m_e == NONE; }

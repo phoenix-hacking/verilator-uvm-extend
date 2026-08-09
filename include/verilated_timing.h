@@ -379,9 +379,12 @@ public:
 // wait statements.
 
 struct VlForever final {
-    // Owned by the surrounding coroutine frame. Keep this awaiter trivially destructible because
-    // await_suspend() destroys its own frame; use the pointer only before coro.destroy().
+    // Owned by the surrounding coroutine frame.  Keep only a non-owning pointer here: either the
+    // registered suspension owns the process, or await_suspend() destroys the frame immediately.
     VlProcess* m_processp = nullptr;
+
+    static bool suspendIfNamedActivation(std::coroutine_handle<> coro, VlProcess* processp,
+                                         void (*suspendForever)(std::coroutine_handle<>));
 
     VlForever() = default;
     explicit VlForever(const VlProcessRef& process)
@@ -394,6 +397,12 @@ struct VlForever final {
             m_processp->state(VlProcess::WAITING);
             m_processp->leave();
         }
+        const auto suspendForever = [](std::coroutine_handle<> erasedCoro) {
+            const std::coroutine_handle<T_Promise> typedCoro
+                = std::coroutine_handle<T_Promise>::from_address(erasedCoro.address());
+            typedCoro.promise().suspendForever();
+        };
+        if (suspendIfNamedActivation(coro, m_processp, suspendForever)) return;
         coro.promise().suspendForever();
         coro.destroy();
     }
@@ -472,6 +481,9 @@ private:
     // TYPES
     struct VlPromise final {
         std::coroutine_handle<> m_continuation;  // Coroutine to resume after this one finishes
+        // Type-erased promise callback used to propagate a constant-false wait through an already
+        // suspended coroutine call chain before its frames are destroyed.
+        void (*m_suspendContinuationForever)(std::coroutine_handle<>) = nullptr;
         VlCoroutine* m_corop = nullptr;  // Pointer to the coroutine return object
 
         ~VlPromise();
@@ -528,6 +540,11 @@ public:
             coro.destroy();
         } else {
             m_promisep->m_continuation = coro;
+            m_promisep->m_suspendContinuationForever = [](std::coroutine_handle<> erasedCoro) {
+                const std::coroutine_handle<T_Promise> typedCoro
+                    = std::coroutine_handle<T_Promise>::from_address(erasedCoro.address());
+                typedCoro.promise().suspendForever();
+            };
         }
     }
     void await_resume() const noexcept {}

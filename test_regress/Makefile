@@ -58,6 +58,52 @@ vlt:
 vltmt:
 	$(PYTHON3) driver.py $(DRIVER_FLAGS) --vltmt --stop
 
+# Keep the named-disable/process closure lane independent of the ordered UVM2020 integration
+# contract below.  Compiler-facing tests join this fixed-order lane automatically as their
+# drivers land.
+NAMED_DISABLE_EXISTING_TESTS := \
+	t/t_disable_fork_launch.py \
+	t/t_disable_fork_nested.py \
+	t/t_disable_task_by_name.py \
+	t/t_disable_task_join.py \
+	t/t_disable_task_simple.py \
+	t/t_named_activation_forever.py \
+	t/t_named_activation_runtime.py \
+	t/t_named_activation_suspension.py \
+	t/t_process_context_fork.py \
+	t/t_process_tree_ownership.py \
+	t/t_uvm_lrm_process_kill_self_tree.py
+NAMED_DISABLE_COMPILER_TESTS := \
+	t/t_disable_named_activation.py \
+	t/t_disable_named_control.py \
+	t/t_disable_named_interface_unsup.py \
+	t/t_disable_named_recursive.py
+NAMED_DISABLE_AVAILABLE_COMPILER_TESTS := \
+	$(foreach test,$(NAMED_DISABLE_COMPILER_TESTS),$(wildcard $(test)))
+NAMED_DISABLE_TESTS := \
+	$(NAMED_DISABLE_EXISTING_TESTS) \
+	$(NAMED_DISABLE_COMPILER_TESTS)
+NAMED_DISABLE_RUN_TESTS := $(strip \
+	$(NAMED_DISABLE_EXISTING_TESTS) \
+	$(NAMED_DISABLE_AVAILABLE_COMPILER_TESTS))
+NAMED_DISABLE_OBJ_DIRS := \
+	$(patsubst t/%.py,obj_vlt/%-named-disable,$(NAMED_DISABLE_RUN_TESTS)) \
+	$(patsubst t/%.py,obj_vltmt/%-named-disable,$(NAMED_DISABLE_RUN_TESTS))
+NAMED_DISABLE_SENTINELS := $(addsuffix /interrupted.gch,$(NAMED_DISABLE_OBJ_DIRS))
+
+.PHONY: named-disable
+named-disable:
+	@echo "named-disable: running $(words $(NAMED_DISABLE_RUN_TESTS))/$(words $(NAMED_DISABLE_TESTS)) available focused tests"
+	$(PYTHON3) driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+		--driver-clean-before-seed=interrupted.gch \
+		--obj-suffix=-named-disable --vlt --vltmt $(NAMED_DISABLE_RUN_TESTS)
+	@for sentinel in $(NAMED_DISABLE_SENTINELS); do \
+		if test -e "$$sentinel" || test -L "$$sentinel"; then \
+			echo "%Error: stale-artifact sentinel survived: $$sentinel" >&2; \
+			exit 1; \
+		fi; \
+	done; echo "named-disable: stale-artifact cleanup PASSED"
+
 UVM2020_REDUCED_TESTS := \
 	t/t_uvm_lrm_sched_wait_zero.py \
 	t/t_uvm_lrm_process_kill_tree.py \

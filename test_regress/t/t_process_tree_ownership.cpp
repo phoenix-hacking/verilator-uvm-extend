@@ -12,6 +12,10 @@
 #include <cstdio>
 #include <memory>
 
+#ifndef TEST_USE_THREADS
+#define TEST_USE_THREADS 1
+#endif
+
 static VlCoroutine observeKillCallback(VlForkSync& forkSync, VlProcessRef firstp,
                                        VlProcessRef secondp, VlProcessRef descendantp,
                                        bool& callbackSeen, bool& allKilled) {
@@ -153,6 +157,7 @@ int main(int argc, char** argv) {
     if (!checkProcessTree()) return 10;
 
     const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
+    contextp->threads(TEST_USE_THREADS);
     contextp->commandArgs(argc, argv);
     const std::unique_ptr<VM_PREFIX> topp{new VM_PREFIX{contextp.get()}};
     while (!contextp->gotFinish()) {

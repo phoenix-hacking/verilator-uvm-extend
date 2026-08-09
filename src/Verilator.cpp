@@ -457,7 +457,7 @@ static void process() {
             // Reorder assignments in pipelined blocks
             if (v3Global.opt.fReorder()) V3Reorder::reorderAll(v3Global.rootp());
 
-            if (v3Global.opt.timing().isSetTrue()) {
+            if (v3Global.opt.timing().isSetTrue() || v3Global.usesTiming()) {
                 // Convert AST for timing if requested
                 // Needs to be after V3Gate, as that step modifies sentrees
                 // Needs to be before V3Delayed, as delayed assignments are handled differently in

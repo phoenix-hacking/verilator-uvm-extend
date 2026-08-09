@@ -2449,6 +2449,12 @@ class WidthVisitor final : public VNVisitor {
         if (nodep->didWidthAndSet()) return;  // This node is a dtype & not both PRELIMed+FINALed
         nodep->dtypep(nodep);
     }
+    void visit(AstCDType* nodep) override {
+        // Raw C++ types normally appear only after widthing.  Named-activation registry members
+        // are introduced earlier, and have no SystemVerilog width work to perform.
+        if (nodep->didWidthAndSet()) return;
+        nodep->dtypep(nodep);
+    }
     void visit(AstDynArrayDType* nodep) override {
         if (nodep->didWidthAndSet()) return;  // This node is a dtype & not both PRELIMed+FINALed
         // Iterate into subDTypep() to resolve that type and update pointer.

@@ -272,7 +272,7 @@ public:
     }
     template <typename T>
     string optionalProcArg(const T* const nodep) {
-        return (nodep && constructorNeedsProcess(nodep)) ? "vlProcess, " : "";
+        return (nodep && constructorNeedsProcess(nodep)) ? "vlProcess, vlActivation, " : "";
     }
     const AstCNew* getSuperNewCallRecursep(AstNode* const nodep) {
         // Get the super.new call
@@ -380,7 +380,7 @@ public:
             puts(EmitCUtil::prefixNameProtect(extp->classp()));
             puts("::init");
             if (constructorNeedsProcess(extp->classp())) {
-                puts("(vlProcess, vlSymsp");
+                puts("(vlProcess, vlActivation, vlSymsp");
             } else {
                 puts("(vlSymsp");
             }
@@ -454,6 +454,7 @@ public:
         if (m_instantiatesOwnProcess) {
             AstCStmt* const vlprocp = new AstCStmt{nodep->fileline()};
             vlprocp->add("VlProcessRef vlProcess = std::make_shared<VlProcess>();\n");
+            vlprocp->add("VlNamedActivationToken vlActivation;\n");
             vlprocp->add("VlProcessContext __VprocessContext{vlProcess.get()};");
             nodep->stmtsp()->addHereThisAsNext(vlprocp);
         } else if (nodep->needProcess() && nodep->stmtsp()) {
@@ -1245,7 +1246,14 @@ public:
         // Emit
         putns(nodep, "{\n");  // Make it visually obvious label jumps outside these
         VL_RESTORER(m_createdScopeHash);
+        if (nodep->namedActivationRegistryp()) {
+            puts("VlNamedActivationGuard __VactivationGuard = ");
+            iterateConst(nodep->namedActivationRegistryp());
+            puts(".activate(vlProcess);\n");
+            puts("VlNamedActivationToken vlActivation = __VactivationGuard.token();\n");
+        }
         iterateAndNextConstNull(nodep->stmtsp());
+        if (nodep->namedActivationRegistryp()) puts("[[maybe_unused]] ");
         puts("__Vlabel" + std::to_string(n) + ": ;\n");
         puts("}\n");
     }

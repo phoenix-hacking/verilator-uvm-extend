@@ -44,6 +44,53 @@ VL_DEFINE_DEBUG_FUNCTIONS;
 
 //######################################################################
 
+using ActivationOwnerModuleMap = std::unordered_map<const AstNode*, AstNodeModule*>;
+using ActivationOwnerFTaskMap = std::unordered_map<const AstNode*, AstNodeFTask*>;
+
+// LinkJump can resolve a disable before visiting its target declaration.  Capture stable lexical
+// ownership before this pass starts mutating the tree; AstNode::backp() is not suitable for this
+// because it can point to a previous sibling rather than the parent.
+class ActivationOwnerVisitor final : public VNVisitor {
+    ActivationOwnerModuleMap& m_ownerModules;
+    ActivationOwnerFTaskMap& m_ownerFTasks;
+    AstNodeModule* m_modp = nullptr;
+    AstNodeFTask* m_ftaskp = nullptr;
+
+    void visit(AstNodeModule* nodep) override {
+        VL_RESTORER(m_modp);
+        VL_RESTORER(m_ftaskp);
+        m_modp = nodep;
+        m_ftaskp = nullptr;
+        iterateChildren(nodep);
+    }
+    void visit(AstNodeFTask* nodep) override {
+        UASSERT_OBJ(m_modp, nodep, "Task/function has no containing module/class/package");
+        m_ownerModules.emplace(nodep, m_modp);
+        m_ownerFTasks.emplace(nodep, nodep);
+        VL_RESTORER(m_ftaskp);
+        m_ftaskp = nodep;
+        iterateChildren(nodep);
+    }
+    void visit(AstBegin* nodep) override {
+        UASSERT_OBJ(m_modp, nodep, "Begin block has no containing module/class/package");
+        m_ownerModules.emplace(nodep, m_modp);
+        if (m_ftaskp) m_ownerFTasks.emplace(nodep, m_ftaskp);
+        iterateChildren(nodep);
+    }
+    void visit(AstNode* nodep) override { iterateChildren(nodep); }
+
+public:
+    ActivationOwnerVisitor(AstNetlist* nodep, ActivationOwnerModuleMap& ownerModules,
+                           ActivationOwnerFTaskMap& ownerFTasks)
+        : m_ownerModules{ownerModules}
+        , m_ownerFTasks{ownerFTasks} {
+        iterate(nodep);
+    }
+    ~ActivationOwnerVisitor() override = default;
+};
+
+//######################################################################
+
 class LinkJumpVisitor final : public VNVisitor {
     // NODE STATE
     //  AstBegin/etc::user1()  -> AstJumpBlock*, for body of this loop
@@ -66,12 +113,11 @@ class LinkJumpVisitor final : public VNVisitor {
     std::vector<AstNodeBlock*> m_blockStack;  // All begin blocks above current node
     V3UniqueNames m_queueNames{
         "__VprocessQueue"};  // Names for queues needed for 'disable' handling
-    std::unordered_map<const AstTask*, AstVar*> m_taskDisableQueues;  // Per-task process queues
-    std::unordered_map<const AstBegin*, AstVar*> m_beginDisableQueues;  // Per-begin process queues
-    std::unordered_map<const AstTask*, AstBegin*>
-        m_taskDisableBegins;  // Per-task process wrappers
-    std::unordered_map<const AstBegin*, AstBegin*>
-        m_beginDisableBegins;  // Per-begin process wrappers
+    V3UniqueNames m_activationNames{"__VnamedActivation"};
+    std::unordered_map<const AstNode*, AstVar*> m_activationRegistries;
+    ActivationOwnerModuleMap m_activationOwnerModules;
+    ActivationOwnerFTaskMap m_activationOwnerFTasks;
+    AstCDType* m_activationRegistryDTypep = nullptr;
 
     // METHODS
     // Get (and create if necessary) the JumpBlock for this statement
@@ -167,6 +213,164 @@ class LinkJumpVisitor final : public VNVisitor {
         }
         return false;
     }
+    AstNodeModule* ownerModulep(const AstNode* const nodep) const {
+        const auto it = m_activationOwnerModules.find(nodep);
+        UASSERT_OBJ(it != m_activationOwnerModules.end(), nodep,
+                    "Named activation has no containing module/class/package");
+        return it->second;
+    }
+    AstNodeFTask* ownerFTaskp(const AstNode* const nodep) const {
+        const auto it = m_activationOwnerFTasks.find(nodep);
+        return it == m_activationOwnerFTasks.end() ? nullptr : it->second;
+    }
+    static AstClass* baseClassp(const AstClass* const classp) {
+        for (const AstClassExtends* extendsp = classp->extendsp(); extendsp;
+             extendsp = VN_AS(extendsp->nextp(), ClassExtends)) {
+            if (extendsp->isImplements()) continue;
+            // LinkJump runs before V3Param.  A parameterized extends still has the declaration
+            // class linked through its ClassRefDType, even though classOrNullp() deliberately
+            // reports it as unresolved until specialization.
+            const AstNodeDType* const dtypep
+                = extendsp->dtypep() ? extendsp->dtypep() : extendsp->childDTypep();
+            if (const AstClassRefDType* const refp = VN_CAST(dtypep, ClassRefDType)) {
+                if (refp->classp()) return refp->classp();
+            }
+        }
+        return nullptr;
+    }
+    static AstTask* directTaskp(AstClass* const classp, const string& name) {
+        AstTask* fallbackp = nullptr;
+        for (AstNode* memberp = classp->membersp(); memberp; memberp = memberp->nextp()) {
+            AstTask* const taskp = VN_CAST(memberp, Task);
+            if (!taskp || taskp->name() != name) continue;
+            if (!fallbackp) fallbackp = taskp;
+            if (!taskp->prototype() && !taskp->isExternProto()) return taskp;
+        }
+        return fallbackp;
+    }
+    // Virtual overrides form one dynamically dispatched method family.  Use the oldest virtual
+    // declaration as the registry owner so both base-typed and derived-typed receivers address the
+    // same inherited member.
+    AstTask* activationFamilyRootp(AstTask* const taskp) const {
+        AstClass* classp = VN_CAST(ownerModulep(taskp), Class);
+        if (!classp) return taskp;
+        AstTask* rootp = taskp;
+        bool virtualFamily = taskp->isVirtual();
+        while ((classp = baseClassp(classp))) {
+            AstTask* const baseTaskp = directTaskp(classp, taskp->name());
+            if (baseTaskp && baseTaskp->isVirtual()) {
+                rootp = baseTaskp;
+                virtualFamily = true;
+            }
+        }
+        return virtualFamily ? rootp : taskp;
+    }
+    static void markNeedsProcess(AstNode* nodep) {
+        for (AstNode* itemp = nodep; itemp; itemp = itemp->backp()) {
+            if (AstNodeFTask* const ftaskp = VN_CAST(itemp, NodeFTask)) {
+                ftaskp->setNeedProcess();
+                return;
+            }
+            if (AstNodeProcedure* const procedurep = VN_CAST(itemp, NodeProcedure)) {
+                procedurep->setNeedProcess();
+                return;
+            }
+        }
+    }
+    AstVar* getOrCreateActivationRegistryp(AstNode* const targetp) {
+        const auto it = m_activationRegistries.find(targetp);
+        if (it != m_activationRegistries.end()) return it->second;
+
+        FileLine* const flp = targetp->fileline();
+        AstNodeModule* const ownerp = ownerModulep(targetp);
+        if (!m_activationRegistryDTypep) {
+            m_activationRegistryDTypep = new AstCDType{flp, "VlNamedActivationRegistry"};
+            v3Global.rootp()->typeTablep()->addTypesp(m_activationRegistryDTypep);
+        }
+        const VVarType varType = VN_IS(ownerp, Class) ? VVarType::MEMBER : VVarType::MODULETEMP;
+        AstVar* const registryp = new AstVar{flp, varType, m_activationNames.get(targetp->name()),
+                                             m_activationRegistryDTypep};
+        // This pass runs after LinkParse assigned source-variable lifetimes. Module, interface,
+        // program, and package registries are persistent storage; ordinary class registries are
+        // per-object members unless the owning task is static.
+        registryp->lifetime(VN_IS(ownerp, Class) ? VLifetime::AUTOMATIC_IMPLICIT
+                                                 : VLifetime::STATIC_IMPLICIT);
+        registryp->isInternal(true);
+        registryp->noCReset(true);
+        registryp->noReset(true);
+        registryp->noSubst(true);
+        registryp->setIgnoreSchedWrite();
+        if (AstNodeFTask* const ftaskp = ownerFTaskp(targetp)) {
+            if (VN_IS(ownerp, Class) && ftaskp->isStatic()) {
+                registryp->isStatic(true);
+                registryp->lifetime(VLifetime::STATIC_EXPLICIT);
+            }
+        }
+        ownerp->addStmtsp(registryp);
+        m_activationOwnerModules.emplace(registryp, ownerp);
+        m_activationRegistries.emplace(targetp, registryp);
+        return registryp;
+    }
+    AstNodeExpr* activationRefp(FileLine* const flp, AstVar* const registryp,
+                                const string& dotted = "") const {
+        AstNodeModule* const ownerp = ownerModulep(registryp);
+        if (!dotted.empty() && !VN_IS(ownerp, Class)) {
+            return new AstVarXRef{flp, registryp, dotted, VAccess::READWRITE};
+        }
+        if (VN_IS(ownerp, Class) || VN_IS(ownerp, Package)) {
+            return new AstVarRef{flp, ownerp, registryp, VAccess::READWRITE};
+        }
+        return new AstVarRef{flp, registryp, VAccess::READWRITE};
+    }
+    AstJumpBlock* markActivationBoundary(AstNode* const targetp, AstVar* const registryp) {
+        AstJumpBlock* const blockp = getJumpBlock(targetp, false);
+        if (!blockp->namedActivationRegistryp()) {
+            blockp->namedActivationRegistryp(activationRefp(targetp->fileline(), registryp));
+            // Named activation cancellation requires process/token propagation even in a design
+            // with no source timing controls (including under explicit --no-timing).
+            v3Global.setUsesTiming();
+            // The activation guard is emitter-hidden state, so invalidate any purity result that
+            // may have been cached while this was still an ordinary JumpBlock.
+            VIsCached::clearCacheTree();
+        }
+        markNeedsProcess(targetp);
+        return blockp;
+    }
+    AstJumpBlock* markActivationFamily(AstTask* const targetp, AstTask* const rootp,
+                                       AstVar* const registryp) {
+        if (!rootp->isVirtual()) return markActivationBoundary(targetp, registryp);
+
+        AstJumpBlock* targetBoundaryp = nullptr;
+        std::vector<AstTask*> candidates;
+        v3Global.rootp()->foreach(
+            [&candidates](AstTask* const candidatep) { candidates.push_back(candidatep); });
+        for (AstTask* const candidatep : candidates) {
+            if (ownerModulep(candidatep)->dead() || candidatep->name() != rootp->name()
+                || activationFamilyRootp(candidatep) != rootp || candidatep->pureVirtual()
+                || candidatep->prototype() || candidatep->isExternProto()) {
+                continue;
+            }
+            AstJumpBlock* const boundaryp = markActivationBoundary(candidatep, registryp);
+            if (candidatep == targetp) targetBoundaryp = boundaryp;
+        }
+        return targetBoundaryp;
+    }
+    AstCStmt* activationDisableStmtp(AstDisable* const nodep, AstVar* const registryp) const {
+        AstCStmt* const stmtp = new AstCStmt{nodep->fileline(), "", VCStmtType::NAMED_DISABLE};
+        AstNodeExpr* registryRefp = nullptr;
+        if (nodep->receiverp()) {
+            AstNodeExpr* const receiverp = nodep->receiverp()->unlinkFrBack();
+            AstMemberSel* const memberp
+                = new AstMemberSel{nodep->fileline(), receiverp, registryp};
+            memberp->access(VAccess::READWRITE);
+            registryRefp = memberp;
+        } else {
+            registryRefp = activationRefp(nodep->fileline(), registryp, nodep->dotted());
+        }
+        stmtp->add(registryRefp);
+        stmtp->add(".disableAll();");
+        return stmtp;
+    }
     static AstStmtExpr* getQueuePushProcessSelfp(AstVarRef* const queueRefp) {
         // Constructs queue.push_back(std::process::self()) statement
         FileLine* const flp = queueRefp->fileline();
@@ -215,23 +419,6 @@ class LinkJumpVisitor final : public VNVisitor {
         if (nodep->backp()->nextp() == nodep) return directlyUnderFork(nodep->backp());
         return VN_IS(nodep->backp(), Fork);
     }
-    AstBegin* getOrCreateTaskDisableBeginp(AstTask* const taskp, FileLine* const fl) {
-        const auto it = m_taskDisableBegins.find(taskp);
-        if (it != m_taskDisableBegins.end()) return it->second;
-
-        AstBegin* const taskBodyp = new AstBegin{fl, "", nullptr, false};
-        // Disable-by-name rewrites kill this detached task-body process, so mark it as process
-        // backed to ensure fork/join kill-accounting hooks are always emitted.
-        taskBodyp->setNeedProcess();
-        if (taskp->stmtsp()) taskBodyp->addStmtsp(taskp->stmtsp()->unlinkFrBackWithNext());
-
-        AstFork* const forkp = new AstFork{fl, VJoinType::JOIN};
-        forkp->addForksp(taskBodyp);
-        taskp->addStmtsp(forkp);
-
-        m_taskDisableBegins.emplace(taskp, taskBodyp);
-        return taskBodyp;
-    }
     AstVar* getProcessQueuep(AstNode* const nodep, FileLine* const fl) {
         AstPackage* const topPkgp = v3Global.rootp()->dollarUnitPkgAddp();
         AstVar* const processQueuep = new AstVar{
@@ -244,56 +431,6 @@ class LinkJumpVisitor final : public VNVisitor {
         processQueuep->processQueue(true);
         processQueuep->setIgnoreSchedWrite();
         topPkgp->addStmtsp(processQueuep);
-        return processQueuep;
-    }
-    AstVar* getOrCreateTaskDisableQueuep(AstTask* const taskp, FileLine* const fl) {
-        const auto it = m_taskDisableQueues.find(taskp);
-        if (it != m_taskDisableQueues.end()) return it->second;
-
-        AstVar* const processQueuep = getProcessQueuep(taskp, fl);
-        AstStmtExpr* const pushCurrentProcessp = getQueuePushProcessSelfp(fl, processQueuep);
-        AstBegin* const taskBodyp = getOrCreateTaskDisableBeginp(taskp, fl);
-        prependStmtsp(taskBodyp, pushCurrentProcessp);
-        m_taskDisableQueues.emplace(taskp, processQueuep);
-        return processQueuep;
-    }
-    AstBegin* getOrCreateBeginDisableBeginp(AstBegin* const beginp, FileLine* const fl) {
-        const auto it = m_beginDisableBegins.find(beginp);
-        if (it != m_beginDisableBegins.end()) return it->second;
-
-        AstBegin* const beginBodyp = new AstBegin{fl, "", nullptr, false};
-        // Disable-by-name rewrites kill this detached block-body process, so mark it as process
-        // backed to ensure fork/join kill-accounting hooks are always emitted.
-        beginBodyp->setNeedProcess();
-        if (beginp->stmtsp()) beginBodyp->addStmtsp(beginp->stmtsp()->unlinkFrBackWithNext());
-
-        AstFork* const forkp = new AstFork{fl, VJoinType::JOIN};
-        forkp->addForksp(beginBodyp);
-        beginp->addStmtsp(forkp);
-
-        m_beginDisableBegins.emplace(beginp, beginBodyp);
-        return beginBodyp;
-    }
-    AstVar* getOrCreateBeginDisableQueuep(AstBegin* const beginp, FileLine* const fl) {
-        const auto it = m_beginDisableQueues.find(beginp);
-        if (it != m_beginDisableQueues.end()) return it->second;
-
-        AstVar* const processQueuep = getProcessQueuep(beginp, fl);
-        AstStmtExpr* const pushCurrentProcessp = getQueuePushProcessSelfp(fl, processQueuep);
-        AstBegin* const beginBodyp = getOrCreateBeginDisableBeginp(beginp, fl);
-        prependStmtsp(beginBodyp, pushCurrentProcessp);
-
-        // Named-block disable must also terminate detached descendants created by forks
-        // under the block, so track each fork branch process in the same queue.
-        beginBodyp->foreach([&](AstFork* const forkp) {
-            for (AstBegin* branchp = forkp->forksp(); branchp;
-                 branchp = VN_AS(branchp->nextp(), Begin)) {
-                AstStmtExpr* const pushBranchProcessp
-                    = getQueuePushProcessSelfp(fl, processQueuep);
-                prependStmtsp(branchp, pushBranchProcessp);
-            }
-        });
-        m_beginDisableQueues.emplace(beginp, processQueuep);
         return processQueuep;
     }
     void handleDisableOnFork(AstDisable* const nodep, const std::vector<AstBegin*>& forks) {
@@ -520,19 +657,20 @@ class LinkJumpVisitor final : public VNVisitor {
             return;
         }
         if (AstTask* const taskp = VN_CAST(targetp, Task)) {
-            AstVar* const processQueuep = getOrCreateTaskDisableQueuep(taskp, nodep->fileline());
-            AstStmtExpr* const killStmtp = getQueueKillStmtp(nodep->fileline(), processQueuep);
-            nodep->addNextHere(killStmtp);
-
-            // Process cancellation unwinds cooperatively.  If the current task disables itself by
-            // name, also jump to its end so no statements after the disable can run on paths
-            // without process unwinding.
-            if (m_ftaskp == taskp) {
-                AstNode* jumpTargetp = taskp;
-                const auto it = m_taskDisableBegins.find(taskp);
-                if (it != m_taskDisableBegins.end()) jumpTargetp = it->second;
-                AstJumpBlock* const blockp = getJumpBlock(jumpTargetp, false);
-                killStmtp->addNextHere(new AstJumpGo{nodep->fileline(), blockp});
+            AstTask* const rootp = activationFamilyRootp(taskp);
+            if (AstClass* const rootClassp = VN_CAST(ownerModulep(rootp), Class);
+                rootClassp && rootClassp->isInterfaceClass()) {
+                nodep->v3warn(E_UNSUPPORTED,
+                              "Unsupported: disabling an interface class task through an interface"
+                              " class receiver");
+            } else {
+                AstVar* const registryp = getOrCreateActivationRegistryp(rootp);
+                AstJumpBlock* const boundaryp = markActivationFamily(taskp, rootp, registryp);
+                AstCStmt* const disablep = activationDisableStmtp(nodep, registryp);
+                nodep->addNextHere(disablep);
+                if (m_ftaskp == taskp && !m_inFork && boundaryp) {
+                    disablep->addNextHere(new AstJumpGo{nodep->fileline(), boundaryp});
+                }
             }
         } else if (AstFork* const forkp = VN_CAST(targetp, Fork)) {
             std::vector<AstBegin*> forks;
@@ -541,38 +679,12 @@ class LinkJumpVisitor final : public VNVisitor {
             }
             handleDisableOnFork(nodep, forks);
         } else if (AstBegin* const beginp = VN_CAST(targetp, Begin)) {
-            if (existsBlockAbove(beginp->name())) {
-                if (!beginp->user3()) {
-                    // Jump to the end of the named block
-                    AstJumpBlock* const blockp = getJumpBlock(beginp, false);
-                    nodep->addNextHere(new AstJumpGo{nodep->fileline(), blockp});
-                } else {
-                    AstVar* const processQueuep
-                        = getOrCreateBeginDisableQueuep(beginp, nodep->fileline());
-                    AstStmtExpr* const killStmtp
-                        = getQueueKillStmtp(nodep->fileline(), processQueuep);
-                    nodep->addNextHere(killStmtp);
-
-                    // Process cancellation unwinds cooperatively.  If disable executes inside a
-                    // fork branch of this named block, also jump to the end of that branch so no
-                    // statements after the disable can run on paths without process unwinding.
-                    AstBegin* currentBeginp = nullptr;
-                    for (AstNodeBlock* const blockp : vlstd::reverse_view(m_blockStack)) {
-                        if (VN_IS(blockp, Begin)) {
-                            currentBeginp = VN_AS(blockp, Begin);
-                            break;
-                        }
-                    }
-                    if (currentBeginp && directlyUnderFork(currentBeginp)) {
-                        AstJumpBlock* const blockp = getJumpBlock(currentBeginp, false);
-                        killStmtp->addNextHere(new AstJumpGo{nodep->fileline(), blockp});
-                    }
-                }
-            } else {
-                AstVar* const processQueuep
-                    = getOrCreateBeginDisableQueuep(beginp, nodep->fileline());
-                AstStmtExpr* const killStmtp = getQueueKillStmtp(nodep->fileline(), processQueuep);
-                nodep->addNextHere(killStmtp);
+            AstVar* const registryp = getOrCreateActivationRegistryp(beginp);
+            AstJumpBlock* const boundaryp = markActivationBoundary(beginp, registryp);
+            AstCStmt* const disablep = activationDisableStmtp(nodep, registryp);
+            nodep->addNextHere(disablep);
+            if (existsBlockAbove(beginp->name()) && !m_inFork) {
+                disablep->addNextHere(new AstJumpGo{nodep->fileline(), boundaryp});
             }
         } else {
             nodep->v3fatalSrc("Disable linked with node of unhandled type "
@@ -601,7 +713,10 @@ class LinkJumpVisitor final : public VNVisitor {
 
 public:
     // CONSTRUCTORS
-    explicit LinkJumpVisitor(AstNetlist* nodep) { iterate(nodep); }
+    explicit LinkJumpVisitor(AstNetlist* nodep) {
+        { ActivationOwnerVisitor{nodep, m_activationOwnerModules, m_activationOwnerFTasks}; }
+        iterate(nodep);
+    }
     ~LinkJumpVisitor() override = default;
 };
 

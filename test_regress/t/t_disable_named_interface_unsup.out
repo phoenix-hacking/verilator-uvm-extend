@@ -1,0 +1,5 @@
+%Error-UNSUPPORTED: t/t_disable_named_interface_unsup.v:25:9: Unsupported: disabling an interface class task through an interface class receiver
+   25 |         disable obj.run;
+      |         ^~~~~~~
+                    ... For error description see https://verilator.org/warn/UNSUPPORTED?v=latest
+%Error: Exiting due to

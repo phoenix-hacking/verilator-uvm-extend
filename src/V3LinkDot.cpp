@@ -4200,6 +4200,60 @@ class LinkDotResolveVisitor final : public VNVisitor {
             // Found a Var, everything following is membership.  {scope}.{var}.HERE {member}
             if (m_ds.m_dotErr) {
                 nodep->unlinkFrBack();  // Avoid circular node loop on errors
+            } else if (m_ds.m_disablep) {
+                // A task named by disable is parsed as a ParseRef, unlike an ordinary method
+                // call which is already an AstTaskRef here.  Resolve the task before the generic
+                // member-select lowering so that the receiver can be retained by AstDisable.
+                AstNodeExpr* const receiverp = VN_AS(m_ds.m_dotp->lhsp(), NodeExpr);
+                const AstNodeDType* receiverDtp = receiverp->dtypep();
+                if (!receiverDtp) {
+                    if (const AstNodeVarRef* const receiverRefp = VN_CAST(receiverp, NodeVarRef)) {
+                        receiverDtp = receiverRefp->varp()->subDTypep();
+                    } else {
+                        receiverDtp = getExprDTypep(receiverp);
+                    }
+                }
+                if (receiverDtp) receiverDtp = receiverDtp->skipRefp();
+                const AstClassRefDType* const classDtp = VN_CAST(receiverDtp, ClassRefDType);
+                VSymEnt* const classSymp
+                    = classDtp ? m_statep->getNodeSym(classDtp->classp()) : nullptr;
+                VSymEnt* const foundp
+                    = classSymp ? classSymp->findIdFallback(nodep->name()) : nullptr;
+                AstTask* const taskp = foundp ? VN_CAST(foundp->nodep(), Task) : nullptr;
+                if (!taskp) {
+                    if (classDtp) {
+                        nodep->v3error("Could not find task " + nodep->prettyNameQ()
+                                       + " in class object used by disable");
+                    } else {
+                        nodep->v3error(
+                            "Object-qualified disable requires a class-handle receiver");
+                    }
+                    // Keep the Dot structurally valid after the diagnostic.  The outer disable
+                    // visitor will discard this unsupported member-select cleanly.
+                    AstNodeExpr* const varEtcp
+                        = VN_AS(m_ds.m_dotp->lhsp()->unlinkFrBack(), NodeExpr);
+                    AstNodeExpr* const newp = new AstMemberSel{nodep->fileline(), varEtcp,
+                                                               VFlagChildDType{}, nodep->name()};
+                    nodep->replaceWith(newp);
+                } else {
+                    const AstDot* const outerDotp
+                        = m_ds.m_dotp ? VN_CAST(m_ds.m_dotp->backp(), Dot) : nullptr;
+                    const bool disableTaskAsScope = outerDotp && outerDotp->lhsp() == m_ds.m_dotp;
+                    AstTaskRef* const taskRefp = new AstTaskRef{nodep->fileline(), taskp, nullptr};
+                    taskRefp->classOrPackagep(foundp->classOrPackagep() ? foundp->classOrPackagep()
+                                                                        : classDtp->classp());
+                    // The enclosing AstDot still owns and will delete its lhs after replacing
+                    // itself with the resolved TaskRef.  Retain an expression clone for the
+                    // registry access instead of detaching the Dot's live child mid-visit.
+                    m_ds.m_disablep->receiverp(receiverp->cloneTree(false));
+                    nodep->replaceWith(taskRefp);
+                    if (disableTaskAsScope) {
+                        m_ds.m_dotSymp = m_statep->getNodeSym(taskp);
+                        m_ds.m_dotPos = DP_SCOPE;
+                    }
+                }
+                VL_DO_DANGLING(pushDeletep(nodep), nodep);
+                return;
             } else {
                 AstNodeExpr* const varEtcp = VN_AS(m_ds.m_dotp->lhsp()->unlinkFrBack(), NodeExpr);
                 AstNodeExpr* const newp = new AstMemberSel{nodep->fileline(), varEtcp,  //
@@ -4217,7 +4271,10 @@ class LinkDotResolveVisitor final : public VNVisitor {
             if (m_ds.m_disablep) {
                 allowScope = true;
                 allowFTask = true;
-                expectWhat = "block/task";
+                // An object-qualified task disable starts with a class-handle variable.  Keep
+                // variables eligible here so the final TaskRef can retain that object receiver.
+                allowVar = true;
+                expectWhat = "block/task/object";
             } else if (m_ds.m_dotPos == DP_PACKAGE) {
                 // {package-or-class}::{a}
                 AstNodeModule* classOrPackagep = nullptr;
@@ -4360,6 +4417,11 @@ class LinkDotResolveVisitor final : public VNVisitor {
                     m_ds.m_dotText = VString::dot(m_ds.m_dotText, ".", nodep->name());
                     m_ds.m_dotSymp = foundp;
                     m_ds.m_dotPos = DP_SCOPE;
+                    if (m_ds.m_disablep && VN_IS(foundp->nodep(), Cell)) {
+                        // Registries for module tasks/blocks are hoisted onto the module, not into
+                        // lexical task/block scopes.  Preserve only the elaborated instance path.
+                        m_ds.m_disablep->dotted(m_ds.m_dotText);
+                    }
                     if (m_ds.m_disablep && VN_IS(foundp->nodep(), NodeBlock)) {
                         // Possibly it is not the final link. If we are under dot and not in its
                         // last component, `targetp()` field will be overwritten by next components
@@ -5128,6 +5190,9 @@ class LinkDotResolveVisitor final : public VNVisitor {
         LINKDOT_VISIT_START();
         UINFO(8, indent() << "visit " << nodep);
         UINFO(8, indent() << m_ds.ascii());
+        const AstDot* const outerDotp = m_ds.m_dotp ? VN_CAST(m_ds.m_dotp->backp(), Dot) : nullptr;
+        const bool disableTaskAsScope
+            = m_ds.m_disablep && outerDotp && outerDotp->lhsp() == m_ds.m_dotp;
         if (m_ds.m_dotPos != DP_MEMBER || nodep->name() != "randomize") {
             // Visit arguments at the beginning.
             // They may be visitted even if the current node can't be linked now.
@@ -5193,6 +5258,39 @@ class LinkDotResolveVisitor final : public VNVisitor {
         } else if (m_ds.m_dotp && m_ds.m_dotPos == DP_MEMBER) {
             // Found a Var, everything following is method call.
             // {scope}.{var}.HERE {method} ( ARGS )
+            if (AstTaskRef* const taskRefp = VN_CAST(nodep, TaskRef)) {
+                if (m_ds.m_disablep) {
+                    // The ParseRef disable path above may have just created and linked this
+                    // TaskRef.  It can be revisited before AstDot unwraps it; do not relower it
+                    // as an ordinary method call or clone the receiver a second time.
+                    if (taskRefp->taskp() && m_ds.m_disablep->receiverp()) return;
+                    AstNodeExpr* const receiverp = VN_AS(m_ds.m_dotp->lhsp(), NodeExpr);
+                    AstNodeDType* const receiverDtp
+                        = receiverp->dtypep() ? receiverp->dtypep()->skipRefp() : nullptr;
+                    if (AstClassRefDType* const classDtp = VN_CAST(receiverDtp, ClassRefDType)) {
+                        VSymEnt* const classSymp = m_statep->getNodeSym(classDtp->classp());
+                        VSymEnt* const foundp = classSymp->findIdFallback(nodep->name());
+                        AstTask* const taskp = foundp ? VN_CAST(foundp->nodep(), Task) : nullptr;
+                        if (taskp) {
+                            taskRefp->taskp(taskp);
+                            taskRefp->classOrPackagep(foundp->classOrPackagep()
+                                                          ? foundp->classOrPackagep()
+                                                          : classDtp->classp());
+                            m_ds.m_disablep->receiverp(receiverp->cloneTree(false));
+                            if (disableTaskAsScope) {
+                                m_ds.m_dotSymp = m_statep->getNodeSym(taskp);
+                                m_ds.m_dotPos = DP_SCOPE;
+                            }
+                            return;
+                        }
+                        nodep->v3error("Could not find task " + nodep->prettyNameQ()
+                                       + " in class object used by disable");
+                    } else {
+                        nodep->v3error(
+                            "Object-qualified disable requires a class-handle receiver");
+                    }
+                }
+            }
             AstNodeExpr* const varEtcp = VN_AS(m_ds.m_dotp->lhsp()->unlinkFrBack(), NodeExpr);
             AstArg* const argsp = nodep->argsp();
             if (argsp) argsp->unlinkFrBackWithNext();
@@ -5204,8 +5302,10 @@ class LinkDotResolveVisitor final : public VNVisitor {
             return;
         } else if (m_ds.m_dotp && (m_ds.m_dotPos == DP_SCOPE || m_ds.m_dotPos == DP_FIRST)) {
             // HERE function() . method_called_on_function_return_value()
-            m_ds.m_dotPos = DP_MEMBER;
-            m_ds.m_dotText = "";
+            if (!disableTaskAsScope) {
+                m_ds.m_dotPos = DP_MEMBER;
+                m_ds.m_dotText = "";
+            }
         } else if (!m_ds.m_disablep) {
             // visit(AstDisable*) setup the dot handling
             checkNoDot(nodep);
@@ -5308,6 +5408,12 @@ class LinkDotResolveVisitor final : public VNVisitor {
                 }
                 nodep->taskp(taskp);
                 nodep->classOrPackagep(foundp->classOrPackagep());
+                if (disableTaskAsScope) {
+                    // A task name may be an intermediate scope in a hierarchical block disable,
+                    // for example disable worker0.run.block_name.
+                    m_ds.m_dotSymp = m_statep->getNodeSym(taskp);
+                    m_ds.m_dotPos = DP_SCOPE;
+                }
                 UINFO(7, indent() << "Resolved " << nodep);  // Also prints taskp
             } else {
                 // Note ParseRef has similar error handling/message output
@@ -6177,7 +6283,9 @@ class LinkDotResolveVisitor final : public VNVisitor {
         if (nodep->targetRefp()) {
             if (AstTaskRef* const taskRefp = VN_CAST(nodep->targetRefp(), TaskRef)) {
                 nodep->targetp(taskRefp->taskp());
-            } else if (!VN_IS(nodep->targetRefp(), ParseRef)) {
+            } else if (VN_IS(nodep->targetRefp(), ParseRef)) {
+                // A ParseRef may remain after its named-block target was linked through targetp().
+            } else {
                 // If it is a ParseRef, either it couldn't be linked or it is linked to a block
                 nodep->v3warn(E_UNSUPPORTED, "Node of type "
                                                  << nodep->targetRefp()->prettyTypeName()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# DESCRIPTION: Verilator: Process tree ownership and terminal release
+# DESCRIPTION: Verilator: Named activation constant-false wait lifecycle
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of either the GNU Lesser General Public License Version 3
@@ -20,5 +20,8 @@ test.compile(make_top_shell=False,
              make_flags=[f'CPPFLAGS_ADD=-DTEST_USE_THREADS={threads}'])
 
 test.execute()
+
+test.file_grep(test.run_log_filename,
+               rf'NAMED_ACTIVATION_FOREVER_SENTINEL pass=1 threads={threads}')
 
 test.passes()

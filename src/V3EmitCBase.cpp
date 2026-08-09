@@ -105,7 +105,7 @@ string EmitCBaseVisitorConst::cFuncArgs(const AstCFunc* nodep) {
     }
     if (nodep->needProcess()) {
         if (!args.empty()) args += ", ";
-        args += "VlProcessRef vlProcess";
+        args += "VlProcessRef vlProcess, VlNamedActivationToken vlActivation";
     }
     if (!nodep->argTypes().empty()) {
         if (!args.empty()) args += ", ";

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# DESCRIPTION: Verilator: Process tree ownership and terminal release
+# DESCRIPTION: Verilator: Named sequential activation lifetime and identity
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of either the GNU Lesser General Public License Version 3
@@ -9,15 +9,9 @@
 
 import vltest_bootstrap
 
-test.scenarios('vlt_all')
+test.scenarios('vlt', 'vltmt')
 
-threads = 2 if test.vltmt else 1
-
-test.compile(make_top_shell=False,
-             make_main=False,
-             verilator_flags2=['--timing', '--exe', test.pli_filename],
-             threads=threads,
-             make_flags=[f'CPPFLAGS_ADD=-DTEST_USE_THREADS={threads}'])
+test.compile(verilator_flags2=['--binary', '--timing'])
 
 test.execute()
 

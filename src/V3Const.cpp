@@ -4229,6 +4229,10 @@ class ConstVisitor final : public VNVisitor {
     void visit(AstJumpBlock* nodep) override {
         iterateChildren(nodep);
 
+        // A named-activation JumpBlock is also the lifetime boundary for its hidden RAII guard,
+        // even when no AstJumpGo currently targets it (and even when its source body is empty).
+        if (nodep->namedActivationRegistryp()) return;
+
         // If first statement is an AstLoopTest, pull it before the jump block
         if (AstLoopTest* const testp = VN_CAST(nodep->stmtsp(), LoopTest)) {
             nodep->addHereThisAsNext(testp->unlinkFrBack());

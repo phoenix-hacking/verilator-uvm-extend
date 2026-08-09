@@ -1435,6 +1435,9 @@ bool AstJumpBlock::isPure() {
     return m_purity.get();
 }
 bool AstJumpBlock::getPurityRecurse() const {
+    // Activation entry/leave is emitted implicitly around this block.  Treat the boundary as
+    // impure even when its visible statement list is empty or otherwise side-effect free.
+    if (namedActivationRegistryp()) return false;
     for (AstNode* stmtp = this->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
         if (!stmtp->isPure()) return false;
     }

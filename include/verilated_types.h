@@ -343,14 +343,15 @@ public:
 /// runtime infrastructure; compiler lowering is added separately after cancellation-aware
 /// coroutine suspension is available.
 class VlNamedActivationRegistry final {
-    VL_UNCOPYABLE(VlNamedActivationRegistry);
-
     // MEMBERS
     std::shared_ptr<VlNamedActivationRegistryState> m_statep;
 
 public:
     // CONSTRUCTORS
     VlNamedActivationRegistry();
+    /// A cloned SystemVerilog object receives an independent, initially empty registry.
+    VlNamedActivationRegistry(const VlNamedActivationRegistry&);
+    VlNamedActivationRegistry& operator=(const VlNamedActivationRegistry&) = delete;
     ~VlNamedActivationRegistry();
 
     // METHODS

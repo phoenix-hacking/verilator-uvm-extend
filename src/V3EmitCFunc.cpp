@@ -376,6 +376,7 @@ void EmitCFunc::emitCCallArgs(const AstNodeCCall* nodep, const string& selfPoint
     }
     if (nodep->funcp()->needProcess()) {
         if (comma) puts(", ");
+        bool sameProcess = false;
         if (AstNodeExpr* const processp = nodep->processp()) {
             puts("(");
             iterateConst(processp);
@@ -390,11 +391,13 @@ void EmitCFunc::emitCCallArgs(const AstNodeCCall* nodep, const string& selfPoint
             puts("std::make_shared<VlProcess>()");
         } else if (VN_IS(nodep->backp(), CAwait) || !nodep->funcp()->isCoroutine()) {
             puts("vlProcess");
+            sameProcess = true;
         } else if (inProcess) {
             puts("VlProcess::createChild(vlProcess)");
         } else {
             puts("std::make_shared<VlProcess>()");
         }
+        puts(sameProcess ? ", vlActivation" : ", VlNamedActivationToken{}");
         comma = true;
     }
     if (!nodep->argTypes().empty()) {
