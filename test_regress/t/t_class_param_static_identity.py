@@ -15,6 +15,9 @@ test.compile(verilator_flags2=["--binary", "-Wall"])
 
 test.execute()
 
-test.file_grep(test.run_log_filename, r'CLASS PARAM STATIC IDENTITY PASSED')
+test.file_grep_count(test.run_log_filename, r'^\*-\* CLASS PARAM STATIC IDENTITY PASSED \*-\*
+
+test.passes()
+, 1)
 
 test.passes()
