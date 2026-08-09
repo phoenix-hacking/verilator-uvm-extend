@@ -6,10 +6,13 @@
 
 This plan tracks one resource-capped regression lane for the vendored,
 concatenated UVM 2020.3.1 package. It advances issue #21 package-elaboration
-smoke and issue #39 `UVM_NO_DPI` command-flow evidence. The current local
-expansion also closes the tracker gates for issue #5 UVM phasing/process
-semantics and issue #7 config-DB virtual-interface/clocking flow. It does not
-establish complete UVM 2020 or IEEE 1800.2 parity.
+smoke and issue #39 `UVM_NO_DPI` command-flow evidence. Two independent current
+Makefile contracts gate this PR: 15 focused named-disable tests run in both
+`vlt` and `vltmt`, and 20 ordered UVM integration tests run in `vlt`. Their
+validation remains independent: the focused local target passed, while its CI
+proof is pending; the current UVM local target also passed, while its CI proof
+is pending. The accepted older 15-test UVM results below are historical.
+Neither lane establishes complete UVM 2020 or IEEE 1800.2 parity.
 
 See `PROGRESS.md` for the full-program dashboard, all 21 criteria, all 20
 public milestones, all 46 atomic gates, all 40 public issues, open work, and
@@ -24,7 +27,7 @@ upstream `uvm_pkg.sv` source tree.
 
 ## Progress accounting
 
-Progress is reported against five independent denominators. They must not be
+Progress is reported against seven independent denominators. They must not be
 combined into one percentage:
 
 | Metric | Denominator | Completion rule |
@@ -32,7 +35,9 @@ combined into one percentage:
 | Program exit criteria | `C01` through `C21` (21) | A criterion counts only when its status is `pass` and every referenced public capability milestone has exited. |
 | Public capability milestones | `M00` through `M19` (20) | A milestone exits only when every required gate has accepted evidence. |
 | Atomic milestone gates | 46 required gates | Engineering progress counts each required gate with accepted evidence; this diagnostic does not substitute for milestone exits. |
-| Pull request #41 lane evidence | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs pass: 11/11, or 100.0%. |
+| Historical pull request #41 evidence slice | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs were accepted at the recorded revisions: 11/11. This does not validate the current 20-test contract. |
+| Current focused named-disable lane | 15 tests in two scenarios | `check_tracker.py` derives the ordered 15-test contract from `NAMED_DISABLE_EXISTING_TESTS` followed by `NAMED_DISABLE_COMPILER_TESTS`. Every test runs under both `vlt` and `vltmt`, for 30 scenario executions and 30 cleanup sentinels. Local passed 30/30; CI is pending. |
+| Current Makefile lane contract | 20 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Local passed 20/20; CI is pending. |
 | Test corpora | Per-corpus planned-test count | Report implementation, execution, pass, and verified rates separately as described below. |
 
 Full-program `C01`-`C21` completion cannot be inferred from a lane evidence
@@ -75,7 +80,9 @@ The current checker-derived snapshot is:
 program criteria: 0/21 (0.0%)
 public milestone exits: 2/20 (10.0%)
 atomic milestone gates: 24/46 (52.2%)
-PR #41 lane evidence: 11/11 (100.0%)
+historical original PR #41 evidence slice: 11/11 accepted at recorded revisions
+current focused lane contract: 15 tests x 2 scenarios; local pass, CI pending
+current Makefile lane contract: 20 ordered tests; local pass, CI pending
 mixed corpus: planned=108 implemented=108 executed=100 passed=100 failed=0 blocked=8
 mixed corpus rates: execution=92.6% pass/executed=100.0% verified=92.6%
 issue #5 mapped gates: 4/6 (66.7%)
@@ -95,16 +102,90 @@ performance closure; `M06` still requires APB setup/access proof. No
 full-program criterion has yet cleared all of its public milestone
 dependencies.
 
-## Lane contract
+## Focused named-disable contract
 
-Run the named lane from the repository root:
+Run the focused compiler/runtime lane from the repository root:
+
+```sh
+make -C test_regress named-disable
+```
+
+The fixed-order contract contains these 15 tests:
+
+```text
+t/t_disable_fork_launch.py
+t/t_disable_fork_nested.py
+t/t_disable_task_by_name.py
+t/t_disable_task_join.py
+t/t_disable_task_simple.py
+t/t_named_activation_forever.py
+t/t_named_activation_runtime.py
+t/t_named_activation_suspension.py
+t/t_process_context_fork.py
+t/t_process_tree_ownership.py
+t/t_uvm_lrm_process_kill_self_tree.py
+t/t_disable_named_activation.py
+t/t_disable_named_control.py
+t/t_disable_named_interface_unsup.py
+t/t_disable_named_recursive.py
+```
+
+Each test runs under both `vlt` and `vltmt`, with test and generated-build
+fanout fixed at one. The `-named-disable` object suffix and one seeded
+`interrupted.gch` per test/scenario pair produce 30 independent cleanup
+sentinels. The interface-class case is a passing negative regression only when
+it emits the tracked explicit `UNSUPPORTED` diagnostic.
+
+The supported named sequential task/begin envelope is deliberately narrower
+than all SystemVerilog hierarchy:
+
+| Form | Current focused status |
+|---|---|
+| Scalar hierarchical module paths and scalar class-object receivers | Supported by the focused implementation and tests. |
+| Ordinary, pure-virtual, and parameterized virtual class task families | Supported; base- and derived-typed receivers share the virtual-family registry. |
+| Interface-class task disable through an interface-class receiver | Explicitly unsupported with a stable regression diagnostic. |
+| Generate-scope paths and instance/cell-array paths | Pre-existing unsupported hierarchy forms; this PR does not claim to add them. |
+
+### Recorded local result
+
+The validation worktree head was
+`c1dab4a4f5961fe5e6c61ed57d539d576cecca0d`. Its `src/` subtree,
+`e071957ca32d0b2c0a8210747bdc4d1faa818d91`, supplied the exact clean compiler
+build at `/tmp/pr41-exact-build.eR6mjg/repo/bin/verilator_bin`. Its version was
+`Verilator 5.051 devel rev vUNKNOWN-built20260809-c1dab4a4f`, with binary
+SHA-256
+`37551f1957a2a31f5f321ad69cdb39e05e97c1f4d2583834a33528d9714302bb`.
+
+The exact invocation was:
+
+```sh
+time -p env \
+  VERILATOR_ROOT=/tmp/pr41-exact-build.eR6mjg/repo \
+  PYTHONPATH=/tmp/uvm_run_shim \
+  PATH=/tmp/uvm_run_shim:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  PYTHONUNBUFFERED=1 \
+  make -C test_regress named-disable
+```
+
+All 15 tests passed under both scenarios: 30/30 passed and zero failed. Driver
+time was 22:03; `time -p` reported 1324.11 real, 1051.40 user, and 241.91
+system seconds. The run seeded and removed 30/30 `interrupted.gch` sentinels,
+reported a passing cleanup postcheck, and left the validation worktree clean.
+
+This satisfies the focused local gate only. The Ubuntu 26 GCC `named-disable`
+job, the 20-test UVM CI job, and the other required exact-head workflow checks
+remain pending, so focused technical closure is not yet recorded.
+
+## UVM integration lane contract
+
+Run the UVM integration lane from the repository root:
 
 ```sh
 make -C test_regress uvm2020
 ```
 
-The current target runs nine reduced scheduler/process/interface tests and
-six UVM package/API tests:
+The current target runs 14 reduced scheduler/process/interface tests followed
+by six UVM package/API tests:
 
 ```sh
 cd test_regress
@@ -117,6 +198,11 @@ python3 driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
   t/t_uvm_lrm_process_kill_self_zero.py \
   t/t_uvm_lrm_process_kill_function.py \
   t/t_uvm_lrm_process_kill_wait_zero.py \
+  t/t_process_context_fork.py \
+  t/t_process_fork_finished.py \
+  t/t_process_phase_teardown.py \
+  t/t_process_self_kill_ctor.py \
+  t/t_process_self_kill_initial.py \
   t/t_timing_finish.py \
   t/t_finish_stops_nonfinal.py \
   t/t_clocking_virtual.py \
@@ -132,9 +218,9 @@ The child regression process plants `interrupted.gch` in each dedicated
 object directory immediately before that test is cleaned. It then atomically
 renames the complete directory to a process- and time-unique quarantine,
 creates the active directory, asserts that the active directory is empty, and
-removes the quarantine. The current target therefore creates and removes 15
+removes the quarantine. The current target therefore creates and removes 20
 sentinels without an external pre-seeding race. After the harness returns, a
-fail-fast shell loop independently asserts that all 15 sentinel paths are
+fail-fast shell loop independently asserts that all 20 sentinel paths are
 absent and prints `uvm2020: stale-artifact cleanup PASSED`. Thus every lane
 execution, including the first execution in a clean checkout, exercises the
 recovery policy rather than relying on pre-existing workspace state.
@@ -165,11 +251,29 @@ The `uvm2020` suite in `ci/ci-script.bash` runs the same Make target. The suite
 is an Ubuntu GCC entry in the normal `build-test` workflow, which connects the
 proof to the repository's built-checkout regression path.
 
-The current 15-test target passed locally, including all 15 post-run sentinel
-assertions, in 14:27. The canonical Ubuntu 26.04 GCC `uvm2020` job then passed
-the same target 15/0 in 6:00 and repeated the cleanup assertion. That job
-supplies all five required CI proof environments, so the PR #41 metric is now
-11/11 (100.0%).
+### Recorded local result
+
+Validation worktree head `c1dab4a4f5961fe5e6c61ed57d539d576cecca0d`
+passed the exact `make -C test_regress uvm2020` command with
+`VERILATOR_ROOT=/tmp/pr41-validated.zZ2zfS/repo`,
+`VERILATOR_BIN=/tmp/pr41-coroutine-return.JfE1Cy/verilator_bin_fixed`, and
+`/tmp/uvm_run_shim` supplied through `PYTHONPATH` and prepended to `PATH`.
+The compiler version was
+`Verilator 5.051 devel rev vUNKNOWN-built20260809-fa6fd2c68 (mod)`, with binary
+SHA-256
+`e52a7a32fe54127f6a4a37cb315bfd2d1e6b1c998d2180184f02c2b357073e62`.
+
+All 20 ordered tests passed under `vlt`, with zero failures. Driver time was
+80:15; external timing reported 4819.25 real, 3761.18 user, and 998.74 system
+seconds. The clean-before symlink-safety preflight passed, the run seeded and
+removed 20/20 `interrupted.gch` sentinels, and the postcheck printed
+`uvm2020: stale-artifact cleanup PASSED`.
+
+The current UVM local gate is therefore satisfied, but its CI proof remains
+pending. The historical 15-test target passed locally in 14:27, and a
+historical canonical Ubuntu 26.04 GCC job passed that older target 15/0 in
+6:00. Those dated runs remain accepted only for their recorded proof slice and
+do not close the broader 0/21 UVM program.
 
 ## Frozen repo-native compatibility corpus
 
@@ -255,7 +359,7 @@ make -j2
 make -C test_regress uvm2020
 ```
 
-The named target performs its 15-directory child-local sentinel setup and
+The named target performs its 20-directory child-local sentinel setup and
 assertions automatically. It must report the expected test pass markers and
 the cleanup pass marker, then exit zero. Repeating the same command
 additionally proves that artifacts left by a prior completed or interrupted
@@ -504,20 +608,21 @@ repository, test selection, commands, or build settings. The committed CI lane
 uses the driver's normal `forkserver` path, and its status is tracked
 separately in `MATRIX.md` and `tracker.yaml`.
 
-### Current local expansion
+### Historical 2026-07-16 local expansion
 
 Validation on 2026-07-16 used the same host compiler and the same local `fork`
 shim caveat. A fresh isolated tree at revision
 `703bb474d9ea45bff246fec43397cd7c7acaa0fa` completed a full optimized source
 build using Autoconf 2.72, Bison 3.8.2, and Flex 2.6.4 under the temporary
-`/tmp/uvm-tools` prefix. Every current focused and integrated result uses its
+`/tmp/uvm-tools` prefix. Every focused and integrated result recorded in this
+historical snapshot used its
 `vUNKNOWN-built20260716-703bb474d` compiler. A debug build was not run and
 receives no credit.
 
 The earlier evidence remains valid history: the complete optimized build
 preceded the review-driven `src/V3Timing.cpp` return-staging and jump-scope
 edits, after which the exact translation unit compiled and the optimized
-binary relinked. The current exact-head full build supersedes the old local
+binary relinked. That snapshot's exact-head full build superseded the old local
 missing-Flex regeneration limitation for optimized-source validation; it does
 not reclassify the frozen baseline's canonical missing-debug-binary result.
 
@@ -536,13 +641,13 @@ fail-closed results led to child-local seeding and atomic quarantine of the
 complete old directory before creation and emptiness checking of the new
 active directory.
 
-Two current validation attempts inside the managed workspace received no
+Two validation attempts in that historical snapshot received no
 credit. In the first, the host restored 317 old generated files after the
 harness had asserted the replacement directory empty; the restored dependency
 named obsolete specialization `Tz23` while every fresh generated source named
 `Tz36`. In the second, a never-before-used suffix avoided that PCH but the host
 changed the freshly linked simulator from mode 0755 to 0644 before execution.
-The definitive 15-test command therefore runs from an isolated `/tmp`
+The historical definitive 15-test command therefore ran from an isolated `/tmp`
 execution root. Its Makefile, driver, input file, and tests resolve to this
 proposed tree, while every generated object/PCH/executable stays outside the
 managed overlay. The lane still uses the committed fixed `-uvm2020` suffix;
@@ -560,8 +665,8 @@ LD_LIBRARY_PATH=/tmp/uvm-tools/lib \
 make uvm2020
 ```
 
-It passed all 15 tests with zero failures in 14:27. The target retained
-test/build fanout at 1/1 with output group 6, removed all 15 child-local
+That historical run passed all 15 tests with zero failures in 14:27. The
+target retained test/build fanout at 1/1 with output group 6, removed all 15 child-local
 `interrupted.gch` sentinels, and printed
 `uvm2020: stale-artifact cleanup PASSED`. This integrated result includes the
 new UVM config-DB virtual-interface/clocking and UVM core-phasing tests, in
@@ -589,8 +694,8 @@ and seven dependency skips are eight blocked entries. With the six L1 UVM
 tests, the current mixed corpus is 100 pass, zero semantic failures, and eight
 blocked--not 72/72 semantic pass.
 
-The canonical `Test | ubuntu-26.04 | gcc | uvm2020` job passed 15/0 in 6:00
-and printed `uvm2020: stale-artifact cleanup PASSED`. The accepted job is
+The historical canonical `Test | ubuntu-26.04 | gcc | uvm2020` job passed
+15/0 in 6:00 and printed `uvm2020: stale-artifact cleanup PASSED`. The accepted job is
 <https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/29489670514/job/87592850312>.
 GitHub tested synthetic merge `80ca22d72275f3e1bd865c460b7a99868b88a38e`
 for source head `7170338f85745a68eeec557e6eb7e88f63a281fc`.

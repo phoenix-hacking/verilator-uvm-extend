@@ -10,6 +10,11 @@ documentation and must not be used to claim implemented user-facing support.
 
 Snapshot: 2026-07-03, repository commit `f82f59a02`.
 
+This file preserves that historical planning snapshot. Its percentages,
+ledger paths, and run references are not current-state claims. Use
+`tracker.yaml` plus `PROGRESS.md` for the broader 0/21 program state, and
+`PLAN.md` for the current PR lane contract.
+
 ## Top-Level Objective
 
 The objective is to make this Verilator checkout capable of running a serious
@@ -242,7 +247,7 @@ specific changes:
 
 ## Top-Level Dashboard
 
-Current overall completion estimate: `[##--------] 15%` for the full competitive
+Historical snapshot completion estimate: `[##--------] 15%` for the full competitive
 SoC-grade UVM 2020 objective. Tracking is mostly complete, C1 core proof is
 roughly 40%, and protocol/SoC/RAL/coverage/performance work is still mostly
 ahead.

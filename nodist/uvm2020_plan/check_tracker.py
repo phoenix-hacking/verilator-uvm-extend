@@ -14,6 +14,9 @@ Program completion uses the public capability milestones M00 through M19.
 Required atomic gates are also reported as an engineering-progress diagnostic.
 Issue-specific progress, when declared, is derived from the required gates in
 the public milestones explicitly mapped to that issue.
+The current ``named-disable`` and ``uvm2020`` lanes are separately derived from
+their ordered Makefile variables and must match the tracker test lists,
+scenarios, and stale-seed counts exactly.
 The separate M0-through-M17 implementation sequence is dependency-order
 metadata and is intentionally not another completion denominator here.
 """
@@ -22,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -45,6 +49,16 @@ VALID_STATUSES = frozenset(
 )
 EXPECTED_CRITERIA = frozenset(f"C{number:02d}" for number in range(1, 22))
 EXPECTED_MILESTONES = frozenset(f"M{number:02d}" for number in range(20))
+UVM2020_LANE_VARIABLES = ("UVM2020_REDUCED_TESTS", "UVM2020_PACKAGE_TESTS")
+UVM2020_LANE_COMPOSITION = [f"$({name})" for name in UVM2020_LANE_VARIABLES]
+UVM2020_LANE_TEST_COUNT = 20
+FOCUSED_LANE_VARIABLES = (
+    "NAMED_DISABLE_EXISTING_TESTS",
+    "NAMED_DISABLE_COMPILER_TESTS",
+)
+FOCUSED_LANE_COMPOSITION = [f"$({name})" for name in FOCUSED_LANE_VARIABLES]
+FOCUSED_LANE_TEST_COUNT = 15
+FOCUSED_LANE_SCENARIOS = ["vlt", "vltmt"]
 
 
 class UniqueKeySafeLoader(yaml.SafeLoader):
@@ -107,14 +121,42 @@ def _corpus_counts(
 class TrackerChecker:
     """Schema and consistency checker for one loaded tracker document."""
 
-    def __init__(self, document: Any) -> None:
+    def __init__(self, document: Any, makefile: Path | None = None) -> None:
         self.document = document
+        self.makefile = makefile or (
+            Path(__file__).resolve().parents[2] / "test_regress" / "Makefile"
+        )
         self.errors: list[str] = []
         self.atomic_ids: dict[str, str] = {}
         self.test_ids: dict[str, str] = {}
         self.evidence_complete: dict[str, bool] = {}
         self.milestone_complete: dict[str, bool] = {}
         self.computed: dict[str, Any] = {}
+
+    def make_assignment(self, lines: list[str], name: str) -> list[str]:
+        """Return tokens from one simple ``:=`` Make assignment."""
+
+        prefix = f"{name} :="
+        for index, line in enumerate(lines):
+            if not line.startswith(prefix):
+                continue
+            fragments: list[str] = []
+            fragment = line[len(prefix) :].strip()
+            while True:
+                continued = fragment.endswith("\\")
+                fragments.append(fragment[:-1].strip() if continued else fragment)
+                if not continued:
+                    break
+                index += 1
+                if index >= len(lines):
+                    self.error(
+                        f"$makefile.{name}", "unterminated line continuation"
+                    )
+                    return []
+                fragment = lines[index].strip()
+            return " ".join(fragments).split()
+        self.error(f"$makefile.{name}", "missing simple := assignment")
+        return []
 
     def error(self, path: str, message: str) -> None:
         rendered = f"{path}: {message}"
@@ -536,6 +578,439 @@ class TrackerChecker:
             self.compare_completion(lane["progress"], "$.lane.progress", result)
         return result
 
+    def check_expanded_lane(self, root: dict[Any, Any]) -> dict[str, Any]:
+        """Cross-check the current ordered lane contract against its Makefile."""
+
+        lane = self.mapping(root.get("expanded_lane"), "$.expanded_lane")
+        declared_tests = self.reference_list(
+            lane.get("tests"), "$.expanded_lane.tests", require_nonempty=True
+        )
+        controls = self.mapping(lane.get("controls"), "$.expanded_lane.controls")
+        declared_seed_count = controls.get("stale_seed_directories")
+        validation = self.mapping(
+            lane.get("current_validation"), "$.expanded_lane.current_validation"
+        )
+        validation_status = self.status(
+            validation.get("status"), "$.expanded_lane.current_validation.status"
+        )
+        proof_statuses: dict[str, str | None] = {}
+        proofs: dict[str, dict[Any, Any]] = {}
+        for environment in ("local", "ci"):
+            proof = self.mapping(
+                validation.get(environment),
+                f"$.expanded_lane.current_validation.{environment}",
+            )
+            proofs[environment] = proof
+            proof_statuses[environment] = self.status(
+                proof.get("status"),
+                f"$.expanded_lane.current_validation.{environment}.status",
+            )
+        all_proofs_pass = all(status == "pass" for status in proof_statuses.values())
+        if validation_status == "pass" and not all_proofs_pass:
+            self.error(
+                "$.expanded_lane.current_validation.status",
+                "pass requires both local and CI proof to pass",
+            )
+        elif validation_status != "pass" and all_proofs_pass:
+            self.error(
+                "$.expanded_lane.current_validation.status",
+                "must be pass when both local and CI proof pass",
+            )
+
+        try:
+            makefile_lines = self.makefile.read_text(encoding="utf-8").splitlines()
+        except OSError as error:
+            self.error("$makefile", f"unable to read {self.makefile}: {error}")
+            return {
+                "tests": declared_tests,
+                "total": len(declared_tests),
+                "status": validation_status,
+                "proofs": proof_statuses,
+            }
+
+        make_tests: list[str] = []
+        for variable in UVM2020_LANE_VARIABLES:
+            make_tests.extend(self.make_assignment(makefile_lines, variable))
+        composition = self.make_assignment(makefile_lines, "UVM2020_TESTS")
+        if composition != UVM2020_LANE_COMPOSITION:
+            self.error(
+                "$makefile.UVM2020_TESTS",
+                "must compose the reduced list followed by the package list exactly",
+            )
+        if len(make_tests) != UVM2020_LANE_TEST_COUNT:
+            self.error(
+                "$makefile.UVM2020_TESTS",
+                f"expected {UVM2020_LANE_TEST_COUNT} tests, found {len(make_tests)}",
+            )
+        if len(set(make_tests)) != len(make_tests):
+            self.error("$makefile.UVM2020_TESTS", "contains duplicate test paths")
+
+        expected_tests = [f"test_regress/{test}" for test in make_tests]
+        if declared_tests != expected_tests:
+            self.error(
+                "$.expanded_lane.tests",
+                "must exactly match the ordered UVM2020_TESTS Makefile lane",
+            )
+        if (
+            not isinstance(declared_seed_count, int)
+            or isinstance(declared_seed_count, bool)
+            or declared_seed_count != len(make_tests)
+        ):
+            self.error(
+                "$.expanded_lane.controls.stale_seed_directories",
+                f"must equal the Makefile lane size ({len(make_tests)})",
+            )
+
+        local = proofs.get("local", {})
+        if proof_statuses.get("local") == "pass":
+            local_path = "$.expanded_lane.current_validation.local"
+            command = local.get("command")
+            lane_command = lane.get("command")
+            if not isinstance(command, str) or not command.endswith(str(lane_command)):
+                self.error(
+                    f"{local_path}.command",
+                    "must end with the expanded lane command",
+                )
+            if local.get("lane_command") != lane_command:
+                self.error(f"{local_path}.lane_command", "must match the lane command")
+            revision = local.get("validation_worktree_revision")
+            if (
+                not isinstance(revision, str)
+                or re.fullmatch(r"[0-9a-f]{40}", revision) is None
+            ):
+                self.error(
+                    f"{local_path}.validation_worktree_revision",
+                    "must be a full lowercase Git object ID",
+                )
+
+            environment = self.mapping(
+                local.get("environment"), f"{local_path}.environment"
+            )
+            for field in ("VERILATOR_ROOT", "VERILATOR_BIN", "PYTHONPATH", "PATH"):
+                value = environment.get(field)
+                if not isinstance(value, str) or not value.startswith("/"):
+                    self.error(
+                        f"{local_path}.environment.{field}",
+                        "must be a nonempty absolute path",
+                    )
+
+            compiler = self.mapping(local.get("compiler"), f"{local_path}.compiler")
+            if compiler.get("path") != environment.get("VERILATOR_BIN"):
+                self.error(
+                    f"{local_path}.compiler.path",
+                    "must match environment.VERILATOR_BIN",
+                )
+            version = compiler.get("version")
+            if not isinstance(version, str) or not version.strip():
+                self.error(f"{local_path}.compiler.version", "must be a nonempty string")
+            sha256 = compiler.get("sha256")
+            if (
+                not isinstance(sha256, str)
+                or re.fullmatch(r"[0-9a-f]{64}", sha256) is None
+            ):
+                self.error(
+                    f"{local_path}.compiler.sha256",
+                    "must be a lowercase SHA-256 digest",
+                )
+
+            result = self.mapping(local.get("result"), f"{local_path}.result")
+            expected_result = {
+                "tests": len(make_tests),
+                "scenarios": ["vlt"],
+                "passed": len(make_tests),
+                "failed": 0,
+                "total": len(make_tests),
+            }
+            for field, expected in expected_result.items():
+                if result.get(field) != expected:
+                    self.error(
+                        f"{local_path}.result.{field}",
+                        f"must equal {expected!r} for passing local evidence",
+                    )
+            driver_elapsed = result.get("driver_elapsed")
+            if (
+                not isinstance(driver_elapsed, str)
+                or re.fullmatch(r"[0-9]+:[0-5][0-9]", driver_elapsed) is None
+            ):
+                self.error(
+                    f"{local_path}.result.driver_elapsed", "must use M:SS notation"
+                )
+            for field in ("real_seconds", "user_seconds", "system_seconds"):
+                value = result.get(field)
+                if (
+                    not isinstance(value, (int, float))
+                    or isinstance(value, bool)
+                    or value < 0
+                ):
+                    self.error(
+                        f"{local_path}.result.{field}",
+                        "must be a nonnegative number",
+                    )
+
+            cleanup = self.mapping(local.get("cleanup"), f"{local_path}.cleanup")
+            if self.status(cleanup.get("status"), f"{local_path}.cleanup.status") != "pass":
+                self.error(f"{local_path}.cleanup.status", "must be pass")
+            for field in ("sentinels_seeded", "sentinels_removed"):
+                if cleanup.get(field) != len(make_tests):
+                    self.error(
+                        f"{local_path}.cleanup.{field}",
+                        f"must equal the Makefile lane size ({len(make_tests)})",
+                    )
+            if cleanup.get("preflight_symlink_safety") != "pass":
+                self.error(
+                    f"{local_path}.cleanup.preflight_symlink_safety",
+                    "must be pass",
+                )
+            if cleanup.get("postcheck") != "uvm2020: stale-artifact cleanup PASSED":
+                self.error(
+                    f"{local_path}.cleanup.postcheck",
+                    "must record the exact passing cleanup sentinel",
+                )
+        for index, test in enumerate(make_tests):
+            if not (self.makefile.parent / test).is_file():
+                self.error(
+                    f"$makefile.UVM2020_TESTS[{index}]", f"missing test file {test!r}"
+                )
+        return {
+            "tests": expected_tests,
+            "total": len(expected_tests),
+            "status": validation_status,
+            "proofs": proof_statuses,
+        }
+
+    def check_focused_lane(self, root: dict[Any, Any]) -> dict[str, Any]:
+        """Cross-check the focused two-scenario contract against its Makefile."""
+
+        lane = self.mapping(root.get("focused_lane"), "$.focused_lane")
+        declared_tests = self.reference_list(
+            lane.get("tests"), "$.focused_lane.tests", require_nonempty=True
+        )
+        controls = self.mapping(lane.get("controls"), "$.focused_lane.controls")
+        declared_scenarios = self.reference_list(
+            controls.get("scenarios"),
+            "$.focused_lane.controls.scenarios",
+            require_nonempty=True,
+        )
+        if declared_scenarios != FOCUSED_LANE_SCENARIOS:
+            self.error(
+                "$.focused_lane.controls.scenarios",
+                "must be the ordered vlt, vltmt scenario pair",
+            )
+        declared_seed_count = controls.get("stale_seed_directories")
+        validation = self.mapping(
+            lane.get("current_validation"), "$.focused_lane.current_validation"
+        )
+        validation_status = self.status(
+            validation.get("status"), "$.focused_lane.current_validation.status"
+        )
+        proof_statuses: dict[str, str | None] = {}
+        proofs: dict[str, dict[Any, Any]] = {}
+        for environment in ("local", "ci"):
+            proof = self.mapping(
+                validation.get(environment),
+                f"$.focused_lane.current_validation.{environment}",
+            )
+            proofs[environment] = proof
+            proof_statuses[environment] = self.status(
+                proof.get("status"),
+                f"$.focused_lane.current_validation.{environment}.status",
+            )
+        all_proofs_pass = all(status == "pass" for status in proof_statuses.values())
+        if validation_status == "pass" and not all_proofs_pass:
+            self.error(
+                "$.focused_lane.current_validation.status",
+                "pass requires both local and CI proof to pass",
+            )
+        elif validation_status != "pass" and all_proofs_pass:
+            self.error(
+                "$.focused_lane.current_validation.status",
+                "must be pass when both local and CI proof pass",
+            )
+
+        try:
+            makefile_text = self.makefile.read_text(encoding="utf-8")
+            makefile_lines = makefile_text.splitlines()
+        except OSError as error:
+            self.error("$makefile", f"unable to read {self.makefile}: {error}")
+            return {
+                "tests": declared_tests,
+                "total": len(declared_tests),
+                "scenarios": declared_scenarios,
+                "scenario_total": len(declared_tests) * len(declared_scenarios),
+                "status": validation_status,
+                "proofs": proof_statuses,
+            }
+
+        make_tests: list[str] = []
+        for variable in FOCUSED_LANE_VARIABLES:
+            make_tests.extend(self.make_assignment(makefile_lines, variable))
+        composition = self.make_assignment(makefile_lines, "NAMED_DISABLE_TESTS")
+        if composition != FOCUSED_LANE_COMPOSITION:
+            self.error(
+                "$makefile.NAMED_DISABLE_TESTS",
+                "must compose the existing list followed by the compiler list exactly",
+            )
+        if len(make_tests) != FOCUSED_LANE_TEST_COUNT:
+            self.error(
+                "$makefile.NAMED_DISABLE_TESTS",
+                f"expected {FOCUSED_LANE_TEST_COUNT} tests, found {len(make_tests)}",
+            )
+        if len(set(make_tests)) != len(make_tests):
+            self.error("$makefile.NAMED_DISABLE_TESTS", "contains duplicate test paths")
+        collapsed_makefile = " ".join(line.strip() for line in makefile_lines)
+        scenario_invocation = (
+            "--obj-suffix=-named-disable --vlt --vltmt "
+            "$(NAMED_DISABLE_RUN_TESTS)"
+        )
+        if scenario_invocation not in collapsed_makefile:
+            self.error(
+                "$makefile.named-disable",
+                "must run the focused list in ordered vlt and vltmt scenarios",
+            )
+
+        expected_tests = [f"test_regress/{test}" for test in make_tests]
+        if declared_tests != expected_tests:
+            self.error(
+                "$.focused_lane.tests",
+                "must exactly match the ordered NAMED_DISABLE_TESTS Makefile lane",
+            )
+        expected_seed_count = len(make_tests) * len(FOCUSED_LANE_SCENARIOS)
+        if (
+            not isinstance(declared_seed_count, int)
+            or isinstance(declared_seed_count, bool)
+            or declared_seed_count != expected_seed_count
+        ):
+            self.error(
+                "$.focused_lane.controls.stale_seed_directories",
+                f"must equal tests times scenarios ({expected_seed_count})",
+            )
+
+        local = proofs.get("local", {})
+        if proof_statuses.get("local") == "pass":
+            local_path = "$.focused_lane.current_validation.local"
+            command = local.get("command")
+            lane_command = lane.get("command")
+            if not isinstance(command, str) or not command.endswith(str(lane_command)):
+                self.error(
+                    f"{local_path}.command",
+                    "must end with the focused lane command",
+                )
+            if local.get("lane_command") != lane_command:
+                self.error(f"{local_path}.lane_command", "must match the lane command")
+            for field in (
+                "validation_worktree_revision",
+                "validation_src_tree",
+                "compiler_source_revision",
+                "compiler_source_src_tree",
+            ):
+                value = local.get(field)
+                if (
+                    not isinstance(value, str)
+                    or re.fullmatch(r"[0-9a-f]{40}", value) is None
+                ):
+                    self.error(
+                        f"{local_path}.{field}",
+                        "must be a full lowercase Git object ID",
+                    )
+            if local.get("validation_src_tree") != local.get("compiler_source_src_tree"):
+                self.error(
+                    f"{local_path}.compiler_source_src_tree",
+                    "must match validation_src_tree",
+                )
+            if local.get("validation_worktree_revision") != local.get(
+                "compiler_source_revision"
+            ):
+                self.error(
+                    f"{local_path}.compiler_source_revision",
+                    "must match validation_worktree_revision",
+                )
+            if local.get("compiler_source_matches_validation_src") is not True:
+                self.error(
+                    f"{local_path}.compiler_source_matches_validation_src",
+                    "must be true for passing local evidence",
+                )
+            if local.get("worktree_clean") is not True:
+                self.error(
+                    f"{local_path}.worktree_clean",
+                    "must be true for passing local evidence",
+                )
+
+            compiler = self.mapping(local.get("compiler"), f"{local_path}.compiler")
+            compiler_path = compiler.get("path")
+            if not isinstance(compiler_path, str) or not compiler_path.startswith("/"):
+                self.error(
+                    f"{local_path}.compiler.path", "must be a nonempty absolute path"
+                )
+            version = compiler.get("version")
+            if not isinstance(version, str) or not version.strip():
+                self.error(f"{local_path}.compiler.version", "must be a nonempty string")
+            sha256 = compiler.get("sha256")
+            if (
+                not isinstance(sha256, str)
+                or re.fullmatch(r"[0-9a-f]{64}", sha256) is None
+            ):
+                self.error(
+                    f"{local_path}.compiler.sha256",
+                    "must be a lowercase SHA-256 digest",
+                )
+
+            result = self.mapping(local.get("result"), f"{local_path}.result")
+            expected_result = {
+                "tests": len(make_tests),
+                "scenarios": FOCUSED_LANE_SCENARIOS,
+                "passed": expected_seed_count,
+                "failed": 0,
+                "total": expected_seed_count,
+            }
+            for field, expected in expected_result.items():
+                if result.get(field) != expected:
+                    self.error(
+                        f"{local_path}.result.{field}",
+                        f"must equal {expected!r} for passing local evidence",
+                    )
+            driver_elapsed = result.get("driver_elapsed")
+            if (
+                not isinstance(driver_elapsed, str)
+                or re.fullmatch(r"[0-9]+:[0-5][0-9]", driver_elapsed) is None
+            ):
+                self.error(
+                    f"{local_path}.result.driver_elapsed", "must use M:SS notation"
+                )
+            for field in ("real_seconds", "user_seconds", "system_seconds"):
+                value = result.get(field)
+                if (
+                    not isinstance(value, (int, float))
+                    or isinstance(value, bool)
+                    or value < 0
+                ):
+                    self.error(
+                        f"{local_path}.result.{field}",
+                        "must be a nonnegative number",
+                    )
+
+            cleanup = self.mapping(local.get("cleanup"), f"{local_path}.cleanup")
+            if self.status(cleanup.get("status"), f"{local_path}.cleanup.status") != "pass":
+                self.error(f"{local_path}.cleanup.status", "must be pass")
+            for field in ("sentinels_seeded", "sentinels_removed"):
+                if cleanup.get(field) != expected_seed_count:
+                    self.error(
+                        f"{local_path}.cleanup.{field}",
+                        f"must equal tests times scenarios ({expected_seed_count})",
+                    )
+        for index, test in enumerate(make_tests):
+            if not (self.makefile.parent / test).is_file():
+                self.error(
+                    f"$makefile.NAMED_DISABLE_TESTS[{index}]", f"missing test file {test!r}"
+                )
+        return {
+            "tests": expected_tests,
+            "total": len(expected_tests),
+            "scenarios": FOCUSED_LANE_SCENARIOS,
+            "scenario_total": expected_seed_count,
+            "status": validation_status,
+            "proofs": proof_statuses,
+        }
+
     def check_declared_progress(self, root: dict[Any, Any]) -> None:
         progress = self.mapping(root.get("progress"), "$.progress")
         expected_sections = {"program", "milestones", "gates", "corpus", "lane"}
@@ -574,12 +1049,16 @@ class TrackerChecker:
         program = self.check_program(root)
         corpus = self.check_corpus(root)
         lane = self.check_lane(root, evidence)
+        focused_lane = self.check_focused_lane(root)
+        expanded_lane = self.check_expanded_lane(root)
         self.computed = {
             "program": program,
             "milestones": milestones,
             "issues": issues,
             "corpus": corpus,
             "lane": lane,
+            "focused_lane": focused_lane,
+            "expanded_lane": expanded_lane,
             "evidence": evidence,
         }
         self.check_declared_progress(root)
@@ -598,6 +1077,8 @@ def _format_text(path: Path, errors: list[str], computed: dict[str, Any]) -> str
         milestones = computed["milestones"]
         corpus = computed["corpus"]
         lane = computed["lane"]
+        focused_lane = computed["focused_lane"]
+        expanded_lane = computed["expanded_lane"]
         issues = computed["issues"]
         lines.extend(
             [
@@ -608,7 +1089,18 @@ def _format_text(path: Path, errors: list[str], computed: dict[str, Any]) -> str
                 f"- atomic gates: {milestones['atomic_gates']['complete']}/"
                 f"{milestones['atomic_gates']['total']} "
                 f"({milestones['atomic_gates']['percent']}%)",
-                f"- lane evidence: {lane['complete']}/{lane['total']} ({lane['percent']}%)",
+                f"- historical original-lane evidence: {lane['complete']}/{lane['total']} "
+                f"({lane['percent']}%)",
+                f"- focused Makefile lane contract: {focused_lane['total']} tests x "
+                f"{len(focused_lane['scenarios'])} scenarios = "
+                f"{focused_lane['scenario_total']} executions; "
+                f"validation={focused_lane['status']}, "
+                f"local={focused_lane['proofs']['local']}, "
+                f"ci={focused_lane['proofs']['ci']}",
+                f"- current Makefile lane contract: {expanded_lane['total']} ordered tests; "
+                f"validation={expanded_lane['status']}, "
+                f"local={expanded_lane['proofs']['local']}, "
+                f"ci={expanded_lane['proofs']['ci']}",
                 f"- corpus: planned={corpus['planned']} implemented={corpus['implemented']} "
                 f"executed={corpus['executed']} passed={corpus['passed']} "
                 f"failed={corpus['failed']} "
@@ -627,8 +1119,12 @@ def _format_text(path: Path, errors: list[str], computed: dict[str, Any]) -> str
 
 def main(argv: list[str] | None = None) -> int:
     default_tracker = Path(__file__).with_name("tracker.yaml")
+    default_makefile = (
+        Path(__file__).resolve().parents[2] / "test_regress" / "Makefile"
+    )
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tracker", nargs="?", type=Path, default=default_tracker)
+    parser.add_argument("--makefile", type=Path, default=default_makefile)
     parser.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
 
@@ -639,7 +1135,7 @@ def main(argv: list[str] | None = None) -> int:
         errors = [f"$: unable to load tracker: {error}"]
         computed: dict[str, Any] = {}
     else:
-        errors, computed = TrackerChecker(document).check()
+        errors, computed = TrackerChecker(document, args.makefile).check()
 
     if args.format == "json":
         print(

@@ -5,7 +5,10 @@
 # UVM 2020 Support Matrix
 
 This matrix tracks support evidence for the UVM 2020 execution plan. It is
-developer planning data, not user documentation.
+developer planning data, not user documentation. It preserves the 2026-07-03
+broad-roadmap snapshot; its progress bars are historical, not current claims.
+Use `tracker.yaml` and `PROGRESS.md` for the current broader 0/21 state and
+`PLAN.md` for the focused PR lane contract.
 
 Progress bars use the scale in `PLAN.md`.
 

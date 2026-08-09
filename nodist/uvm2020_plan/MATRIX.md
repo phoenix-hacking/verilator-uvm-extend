@@ -5,14 +5,16 @@
 # UVM 2020.3.1 evidence matrix
 
 The first table records the original three-test pull request #41 proof
-boundary. The current fifteen-test target is tracked separately below; its
-passing canonical job supplies the five required CI proof environments.
+boundary. The current focused 15-test two-scenario target has passing local
+evidence, and the ordered 20-test UVM target also has passing local evidence.
+Both current CI proofs are pending. Older UVM lane results are retained below
+as historical evidence only.
 
 See `PROGRESS.md` for the complete requirement dashboard, progress bars, open
 work, and estimates. This matrix remains the authority for accepted evidence
 and claim boundaries.
 
-| Evidence ID | Issue | Proof | Expected evidence | Local | CI |
+| Evidence ID | Issue | Proof | Expected evidence | Historical local | Historical CI |
 |---|---:|---|---|---|---|
 | HARNESS-FANOUT-0001 | #21, #39 | Named lane uses one test process and one generated-build job | `--jobs=1`, `--driver-build-jobs=1`, `--build-jobs 1`, `--output-groups 6` | Pass: three 3/0 runs plus parent-jobserver probe | Pass: canonical fifteen-test job retained 1/1 fanout and output groups 6 |
 | HARNESS-CLEAN-0001 | #21, #39 | Lane removes its complete suffixed object directory before every attempt | Planted `interrupted.gch` files are absent after a passing run | Pass: all three original target-seeded sentinels removed | Pass: 15/15 child-local sentinels removed; cleanup postcheck passed |
@@ -22,10 +24,51 @@ and claim boundaries.
 | HARNESS-DEFAULT-0001 | #21, #39 | Omit new options | Existing automatic fanout and object reuse remain selected | Pass: two runs; `-j 9`; sentinel retained | Not separately validated |
 
 The five evidence IDs other than `HARNESS-DEFAULT-0001` each require local and
-CI proof. `HARNESS-DEFAULT-0001` requires local proof only. Pull request #41
-therefore has 11 required proof environments: all six local and all five CI
-proofs pass, for 11/11 accepted (100.0%). This measures evidence acceptance,
-not UVM feature completion or a test pass rate.
+CI proof. `HARNESS-DEFAULT-0001` requires local proof only. At the recorded
+revisions, all six local and all five CI proofs were accepted, for 11/11
+historical proof environments. This measures the original evidence slice, not
+current 20-test validation, focused PR technical closure, UVM feature
+completion, or a test pass rate.
+
+## Current PR validation gates
+
+These current contracts are independent of the historical 11/11 evidence
+slice. Both require exact-head local and CI proof:
+
+| Gate | Contract | Exact-head local | Exact-head CI | Claim boundary |
+|---|---:|---|---|---|
+| Focused named-disable/process lane | 15 ordered tests under both `vlt` and `vltmt` (30 scenario executions and cleanup sentinels) | Pass: 30/30, zero failed, 30/30 sentinels removed, cleanup passed | Pending: Ubuntu 26 GCC `named-disable` job | Compiler/runtime technical scope only. |
+| UVM integration lane | 20 ordered tests under `vlt` (20 cleanup sentinels) | Pass: 20/20, zero failed, 20/20 sentinels removed, symlink preflight and cleanup passed | Pending: Ubuntu 26 GCC `uvm2020` job | Selected UVM integration evidence only. |
+
+The focused local proof used validation head
+`c1dab4a4f5961fe5e6c61ed57d539d576cecca0d` and the exact clean compiler at
+`/tmp/pr41-exact-build.eR6mjg/repo/bin/verilator_bin`. The compiler version was
+`Verilator 5.051 devel rev vUNKNOWN-built20260809-c1dab4a4f`, with binary
+SHA-256
+`37551f1957a2a31f5f321ad69cdb39e05e97c1f4d2583834a33528d9714302bb`.
+Driver time was 22:03; `time -p` reported 1324.11 real, 1051.40 user, and
+241.91 system seconds. The worktree remained clean.
+
+The UVM local proof used the same validation head and compiler
+`/tmp/pr41-coroutine-return.JfE1Cy/verilator_bin_fixed`, version
+`Verilator 5.051 devel rev vUNKNOWN-built20260809-fa6fd2c68 (mod)`, with binary
+SHA-256
+`e52a7a32fe54127f6a4a37cb315bfd2d1e6b1c998d2180184f02c2b357073e62`.
+Driver time was 80:15; external timing reported 4819.25 real, 3761.18 user,
+and 998.74 system seconds.
+
+Focused technical closure may be recorded only after both rows pass on the
+exact source head and the required exact-head workflow checks are green. That
+does not change the independent broader-program result, which remains 0/21.
+
+### Focused named-disable support envelope
+
+| Form | Disposition |
+|---|---|
+| Scalar hierarchical module paths and scalar class-object receivers | Supported in the focused implementation. |
+| Ordinary, pure-virtual, and parameterized virtual class task families | Supported, including base- and derived-typed receivers. |
+| Interface-class task disable through an interface-class receiver | Explicitly unsupported; the focused lane requires the stable diagnostic regression to pass. |
+| Generate-scope paths and instance/cell-array paths | Pre-existing unsupported hierarchy forms; outside this PR's positive claim. |
 
 ## Progress denominators
 
@@ -35,7 +78,9 @@ not UVM feature completion or a test pass rate.
 | Public capability exits | 20 (`M00`-`M19`) | 2/20 exited (10.0%); `M00` and `M01` have accepted evidence for every tracker gate. |
 | Atomic milestone gates | 46 required gates | 24/46 pass (52.2%); this engineering diagnostic does not substitute for public milestone exits. |
 | Library implementation order | None | Unpadded `M0`-`M17` is dependency-order metadata and must never be converted to a completion percentage. |
-| PR #41 lane evidence | 11 required proof environments | Six local and five CI proofs pass; 100.0% accepted. |
+| Historical PR #41 evidence slice | 11 required proof environments | Six local and five CI proofs were accepted at their recorded revisions; this is not current-head proof. |
+| Current focused lane contract | 15 tests, two scenarios | Exact ordered membership is derived from the Makefile; local passed all 30 `vlt`/`vltmt` scenario executions and cleanup, while CI is pending. |
+| Current Makefile lane contract | 20 ordered tests | `check_tracker.py` derives the exact reduced-then-package order from `test_regress/Makefile`; local passed 20/20 with cleanup, while CI is pending. |
 | Tracker mixed corpus | 108 planned tests | 108 implemented; 100 executed/pass and 8 blocked; execution and verified 92.6%; pass/executed 100.0%. |
 | Frozen compatibility selection | 72 manifest entries | All 72 received reproducible dispositions: 64 pass, one debug-build environment block, and seven no-solver skips. This is not a 72/72 semantic-pass claim. |
 
@@ -52,9 +97,9 @@ python3 nodist/uvm2020_plan/check_tracker.py
 ```
 
 Current atomic state is intentionally non-complete: all 21 criteria retain
-open milestone dependencies. `M00` has exited; `M04` retains event-region and
-performance gates, and `M06` retains its APB setup/access gate. Other public
-milestones remain gate-controlled by their tracker entries.
+open milestone dependencies. `M00` and `M01` have exited; `M04` retains
+event-region and performance gates, and `M06` retains its APB setup/access
+gate. Other public milestones remain gate-controlled by their tracker entries.
 
 The mixed corpus inventory is 102 L0 reduced-language tests plus six L1
 minimal-UVM tests. Accepted evidence covers 94/102 at L0 and 6/6 at L1; the
@@ -92,13 +137,15 @@ Those layer rates remain compatibility evidence and do not claim conformance.
 | UVM core phasing | Phase order/callbacks, objection 0-10, live nested descendant, and recursive phase cleanup | Passed 1, failed 0, 2:35; ready-to-end preceded ended; zero UVM errors/fatals |
 | Process/VIF neighbors | 28 process/fork/named-disable plus nine VIF/clocking tests | Passed 34, failed 0, skipped 3, 4:12; skips require a constraint solver |
 | Frozen full selection | Run all 72 manifest entries with capped clean settings | Passed 64, raw failed 1, skipped 7, 9:44; all eight non-passes classified below |
-| Prior expanded lane | Run the thirteen-test target under `make -j8` with child-local stale seeds and atomic quarantine | Passed 13, failed 0, 8:23; 13/13 sentinels removed; fanout remained 1/1 |
-| Current expanded lane | Run the exact fixed fifteen-test target from an isolated execution root with child-local stale seeds and atomic quarantine | Passed 15, failed 0, 14:27; 15/15 sentinels removed; fanout remained 1/1; stale-artifact postcheck passed |
-| Exact-head optimized source build | Fully build revision `703bb474d` in an isolated source tree with the temporary Flex/Bison toolchain | Pass; every current focused/lane result uses that compiler; debug build not run |
+| Historical thirteen-test lane | Run the thirteen-test target under `make -j8` with child-local stale seeds and atomic quarantine | Passed 13, failed 0, 8:23; 13/13 sentinels removed; fanout remained 1/1 |
+| Historical fifteen-test lane | Run the then-current fixed target from an isolated execution root with child-local stale seeds and atomic quarantine | Passed 15, failed 0, 14:27; 15/15 sentinels removed; fanout remained 1/1; stale-artifact postcheck passed |
+| Current focused named-disable contract | Exact clean-c1 compiler; 15 ordered tests in both `vlt` and `vltmt` with child-local stale seeds | Passed 30/30 scenarios, failed 0; driver 22:03, real 1324.11 s; seeded and removed 30/30 sentinels; cleanup passed; worktree clean; CI pending |
+| Current twenty-test contract | `make -C test_regress uvm2020`; ordered `UVM2020_REDUCED_TESTS` then `UVM2020_PACKAGE_TESTS` | Passed 20/20 under `vlt`, failed 0; driver 80:15, real 4819.25 s; symlink preflight passed; seeded and removed 20/20 sentinels; cleanup passed; CI pending |
+| Historical exact-head optimized source build | Fully build revision `703bb474d` in an isolated source tree with the temporary Flex/Bison toolchain | Pass for that revision; recorded focused/lane results used that compiler; debug build not run |
 | Cleanup symlink safety | Reject a symlinked object ancestor and seed; preserve both external targets; detect a dangling sentinel symlink | Pass |
 | Static | Python compile, Bash syntax, manifest/checker validation, `git diff --check`, and three parser rejections | Pass |
 
-Current validation base revision:
+Historical validation base revision:
 `703bb474d9ea45bff246fec43397cd7c7acaa0fa`.
 Environment: Ubuntu 24.04.3 LTS, GCC 13.3.0, Python 3.12.13,
 Verilator 5.051 devel. See `PLAN.md` for the local multiprocessing caveat.
@@ -113,8 +160,10 @@ The exact reduced-test and neighbor commands are recorded in `PLAN.md`.
 | Quick compatibility selection | 8 | Observed within full run | All eight quick entries passed; no separate standalone-run claim |
 | Reduced compatibility selection | 69 | Observed within full run | 61 pass, one debug-build environment block, and seven no-solver skips |
 | Full compatibility selection | 72 | Disposition complete | 64 pass; `t_class_dead_varscope_uaf` blocked because the image lacks `bin/verilator_bin_dbg` and system `FlexLexer.h`; seven randomize/constraint tests skipped because no constraint solver is available; 9:44 |
-| Expanded local UVM lane | 15 | Pass | 15/0 in 14:27; atomic quarantine removed 15 child-local `interrupted.gch` sentinels; test/build fanout stayed 1/1; stale-artifact postcheck passed |
-| Expanded CI UVM lane | 15 | Pass | 15/0 in 6:00; cleanup postcheck passed in job 87592850312 for source head `7170338f` |
+| Current Makefile UVM lane | 20 | Local pass; CI pending | 20/20 passed under `vlt`, zero failed; 20/20 sentinels removed; Ubuntu 26 GCC `uvm2020` is pending |
+| Current Makefile focused lane | 15 x 2 scenarios | Local pass; CI pending | 30/30 scenarios passed with exact clean-c1 compiler, zero failed, and 30/30 sentinels were removed; Ubuntu 26 GCC `named-disable` is pending |
+| Historical expanded local UVM lane | 15 | Pass | 15/0 in 14:27; atomic quarantine removed 15 child-local `interrupted.gch` sentinels; test/build fanout stayed 1/1; stale-artifact postcheck passed |
+| Historical expanded CI UVM lane | 15 | Pass | 15/0 in 6:00; cleanup postcheck passed in job 87592850312 for source head `7170338f` |
 
 Use these reproducible commands:
 
@@ -136,7 +185,9 @@ by itself establish full-program completion.
 
 ## Current classification
 
-- Package and no-DPI smoke: local execution and the dedicated draft-PR CI lane passed.
+- Package and no-DPI smoke: accepted historical local and dedicated draft-PR
+  CI evidence exists; the current 20-test local target passed and its CI proof
+  remains pending.
 - Full UVM package/API support: not claimed.
 - No-DPI parity with DPI: not claimed; the boundary in `PLAN.md` remains a
   known support-envelope constraint.
@@ -145,12 +196,17 @@ by itself establish full-program completion.
   exact clocking samples, sub-interface/member-trigger, and neighbor runs
   passed. The resulting M04/M06 gates receive credit, but event-region,
   performance, and APB gates remain open, so no milestone exit is inferred.
-- Expanded fifteen-test lane: the prior 13/0 local result remains historical;
-  the exact fixed target passed 15/0 locally in 14:27 with its cleanup
-  postcheck, and the canonical job passed 15/0 in 6:00 with the same postcheck.
+- Current focused lane: the Makefile and tracker agree on 15 ordered tests in
+  two scenarios; local passed 30/30 with cleanup, and CI remains pending.
+- Current expanded lane: the Makefile and tracker agree on 20 ordered tests;
+  local passed 20/20 under `vlt` with cleanup, and CI remains pending. The 13/0
+  and 15/0 local results and the 15/0 canonical job remain explicitly
+  historical.
 - Frozen 72-test corpus: every entry has a reproducible disposition (64 pass,
   one environment block, seven dependency skips); this is not 72/72 semantic
   compatibility.
-- CI promotion: the dedicated named suite supplies all five required CI
-  proofs; PR lane evidence is 11/11. The broader workflow matrix and human DCO
-  remain separate review gates.
+- Historical CI evidence: the dedicated named suite supplied all five required
+  CI proofs for the original evidence slice. Focused PR technical closure still
+  requires exact-head `named-disable` and `uvm2020` CI validation; the full UVM
+  program independently remains 0/21, and human review/DCO remain separate
+  gates.

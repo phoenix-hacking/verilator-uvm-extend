@@ -13,6 +13,102 @@ Do not commit extracted standards text, rendered standards pages, generated
 test objects, or temporary compiler trees. In particular, the repository-local
 `tmp/` directory is scratch material and is not part of any checkpoint.
 
+## 2026-08-09 sequential named-activation closure candidate
+
+This section supersedes the open-design instructions in the older dated
+checkpoints below. It records the candidate scope and the passing focused local
+aggregate. The 20-test UVM local aggregate also passed; new-head CI is still
+pending.
+
+The focused Makefile target is now `make -C test_regress named-disable`. Its
+fixed order contains 15 tests: 11 runtime/process predecessors plus the named
+activation, control-flow, interface-class diagnostic, and recursive compiler
+regressions. Every test runs in both `vlt` and `vltmt`, yielding 30 scenario
+executions, 30 independently suffixed object directories, and 30 seeded cleanup
+sentinels. This lane remains independent of the ordered 20-test `uvm2020`
+integration target.
+
+The candidate replaces synthetic sequential process wrappers with dynamic
+activation ownership while retaining the source process. It covers active and
+completed targets, concurrent and recursive activations, scalar hierarchical
+module paths, scalar class-object receivers, constant-false `wait(0)`, live
+descendant ownership, outward control flow, and ordinary, pure-virtual, and
+parameterized virtual class task families.
+
+The exact support boundary is:
+
+- scalar paths and ordinary/pure/parameterized virtual class task families are
+  supported within the focused implementation;
+- disabling an interface-class task through an interface-class receiver emits
+  the tracked explicit `UNSUPPORTED` diagnostic; and
+- generate-scope paths and instance/cell-array paths retain their pre-existing
+  unsupported status and are not positive PR #41 claims.
+
+### Recorded focused local validation
+
+The focused local target passed from validation worktree head
+`c1dab4a4f5961fe5e6c61ed57d539d576cecca0d`. Its `src/` subtree is
+`e071957ca32d0b2c0a8210747bdc4d1faa818d91`, and the compiler was built from
+that exact clean revision.
+
+The exact command was:
+
+```sh
+time -p env \
+  VERILATOR_ROOT=/tmp/pr41-exact-build.eR6mjg/repo \
+  PYTHONPATH=/tmp/uvm_run_shim \
+  PATH=/tmp/uvm_run_shim:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  PYTHONUNBUFFERED=1 \
+  make -C test_regress named-disable
+```
+
+All 15 tests passed in both `vlt` and `vltmt`: 30/30 scenario executions,
+zero failures. Driver time was 22:03; `time -p` reported 1324.11 real, 1051.40
+user, and 241.91 system seconds. The harness seeded and removed all 30
+`interrupted.gch` sentinels, its cleanup postcheck passed, and the validation
+worktree remained clean. The compiler was:
+
+```text
+/tmp/pr41-exact-build.eR6mjg/repo/bin/verilator_bin
+Verilator 5.051 devel rev vUNKNOWN-built20260809-c1dab4a4f
+SHA-256 37551f1957a2a31f5f321ad69cdb39e05e97c1f4d2583834a33528d9714302bb
+```
+
+### Recorded UVM local validation
+
+The same validation worktree head passed the exact command:
+
+```sh
+time -p env \
+  VERILATOR_ROOT=/tmp/pr41-validated.zZ2zfS/repo \
+  VERILATOR_BIN=/tmp/pr41-coroutine-return.JfE1Cy/verilator_bin_fixed \
+  PYTHONPATH=/tmp/uvm_run_shim \
+  PATH=/tmp/uvm_run_shim:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  make -C test_regress uvm2020
+```
+
+All 20 ordered tests passed under `vlt`, with zero failures. The driver reported
+80:15; external timing reported 4819.25 real, 3761.18 user, and 998.74 system
+seconds. The clean-before symlink-safety preflight passed, all 20 seeded
+`interrupted.gch` sentinels were removed, and the target printed
+`uvm2020: stale-artifact cleanup PASSED`. This run used compiler
+`/tmp/pr41-coroutine-return.JfE1Cy/verilator_bin_fixed`, version
+`Verilator 5.051 devel rev vUNKNOWN-built20260809-fa6fd2c68 (mod)`, with
+SHA-256
+`e52a7a32fe54127f6a4a37cb315bfd2d1e6b1c998d2180184f02c2b357073e62`.
+
+Do not convert these local passes into a completion percentage. Focused
+technical closure still requires exact-head CI. The broader UVM program
+independently remains 0/21, and human DCO/review remain outside technical
+closure.
+
+### Next exact validation action
+
+1. Publish without making the draft ready, then require exact-head
+   `named-disable`, `uvm2020`, build, format, distribution, and regression
+   checks to settle green. Record source-head and synthetic-merge identities
+   separately.
+
 ## 2026-08-07 fork-registration hotfix checkpoint
 
 Recorded at: 2026-08-07T13:49:59Z
@@ -651,9 +747,11 @@ An exact `f0b5ddb93...` optimized compiler was built separately under
 - the three `always_comb` tests exposed shared identity, reactivation after
   kill, or RNG-context corruption.
 
-The new direct registry C++ test is not behavioral parent evidence: it fails at
-the parent only because the proposed `VlProcessRegistry` API is absent. A
-temporary SystemVerilog-only registry scenario passed on the parent.
+Historical parent comparison: the direct registry C++ test failed at the
+parent only because the proposed registry API was absent, so that comparison
+was not behavioral parent evidence. A temporary SystemVerilog-only registry
+scenario passed on the parent. The current branch now contains the tracked
+registry API and regression; exact-head focused validation is still required.
 
 ### Standards anchors
 
@@ -675,9 +773,10 @@ pages 185-187 are secondary phase/objection background, not normative proof.
 
 ### Held-back registry design blockers
 
-The working tree contains an unpublished registry prototype. Do not commit its
-current `completedTree` lifetime model. The next implementation must resolve
-all of these together:
+The published branch contains the named-activation registry foundation and the
+current `completedTree` process-lifetime model. Their presence is not technical
+closure. Further compiler/runtime integration must resolve all of these
+together:
 
 1. A named sequential begin/task activation is disable-eligible only while that
    activation is executing. A later disable of a completed activation has no
@@ -720,30 +819,21 @@ that return from a task or break/continue an enclosing loop.
 - Update `PLAN.md`, `MATRIX.md`, `PROGRESS.md`, both trackers, and the
   support/roadmap documents with page-level citations, exact commands, retained
   log or CI links, and explicit historical-versus-current result scope.
-- Remove the stale claim that `stash@{0}` exists.
-- Do not describe the 20-test integration lane as direct proof of tests that it
-  does not run; expand the lane or define a mandatory focused target.
+- Do not assume any recoverable local-only Git state; rely only on committed or
+  explicitly listed worktree artifacts.
+- Keep the ordered 20-test integration lane distinct from the mandatory
+  focused named-disable/process target; neither substitutes for the other.
+- Do not assign a completion percentage to focused PR technical closure until
+  both targets and exact-head CI pass. The broader UVM program remains a
+  separate 0/21 completion measure.
 - Keep the pull request draft. Human review and human DCO certification remain
   required before readiness or merge.
 
-### Next exact action
+### Next exact validation gate
 
-Start by adding the ownership/lifetime regressions against the published head,
-without staging the current registry prototype:
-
-```sh
-git status --short --branch
-git diff 8058c2a202af0a5575fb773dd2251a74a8e8c7d3 -- \
-  include/verilated_timing.cpp include/verilated_types.h \
-  src/V3AstAttr.h src/V3AstNodeDType.h src/V3AstNodes.cpp \
-  src/V3EmitCFunc.cpp src/V3Hasher.cpp src/V3LinkJump.cpp \
-  src/V3Reorder.cpp src/V3Split.cpp src/V3Timing.cpp src/V3Width.cpp \
-  test_regress/t/t_process_disable_registry.cpp \
-  test_regress/t/t_process_disable_registry.py \
-  test_regress/t/t_process_disable_registry.v
-```
-
-Then write the activation-token and independent process-tree-ownership design
-against those tests. Rebuild and publish it as a separate checkpoint only after
-the active, completed, concurrent, recursive, named-fork, and `wait fork`
-cases all pass.
+Run the tracked activation-runtime, process-tree-ownership, named-fork-launch,
+named-task-disable, and task-join regressions as the mandatory focused target.
+Then run the ordered 20-test `uvm2020` lane. Record exact-head local evidence
+before requesting CI, and do not claim focused technical closure until the
+active, completed, concurrent, recursive, named-fork, `wait fork`, current
+lane, and exact-head CI cases all pass.

@@ -7,6 +7,11 @@ metadata:
   repository_commit: f82f59a02
   snapshot_date: "2026-07-03"
   status: internal_planning_only
+  record_scope: historical_snapshot_not_current_program_or_pr_status
+  current_state_sources: [tracker.yaml, PROGRESS.md, PLAN.md]
+  artifact_note: >-
+    Referenced ledger and run-log paths describe the historical workspace and
+    may not exist in the current checkout.
   claim_policy: "No user-facing support claim without passing tests and documented limits."
   top_level_objective: "Evidence-backed UVM 2020 support suitable for complex SoC verification."
   competitive_target: "C3 SoC competitive: UVM 2020 SoC-style verification with documented SystemVerilog parity limits."
