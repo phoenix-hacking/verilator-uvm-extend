@@ -59,13 +59,46 @@ static bool checkNamedActivationRuntime() {
     if (completedRegistry.size() != 0 || completedToken.canceled()) {
         return fail("normal activation leave");
     }
-    completedRegistry.disableAll();
+    VlProcessRef lateDisablerp = std::make_shared<VlProcess>();
+    {
+        VlProcessContext lateDisablerContext{lateDisablerp.get()};
+        completedRegistry.disableAll();
+    }
     if (completedChildp->state() != VlProcess::WAITING || completedToken.canceled()
         || completedOwnerp->state() != VlProcess::RUNNING
         || completedOwnerp->randstate() != completedOwnerRandstate) {
         return fail("late disable no-op");
     }
     completedChildp->state(VlProcess::KILLED);
+
+    // A descendant executing disable before its detached fork family completes still belongs to
+    // that exact dynamic activation.  It cancels itself and its siblings without making the
+    // already exited scope visible to unrelated late disablers.
+    VlNamedActivationRegistry descendantRegistry;
+    VlProcessRef descendantOwnerp = std::make_shared<VlProcess>();
+    VlProcessRef descendantFirstp;
+    VlProcessRef descendantSecondp;
+    VlNamedActivationToken descendantToken;
+    {
+        VlNamedActivationGuard descendantGuard = descendantRegistry.activate(descendantOwnerp);
+        descendantToken = descendantGuard.token();
+        descendantFirstp = VlProcess::createChild(descendantOwnerp);
+        descendantSecondp = VlProcess::createChild(descendantOwnerp);
+        descendantFirstp->state(VlProcess::WAITING);
+        descendantSecondp->state(VlProcess::WAITING);
+    }
+    if (descendantRegistry.size() != 0 || descendantToken.canceled()) {
+        return fail("descendant activation retention");
+    }
+    {
+        VlProcessContext descendantContext{descendantFirstp.get()};
+        descendantRegistry.disableAll();
+    }
+    if (!descendantToken.canceled() || descendantFirstp->state() != VlProcess::KILLED
+        || descendantSecondp->state() != VlProcess::KILLED
+        || descendantOwnerp->state() != VlProcess::RUNNING || descendantRegistry.size() != 0) {
+        return fail("descendant disable after scope exit");
+    }
 
     // Registry operations preserve the executing source process identity, status, and RNG.
     VlNamedActivationRegistry contextRegistry;
@@ -245,8 +278,8 @@ static bool checkNamedActivationRuntime() {
         return fail("isolated registry drain");
     }
 
-    // The registry swaps generations and marks every token and process before callbacks.  A
-    // callback may reenter the same declaration; the new activation survives the old drain.
+    // The registry snapshots and marks every token and process before callbacks.  A callback may
+    // reenter the same declaration; the new activation survives the old drain.
     VlNamedActivationRegistry callbackRegistry;
     VlNamedActivationRegistry callbackInnerRegistry;
     VlProcessRef callbackOwnerp = std::make_shared<VlProcess>();
@@ -276,11 +309,11 @@ static bool checkNamedActivationRuntime() {
     if (callbackCount != 1 || !aggregateStateSeen || !callbackGuard.canceled()
         || !callbackInnerGuard.canceled() || reentrantGuard.canceled()
         || callbackRegistry.size() != 1 || callbackInnerRegistry.size() != 0) {
-        return fail("generation swap and callback order");
+        return fail("snapshot drain and callback order");
     }
     callbackRegistry.disableAll();
     if (callbackCount != 1 || !reentrantGuard.canceled() || callbackRegistry.size() != 0) {
-        return fail("reentrant generation drain");
+        return fail("reentrant snapshot drain");
     }
     if (VlProcess::currentp() != initialCurrentp) return fail("source process context");
 

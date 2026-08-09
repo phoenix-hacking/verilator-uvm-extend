@@ -156,6 +156,43 @@ bool checkNamedActivationForever() {
         }
     }
 
+    // A descendant disable after outer scope exit kills a sibling suspended forever inside a
+    // nested activation.  The killed process's frame must be consumed exactly once, even though
+    // normal outer exit already released its own suspension association.
+    {
+        VlNamedActivationRegistry outerRegistry;
+        VlNamedActivationRegistry innerRegistry;
+        const VlProcessRef ownerp = std::make_shared<VlProcess>();
+        VlNamedActivationGuard outerGuard = outerRegistry.activate(ownerp);
+        const VlNamedActivationToken outerToken = outerGuard.token();
+        const VlProcessRef disablerp = VlProcess::createChild(ownerp);
+        const VlProcessRef waiterp = VlProcess::createChild(ownerp);
+        int resumeCount = 0;
+        int destructionCount = 0;
+        bool canceledSeen = false;
+        VlCoroutine waiter = waitInNamedActivation(innerRegistry, waiterp, resumeCount,
+                                                   canceledSeen, destructionCount);
+        if (outerRegistry.stats().m_suspensions != 1 || innerRegistry.size() != 1
+            || waiterp->state() != VlProcess::WAITING || destructionCount != 0) {
+            return fail("nested detached wait registration");
+        }
+        outerGuard = VlNamedActivationGuard{};
+        if (outerRegistry.size() != 0 || innerRegistry.size() != 1
+            || waiterp->state() != VlProcess::WAITING || destructionCount != 0) {
+            return fail("nested detached wait survives outer exit");
+        }
+        {
+            VlProcessContext disablerContext{disablerp.get()};
+            outerRegistry.disableAll();
+        }
+        if (!outerToken.canceled() || disablerp->state() != VlProcess::KILLED
+            || waiterp->state() != VlProcess::KILLED || ownerp->state() != VlProcess::RUNNING
+            || innerRegistry.size() != 0 || resumeCount != 0 || canceledSeen
+            || destructionCount != 1) {
+            return fail("nested detached wait descendant disable");
+        }
+    }
+
     // Direct process kill of an activation-owned wait consumes and destroys the forever frame
     // outside the process mutex.  The guarded frame destructor takes that mutex, and repeated kill
     // or later named disable must neither resume nor destroy the frame twice.

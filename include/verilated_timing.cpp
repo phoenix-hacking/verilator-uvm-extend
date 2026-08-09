@@ -41,6 +41,10 @@ class VlNamedActivationRegistryState final {
 public:
     std::map<uint64_t, std::shared_ptr<VlNamedActivationState>>
         m_activations VL_GUARDED_BY(s_processMutex);
+    // A normally exited scope is no longer externally disable-addressable, but its detached fork
+    // descendants may still execute a disable from within that dynamic activation.
+    std::map<uint64_t, std::shared_ptr<VlNamedActivationState>>
+        m_retainedActivations VL_GUARDED_BY(s_processMutex);
     uint64_t m_nextId VL_GUARDED_BY(s_processMutex) = 0;
 };
 
@@ -102,13 +106,17 @@ public:
     VlCoroutineHandleStateSet m_foreverSuspensions VL_GUARDED_BY(s_processMutex);
     VlProcessWeakSet m_childProcessps VL_GUARDED_BY(s_processMutex);
     VlProcessWeakSet m_memberProcessps VL_GUARDED_BY(s_processMutex);
+    VlProcessWeak m_ownerProcessp VL_GUARDED_BY(s_processMutex);
+    bool m_scopeActive VL_GUARDED_BY(s_processMutex) = true;
     bool m_active VL_GUARDED_BY(s_processMutex) = true;
 
     VlNamedActivationState(const std::shared_ptr<VlNamedActivationRegistryState>& registryp,
-                           std::shared_ptr<std::atomic<bool>> canceledp, uint64_t id)
+                           std::shared_ptr<std::atomic<bool>> canceledp, uint64_t id,
+                           const VlProcessRef& ownerp)
         : m_registryp{registryp}
         , m_canceledp{std::move(canceledp)}
-        , m_id{id} {}
+        , m_id{id}
+        , m_ownerProcessp{ownerp} {}
 
     bool activeLocked() const VL_REQUIRES(s_processMutex) { return m_active; }
 };
@@ -120,6 +128,29 @@ using VlNamedActivationProcessMap
 VlNamedActivationProcessMap s_namedActivationsByProcess VL_GUARDED_BY(s_processMutex);
 using VlForeverSuspensionMap = std::map<VlProcess*, VlCoroutineHandleStateWeakSet>;
 VlForeverSuspensionMap s_foreverSuspensionsByProcess VL_GUARDED_BY(s_processMutex);
+
+void releaseNamedActivationSuspensionsLocked(
+    const std::shared_ptr<VlNamedActivationState>& activationp,
+    VlCoroutineHandleStateSet& releasedForeverSuspensions) VL_REQUIRES(s_processMutex) {
+    const VlNamedActivationState* const rawActivationp = activationp.get();
+    for (const VlCoroutineHandleStateWeak& suspension : activationp->m_suspensions) {
+        if (const std::shared_ptr<VlCoroutineHandleState> suspensionp = suspension.lock()) {
+            auto& activationps = suspensionp->m_activationps;
+            activationps.erase(
+                std::remove_if(activationps.begin(), activationps.end(),
+                               [rawActivationp](const VlNamedActivationWeak& weak) {
+                                   const std::shared_ptr<VlNamedActivationState> itemp
+                                       = weak.lock();
+                                   return !itemp || itemp.get() == rawActivationp;
+                               }),
+                activationps.end());
+        }
+    }
+    releasedForeverSuspensions.insert(activationp->m_foreverSuspensions.begin(),
+                                      activationp->m_foreverSuspensions.end());
+    activationp->m_foreverSuspensions.clear();
+    activationp->m_suspensions.clear();
+}
 
 void detachNamedActivationLocked(const std::shared_ptr<VlNamedActivationState>& activationp,
                                  VlCoroutineHandleStateSet& releasedForeverSuspensions)
@@ -147,10 +178,7 @@ void detachNamedActivationLocked(const std::shared_ptr<VlNamedActivationState>& 
     }
     activationp->m_parentActivations.clear();
     activationp->m_childActivations.clear();
-    releasedForeverSuspensions.insert(activationp->m_foreverSuspensions.begin(),
-                                      activationp->m_foreverSuspensions.end());
-    activationp->m_foreverSuspensions.clear();
-    activationp->m_suspensions.clear();
+    releaseNamedActivationSuspensionsLocked(activationp, releasedForeverSuspensions);
     activationp->m_childProcessps.clear();
     activationp->m_memberProcessps.clear();
 }
@@ -283,7 +311,32 @@ void addNamedActivationMemberLocked(const std::shared_ptr<VlNamedActivationState
     if (childProcess) activationp->m_childProcessps.emplace(processWeak);
 }
 
-void detachNamedActivationProcessLocked(const VlProcessRef& processp) VL_REQUIRES(s_processMutex) {
+bool namedActivationHasProcessLocked(const std::shared_ptr<VlNamedActivationState>& activationp,
+                                     const VlProcess* const processp) VL_REQUIRES(s_processMutex) {
+    if (!processp) return false;
+    for (const VlProcessWeak& member : activationp->m_memberProcessps) {
+        if (const VlProcessRef memberp = member.lock()) {
+            if (memberp.get() == processp) return true;
+        }
+    }
+    return false;
+}
+
+void removeNamedActivationMemberLocked(const std::shared_ptr<VlNamedActivationState>& activationp,
+                                       const VlProcessRef& processp) VL_REQUIRES(s_processMutex) {
+    if (!processp) return;
+    const VlProcessWeak processWeak{processp};
+    activationp->m_memberProcessps.erase(processWeak);
+    activationp->m_childProcessps.erase(processWeak);
+    const auto processIt = s_namedActivationsByProcess.find(processWeak);
+    if (processIt == s_namedActivationsByProcess.end()) return;
+    processIt->second.erase(VlNamedActivationWeak{activationp});
+    if (processIt->second.empty()) s_namedActivationsByProcess.erase(processIt);
+}
+
+void detachNamedActivationProcessLocked(const VlProcessRef& processp,
+                                        VlCoroutineHandleStateSet& releasedForeverSuspensions)
+    VL_REQUIRES(s_processMutex) {
     const VlProcessWeak processWeak{processp};
     const auto processIt = s_namedActivationsByProcess.find(processWeak);
     if (processIt == s_namedActivationsByProcess.end()) return;
@@ -293,6 +346,14 @@ void detachNamedActivationProcessLocked(const VlProcessRef& processp) VL_REQUIRE
         if (const std::shared_ptr<VlNamedActivationState> activationp = activation.lock()) {
             activationp->m_memberProcessps.erase(processWeak);
             activationp->m_childProcessps.erase(processWeak);
+            if (!activationp->m_scopeActive && activationp->m_childProcessps.empty()
+                && activationp->activeLocked()) {
+                if (const std::shared_ptr<VlNamedActivationRegistryState> registryp
+                    = activationp->m_registryp.lock()) {
+                    registryp->m_retainedActivations.erase(activationp->m_id);
+                }
+                detachNamedActivationLocked(activationp, releasedForeverSuspensions);
+            }
         }
     }
 }
@@ -318,7 +379,11 @@ VlNamedActivationRegistry::~VlNamedActivationRegistry() {
         for (const auto& activation : m_statep->m_activations) {
             activationps.emplace_back(activation.second);
         }
+        for (const auto& activation : m_statep->m_retainedActivations) {
+            activationps.emplace_back(activation.second);
+        }
         m_statep->m_activations.clear();
+        m_statep->m_retainedActivations.clear();
         for (const std::shared_ptr<VlNamedActivationState>& activationp : activationps) {
             detachNamedActivationLocked(activationp, releasedForeverSuspensions);
         }
@@ -337,7 +402,8 @@ VlNamedActivationGuard VlNamedActivationRegistry::activate(const VlProcessRef& o
     const std::shared_ptr<std::atomic<bool>> canceledp
         = std::make_shared<std::atomic<bool>>(false);
     const std::shared_ptr<VlNamedActivationState> activationp
-        = std::make_shared<VlNamedActivationState>(m_statep, canceledp, m_statep->m_nextId++);
+        = std::make_shared<VlNamedActivationState>(m_statep, canceledp, m_statep->m_nextId++,
+                                                   ownerp);
     const auto inserted = m_statep->m_activations.emplace(activationp->m_id, activationp);
     VL_DEBUG_IFDEF(assert(inserted.second););
     s_namedActivationCount.fetch_add(1, std::memory_order_release);
@@ -350,8 +416,6 @@ VlNamedActivationGuard VlNamedActivationRegistry::activate(const VlProcessRef& o
 }
 
 void VlNamedActivationRegistry::disableAll() VL_MT_UNSAFE {
-    const std::shared_ptr<VlNamedActivationRegistryState> replacementp
-        = std::make_shared<VlNamedActivationRegistryState>();
     std::vector<std::shared_ptr<VlNamedActivationState>> activationps;
     std::set<std::shared_ptr<VlCoroutineHandleState>,
              std::owner_less<std::shared_ptr<VlCoroutineHandleState>>>
@@ -363,13 +427,19 @@ void VlNamedActivationRegistry::disableAll() VL_MT_UNSAFE {
     std::vector<VlCoroutineHandleContent> ownerSuspensions;
     {
         const VerilatedLockGuard lock{s_processMutex};
-        const std::shared_ptr<VlNamedActivationRegistryState> drainedp
-            = std::exchange(m_statep, replacementp);
-        replacementp->m_nextId = drainedp->m_nextId;
         std::vector<std::shared_ptr<VlNamedActivationState>> pendingActivationps;
-        pendingActivationps.reserve(drainedp->m_activations.size());
-        for (const auto& activation : drainedp->m_activations) {
+        pendingActivationps.reserve(m_statep->m_activations.size()
+                                    + m_statep->m_retainedActivations.size());
+        for (const auto& activation : m_statep->m_activations) {
             pendingActivationps.emplace_back(activation.second);
+        }
+        // Retained records are intentionally invisible to an external late disable.  Only a
+        // descendant still executing inside that exact dynamic activation may reach them.
+        VlProcess* const callerp = VlProcess::currentp();
+        for (const auto& activation : m_statep->m_retainedActivations) {
+            if (namedActivationHasProcessLocked(activation.second, callerp)) {
+                pendingActivationps.emplace_back(activation.second);
+            }
         }
         std::set<VlNamedActivationState*> seenActivationps;
         while (!pendingActivationps.empty()) {
@@ -394,6 +464,7 @@ void VlNamedActivationRegistry::disableAll() VL_MT_UNSAFE {
             if (const std::shared_ptr<VlNamedActivationRegistryState> registryp
                 = activationp->m_registryp.lock()) {
                 registryp->m_activations.erase(activationp->m_id);
+                registryp->m_retainedActivations.erase(activationp->m_id);
             }
             for (const VlProcessWeak& child : activationp->m_childProcessps) {
                 if (const VlProcessRef childp = child.lock()) {
@@ -407,7 +478,12 @@ void VlNamedActivationRegistry::disableAll() VL_MT_UNSAFE {
         for (const std::shared_ptr<VlNamedActivationState>& activationp : activationps) {
             detachNamedActivationLocked(activationp, suspensionps);
         }
-        VlProcess::disableProcessesLocked(rootProcessps, heldProcessps, forkSyncps);
+        std::vector<std::shared_ptr<VlCoroutineHandleState>> releasedForeverSuspensionps;
+        VlProcess::disableProcessesLocked(rootProcessps, heldProcessps, forkSyncps,
+                                          releasedForeverSuspensionps);
+        takeProcessForeverSuspensionsLocked(heldProcessps, killedSuspensions);
+        suspensionps.insert(releasedForeverSuspensionps.begin(),
+                            releasedForeverSuspensionps.end());
         for (const std::shared_ptr<VlCoroutineHandleState>& suspensionp : suspensionps) {
             VlCoroutineHandleContent content = takeNamedActivationSuspensionLocked(suspensionp);
             if (!content.m_coro) continue;
@@ -483,11 +559,24 @@ void VlNamedActivationGuard::leave() {
     {
         const VerilatedLockGuard lock{s_processMutex};
         if (!statep->activeLocked()) return;
+        statep->m_scopeActive = false;
         if (const std::shared_ptr<VlNamedActivationRegistryState> registryp
             = statep->m_registryp.lock()) {
             registryp->m_activations.erase(statep->m_id);
+            if (const VlProcessRef ownerp = statep->m_ownerProcessp.lock()) {
+                removeNamedActivationMemberLocked(statep, ownerp);
+            }
+            // Normal scope exit stops owning cancellation-aware suspension frames exactly as
+            // before.  Detached process descendants remain ordinary live processes.
+            releaseNamedActivationSuspensionsLocked(statep, releasedForeverSuspensions);
+            if (!statep->m_childProcessps.empty()) {
+                registryp->m_retainedActivations.emplace(statep->m_id, statep);
+            } else {
+                detachNamedActivationLocked(statep, releasedForeverSuspensions);
+            }
+        } else {
+            detachNamedActivationLocked(statep, releasedForeverSuspensions);
         }
-        detachNamedActivationLocked(statep, releasedForeverSuspensions);
         takeInactiveForeverSuspensionsLocked(releasedForeverSuspensions, abandonedSuspensions);
     }
     for (VlCoroutineHandleContent& content : abandonedSuspensions) {
@@ -937,9 +1026,10 @@ bool VlProcess::completedFork() const {
     return completedForkLocked();
 }
 
-void VlProcess::disableProcessesLocked(const std::vector<VlProcessRef>& rootProcessps,
-                                       std::vector<VlProcessRef>& heldProcessps,
-                                       std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps)
+void VlProcess::disableProcessesLocked(
+    const std::vector<VlProcessRef>& rootProcessps, std::vector<VlProcessRef>& heldProcessps,
+    std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps,
+    std::vector<std::shared_ptr<VlCoroutineHandleState>>& releasedForeverSuspensionps)
     VL_REQUIRES(s_processMutex) {
     std::vector<VlProcessRef> pendingProcessps = rootProcessps;
     std::set<VlProcess*> seenProcessps;
@@ -965,9 +1055,13 @@ void VlProcess::disableProcessesLocked(const std::vector<VlProcessRef>& rootProc
         }
     }
 
+    VlCoroutineHandleStateSet releasedForeverSuspensions;
     for (const VlProcessRef& processp : heldProcessps) {
-        detachNamedActivationProcessLocked(processp);
+        detachNamedActivationProcessLocked(processp, releasedForeverSuspensions);
     }
+    releasedForeverSuspensionps.insert(releasedForeverSuspensionps.end(),
+                                       releasedForeverSuspensions.begin(),
+                                       releasedForeverSuspensions.end());
 
     for (auto it = heldProcessps.rbegin(); it != heldProcessps.rend(); ++it) {
         (*it)->completeTreeLocked();
@@ -977,11 +1071,16 @@ void VlProcess::disableProcessesLocked(const std::vector<VlProcessRef>& rootProc
 void VlProcess::disableProcesses(const std::vector<VlProcessRef>& rootProcessps) {
     std::vector<VlProcessRef> heldProcessps;
     std::vector<std::shared_ptr<VlForkSyncState>> forkSyncps;
+    std::vector<std::shared_ptr<VlCoroutineHandleState>> releasedForeverSuspensionps;
     std::vector<VlCoroutineHandleContent> killedSuspensions;
     {
         const VerilatedLockGuard lock{s_processMutex};
-        disableProcessesLocked(rootProcessps, heldProcessps, forkSyncps);
+        disableProcessesLocked(rootProcessps, heldProcessps, forkSyncps,
+                               releasedForeverSuspensionps);
         takeProcessForeverSuspensionsLocked(heldProcessps, killedSuspensions);
+        VlCoroutineHandleStateSet releasedForeverSuspensions{releasedForeverSuspensionps.begin(),
+                                                             releasedForeverSuspensionps.end()};
+        takeInactiveForeverSuspensionsLocked(releasedForeverSuspensions, killedSuspensions);
     }
     for (VlCoroutineHandleContent& content : killedSuspensions) {
         destroyCoroutine(std::move(content));
@@ -994,14 +1093,18 @@ void VlProcess::disable() { disableProcesses({shared_from_this()}); }
 void VlProcess::disableFork() {
     std::vector<VlProcessRef> heldProcessps;
     std::vector<std::shared_ptr<VlForkSyncState>> forkSyncps;
+    std::vector<std::shared_ptr<VlCoroutineHandleState>> releasedForeverSuspensionps;
     std::vector<VlCoroutineHandleContent> killedSuspensions;
     {
         const VerilatedLockGuard lock{s_processMutex};
         std::vector<VlProcessRef> processps;
         processps.reserve(m_children.size());
         for (const auto& child : m_children) processps.emplace_back(child.second);
-        disableProcessesLocked(processps, heldProcessps, forkSyncps);
+        disableProcessesLocked(processps, heldProcessps, forkSyncps, releasedForeverSuspensionps);
         takeProcessForeverSuspensionsLocked(heldProcessps, killedSuspensions);
+        VlCoroutineHandleStateSet releasedForeverSuspensions{releasedForeverSuspensionps.begin(),
+                                                             releasedForeverSuspensionps.end()};
+        takeInactiveForeverSuspensionsLocked(releasedForeverSuspensions, killedSuspensions);
     }
     for (VlCoroutineHandleContent& content : killedSuspensions) {
         destroyCoroutine(std::move(content));
@@ -1031,12 +1134,20 @@ void VlProcess::state(int s) {
         return;
     }
     if (s == FINISHED) {
-        const VerilatedLockGuard lock{s_processMutex};
-        const int oldState = m_state.load(std::memory_order_relaxed);
-        if (oldState == KILLED || oldState == FINISHED) return;
-        m_state.store(FINISHED, std::memory_order_release);
-        detachNamedActivationProcessLocked(shared_from_this());
-        completeTreeLocked();
+        std::vector<VlCoroutineHandleContent> abandonedSuspensions;
+        {
+            const VerilatedLockGuard lock{s_processMutex};
+            const int oldState = m_state.load(std::memory_order_relaxed);
+            if (oldState == KILLED || oldState == FINISHED) return;
+            m_state.store(FINISHED, std::memory_order_release);
+            VlCoroutineHandleStateSet releasedForeverSuspensions;
+            detachNamedActivationProcessLocked(shared_from_this(), releasedForeverSuspensions);
+            completeTreeLocked();
+            takeInactiveForeverSuspensionsLocked(releasedForeverSuspensions, abandonedSuspensions);
+        }
+        for (VlCoroutineHandleContent& content : abandonedSuspensions) {
+            abandonForeverCoroutine(std::move(content));
+        }
         return;
     }
     int oldState = m_state.load(std::memory_order_acquire);

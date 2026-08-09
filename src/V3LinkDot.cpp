@@ -4271,10 +4271,7 @@ class LinkDotResolveVisitor final : public VNVisitor {
             if (m_ds.m_disablep) {
                 allowScope = true;
                 allowFTask = true;
-                // An object-qualified task disable starts with a class-handle variable.  Keep
-                // variables eligible here so the final TaskRef can retain that object receiver.
-                allowVar = true;
-                expectWhat = "block/task/object";
+                expectWhat = "block/task";
             } else if (m_ds.m_dotPos == DP_PACKAGE) {
                 // {package-or-class}::{a}
                 AstNodeModule* classOrPackagep = nullptr;
@@ -4518,7 +4515,13 @@ class LinkDotResolveVisitor final : public VNVisitor {
                     nodep->replaceWith(refp);
 
                     VL_DO_DANGLING(pushDeletep(nodep), nodep);
-                } else if (allowVar) {
+                } else if (allowVar
+                           || (m_ds.m_disablep && m_ds.m_dotp && m_ds.m_dotPos == DP_FIRST
+                               && varp->subDTypep()
+                               && VN_IS(varp->subDTypep()->skipRefp(), ClassRefDType))) {
+                    // Only a dotted class handle is a valid variable-shaped disable prefix.  Do
+                    // not relax ordinary block/task lookup: keeping other variables ineligible
+                    // preserves its precise "found VAR, expected block/task" diagnostic.
                     AstNode* newp;
                     if (m_ds.m_dotText != "") {
                         AstVarXRef* const refp

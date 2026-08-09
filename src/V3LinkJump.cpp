@@ -164,7 +164,28 @@ class LinkJumpVisitor final : public VNVisitor {
         // Also this would otherwise prevent us from using a label twice
         // see t_func_return test.
         while (underp && VN_IS(underp, Var)) underp = underp->nextp();
-        UASSERT_OBJ(underp, nodep, "Break/disable/continue not under expected statement");
+        if (!underp) {
+            // A disable-addressable named block/task may have no executable statements (or only
+            // declarations).  It still needs an activation boundary so object-qualified and
+            // out-of-scope disables can address it without making an empty body an internal
+            // error.
+            AstJumpBlock* const blockp = new AstJumpBlock{nodep->fileline(), nullptr};
+            if (endOfIter) {
+                nodep->user1p(blockp);
+            } else {
+                nodep->user2p(blockp);
+            }
+            if (AstBegin* const beginp = VN_CAST(nodep, Begin)) {
+                beginp->addStmtsp(blockp);
+            } else if (AstNodeFTask* const ftaskp = VN_CAST(nodep, NodeFTask)) {
+                ftaskp->addStmtsp(blockp);
+            } else if (AstLoop* const loopp = VN_CAST(nodep, Loop)) {
+                loopp->addStmtsp(blockp);
+            } else {
+                nodep->v3fatalSrc("Empty unknown jump point for break/disable/continue");
+            }
+            return blockp;
+        }
         UINFO(5, "  Underpoint is " << underp);
 
         // If already wrapped, we are done ...

@@ -300,6 +300,7 @@ public:
 using VlProcessRef = std::shared_ptr<VlProcess>;
 class VlForkSync;
 class VlForkSyncState;
+class VlCoroutineHandleState;
 class VlNamedActivationGuard;
 class VlNamedActivationState;
 class VlNamedActivationRegistryState;
@@ -359,7 +360,7 @@ public:
     VlNamedActivationGuard activate(const VlProcessRef& ownerp) VL_MT_SAFE;
     /// Cancel every activation present at entry, without canceling reentrant activations.
     void disableAll() VL_MT_UNSAFE;
-    /// Return the number of active records in the current registry generation.
+    /// Return the number of externally disable-addressable active records.
     size_t size() const VL_MT_SAFE;
     /// Return internal tracking cardinalities for runtime diagnostics.
     VlNamedActivationStats stats() const VL_MT_SAFE;
@@ -417,9 +418,10 @@ class VlProcess final : public std::enable_shared_from_this<VlProcess> {
     void detachLocked(VlProcess* childp);
     void completeTreeLocked();
     bool completedForkLocked() const;
-    static void disableProcessesLocked(const std::vector<VlProcessRef>& rootProcessps,
-                                       std::vector<VlProcessRef>& heldProcessps,
-                                       std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps);
+    static void disableProcessesLocked(
+        const std::vector<VlProcessRef>& rootProcessps, std::vector<VlProcessRef>& heldProcessps,
+        std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps,
+        std::vector<std::shared_ptr<VlCoroutineHandleState>>& releasedForeverSuspensionps);
     static void disableProcesses(const std::vector<VlProcessRef>& rootProcessps);
 
     explicit VlProcess(const VlProcessRef& parentp);
