@@ -28,15 +28,15 @@ module t_uvm_resource_numeric_precedence;
 
     pool = uvm_resource_pool::get();
 
-    high_resource = new("numeric_precedence", "uvm_test_top.env");
-    high_resource.write(200);
-    pool.set(high_resource);
-    high_resource.precedence = 200;
-
     low_resource = new("numeric_precedence", "uvm_test_top.env");
     low_resource.write(100);
     pool.set(low_resource);
     low_resource.precedence = 100;
+
+    high_resource = new("numeric_precedence", "uvm_test_top.env");
+    high_resource.write(200);
+    pool.set(high_resource);
+    high_resource.precedence = 200;
 
     matches = pool.lookup_name(
         "uvm_test_top.env", "numeric_precedence",
@@ -45,12 +45,12 @@ module t_uvm_resource_numeric_precedence;
 
     portable_resource = uvm_resource#(int)::get_highest_precedence(matches);
     if (portable_resource == null)
-      $fatal(1, "portable highest-precedence lookup returned null")
+      $fatal(1, "portable highest-precedence lookup returned null");
     `checkd(portable_resource.read(), 200)
 
     if (!uvm_resource_db#(int)::read_by_name(
             "uvm_test_top.env", "numeric_precedence", direct_value))
-      $fatal(1, "direct numeric resource lookup failed")
+      $fatal(1, "direct numeric resource lookup failed");
     if (direct_value == 200) begin
       direct_fixed = 1'b1;
       $write("** UVM RESOURCE NUMERIC DIRECT FIXED **\n");
@@ -61,7 +61,7 @@ module t_uvm_resource_numeric_precedence;
       $fatal(1, "direct numeric resource lookup returned %0d", direct_value);
     end
     if (!(direct_fixed ^ direct_xfail))
-      $fatal(1, "numeric direct-path disposition was not exclusive")
+      $fatal(1, "numeric direct-path disposition was not exclusive");
 
     report_server = uvm_report_server::get_server();
     `checkd(report_server.get_severity_count(UVM_ERROR), 0)
