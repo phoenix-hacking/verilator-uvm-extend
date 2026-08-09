@@ -311,6 +311,7 @@ struct VlNamedActivationStats final {
     size_t m_childActivations = 0;  ///< Nested activation edges
     size_t m_processMembers = 0;  ///< Process-to-activation memberships
     size_t m_childProcesses = 0;  ///< Child process roots subject to cancellation
+    size_t m_suspensions = 0;  ///< Live cancellation-aware suspension records
     size_t m_globalProcessMapEntries = 0;  ///< Raw global process-map keys
     size_t m_globalProcessMemberships = 0;  ///< Raw global weak activation memberships
 };

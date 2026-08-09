@@ -99,63 +99,43 @@ public:
 // cleared, as we assume that either the coroutine has finished and deleted itself, or, if it got
 // suspended, another VlCoroutineHandle was created to manage it.
 
+class VlCoroutineHandleState;
+
 class VlCoroutineHandle final {
     VL_UNCOPYABLE(VlCoroutineHandle);
 
     // MEMBERS
     std::coroutine_handle<> m_coro;  // The wrapped coroutine handle
+    // Shared one-shot state only while a named activation can cancel this suspension.  Ordinary
+    // scheduler waits retain the raw-handle fast path above.
+    std::shared_ptr<VlCoroutineHandleState> m_statep;
     VlProcessRef m_process;  // Data of the suspended process, null if not needed
     VlFileLineDebug m_fileline;
+
+    // METHODS
+    void reset();
 
 public:
     // CONSTRUCTORS
     // Construct
     // non-explicit:
     // cppcheck-suppress noExplicitConstructor
-    VlCoroutineHandle(VlProcessRef process)
-        : m_coro{nullptr}
-        , m_process{process} {
-        if (m_process) m_process->state(VlProcess::WAITING);
-    }
-    VlCoroutineHandle(std::coroutine_handle<> coro, VlProcessRef process, VlFileLineDebug fileline)
-        : m_coro{coro}
-        , m_process{process}
-        , m_fileline{fileline} {
-        if (m_process) {
-            m_process->state(VlProcess::WAITING);
-            m_process->leave();
-        }
-    }
+    VlCoroutineHandle(VlProcessRef process);
+    VlCoroutineHandle(std::coroutine_handle<> coro, VlProcessRef process,
+                      VlFileLineDebug fileline);
     // Move the handle, leaving a nullptr
     // non-explicit:
     // cppcheck-suppress noExplicitConstructor
-    VlCoroutineHandle(VlCoroutineHandle&& moved)
-        : m_coro{std::exchange(moved.m_coro, nullptr)}
-        , m_process{std::exchange(moved.m_process, nullptr)}
-        , m_fileline{moved.m_fileline} {}
+    VlCoroutineHandle(VlCoroutineHandle&& moved);
     // Destroy if the handle isn't null
-    ~VlCoroutineHandle() {
-        // Usually these coroutines should get resumed; we only need to clean up if we destroy a
-        // model with some coroutines suspended
-        if (VL_UNLIKELY(m_coro)) {
-            const std::coroutine_handle<> coro = std::exchange(m_coro, nullptr);
-            const VlProcessRef process = m_process;
-            coro.destroy();
-            if (process && process->state() != VlProcess::KILLED) {
-                process->state(VlProcess::FINISHED);
-            }
-        }
-    }
+    ~VlCoroutineHandle();
     // METHODS
     // Move the handle, leaving a null handle
-    auto& operator=(VlCoroutineHandle&& moved) {
-        m_coro = std::exchange(moved.m_coro, nullptr);
-        m_process = std::exchange(moved.m_process, nullptr);
-        m_fileline = moved.m_fileline;
-        return *this;
-    }
+    VlCoroutineHandle& operator=(VlCoroutineHandle&& moved);
+    // True if this scheduler entry still owns a live coroutine rather than a canceled tombstone.
+    bool pending() const;
     // Resume the coroutine if the handle isn't null and the process isn't killed
-    void resume();
+    bool resume();
 #ifdef VL_DEBUG
     void dump() const;
 #endif
@@ -191,8 +171,17 @@ public:
     // Returns the simulation time of the next time slot (aborts if there are no delayed
     // coroutines)
     uint64_t nextTimeSlot() const;
-    // Are there no delayed coroutines awaiting?
-    bool empty() const { return m_queue.empty() && m_zeroDelayed.empty(); }
+    // Are there no live delayed coroutines awaiting?  Canceled named activations leave shared
+    // one-shot tombstones in these containers until a later scheduler pass or model teardown.
+    bool empty() const {
+        for (const auto& delayed : m_queue) {
+            if (delayed.second.pending()) return false;
+        }
+        for (const VlCoroutineHandle& handle : m_zeroDelayed) {
+            if (handle.pending()) return false;
+        }
+        return true;
+    }
     // Are there coroutines to resume at the current simulation time?
     bool awaitingCurrentTime() const {
         return !m_context.gotFinish()
@@ -269,8 +258,17 @@ public:
     void moveToResumeQueue(const char* eventDescription = VL_UNKNOWN);
     // Moves all coroutines from m_awaiting to m_fired
     void ready(const char* eventDescription = VL_UNKNOWN);
-    // Are there no coroutines awaiting?
-    bool empty() const { return m_fired.empty() && m_awaiting.empty(); }
+    // Are there no live coroutines awaiting?  Canceled named activations can leave tombstones in
+    // either stage until the trigger naturally advances its queues.
+    bool empty() const {
+        for (const VlCoroutineHandle& handle : m_fired) {
+            if (handle.pending()) return false;
+        }
+        for (const VlCoroutineHandle& handle : m_awaiting) {
+            if (handle.pending()) return false;
+        }
+        return true;
+    }
 #ifdef VL_DEBUG
     void dump(const char* eventDescription) const;
 #endif
