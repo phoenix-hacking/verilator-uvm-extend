@@ -4,15 +4,15 @@
 
 # UVM 2020 program progress
 
-Snapshot date: **2026-08-09** (both current local and exact-head CI gates pass
-for source head `ea172f63c5ddab12a5ca032e119b2f1a95b4e71e` and synthetic merge
-`19ca7867bdff8fc60c35e11132d37b88ab2df1c5`)
+Snapshot date: **2026-08-09** (PR #41 retains its recorded local and exact-head
+CI closure; stacked PR #42 contains a source-integrated 27-test successor lane
+whose accepted local and exact-head CI validation is pending)
 
 Repository: `phoenix-hacking/verilator-uvm-extend`
 
-Active branch: `agent/uvm2020-clean-lane`
+Active branch: `codex/uvm-program-integration-wip`
 
-Active pull request: [#41, Harden and expand the clean UVM 2020 regression lane](https://github.com/phoenix-hacking/verilator-uvm-extend/pull/41)
+Active pull request: [#42, Expand UVM class, config, TLM, and sequence acceptance](https://github.com/phoenix-hacking/verilator-uvm-extend/pull/42), stacked on draft PR #41.
 
 This is the human-readable, full-program dashboard for the objective:
 
@@ -90,8 +90,8 @@ Anything less remains incomplete, even if a narrower test lane is green.
 | Remaining engineering | `[#######---]` **about 70%** | Estimated 65-75% | Most integrated UVM verticals remain. |
 | Historical PR #41 evidence slice | `11/11 accepted` | Original three-test proof environments accepted at their recorded revisions | Historical evidence only; it is not current-head technical closure or full-program completion. |
 | Focused PR #41 technical scope | **Technical closure passed; no broader completion percentage assigned** | Local and exact-head push/PR focused and UVM targets passed; format and both 46-job matrices passed | Human review and DCO remain separate, and the PR remains draft. |
-| Current expanded UVM lane | **Local and exact-head CI pass** | Local, push CI, and PR CI passed 20/20 under `vlt` with symlink preflight, phase stress, and cleanup | Historical 15/15 results remain separately scoped. |
-| Mixed compatibility corpus | `[#########-]` **92.6% verified** | 100/108 passed; 8 blocked | Compatibility inventory only, not IEEE/UVM conformance. |
+| Current expanded UVM lane | **Source-integrated; execution pending** | 27 ordered tests; no accepted 27/27 local or exact-head CI result | Historical 20/20 results remain separately scoped and do not validate this membership. |
+| Mixed compatibility corpus | `[#########-]` **87.0% verified** | 100/115 passed; 8 blocked; 7 pending | Compatibility inventory only, not IEEE/UVM conformance. |
 | Frozen 72-test selection | `[##########]` **100% dispositioned** | 64 pass, 1 environment block, 7 dependency skips | Every entry is classified, but only 64 are semantic passes. |
 | Competitive C0 tracking envelope | `[##########]` **100%** | Planning/tracking exists | Tracking is complete enough to expose the remaining work. |
 | Competitive C1 usable core | `[####------]` **about 40%** | Not formally achieved | Scheduler/factory/phasing/VIF foundations exist; DB/TLM/sequences/randomization/coverage remain. |
@@ -121,11 +121,11 @@ and correcting compiler/runtime semantics under realistic UVM pressure.
 | Order | Work | Bar | Current evidence | Open work | Remaining estimate |
 |---:|---|---:|---|---|---:|
 | 1 | Focused named-disable/process closure | Pass; unscored | Local, push CI, and PR CI passed 30/30 with cleanup; the implementation has an explicit support envelope. | None inside this focused technical gate; preserve evidence. | 0 |
-| 2 | Current 20-test UVM lane | Pass | Local, push CI, and PR CI passed 20/20 with symlink preflight and cleanup; each CI job passed one 1,000-phase teardown stress run (`phases=1000`, `winners=1000`, `cleanups=1000`). | None inside this selected lane; preserve evidence. | 0 |
+| 2 | Current 27-test UVM lane | Source-integrated; execution pending | Exact ordered membership and pass oracles are present. Historical 20/20 results remain scoped to their revisions. | Obtain accepted local and exact-head CI execution for all 27 tests. | 1-2 days after executable access |
 | 3 | PR #41 current-head technical CI | Pass | Format succeeded; push and PR `build-test` each passed 46/46, including all 25 former-red shards and all five `dist-vlt-0` jobs. | Keep the tracker-only recording child scoped as untested documentation. | 0 |
 | 4 | Contributor Agreement/DCO | `[----------]` external | Runs 31311244130 and 31311246183 request a human-signed `docs/CONTRIBUTORS` entry. | Human contributor must satisfy repository policy; agents must not edit `docs/CONTRIBUTORS`. | Usually <1 day of human time |
 | 5 | Align all planning artifacts | `[########--]` about 80% | Canonical PR files validate; broad pre-PR files and `PROGRESS.md` are published. | Align stale issue bodies, split over-broad gates, and remove namespace ambiguity. | 2-5 days |
-| 6 | M07 config/resource/component closure | `[####------]` about 35% engineering readiness; 0% formal | Historical records describe absent prototypes; the canonical VIF test passes. | Implement strict hierarchy/config/resource semantics, report/timeout behavior, and canonical-lane proof. | 1-3 weeks |
+| 6 | M07 config/resource/component closure | `[######----]` source-integrated; 0% formal | Strict config/resource/component and numeric-precedence source tests are present with exact oracles. | Obtain executable 27-test lane proof; bounded direct-path XFAIL is not conformance. | 2-5 days after executable access |
 
 ## All 21 program criteria
 
@@ -171,8 +171,8 @@ Bars are exact passed-gate fractions. A milestone exits only at 100%.
 | M04 / [#5](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/5) | Scheduler, process, and fork closure | `[#######---]` 4/6, 66.7% | In progress | Publish and prove the Ubuntu 22 teardown fix; event regions and RTL performance proof remain. | 1-3 weeks |
 | M05 / [#6](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/6) | Class, factory, and static initialization | `[###-------]` 1/3, 33.3% | In progress | Class identity/static initialization matrix and canonical CI. | 2-5 weeks |
 | M06 / [#7](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7) | Interfaces, VIFs, modports, clocking | `[########--]` 3/4, 75% | In progress | APB setup/access proof through driver and monitor. | 2-4 weeks |
-| M07 / [#8](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8) | Config/resource DB and component flow | `[----------]` 0/1, 0% | Not started formally | Implement one strict acceptance test and add it to the canonical lane; older prototype paths are absent. | 1-3 weeks |
-| M08 / [#9](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/9) | TLM and sequence flow | `[----------]` 0/1, 0% | Not started | Analysis port/export/imp/FIFO and sequence-driver handshakes. | 2-4 weeks |
+| M07 / [#8](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8) | Config/resource DB and component flow | `[----------]` 0/1, 0% | In progress at source level | Source acceptance tests are present; executable lane proof and direct-path conformance remain pending. | 2-5 days after executable access |
+| M08 / [#9](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/9) | TLM and sequence flow | `[----------]` 0/1, 0% | In progress at source level | TLM fanout/FIFO and sequence-driver/cancellation source tests are present; executable lane proof remains pending. | 2-5 days after executable access |
 | M09 / [#10](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10) | Constrained-random sequence items | `[----------]` 0/1, 0% | Not started | Solver/runtime semantics and deterministic UVM item replay. | 4-10 weeks |
 | M10 / [#11](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11) | Functional coverage from UVM classes | `[----------]` 0/1, 0% | Not started | UVM covergroups/subscribers plus report and merge. | 4-10 weeks |
 | M11 / [#12](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/12) | APB protocol environment | `[----------]` 0/1, 0% | Not started | Complete active/passive APB environment. | 3-6 weeks |
@@ -220,8 +220,8 @@ other rows.
 | M06-G02-UVM-VIF | UVM config-DB VIF clocking passes | `[##########]` Pass | `LOCAL-UVM-VIF-CLOCKING-0001` | 0 |
 | M06-G03-SUBINTERFACE-TRIGGERS | Sub-interface and VIF triggers pass | `[##########]` Pass | `LOCAL-VIF-NEIGHBORS-0001` | 0 |
 | M06-G04-APB-CYCLES | APB setup/access cycles pass through driver/monitor | `[----------]` Pending | Implement cycle-accurate APB interface, driver, monitor, and exact observations. | 2-4 weeks |
-| M07-G01-CLOSURE | Config/resource DB and component acceptance passes | `[----------]` Pending | Implement hierarchy/order/identity/scope/wildcard/override/update/negative/report/timeout assertions and add canonical-lane proof. | 1-3 weeks |
-| M08-G01-CLOSURE | TLM and sequence handshake acceptance passes | `[----------]` Pending | Analysis path, FIFO, sequencer-driver handshake, stop/kill, scoreboard/predictor path. | 2-4 weeks |
+| M07-G01-CLOSURE | Config/resource DB and component acceptance passes | `[----------]` Pending | Source assertions cover hierarchy/order/identity/scope/override/update/negative/report/timeout behavior; obtain executable lane proof. Bounded direct-path XFAIL is not conformance. | 2-5 days after executable access |
+| M08-G01-CLOSURE | TLM and sequence handshake acceptance passes | `[----------]` Pending | Source covers analysis fanout/FIFO, predictor/scoreboard, sequencer-driver handshake, stop/kill, and reuse; obtain executable lane proof. | 2-5 days after executable access |
 | M09-G01-CLOSURE | Deterministic constrained-random UVM items pass | `[----------]` Pending | Solver, fields, inline/member constraints, arrays, modes, failures, fixed-seed replay. | 4-10 weeks |
 | M10-G01-CLOSURE | UVM class coverage/report/merge passes | `[----------]` Pending | Covergroups/subscribers, data generation, report, merge, CI artifact flow. | 4-10 weeks |
 | M11-G01-CLOSURE | Active/passive APB environment passes | `[----------]` Pending | Full APB vertical including scoreboard, coverage, assertions, RAL adapter. | 3-6 weeks |
@@ -254,7 +254,8 @@ M19-G02 work; this dashboard does not silently treat stale issue text as proof.
 |---|---|---|---|
 | #1-#2 | Open | M00 and M01 passed/exited | Update body evidence and decide whether maintainers close or retain as umbrella issues. |
 | #3-#7 | Open | M02-M06 in progress | Keep open until every atomic gate in the milestone passes. |
-| #8-#14 | Open | M07-M13 formally not started | Implement accepted gates, then build the TLM-through-RAL verticals; older prototype paths are absent. |
+| #8-#9 | Open | M07-M08 source integration in progress; formal gates pending | Execute the integrated config/resource/TLM/sequence tests and preserve claim boundaries. |
+| #10-#14 | Open | M09-M13 formally not started | Implement constrained-random through RAL verticals. |
 | #15 | Open | M14 in progress | C reference and VPI/backdoor work remain. |
 | #16-#17 | Open | M15-M16 not started | SVA and synthetic SoC remain. |
 | #18 | Open | M17 in progress | Performance/productization remains. |
@@ -311,7 +312,7 @@ formal full-program completion remains 0/21.
 | Format | Pass | Run 31311244123 succeeded for `ea172f63`. | None technical. |
 | Builds | Pass | Push run 31311244235 and PR run 31311246321 each passed 46/46 for `ea172f63` / `19ca7867`. | None technical. |
 | Focused named-disable lane | Local and exact-head CI pass | Local 30/30; push job 93239581011 passed 30/0 in 1:36; PR job 93239545832 passed 30/0 in 1:37; cleanup passed. | None inside the focused gate. |
-| Dedicated UVM 2020 lane | Local and exact-head CI pass | Local 20/20; push job 93239580961 passed 20/0 in 13:12; PR job 93239545848 passed 20/0 in 13:03; each CI job passed symlink preflight, one 1,000-phase teardown stress run (`phases=1000`, `winners=1000`, `cleanups=1000`), and cleanup. | None inside the selected lane. |
+| Dedicated UVM 2020 lane | Current 27-test execution pending | Source membership is 27 ordered tests; historical local/push/PR 20/20 evidence remains recorded but does not validate current membership. | Obtain accepted local and exact-head CI execution. |
 | Broad distribution checks | Pass | All five exact-head `dist-vlt-0` jobs passed in both 46-job matrices. | Preserve current evidence. |
 | Broad recovered shards | Pass | All 25 jobs that were red on earlier heads recovered on both exact-head events. | Preserve current evidence. |
 | Ubuntu 22 broad UVM tests | Pass | Exact-head matrices include the corrected teardown path; on each event, the dedicated UVM job passed one 1,000-phase teardown stress run (`phases=1000`, `winners=1000`, `cleanups=1000`). | Broader UVM program work remains separate. |
@@ -341,8 +342,9 @@ In the historical workflow snapshot, duplicate pre-fix push and pull-request
 runs completed with three observed technical cause classes--missing SPDX
 headers, a stale generated golden, and Ubuntu 22 teardown corruption--plus two
 Contributor Agreement jobs. The exact-head matrices recovered all 25 formerly
-red shards and all five `dist-vlt-0` jobs, and the current focused and 20-test
-lanes passed on both events. The remaining contributor action is independent.
+red shards and all five `dist-vlt-0` jobs; the current focused lane and
+historical 20-test lane passed on both events. Current 27-test execution remains
+pending. The remaining contributor action is independent.
 
 ### Focused named-disable support envelope
 
@@ -381,10 +383,10 @@ redefines the broader 0/21 program denominator.
 |---|---:|---:|---|---|
 | L0 reduced SystemVerilog | `[#########-]` 94/102, 92.2% | 94 pass, 8 blocked | Selected language compatibility around known UVM dependencies | Complete IEEE 1800 parity |
 | L1 minimal UVM | `[##########]` 6/6, 100% | Six accepted local tests | Package smoke, factory, phasing, VIF/config slices | Full UVM 1800.2 API or integrated environments |
-| Mixed corpus | `[#########-]` 100/108, 92.6% | 100 pass, 8 blocked | Reproducible selected compatibility evidence | Full-program completion |
+| Mixed corpus | `[#########-]` 100/115, 87.0% | 100 pass, 8 blocked, 7 pending | Reproducible selected compatibility evidence | Full-program completion |
 | Current focused named-disable lane | Local and exact-head CI pass, 15 tests x 2 scenarios | Local, push CI, and PR CI passed 30/30; cleanup passed | Ordered focused membership, positive scalar/class cases, explicit interface-class diagnostic, and cleanup contract | Complete IEEE/UVM support outside the focused envelope |
-| Current expanded lane | Local and exact-head CI pass, 20-test contract | Local, push CI, and PR CI passed 20/20; symlink preflight, phase stress, and cleanup passed | Ordered Makefile/tracker membership and cleanup/fanout contract | Complete UVM 2020 or broader-program closure |
-| Historical expanded lane | 15/15 accepted at recorded revisions | Historical local and Ubuntu 26 canonical pass | The older lane contract and cleanup/fanout invariants at those revisions | Current 20-test or exact-head closure |
+| Current expanded lane | Source-integrated, 27-test contract; execution pending | No accepted 27/27 local or exact-head CI result | Ordered Makefile/tracker membership and exact pass oracles | Complete UVM 2020 or broader-program closure |
+| Historical expanded lanes | 20/20 and 15/15 accepted at recorded revisions | Historical local and canonical CI passes | Older lane contracts and cleanup/fanout invariants at those revisions | Current 27-test or exact-head closure |
 | Phase-teardown stress | `[##########]` Local, exact Jammy A/B, and exact-head CI pass | 1,000 phase graphs pass natively and under GCC 11 normal/ASan; each UVM CI job passed one 1,000-phase run with `winners=1000` and `cleanups=1000` | The isolated process/coroutine lifetime defect and its teardown path | Broader UVM program completion |
 
 The eight blocked L0 entries remain open:
