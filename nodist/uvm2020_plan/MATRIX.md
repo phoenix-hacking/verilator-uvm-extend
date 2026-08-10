@@ -37,12 +37,13 @@ completion, or a test pass rate.
 ## Current PR validation gates
 
 These current contracts are independent of the historical 11/11 evidence
-slice. Both require exact-head local and CI proof:
+slice. Proof is revision-scoped: accepted local and CI evidence must identify
+the tested source revision, and later evidence-only commits do not inherit it:
 
 | Gate | Contract | Exact-head local | Exact-head CI | Claim boundary |
 |---|---:|---|---|---|
 | Focused named-disable/process lane | 15 ordered tests under both `vlt` and `vltmt` (30 scenario executions and cleanup sentinels) | Pass: 30/30, zero failed, 30/30 sentinels removed, cleanup passed | Pass: push job 93239581011, 30/0 in 1:36; PR job 93239545832, 30/0 in 1:37; both cleanup postchecks passed | Compiler/runtime technical scope only. |
-| UVM integration lane | 27 ordered tests under `vlt` (27 cleanup sentinels) | Pending: no accepted 27-test local run | Pending: no accepted exact-head 27-test CI run | Source membership and oracles are present; no feature or direct numeric-path conformance credit is inferred. |
+| UVM integration lane | 27 ordered tests under `vlt` (27 cleanup sentinels) | Pending: no accepted 27-test local run because the workspace is blocked by `ENOSPC` | Pass at workflow level: pull-request `build-test` run 31346076613 concluded successfully for source `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73`; the successful aggregate includes the configured current `uvm2020` job, but connector pagination prevents a job-level claim | Overall validation remains pending; no feature or direct numeric-path conformance credit is inferred. |
 | Historical twenty-test UVM lane | 20 ordered tests under `vlt` | Pass at recorded revision: 20/20 and 20/20 sentinels removed | Pass at recorded revisions: push 20/0 and PR 20/0 | Does not validate current 27-test membership. |
 
 The focused local proof used validation head
@@ -88,7 +89,7 @@ not be satisfied or represented by an agent-authored signature.
 | Library implementation order | None | Unpadded `M0`-`M17` is dependency-order metadata and must never be converted to a completion percentage. |
 | Historical PR #41 evidence slice | 11 required proof environments | Six local and five CI proofs were accepted at their recorded revisions; this is not current-head proof. |
 | Current focused lane contract | 15 tests, two scenarios | Exact ordered membership is derived from the Makefile; local and exact-head push/PR CI passed all 30 `vlt`/`vltmt` scenario executions and cleanup. |
-| Current Makefile lane contract | 27 ordered tests | `check_tracker.py` derives the exact reduced-then-package order from `test_regress/Makefile`; accepted local and exact-head CI execution is pending. |
+| Current Makefile lane contract | 27 ordered tests | `check_tracker.py` derives the exact reduced-then-package order from `test_regress/Makefile`; tested integration-head pull-request CI passed at workflow level, while accepted local execution remains pending because of `ENOSPC`. Later evidence-only `[ci skip]` commits are not tested revisions. |
 | Tracker mixed corpus | 115 planned tests | 115 implemented; 100 executed/pass, 8 blocked, and 7 pending; execution and verified 87.0%; pass/executed 100.0%. |
 | Frozen compatibility selection | 72 manifest entries | All 72 received reproducible dispositions: 64 pass, one debug-build environment block, and seven no-solver skips. This is not a 72/72 semantic-pass claim. |
 
@@ -171,7 +172,7 @@ The exact reduced-test and neighbor commands are recorded in `PLAN.md`.
 | Quick compatibility selection | 8 | Observed within full run | All eight quick entries passed; no separate standalone-run claim |
 | Reduced compatibility selection | 69 | Observed within full run | 61 pass, one debug-build environment block, and seven no-solver skips |
 | Full compatibility selection | 72 | Disposition complete | 64 pass; `t_class_dead_varscope_uaf` blocked because the image lacks `bin/verilator_bin_dbg` and system `FlexLexer.h`; seven randomize/constraint tests skipped because no constraint solver is available; 9:44 |
-| Current Makefile UVM lane | 27 | Execution pending | Source membership and exact oracles are present; accepted local and exact-head CI results are pending |
+| Current Makefile UVM lane | 27 | Workflow-level pull-request CI pass; local pending | Run 31346076613 passed source `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73` and includes the configured current `uvm2020` job; no job metadata is claimed, and local evidence is blocked by `ENOSPC` |
 | Historical twenty-test UVM lane | 20 | Pass at recorded revisions | Local, push CI, and PR CI each passed 20/20; those results do not validate the current lane |
 | Current Makefile focused lane | 15 x 2 scenarios | Local and exact-head CI pass | Local, push CI, and PR CI each passed 30/30 scenarios; cleanup passed in all three environments |
 | Historical expanded local UVM lane | 15 | Pass | 15/0 in 14:27; atomic quarantine removed 15 child-local `interrupted.gch` sentinels; test/build fanout stayed 1/1; stale-artifact postcheck passed |
@@ -199,7 +200,9 @@ by itself establish full-program completion.
 
 - Package and no-DPI smoke: accepted historical local and dedicated draft-PR
   CI evidence exists; the historical 20-test target passed locally and in
-  exact-head push and pull-request CI. Current 27-test validation is pending.
+  exact-head push and pull-request CI. The current 27-test workflow-level
+  pull-request CI passed at the tested integration head, while local evidence
+  remains pending because of `ENOSPC`.
 - Full UVM package/API support: not claimed.
 - No-DPI parity with DPI: not claimed; the boundary in `PLAN.md` remains a
   known support-envelope constraint.
@@ -211,9 +214,12 @@ by itself establish full-program completion.
 - Current focused lane: the Makefile and tracker agree on 15 ordered tests in
   two scenarios; local, push CI, and pull-request CI passed 30/30 with cleanup.
 - Current expanded lane: the Makefile and tracker agree on 27 ordered tests;
-  accepted local, push CI, and pull-request CI execution is pending. The 20/20,
-  15/15, and 13/13 results remain explicitly historical and do not validate
-  current membership.
+  workflow-level pull-request CI passed for source
+  `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge
+  `cda98bba177663b2df45745d2e946ddf0e274d73`, while accepted local execution
+  remains pending because of `ENOSPC`. No push result or job-level metadata is
+  claimed. The 20/20, 15/15, and 13/13 results remain explicitly historical and
+  do not validate current membership.
 - Frozen 72-test corpus: every entry has a reproducible disposition (64 pass,
   one environment block, seven dependency skips); this is not 72/72 semantic
   compatibility.
