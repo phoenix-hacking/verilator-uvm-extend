@@ -395,15 +395,35 @@ expanded_lane:
   current_validation:
     status: pending
     note: >-
-      No accepted local or CI result yet covers the current ordered
-      twenty-seven-test contract. The historical results below cover only the
-      previous twenty-test contract.
+      Pull-request build-test run 31346076613 passed the current ordered
+      twenty-seven-test contract at source head
+      b09ff3e78f97e928907b8f2929bf8bacab6b16bd through synthetic merge
+      cda98bba177663b2df45745d2e946ddf0e274d73. Accepted local evidence remains
+      pending because the workspace is blocked by ENOSPC. The historical
+      results below cover only the previous twenty-test contract.
     local:
       status: pending
-      evidence_scope: historical_twenty_test_contract_only
+      blocker: workspace_filesystem_enospc
+      evidence_scope: no_current_twenty_seven_test_result
     ci:
-      status: pending
-      evidence_scope: historical_twenty_test_contract_only
+      status: pass
+      conclusion: success
+      evidence_scope: current_twenty_seven_test_contract
+      event: pull_request
+      workflow: build-test
+      workflow_run_id: 31346076613
+      workflow_run_url: >-
+        https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31346076613
+      source_head_revision: b09ff3e78f97e928907b8f2929bf8bacab6b16bd
+      tested_synthetic_merge_revision: cda98bba177663b2df45745d2e946ddf0e274d73
+      configured_job: uvm2020
+      configured_command: make -C test_regress uvm2020
+      job_metadata: unavailable_due_to_connector_first_page_pagination
+      claim_boundary: >-
+        Workflow-level success includes the configured current twenty-seven-test
+        uvm2020 job. No job ID, elapsed time, per-test summary, or cleanup count
+        is claimed because the connector could not retrieve the page-two job.
+        Later evidence-only [ci skip] commits are not tested revisions.
   historical_twenty_test_validation:
     status: pass
     local:
