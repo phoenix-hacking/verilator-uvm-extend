@@ -118,11 +118,18 @@ UVM2020_REDUCED_TESTS := \
 	t/t_process_self_kill_initial.py \
 	t/t_timing_finish.py \
 	t/t_finish_stops_nonfinal.py \
-	t/t_clocking_virtual.py
+	t/t_clocking_virtual.py \
+	t/t_class_param_static_identity.py \
+	t/t_class_member_sel_used.py
 UVM2020_PACKAGE_TESTS := \
 	t/t_uvm_core_factory_basic.py \
+	t/t_uvm_core_factory_param.py \
 	t/t_uvm_config_vif_clocking.py \
+	t/t_uvm_config_resource_component.py \
+	t/t_uvm_resource_numeric_precedence.py \
 	t/t_uvm_core_phasing.py \
+	t/t_uvm_tlm_analysis_fifo.py \
+	t/t_uvm_sequence_driver_flow.py \
 	t/t_uvm_hello_all_v2020_3_1_nodpi.py \
 	t/t_uvm_hello_all_v2020_3_1_dpi.py \
 	t/t_uvm_dpi_v2020_3_1.py
