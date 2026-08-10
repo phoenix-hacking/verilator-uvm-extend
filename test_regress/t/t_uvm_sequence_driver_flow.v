@@ -135,7 +135,6 @@ module t;
     `uvm_object_utils(quiet_sequence)
 
     bit entered;
-    bit release_body;
     bit body_returned;
     int heartbeats;
 
@@ -145,7 +144,7 @@ module t;
 
     virtual task body();
       entered = 1'b1;
-      while (!release_body) begin
+      forever begin
         #1;
         heartbeats++;
       end
