@@ -41,7 +41,7 @@ combined into one percentage:
 | Atomic milestone gates | 46 required gates | Engineering progress counts each required gate with accepted evidence; this diagnostic does not substitute for milestone exits. |
 | Historical pull request #41 evidence slice | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs were accepted at the recorded revisions: 11/11. This does not validate the current 27-test contract. |
 | Current focused named-disable lane | 15 tests in two scenarios | `check_tracker.py` derives the ordered 15-test contract from `NAMED_DISABLE_EXISTING_TESTS` followed by `NAMED_DISABLE_COMPILER_TESTS`. Every test runs under both `vlt` and `vltmt`, for 30 scenario executions and 30 cleanup sentinels. Local and exact-head push/PR CI passed. |
-| Current Makefile lane contract | 27 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Executable local and exact-head CI validation is pending; historical 20-test results do not validate this membership. |
+| Current Makefile lane contract | 27 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Pull-request `build-test` run 31346076613 passed the tested integration head `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73`; accepted local validation remains pending because the workspace is blocked by `ENOSPC`. Historical 20-test results do not validate this membership. |
 | Test corpora | Per-corpus planned-test count | Report implementation, execution, pass, and verified rates separately as described below. |
 
 Full-program `C01`-`C21` completion cannot be inferred from a lane evidence
@@ -86,7 +86,7 @@ public milestone exits: 2/20 (10.0%)
 atomic milestone gates: 24/46 (52.2%)
 historical original PR #41 evidence slice: 11/11 accepted at recorded revisions
 current focused lane contract: 15 tests x 2 scenarios; local and CI pass
-current Makefile lane contract: 27 ordered tests; local and CI pending
+current Makefile lane contract: 27 ordered tests; tested integration-head PR CI pass, local pending (ENOSPC)
 mixed corpus: planned=115 implemented=115 executed=100 passed=100 failed=0 blocked=8 pending=7
 mixed corpus rates: execution=87.0% pass/executed=100.0% verified=87.0%
 issue #5 mapped gates: 4/6 (66.7%)
@@ -263,11 +263,27 @@ The `uvm2020` suite in `ci/ci-script.bash` runs the same Make target. The suite
 is an Ubuntu GCC entry in the normal `build-test` workflow, which connects the
 proof to the repository's built-checkout regression path.
 
+### Current twenty-seven-test pull-request CI result
+
+Pull-request `build-test` run
+[31346076613](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31346076613)
+completed successfully for source head
+`b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge
+`cda98bba177663b2df45745d2e946ddf0e274d73`. The successful workflow includes
+the configured current `uvm2020` job, which runs
+`make -C test_regress uvm2020`.
+
+The connector exposes only the first page of run jobs, so no UVM job ID,
+elapsed time, per-test summary, or cleanup count is claimed. Accepted local
+evidence remains pending because the workspace is blocked by `ENOSPC`.
+Later evidence-only `[ci skip]` commits are not tested revisions, and the
+lane remains pending until accepted local evidence exists.
+
 ### Historical twenty-test local and CI result
 
 The following evidence covers the previous ordered twenty-test contract only.
 It does not validate the current twenty-seven-test Makefile membership. No
-accepted local or CI result yet covers all 27 tests.
+accepted local result yet covers all 27 tests.
 
 Validation worktree head `c1dab4a4f5961fe5e6c61ed57d539d576cecca0d`
 passed the exact `make -C test_regress uvm2020` command with
