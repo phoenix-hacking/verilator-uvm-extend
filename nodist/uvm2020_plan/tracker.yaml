@@ -109,6 +109,18 @@ pull_request:
     note: agents_must_not_sign_or_edit_docs_contributors
   broader_program_relation: independent_from_zero_of_twenty_one_program_criteria
 
+successor_pull_request:
+  number: 42
+  url: https://github.com/phoenix-hacking/verilator-uvm-extend/pull/42
+  status: in_progress
+  draft: true
+  base: agent/uvm2020-clean-lane
+  base_revision: ee6197dff37260fa892783744d7183b96ce26d43
+  head: codex/uvm-program-integration-wip
+  source_checkpoint_revision: 1563f0d996ddfea766a9105e9ba5aad8afb071b6
+  validation_status: pending
+  claim: source_preservation_and_twenty_seven_test_lane_integration
+  broader_program_relation: independent_from_zero_of_twenty_one_program_criteria
 issues:
   5:
     id: M04
@@ -341,7 +353,7 @@ expanded_lane:
   id: uvm2020-current
   command: make -C test_regress uvm2020
   object_suffix: -uvm2020
-  scope: current_twenty_test_makefile_contract
+  scope: current_twenty_seven_test_makefile_contract
   contract_source: test_regress/Makefile::UVM2020_TESTS
   controls:
     test_jobs: 1
@@ -350,7 +362,7 @@ expanded_lane:
     clean_before: atomic_quarantine_of_complete_test_object_directory
     inherited_jobserver: ignored_when_build_jobs_explicit
     stale_seed_name: interrupted.gch
-    stale_seed_directories: 20
+    stale_seed_directories: 27
     defaults_changed: false
   tests:
     - test_regress/t/t_uvm_lrm_sched_wait_zero.py
@@ -367,13 +379,32 @@ expanded_lane:
     - test_regress/t/t_timing_finish.py
     - test_regress/t/t_finish_stops_nonfinal.py
     - test_regress/t/t_clocking_virtual.py
+    - test_regress/t/t_class_param_static_identity.py
+    - test_regress/t/t_class_member_sel_used.py
     - test_regress/t/t_uvm_core_factory_basic.py
+    - test_regress/t/t_uvm_core_factory_param.py
     - test_regress/t/t_uvm_config_vif_clocking.py
+    - test_regress/t/t_uvm_config_resource_component.py
+    - test_regress/t/t_uvm_resource_numeric_precedence.py
     - test_regress/t/t_uvm_core_phasing.py
+    - test_regress/t/t_uvm_tlm_analysis_fifo.py
+    - test_regress/t/t_uvm_sequence_driver_flow.py
     - test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py
     - test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py
     - test_regress/t/t_uvm_dpi_v2020_3_1.py
   current_validation:
+    status: pending
+    note: >-
+      No accepted local or CI result yet covers the current ordered
+      twenty-seven-test contract. The historical results below cover only the
+      previous twenty-test contract.
+    local:
+      status: pending
+      evidence_scope: historical_twenty_test_contract_only
+    ci:
+      status: pending
+      evidence_scope: historical_twenty_test_contract_only
+  historical_twenty_test_validation:
     status: pass
     local:
       status: pass
@@ -836,6 +867,11 @@ milestones:
         title: Class identity and static initialization closure completes
         status: pending
         evidence: []
+        implementation_tests:
+          - test_regress/t/t_class_param_static_identity.py
+          - test_regress/t/t_class_member_sel_used.py
+          - test_regress/t/t_uvm_core_factory_param.py
+        note: Source and causal oracles are present; executable lane evidence is pending.
       M05-G03-CANONICAL-CI:
         title: Factory and class closure pass canonical CI
         status: pending
@@ -867,21 +903,33 @@ milestones:
   M07:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8
     title: Config/resource DB and component flow
-    status: not_started
+    status: in_progress
     gates:
       M07-G01-CLOSURE:
         title: Config/resource DB and component flow acceptance passes
         status: pending
         evidence: []
+        implementation_tests:
+          - test_regress/t/t_uvm_config_resource_component.py
+          - test_regress/t/t_uvm_resource_numeric_precedence.py
+        claim_boundary: >-
+          The portable precedence oracle must select 200. A bounded XFAIL in
+          the Accellera direct convenience lookup selecting 100 is disclosure
+          of a known deviation and must not receive direct-path conformance
+          credit. Executable lane evidence remains pending.
   M08:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/9
     title: TLM and sequence flow
-    status: not_started
+    status: in_progress
     gates:
       M08-G01-CLOSURE:
         title: TLM and sequence handshake acceptance passes
         status: pending
         evidence: []
+        implementation_tests:
+          - test_regress/t/t_uvm_tlm_analysis_fifo.py
+          - test_regress/t/t_uvm_sequence_driver_flow.py
+        note: Source and exact pass oracles are present; executable lane evidence is pending.
   M09:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10
     title: Constrained-random sequence items
@@ -1207,6 +1255,10 @@ corpus:
         implemented: true
         status: pass
         evidence: [FULL-BASELINE-0001]
+      t_class_param_static_identity:
+        implemented: true
+        status: pending
+        evidence: []
       t_class_param_typedef:
         implemented: true
         status: pass
@@ -1219,6 +1271,10 @@ corpus:
         implemented: true
         status: pass
         evidence: [FULL-BASELINE-0001]
+      t_class_member_sel_used:
+        implemented: true
+        status: pending
+        evidence: []
       t_class_typedef:
         implemented: true
         status: pass
@@ -1571,15 +1627,34 @@ corpus:
         implemented: true
         status: pass
         evidence: [LOCAL-FACTORY-0001]
+      t_uvm_core_factory_param:
+        implemented: true
+        status: pending
+        evidence: []
       t_uvm_config_vif_clocking:
         implemented: true
         status: pass
         evidence: [LOCAL-UVM-VIF-CLOCKING-0001]
+      t_uvm_config_resource_component:
+        implemented: true
+        status: pending
+        evidence: []
+      t_uvm_resource_numeric_precedence:
+        implemented: true
+        status: pending
+        evidence: []
       t_uvm_core_phasing:
         implemented: true
         status: pass
         evidence: [LOCAL-UVM-PHASING-0001]
-
+      t_uvm_tlm_analysis_fifo:
+        implemented: true
+        status: pending
+        evidence: []
+      t_uvm_sequence_driver_flow:
+        implemented: true
+        status: pending
+        evidence: []
 progress:
   program:
     complete: 0
@@ -1598,15 +1673,15 @@ progress:
     total: 11
     percent: 100.0
   corpus:
-    planned: 108
-    implemented: 108
+    planned: 115
+    implemented: 115
     executed: 100
     passed: 100
     failed: 0
     blocked: 8
-    execution_percent: 92.6
+    execution_percent: 87.0
     pass_percent: 100.0
-    verified_percent: 92.6
+    verified_percent: 87.0
 
 validation:
   scope: historical_records_only_not_current_head_validation
