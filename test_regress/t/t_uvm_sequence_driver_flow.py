@@ -26,5 +26,6 @@ test.compile(v_flags2=[
 ])
 
 test.execute(all_run_flags=['' if test.verbose else '+UVM_NO_RELNOTES'])
+# Require one exact sentinel so partial or duplicate success is not accepted.
 test.file_grep_count(test.run_log_filename, r'^\*\* UVM SEQUENCE DRIVER FLOW PASSED \*\*$', 1)
 test.passes()
