@@ -39,9 +39,9 @@ combined into one percentage:
 | Program exit criteria | `C01` through `C21` (21) | A criterion counts only when its status is `pass` and every referenced public capability milestone has exited. |
 | Public capability milestones | `M00` through `M19` (20) | A milestone exits only when every required gate has accepted evidence. |
 | Atomic milestone gates | 46 required gates | Engineering progress counts each required gate with accepted evidence; this diagnostic does not substitute for milestone exits. |
-| Historical pull request #41 evidence slice | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs were accepted at the recorded revisions: 11/11. This does not validate the current 20-test contract. |
+| Historical pull request #41 evidence slice | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs were accepted at the recorded revisions: 11/11. This does not validate the current 27-test contract. |
 | Current focused named-disable lane | 15 tests in two scenarios | `check_tracker.py` derives the ordered 15-test contract from `NAMED_DISABLE_EXISTING_TESTS` followed by `NAMED_DISABLE_COMPILER_TESTS`. Every test runs under both `vlt` and `vltmt`, for 30 scenario executions and 30 cleanup sentinels. Local and exact-head push/PR CI passed. |
-| Current Makefile lane contract | 20 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Local and exact-head push/PR CI passed. |
+| Current Makefile lane contract | 27 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Executable local and exact-head CI validation is pending; historical 20-test results do not validate this membership. |
 | Test corpora | Per-corpus planned-test count | Report implementation, execution, pass, and verified rates separately as described below. |
 
 Full-program `C01`-`C21` completion cannot be inferred from a lane evidence
@@ -86,9 +86,9 @@ public milestone exits: 2/20 (10.0%)
 atomic milestone gates: 24/46 (52.2%)
 historical original PR #41 evidence slice: 11/11 accepted at recorded revisions
 current focused lane contract: 15 tests x 2 scenarios; local and CI pass
-current Makefile lane contract: 20 ordered tests; local and CI pass
-mixed corpus: planned=108 implemented=108 executed=100 passed=100 failed=0 blocked=8
-mixed corpus rates: execution=92.6% pass/executed=100.0% verified=92.6%
+current Makefile lane contract: 27 ordered tests; local and CI pending
+mixed corpus: planned=115 implemented=115 executed=100 passed=100 failed=0 blocked=8 pending=7
+mixed corpus rates: execution=87.0% pass/executed=100.0% verified=87.0%
 issue #5 mapped gates: 4/6 (66.7%)
 issue #7 mapped gates: 3/4 (75.0%)
 issue #21 mapped gates: 5/6 (83.3%)
@@ -190,8 +190,8 @@ Run the UVM integration lane from the repository root:
 make -C test_regress uvm2020
 ```
 
-The current target runs 14 reduced scheduler/process/interface tests followed
-by six UVM package/API tests:
+The current target runs 16 reduced scheduler/process/interface/class tests
+followed by 11 UVM package/API tests:
 
 ```sh
 cd test_regress
@@ -212,21 +212,27 @@ python3 driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
   t/t_timing_finish.py \
   t/t_finish_stops_nonfinal.py \
   t/t_clocking_virtual.py \
+  t/t_class_param_static_identity.py \
+  t/t_class_member_sel_used.py \
   t/t_uvm_core_factory_basic.py \
+  t/t_uvm_core_factory_param.py \
   t/t_uvm_config_vif_clocking.py \
+  t/t_uvm_config_resource_component.py \
+  t/t_uvm_resource_numeric_precedence.py \
   t/t_uvm_core_phasing.py \
+  t/t_uvm_tlm_analysis_fifo.py \
+  t/t_uvm_sequence_driver_flow.py \
   t/t_uvm_hello_all_v2020_3_1_nodpi.py \
   t/t_uvm_hello_all_v2020_3_1_dpi.py \
   t/t_uvm_dpi_v2020_3_1.py
 ```
-
 The child regression process plants `interrupted.gch` in each dedicated
 object directory immediately before that test is cleaned. It then atomically
 renames the complete directory to a process- and time-unique quarantine,
 creates the active directory, asserts that the active directory is empty, and
-removes the quarantine. The current target therefore creates and removes 20
+removes the quarantine. The current target therefore creates and removes 27
 sentinels without an external pre-seeding race. After the harness returns, a
-fail-fast shell loop independently asserts that all 20 sentinel paths are
+fail-fast shell loop independently asserts that all 27 sentinel paths are
 absent and prints `uvm2020: stale-artifact cleanup PASSED`. Thus every lane
 execution, including the first execution in a clean checkout, exercises the
 recovery policy rather than relying on pre-existing workspace state.
@@ -257,7 +263,11 @@ The `uvm2020` suite in `ci/ci-script.bash` runs the same Make target. The suite
 is an Ubuntu GCC entry in the normal `build-test` workflow, which connects the
 proof to the repository's built-checkout regression path.
 
-### Recorded local result
+### Historical twenty-test local and CI result
+
+The following evidence covers the previous ordered twenty-test contract only.
+It does not validate the current twenty-seven-test Makefile membership. No
+accepted local or CI result yet covers all 27 tests.
 
 Validation worktree head `c1dab4a4f5961fe5e6c61ed57d539d576cecca0d`
 passed the exact `make -C test_regress uvm2020` command with
@@ -275,8 +285,9 @@ seconds. The clean-before symlink-safety preflight passed, the run seeded and
 removed 20/20 `interrupted.gch` sentinels, and the postcheck printed
 `uvm2020: stale-artifact cleanup PASSED`.
 
-The current UVM local gate and its exact-head CI proof are satisfied. Push job
-93239580961 passed 20/0 in 13:12, and pull-request job 93239545848 passed 20/0
+The historical twenty-test UVM local gate and its exact-head CI proof were
+satisfied at their recorded revisions. Push job 93239580961 passed 20/0 in
+13:12, and pull-request job 93239545848 passed 20/0
 in 13:03. Each job passed symlink preflight, one 1,000-phase teardown stress
 run (`phases=1000`, `winners=1000`, `cleanups=1000`), and cleanup. The
 historical 15-test target passed locally in 14:27, and a historical canonical
