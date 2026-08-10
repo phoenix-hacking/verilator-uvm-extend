@@ -20,7 +20,7 @@ module t_uvm_resource_numeric_precedence;
     uvm_resource#(int) high_resource;
     uvm_resource#(int) low_resource;
     uvm_resource#(int) portable_resource;
-    uvm_resource_types::rsrc_q_t matches;
+    uvm_resource_types::rsrc_q_t numeric_matches;
     uvm_report_server report_server;
     int direct_value;
     bit direct_fixed;
@@ -38,12 +38,12 @@ module t_uvm_resource_numeric_precedence;
     pool.set(high_resource);
     high_resource.precedence = 200;
 
-    matches = pool.lookup_name(
+    numeric_matches = pool.lookup_name(
         "uvm_test_top.env", "numeric_precedence",
         uvm_resource#(int)::get_type(), 0);
-    `checkd(matches.size(), 2)
+    `checkd(numeric_matches.size(), 2)
 
-    portable_resource = uvm_resource#(int)::get_highest_precedence(matches);
+    portable_resource = uvm_resource#(int)::get_highest_precedence(numeric_matches);
     if (portable_resource == null)
       $fatal(1, "portable highest-precedence lookup returned null");
     `checkd(portable_resource.read(), 200)
