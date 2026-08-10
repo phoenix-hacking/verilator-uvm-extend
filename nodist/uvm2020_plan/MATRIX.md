@@ -6,7 +6,8 @@
 
 The first table records the original three-test pull request #41 proof
 boundary. The current focused 15-test two-scenario target has passing local
-evidence, and the ordered 20-test UVM target also has passing local evidence.
+evidence. The current UVM target contains 27 ordered tests and awaits accepted
+local and exact-head CI execution; prior 20-test results remain historical.
 Push and pull-request CI for source head
 `ea172f63c5ddab12a5ca032e119b2f1a95b4e71e` and synthetic merge
 `19ca7867bdff8fc60c35e11132d37b88ab2df1c5` passed in push `build-test` run
@@ -30,7 +31,7 @@ The five evidence IDs other than `HARNESS-DEFAULT-0001` each require local and
 CI proof. `HARNESS-DEFAULT-0001` requires local proof only. At the recorded
 revisions, all six local and all five CI proofs were accepted, for 11/11
 historical proof environments. This measures the original evidence slice, not
-current 20-test validation, focused PR technical closure, UVM feature
+current 27-test validation, focused PR technical closure, UVM feature
 completion, or a test pass rate.
 
 ## Current PR validation gates
@@ -41,7 +42,8 @@ slice. Both require exact-head local and CI proof:
 | Gate | Contract | Exact-head local | Exact-head CI | Claim boundary |
 |---|---:|---|---|---|
 | Focused named-disable/process lane | 15 ordered tests under both `vlt` and `vltmt` (30 scenario executions and cleanup sentinels) | Pass: 30/30, zero failed, 30/30 sentinels removed, cleanup passed | Pass: push job 93239581011, 30/0 in 1:36; PR job 93239545832, 30/0 in 1:37; both cleanup postchecks passed | Compiler/runtime technical scope only. |
-| UVM integration lane | 20 ordered tests under `vlt` (20 cleanup sentinels) | Pass: 20/20, zero failed, 20/20 sentinels removed, symlink preflight and cleanup passed | Pass: push job 93239580961, 20/0 in 13:12; PR job 93239545848, 20/0 in 13:03; each passed symlink preflight, one 1,000-phase teardown stress run (`phases=1000`, `winners=1000`, `cleanups=1000`), and cleanup | Selected UVM integration evidence only. |
+| UVM integration lane | 27 ordered tests under `vlt` (27 cleanup sentinels) | Pending: no accepted 27-test local run | Pending: no accepted exact-head 27-test CI run | Source membership and oracles are present; no feature or direct numeric-path conformance credit is inferred. |
+| Historical twenty-test UVM lane | 20 ordered tests under `vlt` | Pass at recorded revision: 20/20 and 20/20 sentinels removed | Pass at recorded revisions: push 20/0 and PR 20/0 | Does not validate current 27-test membership. |
 
 The focused local proof used validation head
 `c1dab4a4f5961fe5e6c61ed57d539d576cecca0d` and the exact clean compiler at
@@ -52,7 +54,7 @@ SHA-256
 Driver time was 22:03; `time -p` reported 1324.11 real, 1051.40 user, and
 241.91 system seconds. The worktree remained clean.
 
-The UVM local proof used the same validation head and compiler
+The historical twenty-test UVM local proof used the same validation head and compiler
 `/tmp/pr41-coroutine-return.JfE1Cy/verilator_bin_fixed`, version
 `Verilator 5.051 devel rev vUNKNOWN-built20260809-fa6fd2c68 (mod)`, with binary
 SHA-256
@@ -86,8 +88,8 @@ not be satisfied or represented by an agent-authored signature.
 | Library implementation order | None | Unpadded `M0`-`M17` is dependency-order metadata and must never be converted to a completion percentage. |
 | Historical PR #41 evidence slice | 11 required proof environments | Six local and five CI proofs were accepted at their recorded revisions; this is not current-head proof. |
 | Current focused lane contract | 15 tests, two scenarios | Exact ordered membership is derived from the Makefile; local and exact-head push/PR CI passed all 30 `vlt`/`vltmt` scenario executions and cleanup. |
-| Current Makefile lane contract | 20 ordered tests | `check_tracker.py` derives the exact reduced-then-package order from `test_regress/Makefile`; local and exact-head push/PR CI passed 20/20 with cleanup. |
-| Tracker mixed corpus | 108 planned tests | 108 implemented; 100 executed/pass and 8 blocked; execution and verified 92.6%; pass/executed 100.0%. |
+| Current Makefile lane contract | 27 ordered tests | `check_tracker.py` derives the exact reduced-then-package order from `test_regress/Makefile`; accepted local and exact-head CI execution is pending. |
+| Tracker mixed corpus | 115 planned tests | 115 implemented; 100 executed/pass, 8 blocked, and 7 pending; execution and verified 87.0%; pass/executed 100.0%. |
 | Frozen compatibility selection | 72 manifest entries | All 72 received reproducible dispositions: 64 pass, one debug-build environment block, and seven no-solver skips. This is not a 72/72 semantic-pass claim. |
 
 Mapped issue progress is also checker-derived: issue #5 is 4/6 gates (66.7%),
@@ -146,9 +148,9 @@ Those layer rates remain compatibility evidence and do not claim conformance.
 | Historical thirteen-test lane | Run the thirteen-test target under `make -j8` with child-local stale seeds and atomic quarantine | Passed 13, failed 0, 8:23; 13/13 sentinels removed; fanout remained 1/1 |
 | Historical fifteen-test lane | Run the then-current fixed target from an isolated execution root with child-local stale seeds and atomic quarantine | Passed 15, failed 0, 14:27; 15/15 sentinels removed; fanout remained 1/1; stale-artifact postcheck passed |
 | Current focused named-disable local contract | Exact clean-c1 compiler; 15 ordered tests in both `vlt` and `vltmt` with child-local stale seeds | Passed 30/30 scenarios, failed 0; driver 22:03, real 1324.11 s; seeded and removed 30/30 sentinels; cleanup passed; worktree clean |
-| Current twenty-test local contract | `make -C test_regress uvm2020`; ordered `UVM2020_REDUCED_TESTS` then `UVM2020_PACKAGE_TESTS` | Passed 20/20 under `vlt`, failed 0; driver 80:15, real 4819.25 s; symlink preflight passed; seeded and removed 20/20 sentinels; cleanup passed |
+| Historical twenty-test local contract | `make -C test_regress uvm2020`; ordered `UVM2020_REDUCED_TESTS` then `UVM2020_PACKAGE_TESTS` | Passed 20/20 under `vlt`, failed 0; driver 80:15, real 4819.25 s; symlink preflight passed; seeded and removed 20/20 sentinels; cleanup passed |
 | Exact-head focused CI | Push and pull-request Ubuntu 26 GCC `named-disable` jobs | Push 30/0 in 1:36; PR 30/0 in 1:37; both cleanup postchecks passed |
-| Exact-head UVM CI | Push and pull-request Ubuntu 26 GCC `uvm2020` jobs | Push 20/0 in 13:12; PR 20/0 in 13:03; each passed symlink preflight, one 1,000-phase teardown stress run (`phases=1000`, `winners=1000`, `cleanups=1000`), and cleanup |
+| Historical twenty-test exact-head UVM CI | Push and pull-request Ubuntu 26 GCC `uvm2020` jobs | Push 20/0 in 13:12; PR 20/0 in 13:03; each passed symlink preflight, one 1,000-phase teardown stress run (`phases=1000`, `winners=1000`, `cleanups=1000`), and cleanup |
 | Exact-head workflow aggregate | Format plus push and pull-request `build-test` | Format success; both build-test runs passed 46/46; all 25 former-red shards recovered and all five `dist-vlt-0` jobs passed |
 | Historical exact-head optimized source build | Fully build revision `703bb474d` in an isolated source tree with the temporary Flex/Bison toolchain | Pass for that revision; recorded focused/lane results used that compiler; debug build not run |
 | Cleanup symlink safety | Reject a symlinked object ancestor and seed; preserve both external targets; detect a dangling sentinel symlink | Pass |
@@ -169,7 +171,8 @@ The exact reduced-test and neighbor commands are recorded in `PLAN.md`.
 | Quick compatibility selection | 8 | Observed within full run | All eight quick entries passed; no separate standalone-run claim |
 | Reduced compatibility selection | 69 | Observed within full run | 61 pass, one debug-build environment block, and seven no-solver skips |
 | Full compatibility selection | 72 | Disposition complete | 64 pass; `t_class_dead_varscope_uaf` blocked because the image lacks `bin/verilator_bin_dbg` and system `FlexLexer.h`; seven randomize/constraint tests skipped because no constraint solver is available; 9:44 |
-| Current Makefile UVM lane | 20 | Local and exact-head CI pass | Local, push CI, and PR CI each passed 20/20; both CI jobs passed symlink preflight, phase stress, and cleanup |
+| Current Makefile UVM lane | 27 | Execution pending | Source membership and exact oracles are present; accepted local and exact-head CI results are pending |
+| Historical twenty-test UVM lane | 20 | Pass at recorded revisions | Local, push CI, and PR CI each passed 20/20; those results do not validate the current lane |
 | Current Makefile focused lane | 15 x 2 scenarios | Local and exact-head CI pass | Local, push CI, and PR CI each passed 30/30 scenarios; cleanup passed in all three environments |
 | Historical expanded local UVM lane | 15 | Pass | 15/0 in 14:27; atomic quarantine removed 15 child-local `interrupted.gch` sentinels; test/build fanout stayed 1/1; stale-artifact postcheck passed |
 | Historical expanded CI UVM lane | 15 | Pass | 15/0 in 6:00; cleanup postcheck passed in job 87592850312 for source head `7170338f` |
@@ -195,8 +198,8 @@ by itself establish full-program completion.
 ## Current classification
 
 - Package and no-DPI smoke: accepted historical local and dedicated draft-PR
-  CI evidence exists; the current 20-test target passed locally and in exact-head
-  push and pull-request CI.
+  CI evidence exists; the historical 20-test target passed locally and in
+  exact-head push and pull-request CI. Current 27-test validation is pending.
 - Full UVM package/API support: not claimed.
 - No-DPI parity with DPI: not claimed; the boundary in `PLAN.md` remains a
   known support-envelope constraint.
@@ -207,10 +210,10 @@ by itself establish full-program completion.
   performance, and APB gates remain open, so no milestone exit is inferred.
 - Current focused lane: the Makefile and tracker agree on 15 ordered tests in
   two scenarios; local, push CI, and pull-request CI passed 30/30 with cleanup.
-- Current expanded lane: the Makefile and tracker agree on 20 ordered tests;
-  local, push CI, and pull-request CI passed 20/20 under `vlt` with cleanup. The 13/0
-  and 15/0 local results and the 15/0 canonical job remain explicitly
-  historical.
+- Current expanded lane: the Makefile and tracker agree on 27 ordered tests;
+  accepted local, push CI, and pull-request CI execution is pending. The 20/20,
+  15/15, and 13/13 results remain explicitly historical and do not validate
+  current membership.
 - Frozen 72-test corpus: every entry has a reproducible disposition (64 pass,
   one environment block, seven dependency skips); this is not 72/72 semantic
   compatibility.
