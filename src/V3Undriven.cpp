@@ -484,10 +484,12 @@ class UndrivenVisitor final : public VNVisitorConst {
     }
     void visit(AstMemberSel* nodep) override {
         AstVar* const varp = nodep->varp();
-        for (int usr = 1; usr < (m_alwaysCombp ? 3 : 2); ++usr) {
-            UndrivenVarEntry* const entryp = getEntryp(varp, usr);
-            if (m_inBBox || nodep->access().isWriteOrRW()) entryp->drivenWhole(nodep);
-            if (m_inBBox || nodep->access().isReadOrRW()) entryp->usedWhole(nodep);
+        if (varp->isClassMember()) {
+            for (int usr = 1; usr < (m_alwaysCombp ? 3 : 2); ++usr) {
+                UndrivenVarEntry* const entryp = getEntryp(varp, usr);
+                if (m_inBBox || nodep->access().isWriteOrRW()) entryp->drivenWhole(nodep);
+                if (m_inBBox || nodep->access().isReadOrRW()) entryp->usedWhole(nodep);
+            }
         }
         iterateChildrenConst(nodep);
     }
