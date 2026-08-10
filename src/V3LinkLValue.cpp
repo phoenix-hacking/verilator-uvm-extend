@@ -136,7 +136,7 @@ class LinkLValueVisitor final : public VNVisitor {
                 const bool rhsHasAutomatic
                     = nodep->rhsp()->exists([](const AstNodeVarRef* const refp) {
                           return refp->varp() && !refp->varp()->isParam()
-                               && refp->varp()->lifetime().isAutomatic();
+                                 && refp->varp()->lifetime().isAutomatic();
                       });
                 if (rhsHasAutomatic) {
                     nodep->rhsp()->v3error("Static variable initializer\n"

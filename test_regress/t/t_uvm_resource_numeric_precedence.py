@@ -26,6 +26,6 @@ test.compile(v_flags2=[
 ])
 
 test.execute(all_run_flags=['' if test.verbose else '+UVM_NO_RELNOTES'])
-test.file_grep_count(
-    test.run_log_filename, r'^\*\* UVM RESOURCE NUMERIC PRECEDENCE PASSED \*\*$', 1)
+test.file_grep_count(test.run_log_filename, r'^\*\* UVM RESOURCE NUMERIC PRECEDENCE PASSED \*\*$',
+                     1)
 test.passes()
