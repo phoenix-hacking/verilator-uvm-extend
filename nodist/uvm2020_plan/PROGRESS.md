@@ -6,7 +6,9 @@
 
 Snapshot date: **2026-08-09** (PR #41 retains its recorded local and exact-head
 CI closure; stacked PR #42 contains a source-integrated 27-test successor lane
-whose accepted local and exact-head CI validation is pending)
+whose tested integration-head pull-request CI passed at workflow level while
+accepted local validation remains pending because of `ENOSPC`; later
+evidence-only `[ci skip]` commits are not tested revisions)
 
 Repository: `phoenix-hacking/verilator-uvm-extend`
 
@@ -90,7 +92,7 @@ Anything less remains incomplete, even if a narrower test lane is green.
 | Remaining engineering | `[#######---]` **about 70%** | Estimated 65-75% | Most integrated UVM verticals remain. |
 | Historical PR #41 evidence slice | `11/11 accepted` | Original three-test proof environments accepted at their recorded revisions | Historical evidence only; it is not current-head technical closure or full-program completion. |
 | Focused PR #41 technical scope | **Technical closure passed; no broader completion percentage assigned** | Local and exact-head push/PR focused and UVM targets passed; format and both 46-job matrices passed | Human review and DCO remain separate, and the PR remains draft. |
-| Current expanded UVM lane | **Source-integrated; execution pending** | 27 ordered tests; no accepted 27/27 local or exact-head CI result | Historical 20/20 results remain separately scoped and do not validate this membership. |
+| Current expanded UVM lane | **Workflow-level pull-request CI pass; local pending** | Run 31346076613 passed source `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73` and includes the configured current `uvm2020` job; no job-level metadata is claimed | Overall validation remains pending because accepted local evidence is blocked by `ENOSPC`; historical 20/20 results remain separately scoped. |
 | Mixed compatibility corpus | `[#########-]` **87.0% verified** | 100/115 passed; 8 blocked; 7 pending | Compatibility inventory only, not IEEE/UVM conformance. |
 | Frozen 72-test selection | `[##########]` **100% dispositioned** | 64 pass, 1 environment block, 7 dependency skips | Every entry is classified, but only 64 are semantic passes. |
 | Competitive C0 tracking envelope | `[##########]` **100%** | Planning/tracking exists | Tracking is complete enough to expose the remaining work. |
@@ -121,11 +123,11 @@ and correcting compiler/runtime semantics under realistic UVM pressure.
 | Order | Work | Bar | Current evidence | Open work | Remaining estimate |
 |---:|---|---:|---|---|---:|
 | 1 | Focused named-disable/process closure | Pass; unscored | Local, push CI, and PR CI passed 30/30 with cleanup; the implementation has an explicit support envelope. | None inside this focused technical gate; preserve evidence. | 0 |
-| 2 | Current 27-test UVM lane | Source-integrated; execution pending | Exact ordered membership and pass oracles are present. Historical 20/20 results remain scoped to their revisions. | Obtain accepted local and exact-head CI execution for all 27 tests. | 1-2 days after executable access |
+| 2 | Current 27-test UVM lane | Workflow-level pull-request CI pass; local pending | Run 31346076613 passed source `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73`; the successful aggregate includes the configured current `uvm2020` job. | Obtain accepted local execution after the `ENOSPC` blocker is removed; do not treat later evidence-only commits as tested. | 1-2 days after executable access |
 | 3 | PR #41 current-head technical CI | Pass | Format succeeded; push and PR `build-test` each passed 46/46, including all 25 former-red shards and all five `dist-vlt-0` jobs. | Keep the tracker-only recording child scoped as untested documentation. | 0 |
 | 4 | Contributor Agreement/DCO | `[----------]` external | Runs 31311244130 and 31311246183 request a human-signed `docs/CONTRIBUTORS` entry. | Human contributor must satisfy repository policy; agents must not edit `docs/CONTRIBUTORS`. | Usually <1 day of human time |
 | 5 | Align all planning artifacts | `[########--]` about 80% | Canonical PR files validate; broad pre-PR files and `PROGRESS.md` are published. | Align stale issue bodies, split over-broad gates, and remove namespace ambiguity. | 2-5 days |
-| 6 | M07 config/resource/component closure | `[######----]` source-integrated; 0% formal | Strict config/resource/component and numeric-precedence source tests are present with exact oracles. | Obtain executable 27-test lane proof; bounded direct-path XFAIL is not conformance. | 2-5 days after executable access |
+| 6 | M07 config/resource/component closure | `[######----]` source-integrated; 0% formal | Strict config/resource/component and numeric-precedence source tests are present, and workflow-level pull-request CI passed the configured current lane. | Obtain accepted local proof and close the direct-path deviation; a bounded direct-path XFAIL is not conformance. | 2-5 days after executable access |
 
 ## All 21 program criteria
 
@@ -312,7 +314,7 @@ formal full-program completion remains 0/21.
 | Format | Pass | Run 31311244123 succeeded for `ea172f63`. | None technical. |
 | Builds | Pass | Push run 31311244235 and PR run 31311246321 each passed 46/46 for `ea172f63` / `19ca7867`. | None technical. |
 | Focused named-disable lane | Local and exact-head CI pass | Local 30/30; push job 93239581011 passed 30/0 in 1:36; PR job 93239545832 passed 30/0 in 1:37; cleanup passed. | None inside the focused gate. |
-| Dedicated UVM 2020 lane | Current 27-test execution pending | Source membership is 27 ordered tests; historical local/push/PR 20/20 evidence remains recorded but does not validate current membership. | Obtain accepted local and exact-head CI execution. |
+| Dedicated UVM 2020 lane | Workflow-level pull-request CI pass; local pending | Run 31346076613 concluded successfully for source `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73`; the aggregate includes the configured current `uvm2020` job, but connector pagination prevents job-level claims. | Obtain accepted local execution after the `ENOSPC` blocker is removed. |
 | Broad distribution checks | Pass | All five exact-head `dist-vlt-0` jobs passed in both 46-job matrices. | Preserve current evidence. |
 | Broad recovered shards | Pass | All 25 jobs that were red on earlier heads recovered on both exact-head events. | Preserve current evidence. |
 | Ubuntu 22 broad UVM tests | Pass | Exact-head matrices include the corrected teardown path; on each event, the dedicated UVM job passed one 1,000-phase teardown stress run (`phases=1000`, `winners=1000`, `cleanups=1000`). | Broader UVM program work remains separate. |
@@ -343,8 +345,12 @@ runs completed with three observed technical cause classes--missing SPDX
 headers, a stale generated golden, and Ubuntu 22 teardown corruption--plus two
 Contributor Agreement jobs. The exact-head matrices recovered all 25 formerly
 red shards and all five `dist-vlt-0` jobs; the current focused lane and
-historical 20-test lane passed on both events. Current 27-test execution remains
-pending. The remaining contributor action is independent.
+historical 20-test lane passed on both events. Current 27-test workflow-level
+pull-request CI passed at source
+`b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge
+`cda98bba177663b2df45745d2e946ddf0e274d73`; local execution remains pending
+because of `ENOSPC`. Connector pagination prevents a job-level result claim.
+The remaining contributor action is independent.
 
 ### Focused named-disable support envelope
 
@@ -385,7 +391,7 @@ redefines the broader 0/21 program denominator.
 | L1 minimal UVM | `[##########]` 6/6, 100% | Six accepted local tests | Package smoke, factory, phasing, VIF/config slices | Full UVM 1800.2 API or integrated environments |
 | Mixed corpus | `[#########-]` 100/115, 87.0% | 100 pass, 8 blocked, 7 pending | Reproducible selected compatibility evidence | Full-program completion |
 | Current focused named-disable lane | Local and exact-head CI pass, 15 tests x 2 scenarios | Local, push CI, and PR CI passed 30/30; cleanup passed | Ordered focused membership, positive scalar/class cases, explicit interface-class diagnostic, and cleanup contract | Complete IEEE/UVM support outside the focused envelope |
-| Current expanded lane | Source-integrated, 27-test contract; execution pending | No accepted 27/27 local or exact-head CI result | Ordered Makefile/tracker membership and exact pass oracles | Complete UVM 2020 or broader-program closure |
+| Current expanded lane | Workflow-level pull-request CI pass; local pending | Run 31346076613 passed source `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73`; no job metadata is claimed | Ordered Makefile/tracker membership plus workflow-level execution of the configured lane | Accepted local execution, direct numeric-path conformance, or broader-program closure |
 | Historical expanded lanes | 20/20 and 15/15 accepted at recorded revisions | Historical local and canonical CI passes | Older lane contracts and cleanup/fanout invariants at those revisions | Current 27-test or exact-head closure |
 | Phase-teardown stress | `[##########]` Local, exact Jammy A/B, and exact-head CI pass | 1,000 phase graphs pass natively and under GCC 11 normal/ASan; each UVM CI job passed one 1,000-phase run with `winners=1000` and `cleanups=1000` | The isolated process/coroutine lifetime defect and its teardown path | Broader UVM program completion |
 
