@@ -2936,7 +2936,9 @@ def run_them() -> None:
     test_data = {}
     for test_py in Arg_Tests:
         test_data[test_py] = VlTest._prefilter_scenario(test_py)
-    for test_py in sorted(Arg_Tests, key=lambda key: test_data[key]['priority'], reverse=True):
+    ordered_tests = Arg_Tests if Args.driver_preserve_order else sorted(
+        Arg_Tests, key=lambda key: test_data[key]['priority'], reverse=True)
+    for test_py in ordered_tests:
         for scenario in sorted(set(Args.scenarios)):
             run_it = False
             for allscarg in All_Scenarios[scenario]:
@@ -3042,6 +3044,9 @@ if __name__ == '__main__':
                         action='store',
                         default=None,
                         help='create this basename in each object directory before cleaning')
+    parser.add_argument('--driver-preserve-order',
+                        action='store_true',
+                        help='schedule tests in command-line order instead of priority order')
     parser.add_argument('--fail-max',
                         action='store',
                         default=None,

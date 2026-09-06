@@ -94,7 +94,7 @@ NAMED_DISABLE_SENTINELS := $(addsuffix /interrupted.gch,$(NAMED_DISABLE_OBJ_DIRS
 .PHONY: named-disable
 named-disable:
 	@echo "named-disable: running $(words $(NAMED_DISABLE_RUN_TESTS))/$(words $(NAMED_DISABLE_TESTS)) available focused tests"
-	$(PYTHON3) driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+	$(PYTHON3) driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
 		--driver-clean-before-seed=interrupted.gch \
 		--obj-suffix=-named-disable --vlt --vltmt $(NAMED_DISABLE_RUN_TESTS)
 	@for sentinel in $(NAMED_DISABLE_SENTINELS); do \
@@ -140,7 +140,7 @@ UVM2020_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_OBJ_DIRS))
 .PHONY: uvm2020
 uvm2020:
 	$(PYTHON3) ../nodist/uvm2020_plan/check_cleanup_safety.py
-	$(PYTHON3) driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+	$(PYTHON3) driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
 		--driver-clean-before-seed=interrupted.gch \
 		--obj-suffix=-uvm2020 --vlt $(UVM2020_TESTS)
 	@for sentinel in $(UVM2020_SENTINELS); do \

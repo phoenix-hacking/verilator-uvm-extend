@@ -2369,6 +2369,13 @@ driver.py Non-Scenario Arguments
    Before each selected test starts, remove its complete generated-object
    directory. This prevents reuse of objects left by an interrupted run.
 
+.. option:: --driver-preserve-order
+
+   Schedule tests in their command-line order instead of sorting them by test
+   priority. Use with ``--jobs=1`` when a lane must finish its reduced semantic
+   tests before starting larger integration tests. Scenario filtering still
+   applies. Without this option, higher-priority tests are scheduled first.
+
 .. option:: --dump-tree
 
    Same as ``verilator --dump-tree``: Enable Verilator writing .tree debug

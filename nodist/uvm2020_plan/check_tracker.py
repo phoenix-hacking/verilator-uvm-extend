@@ -629,6 +629,19 @@ class TrackerChecker:
             }
 
         make_tests: list[str] = []
+        recipe_match = re.search(
+            r"^uvm2020:\n((?:\t[^\n]*\n)+)", "\n".join(makefile_lines) + "\n", re.M
+        )
+        recipe = recipe_match.group(1).replace("\\\n", " ") if recipe_match else ""
+        driver_command = next(
+            (line for line in recipe.splitlines() if "driver.py " in line), ""
+        )
+        for option in ("--jobs=1", "--driver-preserve-order"):
+            if option not in driver_command.split():
+                self.error(
+                    "$makefile.uvm2020",
+                    f"ordered execution requires {option} on the driver command",
+                )
         for variable in UVM2020_LANE_VARIABLES:
             make_tests.extend(self.make_assignment(makefile_lines, variable))
         composition = self.make_assignment(makefile_lines, "UVM2020_TESTS")

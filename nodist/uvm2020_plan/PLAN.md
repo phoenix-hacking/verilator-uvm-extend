@@ -4,12 +4,29 @@
 
 # UVM 2020.3.1 regression plan
 
+## Current checkpoint: 2026-09-06
+
+The integration branch now corrects the lane's scheduling order with
+`--driver-preserve-order`. The Makefile still contains 27 tests: 16 reduced
+semantic tests followed by 11 package/API tests. Both serial named targets
+request explicit ordering; the default regression priority policy is unchanged.
+The new driver regression failed on the parent and passes with the correction.
+The optimized compiler rebuilt locally and a generated-code smoke test passed.
+The full corrected local lane and exact-head CI are pending at this checkpoint.
+
+Recovered CI job 93328492250 passed all 27 members in 27:01, including cleanup,
+but ran the package tests first. The older tables and dated evidence below
+retain their historical membership results; they do not validate the corrected
+ordering. The old `ENOSPC` limitation does not describe this workspace.
+`tracker.yaml` and the latest `CONTINUATION.md` section own current status.
+Broader progress remains 0/21 criteria, 2/20 milestone exits, and 24/46 gates.
+
 This plan tracks one resource-capped regression lane for the vendored,
 concatenated UVM 2020.3.1 package. It advances issue #21 package-elaboration
 smoke and issue #39 `UVM_NO_DPI` command-flow evidence. Two independent current
 Makefile contracts gate this PR: 15 focused named-disable tests run in both
-`vlt` and `vltmt`, and 20 ordered UVM integration tests run in `vlt`. Their
-validation remains independent: the focused and UVM targets passed locally and
+`vlt` and `vltmt`, and 27 ordered UVM integration tests run in `vlt`. Historical
+validation remains independent: the focused and previous 20-test UVM targets passed locally and
 in exact-head push and pull-request CI. The accepted exact-head scope is source
 revision
 `ea172f63c5ddab12a5ca032e119b2f1a95b4e71e` (tree
@@ -195,7 +212,7 @@ followed by 11 UVM package/API tests:
 
 ```sh
 cd test_regress
-python3 driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+python3 driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
   --driver-clean-before-seed=interrupted.gch \
   --obj-suffix=-uvm2020 --vlt \
   t/t_uvm_lrm_sched_wait_zero.py \
@@ -395,7 +412,7 @@ make -j2
 make -C test_regress uvm2020
 ```
 
-The named target performs its 20-directory child-local sentinel setup and
+The named target performs its 27-directory child-local sentinel setup and
 assertions automatically. It must report the expected test pass markers and
 the cleanup pass marker, then exit zero. Repeating the same command
 additionally proves that artifacts left by a prior completed or interrupted

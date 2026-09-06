@@ -13,6 +13,56 @@ Do not commit extracted standards text, rendered standards pages, generated
 test objects, or temporary compiler trees. In particular, the repository-local
 `tmp/` directory is scratch material and is not part of any checkpoint.
 
+## 2026-09-06 ordered-lane correction
+
+Resume on `codex/uvm-program-integration-wip`, stacked draft PR #42. The
+starting head was `4906f041ddd73e53099393a9d7155414d1458f0a`.
+
+The job-list endpoint with `per_page=100` recovered all 46 jobs from run
+31346076613. UVM job
+[93328492250](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31346076613/job/93328492250)
+passed all 27 members in 27:01, including the symlink-safety preflight and
+cleanup postcheck. Its source head was `b09ff3e78f97e928907b8f2929bf8bacab6b16bd`
+and synthetic merge was `cda98bba177663b2df45745d2e946ddf0e274d73`.
+The log also revealed that priority-50 UVM package tests ran before the
+priority-1 reduced tests. Earlier claims of reduced-then-package execution
+were therefore incorrect even though membership and pass counts were correct.
+
+The new `--driver-preserve-order` option bypasses priority sorting when
+explicitly requested. Both serial named targets use it; ordinary regression
+runs keep their default priority policy. `t_driver_order.py` exercises the
+real prefilter and scheduler, with submissions intercepted to avoid compiling
+HDL. It failed on the parent ordering, then passed after the correction,
+including scenario filtering and deduplication. The tracker now rejects an
+ordered UVM recipe that omits either `--jobs=1` or the new option.
+
+The old `ENOSPC` workspace is gone. This session rebuilt the optimized
+compiler locally with GCC 13.3 and warnings as errors. Build bootstrap used
+the generated configure/parser/lexer files from verified Ubuntu 22.04 CI
+artifact 9047394914 (archive SHA-256
+`a84948639f3c54e746d7e3a1fd70ec9ae4446bf67075cb51ff2846a8a0ab46a4`).
+The artifact's `src`, `include`, `bin`, and `test_regress` source trees match
+the starting head. The missing FlexLexer header came from `westes/flex`
+tag `v2.6.4`; no vendored UVM source was edited. Exact build details and lane
+results will be recorded after execution. A local-only Python shim selects
+the ordinary `fork` context because this workspace disallows the Unix socket
+required by `forkserver`; it does not change simulator behavior.
+
+The rebuilt compiler passed `t_class_member_sel_used`. The corrected full
+27-test lane and exact-head CI remain pending at this checkpoint. Historical
+membership evidence is retained separately in `tracker.yaml`; it is not
+proof of the corrected ordering. No broader milestone or criterion is promoted.
+
+The resource-precedence exception remains explicit: IEEE 1800.2-2020
+C.2.4.4.2 and C.2.4.4.4, printed pages 396-397, require the highest numeric
+precedence. The bundled Accellera `sort_by_precedence_q` appends ascending
+associative-array buckets, and its direct name lookup returns the first match.
+The existing bounded XFAIL is not direct-path conformance. Preserve unmodified
+UVM and resolve that implementation boundary separately from driver ordering.
+
+Keep both PRs draft. Human review and Contributor Agreement/DCO remain human
+actions; do not add an agent signature or edit `docs/CONTRIBUTORS`.
+
 ## 2026-08-09 sequential named-activation technical closure
 
 This section supersedes the open-design instructions in the older dated

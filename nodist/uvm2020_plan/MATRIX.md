@@ -4,6 +4,23 @@
 
 # UVM 2020.3.1 evidence matrix
 
+## Current checkpoint: 2026-09-06
+
+The integration branch now corrects the lane's scheduling order with
+`--driver-preserve-order`. The Makefile still contains 27 tests: 16 reduced
+semantic tests followed by 11 package/API tests. Both serial named targets
+request explicit ordering; the default regression priority policy is unchanged.
+The new driver regression failed on the parent and passes with the correction.
+The optimized compiler rebuilt locally and a generated-code smoke test passed.
+The full corrected local lane and exact-head CI are pending at this checkpoint.
+
+Recovered CI job 93328492250 passed all 27 members in 27:01, including cleanup,
+but ran the package tests first. The older tables and dated evidence below
+retain their historical membership results; they do not validate the corrected
+ordering. The old `ENOSPC` limitation does not describe this workspace.
+`tracker.yaml` and the latest `CONTINUATION.md` section own current status.
+Broader progress remains 0/21 criteria, 2/20 milestone exits, and 24/46 gates.
+
 The first table records the original three-test pull request #41 proof
 boundary. The current focused 15-test two-scenario target has passing local
 evidence. The current UVM target contains 27 ordered tests and awaits accepted
