@@ -4,7 +4,7 @@
 
 # UVM 2020 continuation ledger
 
-This file is the durable handoff record for pull request #41. It records
+This file is the durable handoff record for pull requests #41 and #42. It records
 published checkpoints, exact evidence boundaries, unresolved design issues, and
 the next reproducible action. It deliberately does not treat historical CI as
 proof of later source changes.
@@ -44,14 +44,58 @@ artifact 9047394914 (archive SHA-256
 The artifact's `src`, `include`, `bin`, and `test_regress` source trees match
 the starting head. The missing FlexLexer header came from `westes/flex`
 tag `v2.6.4`; no vendored UVM source was edited. Exact build details and lane
-results will be recorded after execution. A local-only Python shim selects
+results are retained below. A local-only Python shim selects
 the ordinary `fork` context because this workspace disallows the Unix socket
 required by `forkserver`; it does not change simulator behavior.
 
-The rebuilt compiler passed `t_class_member_sel_used`. The corrected full
-27-test lane and exact-head CI remain pending at this checkpoint. Historical
-membership evidence is retained separately in `tracker.yaml`; it is not
-proof of the corrected ordering. No broader milestone or criterion is promoted.
+The corrected full lane subsequently passed: **27/27 in 30:10**, with
+1,811.252 seconds wall time, 1,679.939988 user seconds, and 134.334901 system
+seconds. Every reduced test completed before any package test, all 27 child
+cleanup sentinels were removed, and both cleanup checks passed. The phase
+stress sentinel reported `phases=1000 winners=1000 cleanups=1000`.
+
+The local validation head was `e9b1b0de6e7ccc09b917efd51c093887d42f0c98`.
+Command-line push had no credentials, so the connected GitHub app published
+`91089908ad5e464f33676dfd88ffc1e8e266885b` with the same parent and exact
+source tree `b678cab2a01c6019f1914c2755cd28b22d82658c`. No source difference
+exists between those revisions. Reproduce from the published revision, not
+from assumptions about the old local-only commit. The worktree was clean for
+the complete lane and remained clean before evidence recording.
+
+The compiler version was
+`Verilator 5.051 devel rev vUNKNOWN-built20260906-4906f041d`, SHA-256
+`bc3b0a11063ab31e39712b3008b92620208799008015b5b6a54b47f790f0a27b`.
+No compiler source changed between that build and the ordered-lane patch.
+The successful bootstrap commands were `LEX=true YACC=true ./configure
+--enable-longtests --enable-ccwarn`, then `CPATH=/workspace/scratch/86e4a45a0d74/tmp/build-include
+make -C src opt -j8 OBJCACHE=`. All 163 compiler objects were rebuilt after
+removing local object, dependency, and PCH files. Only the matching generated
+parser/lexer inputs were reused. Package installation had failed on restricted
+user/group operations; overriding CPPFLAGS then hid normal include paths and
+was abandoned. The final build used CPATH, keeping normal compiler flags.
+
+The exact lane environment and invocation, complete pass sequence, checksums,
+and raw-log digest are in
+[ordered-lane-validation-2026-09-06.yaml](ordered-lane-validation-2026-09-06.yaml).
+The [retained log](run_logs/2026-09-06-uvm2020-order.log) expands tabs, removes
+trailing whitespace, and adds the repository license header; no log lines were
+omitted. Seven previously pending corpus entries now pass their declared local
+oracles, bringing the inventory to 107/115 with eight blocked and none pending.
+The two resource direct-lookup XFAIL outcomes remain explicit and are not
+conformance. No broader milestone or criterion is promoted.
+
+Format run 34023206562 and both Python lint jobs passed. Push `build-test`
+run 34023206800 and PR run 34023208357 remain in progress. Their UVM jobs are
+101460515806 and 101460640739; named-disable jobs are 101460515894 and
+101460640736. Do not promote the current CI gate until those runs finish.
+The Contributor Agreement checks still require human action.
+
+Next, collect the pending CI results at published implementation revision
+`91089908ad5e464f33676dfd88ffc1e8e266885b`. If green, assess M05 and M08
+against their declared gates using this retained local proof; do not repeat
+this 30-minute lane merely because a later evidence-only commit exists. Keep
+M07 open until the direct numeric resource-lookup boundary is resolved without
+silently altering the bundled UVM acceptance target.
 
 The resource-precedence exception remains explicit: IEEE 1800.2-2020
 C.2.4.4.2 and C.2.4.4.4, printed pages 396-397, require the highest numeric

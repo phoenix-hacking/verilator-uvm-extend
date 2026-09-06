@@ -6,20 +6,38 @@
 
 ## Current checkpoint: 2026-09-06
 
-The integration branch now corrects the lane's scheduling order with
-`--driver-preserve-order`. The Makefile still contains 27 tests: 16 reduced
-semantic tests followed by 11 package/API tests. Both serial named targets
-request explicit ordering; the default regression priority policy is unchanged.
-The new driver regression failed on the parent and passes with the correction.
-The optimized compiler rebuilt locally and a generated-code smoke test passed.
-The full corrected local lane and exact-head CI are pending at this checkpoint.
+The corrected lane passed locally: **27/27 tests, zero failures, 30:10**.
+All 16 reduced tests finished before the 11 package/API tests, exactly matching
+the Makefile list. The symlink-safety preflight and all 27 cleanup sentinels
+passed. The phase teardown check reported 1,000 phases, winners, and cleanups.
+`--driver-preserve-order` is explicit in both serial named targets; ordinary
+regressions retain priority scheduling. The new driver regression fails on
+the parent and passes with the correction.
 
-Recovered CI job 93328492250 passed all 27 members in 27:01, including cleanup,
-but ran the package tests first. The older tables and dated evidence below
-retain their historical membership results; they do not validate the corrected
-ordering. The old `ENOSPC` limitation does not describe this workspace.
+The published implementation is `91089908ad5e464f33676dfd88ffc1e8e266885b`,
+with the identical tree `b678cab2a01c6019f1914c2755cd28b22d82658c` used by
+local validation commit `e9b1b0de6e7ccc09b917efd51c093887d42f0c98`.
+The optimized compiler was rebuilt locally from the unchanged compiler sources.
+Exact commands, compiler digest, timing, pass order, bootstrap details, and
+claim boundaries are retained in
+[ordered-lane-validation-2026-09-06.yaml](ordered-lane-validation-2026-09-06.yaml)
+and the complete whitespace-normalized
+[execution log](run_logs/2026-09-06-uvm2020-order.log).
+
+Seven formerly pending corpus entries now have local evidence: **107/115
+passed their declared oracles (93.0%), eight blocked, zero pending**. This is a
+mixed compatibility inventory. Two resource tests retain their explicit direct
+numeric-lookup XFAIL, which is not conformance credit. Broader progress remains
+**0/21 criteria, 2/20 milestone exits, and 24/46 gates**.
+
+Current `build-test` runs
+[34023206800](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023206800)
+and [34023208357](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023208357)
+remain pending completion; format and Python lint passed. Later evidence-only
+commits are not additional tested implementation revisions. The older detailed
+tables and dated results below are historical; their `ENOSPC` limitation and
+priority-sorted execution do not describe this completed local run.
 `tracker.yaml` and the latest `CONTINUATION.md` section own current status.
-Broader progress remains 0/21 criteria, 2/20 milestone exits, and 24/46 gates.
 
 The first table records the original three-test pull request #41 proof
 boundary. The current focused 15-test two-scenario target has passing local

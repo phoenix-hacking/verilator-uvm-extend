@@ -395,18 +395,63 @@ expanded_lane:
     - test_regress/t/t_uvm_dpi_v2020_3_1.py
   current_validation:
     status: pending
-    note: >-
-      The 2026-09-06 driver correction makes the declared reduced-then-package
-      order effective. Earlier CI passed all 27 members but scheduled them by
-      priority, with package tests first. Local and CI evidence for the
-      corrected ordering are pending; see CONTINUATION.md.
+    note: The corrected 27-test lane passed locally in declared order. Source tree b678cab2a01c6019f1914c2755cd28b22d82658c
+      is identical at the local validation commit and published source 91089908ad5e464f33676dfd88ffc1e8e266885b.
+      Exact-head CI remains pending. The bounded resource-lookup XFAIL remains outside conformance claims.
     local:
-      status: pending
-      blocker: corrected_order_lane_not_yet_executed
-      evidence_scope: no_current_ordered_twenty_seven_test_result
+      status: pass
+      command: env VERILATOR_ROOT=/workspace/scratch/86e4a45a0d74/verilator-uvm-extend VERILATOR_BIN=/workspace/scratch/86e4a45a0d74/verilator-uvm-extend/bin/verilator_bin
+        PYTHONPATH=/workspace/scratch/86e4a45a0d74/tmp/test-shim:/workspace/scratch/86e4a45a0d74/tmp/test-python
+        make -C test_regress uvm2020
+      lane_command: make -C test_regress uvm2020
+      validation_worktree_revision: e9b1b0de6e7ccc09b917efd51c093887d42f0c98
+      published_equivalent_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+      validation_source_tree: b678cab2a01c6019f1914c2755cd28b22d82658c
+      environment:
+        VERILATOR_ROOT: /workspace/scratch/86e4a45a0d74/verilator-uvm-extend
+        VERILATOR_BIN: /workspace/scratch/86e4a45a0d74/verilator-uvm-extend/bin/verilator_bin
+        PYTHONPATH: /workspace/scratch/86e4a45a0d74/tmp/test-shim:/workspace/scratch/86e4a45a0d74/tmp/test-python
+        PATH: /root/.codex/tmp/arg0/codex-arg04LjygQ:/opt/codex/codex-path:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback
+      compiler:
+        path: /workspace/scratch/86e4a45a0d74/verilator-uvm-extend/bin/verilator_bin
+        version: Verilator 5.051 devel rev vUNKNOWN-built20260906-4906f041d
+        sha256: bc3b0a11063ab31e39712b3008b92620208799008015b5b6a54b47f790f0a27b
+        source_revision: 4906f041ddd73e53099393a9d7155414d1458f0a
+        source_tree: effb873ca9b0ec74e749f8188ffd7d8bb5259ac2
+      result:
+        tests: 27
+        scenarios:
+        - vlt
+        passed: 27
+        failed: 0
+        total: 27
+        driver_elapsed: '30:10'
+        real_seconds: 1811.252
+        user_seconds: 1679.939988
+        system_seconds: 134.334901
+        declared_order_verified: true
+      cleanup:
+        status: pass
+        sentinels_seeded: 27
+        sentinels_removed: 27
+        preflight_symlink_safety: pass
+        postcheck: 'uvm2020: stale-artifact cleanup PASSED'
+      log_path: nodist/uvm2020_plan/run_logs/2026-09-06-uvm2020-order.log
+      log_sha256: 9315abba3c0c9c2452ef581c46c5b11c419dcf287b1be9ed2992be157feb4e6d
+      raw_log_sha256: 61379c4c1269f342f39ac582abce255f120acfc27b6e7fa852631e0398f92d0c
+      claim_boundary: All 27 declared oracles passed in order. Two resource tests retain the bounded direct-lookup
+        XFAIL; this is not full UVM conformance.
     ci:
       status: pending
-      evidence_scope: corrected_order_not_yet_tested
+      evidence_scope: corrected_order_awaits_complete_build_test_jobs
+      source_head_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+      push_workflow_run_id: 34023206800
+      pull_request_workflow_run_id: 34023208357
+      push_uvm_job_id: 101460515806
+      pull_request_uvm_job_id: 101460640739
+      format_workflow_run_id: 34023206562
+      format_conclusion: success
+      python_lint_conclusion: success
   historical_priority_order_ci:
     status: pass
     evidence_scope: twenty_seven_test_membership_without_declared_order
@@ -556,6 +601,15 @@ expanded_lane:
       ref: validation.ci.runs.historical_fifteen_test_lane
 
 evidence:
+  LOCAL-ORDERED-UVM-LANE-20260906:
+    claim: Local declared-oracle compatibility evidence; bounded resource XFAIL disclosed, not conformance
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+        - expanded_lane.current_validation.local
+        - nodist/uvm2020_plan/run_logs/2026-09-06-uvm2020-order.log
   HARNESS-FANOUT-0001:
     claim: explicit test and generated-build fanout remain one
     proofs:
@@ -894,7 +948,7 @@ milestones:
           - test_regress/t/t_class_param_static_identity.py
           - test_regress/t/t_class_member_sel_used.py
           - test_regress/t/t_uvm_core_factory_param.py
-        note: Source and causal oracles are present; executable lane evidence is pending.
+        note: Local ordered-lane evidence passes these cases; current-head canonical CI remains pending.
       M05-G03-CANONICAL-CI:
         title: Factory and class closure pass canonical CI
         status: pending
@@ -939,7 +993,7 @@ milestones:
           The portable precedence oracle must select 200. A bounded XFAIL in
           the Accellera direct convenience lookup selecting 100 is disclosure
           of a known deviation and must not receive direct-path conformance
-          credit. Executable lane evidence remains pending.
+          credit. Local lane evidence now passes the declared bounded oracle; direct-path conformance remains open.
   M08:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/9
     title: TLM and sequence flow
@@ -952,7 +1006,7 @@ milestones:
         implementation_tests:
           - test_regress/t/t_uvm_tlm_analysis_fifo.py
           - test_regress/t/t_uvm_sequence_driver_flow.py
-        note: Source and exact pass oracles are present; executable lane evidence is pending.
+        note: Local ordered-lane TLM and sequence oracles pass; current-head canonical CI remains pending.
   M09:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10
     title: Constrained-random sequence items
@@ -1280,8 +1334,8 @@ corpus:
         evidence: [FULL-BASELINE-0001]
       t_class_param_static_identity:
         implemented: true
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
       t_class_param_typedef:
         implemented: true
         status: pass
@@ -1296,8 +1350,8 @@ corpus:
         evidence: [FULL-BASELINE-0001]
       t_class_member_sel_used:
         implemented: true
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
       t_class_typedef:
         implemented: true
         status: pass
@@ -1652,32 +1706,32 @@ corpus:
         evidence: [LOCAL-FACTORY-0001]
       t_uvm_core_factory_param:
         implemented: true
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
       t_uvm_config_vif_clocking:
         implemented: true
         status: pass
         evidence: [LOCAL-UVM-VIF-CLOCKING-0001]
       t_uvm_config_resource_component:
         implemented: true
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
       t_uvm_resource_numeric_precedence:
         implemented: true
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
       t_uvm_core_phasing:
         implemented: true
         status: pass
         evidence: [LOCAL-UVM-PHASING-0001]
       t_uvm_tlm_analysis_fifo:
         implemented: true
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
       t_uvm_sequence_driver_flow:
         implemented: true
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
 progress:
   program:
     complete: 0
@@ -1698,13 +1752,13 @@ progress:
   corpus:
     planned: 115
     implemented: 115
-    executed: 100
-    passed: 100
+    executed: 107
+    passed: 107
     failed: 0
     blocked: 8
-    execution_percent: 87.0
+    execution_percent: 93.0
     pass_percent: 100.0
-    verified_percent: 87.0
+    verified_percent: 93.0
 
 validation:
   scope: historical_records_only_not_current_head_validation
