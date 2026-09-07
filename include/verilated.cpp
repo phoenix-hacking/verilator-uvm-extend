@@ -4026,6 +4026,8 @@ uint32_t VerilatedVarProps::entSize() const VL_MT_SAFE {
     case VLVT_UINT16: size = sizeof(SData); break;
     case VLVT_UINT32: size = sizeof(IData); break;
     case VLVT_UINT64: size = sizeof(QData); break;
+    case VLVT_REAL: size = sizeof(double); break;
+    case VLVT_STRING: size = sizeof(std::string); break;
     case VLVT_WDATA: size = VL_WORDS_I(entBits()) * sizeof(IData); break;
     default: size = 0; break;  // LCOV_EXCL_LINE
     }

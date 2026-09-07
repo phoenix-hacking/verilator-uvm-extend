@@ -212,13 +212,13 @@ int svDimensions(const svOpenArrayHandle h) { return _vl_openhandle_varp(h)->udi
 // Return pointer to open array data, or nullptr if not in IEEE standard C layout
 void* svGetArrayPtr(const svOpenArrayHandle h) {
     const VerilatedDpiOpenVar* const varp = _vl_openhandle_varp(h);
-    if (VL_UNLIKELY(!varp->isDpiStdLayout())) return nullptr;
+    if (VL_UNLIKELY(!varp->isDpiStdLayout() || !varp->isContiguous())) return nullptr;
     return varp->datap();
 }
 // Return size of open array, or 0 if not in IEEE standard C layout
 int svSizeOfArray(const svOpenArrayHandle h) {
     const VerilatedDpiOpenVar* const varp = _vl_openhandle_varp(h);
-    if (VL_UNLIKELY(!varp->isDpiStdLayout())) return 0;
+    if (VL_UNLIKELY(!varp->isDpiStdLayout() || !varp->isContiguous())) return 0;
     // Truncate 64 bits to int; DPI is limited to 4GB
     return static_cast<int>(varp->totalSize());
 }
@@ -245,20 +245,22 @@ static void* _vl_sv_adjusted_datap(const VerilatedDpiOpenVar* varp, int nargs, i
         }
     }
     if (nargs >= 2) {
+        const void* const parentp = datap;
         datap = varp->datapAdjustIndex(datap, 2, indx2);
         if (VL_UNLIKELY(!datap)) {
             VL_SVDPI_WARN_("%%Warning: DPI svOpenArrayHandle function index 2 "
                            "out of bounds; %d outside [%d:%d].\n",
-                           indx2, varp->left(2), varp->right(2));
+                           indx2, varp->indexLeft(2), varp->indexRight(parentp, 2));
             return nullptr;
         }
     }
     if (nargs >= 3) {
+        const void* const parentp = datap;
         datap = varp->datapAdjustIndex(datap, 3, indx3);
         if (VL_UNLIKELY(!datap)) {
             VL_SVDPI_WARN_("%%Warning: DPI svOpenArrayHandle function index 3 "
                            "out of bounds; %d outside [%d:%d].\n",
-                           indx1, varp->left(3), varp->right(3));
+                           indx1, varp->indexLeft(3), varp->indexRight(parentp, 3));
             return nullptr;
         }
     }
