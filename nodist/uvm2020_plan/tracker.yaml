@@ -1248,7 +1248,11 @@ milestones:
           seed changes it, and mode, failed-solve callback, and recovery checks
           pass. The mixed nested-constraint fix also has an expanded causal
           regression and 20 adjacent passing scenarios. Full candidate
-          regression, static analysis, and exact-revision CI remain pending. The
+          regression and static analysis remain running. Candidate CI exposed
+          a t_constraint_mode regression in both modes: cloned constraints use
+          parent mode slots instead of their original child's modes. A correction
+          is in development. A separate probe confirmed failed randomization
+          changes scalar values and array size; value preservation remains open. The
           integrated test is still uncommitted development work. These results
           do not establish milestone acceptance or performance closure.
   M10:
@@ -1375,6 +1379,11 @@ program:
       status: in_progress
       milestones: [M01, M03]
       evidence: [LOCAL-UVM-SMOKE-0001]
+      note: >-
+        A fresh ordered local run passes all 27 selected tests against unchanged
+        Accellera 2020.3.1 sources with the explicit Verilator DPI adapter.
+        source-lane-local-2026-09-07.yaml records hashes, order, and sentinels.
+        The source-selection flow is implemented at 0be94bf57; CI validation remains pending.
     C02:
       title: Tracker reaches complete or documented zero-blocker state
       status: in_progress

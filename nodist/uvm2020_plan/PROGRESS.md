@@ -37,14 +37,18 @@ accumulated evidence. The [eight newly executed tests](dependency-closure-2026-0
 passed locally with the debug compiler and Z3 available. This is not a fresh
 115-test run and does not close the constrained-random UVM item milestone.
 M07 stays open: the resource direct-lookup XFAIL is not conformance credit.
-Unmodified upstream UVM source flow and both performance gates remain open.
+Unmodified upstream UVM source-flow acceptance and both performance gates remain open.
 
-Ongoing follow-up validation has exercised all 27 selected tests against the
-unchanged Accellera 2020.3.1 source checkout across one 25-pass/2-failure run
-and two passing DPI retries. The DPI retries use an explicit adapter that
-links upstream common components with Verilator's HDL backend; the upstream
-top-level DPI file has no Verilator backend selector. A fresh ordered run
-with the adapter is pending. This is not yet accepted source-lane closure.
+The fresh ordered source-library run now passes all 27 tests in 78:18 against
+the unchanged Accellera 2020.3.1 checkout at `78c06547a`. The run verified
+the declared order, clean-before symlink safety, stale-artifact cleanup, and
+the 1,000-phase teardown sentinel. The DPI adapter links unchanged upstream
+common components with Verilator's HDL backend; the upstream top-level DPI
+file has no Verilator backend selector. The
+[local source-lane evidence](source-lane-local-2026-09-07.yaml) records source
+and binary hashes. The source-selection flow is implemented at `0be94bf57`;
+CI validation remains pending; the resource direct-lookup XFAIL is still outside
+conformance credit.
 
 M09 is now in progress. New real UVM constrained-random integration exposed
 compiler failures beyond the accumulated compatibility inventory. Six
@@ -67,8 +71,15 @@ the different seed changes them. Modes, failed-solve callbacks, and recovery
 checks pass. This is local development evidence using retained
 compiler binary SHA-256
 `5599913ab5dd2845dfe253faf39731ae7654f413d4312b67dd362bf4e6b880d1`.
-Full candidate regression, static analysis, and exact-revision CI remain
-pending. The integrated test remains
+The full candidate regression and static analysis remain running. Candidate
+CI at `a9949d7ae` exposed a reproducible `t_constraint_mode` failure in both
+simulation modes: flattened child constraints read independent parent mode
+slots instead of the original child's modes. A correction and expanded
+regression are in development in a separate worktree. Another confirmed
+open defect is value preservation after failed randomization: an unsatisfiable
+call changes an unconstrained scalar, and a failed array-element solve leaves
+the array resized and a scalar changed. Neither defect is claimed fixed.
+The integrated UVM test remains
 uncommitted, and none of these development results advances formal completion
 counts or establishes performance.
 
