@@ -117,8 +117,8 @@ successor_pull_request:
   base: agent/uvm2020-clean-lane
   base_revision: ee6197dff37260fa892783744d7183b96ce26d43
   head: codex/uvm-program-integration-wip
-  source_checkpoint_revision: 1563f0d996ddfea766a9105e9ba5aad8afb071b6
-  validation_status: pending
+  source_checkpoint_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+  validation_status: pass
   claim: source_preservation_and_twenty_seven_test_lane_integration
   broader_program_relation: independent_from_zero_of_twenty_one_program_criteria
 issues:
@@ -394,10 +394,9 @@ expanded_lane:
     - test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py
     - test_regress/t/t_uvm_dpi_v2020_3_1.py
   current_validation:
-    status: pending
-    note: The corrected 27-test lane passed locally in declared order. Source tree b678cab2a01c6019f1914c2755cd28b22d82658c
-      is identical at the local validation commit and published source 91089908ad5e464f33676dfd88ffc1e8e266885b.
-      Exact-head CI remains pending. The bounded resource-lookup XFAIL remains outside conformance claims.
+    status: pass
+    note: The ordered 27-test contract passed locally and in both 46-job CI matrices at the recorded source
+      tree. Resource direct-lookup XFAIL remains outside conformance claims.
     local:
       status: pass
       command: env VERILATOR_ROOT=/workspace/scratch/86e4a45a0d74/verilator-uvm-extend VERILATOR_BIN=/workspace/scratch/86e4a45a0d74/verilator-uvm-extend/bin/verilator_bin
@@ -442,8 +441,8 @@ expanded_lane:
       claim_boundary: All 27 declared oracles passed in order. Two resource tests retain the bounded direct-lookup
         XFAIL; this is not full UVM conformance.
     ci:
-      status: pending
-      evidence_scope: corrected_order_awaits_complete_build_test_jobs
+      status: pass
+      evidence_scope: ordered_twenty_seven_test_contract_with_job_log_proof
       source_head_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
       push_workflow_run_id: 34023206800
       pull_request_workflow_run_id: 34023208357
@@ -452,6 +451,123 @@ expanded_lane:
       format_workflow_run_id: 34023206562
       format_conclusion: success
       python_lint_conclusion: success
+      tested_synthetic_merge_revision: 4c8c048cfa734dcfad26dd50a624b1e0362af662
+      evidence_file: nodist/uvm2020_plan/ordered-lane-ci-2026-09-07.yaml
+      runs:
+        push:
+          status: pass
+          source_head_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+          tested_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+          tested_source_tree: b678cab2a01c6019f1914c2755cd28b22d82658c
+          workflow_run_id: 34023206800
+          workflow_run_url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023206800
+          workflow_jobs:
+            passed: 46
+            failed: 0
+            total: 46
+          job_id: 101460515806
+          job_url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023206800/job/101460515806
+          raw_job_log_sha256: 582094f3b6da8e2b4a3a53f22ce7ec591ab8aa86cb7227293fe07ba28bc5a9b9
+          log_retrieval_command: gh api repos/phoenix-hacking/verilator-uvm-extend/actions/jobs/101460515806/logs
+          result:
+            passed: 27
+            failed: 0
+            driver_elapsed: '22:02'
+            declared_order_verified: true
+          verified_sentinels:
+          - 'uvm2020: clean-before symlink safety PASSED'
+          - 'uvm2020: stale-artifact cleanup PASSED'
+          - PHASE_TEARDOWN_SENTINEL phases=1000 winners=1000 cleanups=1000
+          - '*-* CLASS PARAM STATIC IDENTITY PASSED *-*'
+          - '*-* CLASS MEMBER SELECT USAGE PASSED *-*'
+          - '** UVM FACTORY PARAM PASSED **'
+          - '** UVM TLM ANALYSIS FIFO PASSED **'
+          - '** UVM SEQUENCE DRIVER FLOW PASSED **'
+          passed_in_order:
+          - t_uvm_lrm_sched_wait_zero
+          - t_uvm_lrm_process_kill_tree
+          - t_uvm_lrm_process_kill_self_tree
+          - t_uvm_lrm_process_kill_self_zero
+          - t_uvm_lrm_process_kill_function
+          - t_uvm_lrm_process_kill_wait_zero
+          - t_process_context_fork
+          - t_process_fork_finished
+          - t_process_phase_teardown
+          - t_process_self_kill_ctor
+          - t_process_self_kill_initial
+          - t_timing_finish
+          - t_finish_stops_nonfinal
+          - t_clocking_virtual
+          - t_class_param_static_identity
+          - t_class_member_sel_used
+          - t_uvm_core_factory_basic
+          - t_uvm_core_factory_param
+          - t_uvm_config_vif_clocking
+          - t_uvm_config_resource_component
+          - t_uvm_resource_numeric_precedence
+          - t_uvm_core_phasing
+          - t_uvm_tlm_analysis_fifo
+          - t_uvm_sequence_driver_flow
+          - t_uvm_hello_all_v2020_3_1_nodpi
+          - t_uvm_hello_all_v2020_3_1_dpi
+          - t_uvm_dpi_v2020_3_1
+        pull_request:
+          status: pass
+          source_head_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+          tested_revision: 4c8c048cfa734dcfad26dd50a624b1e0362af662
+          tested_source_tree: b678cab2a01c6019f1914c2755cd28b22d82658c
+          workflow_run_id: 34023208357
+          workflow_run_url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023208357
+          workflow_jobs:
+            passed: 46
+            failed: 0
+            total: 46
+          job_id: 101460640739
+          job_url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023208357/job/101460640739
+          raw_job_log_sha256: d680ee372aa651d1145f086f2a8a6ce3f881b5d0403cae87f373c39a217e6b6a
+          log_retrieval_command: gh api repos/phoenix-hacking/verilator-uvm-extend/actions/jobs/101460640739/logs
+          result:
+            passed: 27
+            failed: 0
+            driver_elapsed: '21:17'
+            declared_order_verified: true
+          verified_sentinels:
+          - 'uvm2020: clean-before symlink safety PASSED'
+          - 'uvm2020: stale-artifact cleanup PASSED'
+          - PHASE_TEARDOWN_SENTINEL phases=1000 winners=1000 cleanups=1000
+          - '*-* CLASS PARAM STATIC IDENTITY PASSED *-*'
+          - '*-* CLASS MEMBER SELECT USAGE PASSED *-*'
+          - '** UVM FACTORY PARAM PASSED **'
+          - '** UVM TLM ANALYSIS FIFO PASSED **'
+          - '** UVM SEQUENCE DRIVER FLOW PASSED **'
+          passed_in_order:
+          - t_uvm_lrm_sched_wait_zero
+          - t_uvm_lrm_process_kill_tree
+          - t_uvm_lrm_process_kill_self_tree
+          - t_uvm_lrm_process_kill_self_zero
+          - t_uvm_lrm_process_kill_function
+          - t_uvm_lrm_process_kill_wait_zero
+          - t_process_context_fork
+          - t_process_fork_finished
+          - t_process_phase_teardown
+          - t_process_self_kill_ctor
+          - t_process_self_kill_initial
+          - t_timing_finish
+          - t_finish_stops_nonfinal
+          - t_clocking_virtual
+          - t_class_param_static_identity
+          - t_class_member_sel_used
+          - t_uvm_core_factory_basic
+          - t_uvm_core_factory_param
+          - t_uvm_config_vif_clocking
+          - t_uvm_config_resource_component
+          - t_uvm_resource_numeric_precedence
+          - t_uvm_core_phasing
+          - t_uvm_tlm_analysis_fifo
+          - t_uvm_sequence_driver_flow
+          - t_uvm_hello_all_v2020_3_1_nodpi
+          - t_uvm_hello_all_v2020_3_1_dpi
+          - t_uvm_dpi_v2020_3_1
   historical_priority_order_ci:
     status: pass
     evidence_scope: twenty_seven_test_membership_without_declared_order
@@ -601,6 +717,46 @@ expanded_lane:
       ref: validation.ci.runs.historical_fifteen_test_lane
 
 evidence:
+  CLASS-STATIC-CLOSURE-20260907:
+    claim: Class parameter/static specialization identity, field access accounting, and parameterized UVM
+      factory acceptance pass locally and in canonical CI.
+    tests:
+    - t_class_param_static_identity
+    - t_class_member_sel_used
+    - t_uvm_core_factory_basic
+    - t_uvm_core_factory_param
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+        - expanded_lane.current_validation.local
+        - nodist/uvm2020_plan/ordered-lane-validation-2026-09-06.yaml
+      ci:
+        required: true
+        status: pass
+        refs:
+        - expanded_lane.current_validation.ci
+        - nodist/uvm2020_plan/ordered-lane-ci-2026-09-07.yaml
+  TLM-SEQUENCE-CLOSURE-20260907:
+    claim: Analysis fanout, hierarchy, predictor/scoreboard, FIFO teardown, and sequencer/driver request,
+      response, cancellation, and reuse acceptance pass locally and in canonical CI.
+    tests:
+    - t_uvm_tlm_analysis_fifo
+    - t_uvm_sequence_driver_flow
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+        - expanded_lane.current_validation.local
+        - nodist/uvm2020_plan/ordered-lane-validation-2026-09-06.yaml
+      ci:
+        required: true
+        status: pass
+        refs:
+        - expanded_lane.current_validation.ci
+        - nodist/uvm2020_plan/ordered-lane-ci-2026-09-07.yaml
   LOCAL-ORDERED-UVM-LANE-20260906:
     claim: Local declared-oracle compatibility evidence; bounded resource XFAIL disclosed, not conformance
     proofs:
@@ -934,28 +1090,31 @@ milestones:
   M05:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/6
     title: Class, factory, and static initialization closure
-    status: in_progress
+    status: pass
     gates:
       M05-G01-FACTORY:
         title: Expanded factory override and creation API passes
         status: pass
-        evidence: [LOCAL-FACTORY-0001]
+        evidence:
+        - LOCAL-FACTORY-0001
       M05-G02-CLASS-STATIC-CLOSURE:
         title: Class identity and static initialization closure completes
-        status: pending
-        evidence: []
+        status: pass
+        evidence:
+        - CLASS-STATIC-CLOSURE-20260907
         implementation_tests:
-          - test_regress/t/t_class_param_static_identity.py
-          - test_regress/t/t_class_member_sel_used.py
-          - test_regress/t/t_uvm_core_factory_param.py
-        note: Local ordered-lane evidence passes these cases; current-head canonical CI remains pending.
+        - test_regress/t/t_class_param_static_identity.py
+        - test_regress/t/t_class_member_sel_used.py
+        - test_regress/t/t_uvm_core_factory_param.py
+        note: Declared acceptance cases pass in the retained local ordered run and both current-source CI
+          job logs.
       M05-G03-CANONICAL-CI:
         title: Factory and class closure pass canonical CI
-        status: pending
-        evidence: [EXPANDED-UVM-LANE-0001]
-        note: >-
-          The factory slice passes the canonical lane, but class/static
-          closure remains open in M05-G02 and has no canonical-CI proof.
+        status: pass
+        evidence:
+        - CLASS-STATIC-CLOSURE-20260907
+        note: Declared acceptance cases pass in the retained local ordered run and both current-source CI
+          job logs.
   M06:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7
     title: Interfaces, virtual interfaces, modports, and clocking closure
@@ -997,16 +1156,18 @@ milestones:
   M08:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/9
     title: TLM and sequence flow
-    status: in_progress
+    status: pass
     gates:
       M08-G01-CLOSURE:
         title: TLM and sequence handshake acceptance passes
-        status: pending
-        evidence: []
+        status: pass
+        evidence:
+        - TLM-SEQUENCE-CLOSURE-20260907
         implementation_tests:
-          - test_regress/t/t_uvm_tlm_analysis_fifo.py
-          - test_regress/t/t_uvm_sequence_driver_flow.py
-        note: Local ordered-lane TLM and sequence oracles pass; current-head canonical CI remains pending.
+        - test_regress/t/t_uvm_tlm_analysis_fifo.py
+        - test_regress/t/t_uvm_sequence_driver_flow.py
+        note: Declared acceptance cases pass in the retained local ordered run and both current-source CI
+          job logs.
   M09:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10
     title: Constrained-random sequence items
@@ -1738,13 +1899,13 @@ progress:
     total: 21
     percent: 0.0
   milestones:
-    complete: 2
+    complete: 4
     total: 20
-    percent: 10.0
+    percent: 20.0
   gates:
-    complete: 24
+    complete: 27
     total: 46
-    percent: 52.2
+    percent: 58.7
   lane:
     complete: 11
     total: 11

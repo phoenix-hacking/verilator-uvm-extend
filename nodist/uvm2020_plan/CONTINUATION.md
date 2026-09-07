@@ -13,6 +13,33 @@ Do not commit extracted standards text, rendered standards pages, generated
 test objects, or temporary compiler trees. In particular, the repository-local
 `tmp/` directory is scratch material and is not part of any checkpoint.
 
+## 2026-09-07 ordered-lane CI acceptance
+
+The declared 27-test UVM contract has accepted local, push, and pull-request
+CI evidence. Both CI matrices passed all 46 jobs at source
+`91089908ad5e464f33676dfd88ffc1e8e266885b`; the PR tested merge
+`4c8c048cfa734dcfad26dd50a624b1e0362af662`. Both have source tree
+`b678cab2a01c6019f1914c2755cd28b22d82658c`, matching retained local validation.
+
+The downloaded UVM logs each contain exactly 27 passing tests in Makefile
+order, successful symlink-safety and cleanup checks, and the 1,000-phase
+teardown sentinel. Push elapsed 22:02; PR elapsed 21:17. The retained local
+run passed in 30:10. These are regression durations, not performance grades.
+[CI evidence](ordered-lane-ci-2026-09-07.yaml) records job URLs, source
+provenance, log hashes, pass order, and the exact acceptance sentinels.
+
+The evidence closes the declared M05 class/factory/static-initialization and
+M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
+criteria, 4/20 milestone exits, and 27/46 atomic gates**. The compatibility
+inventory remains **107/115 passing declared oracles, eight blocked**.
+M07 stays open: the resource direct-lookup XFAIL is not conformance credit.
+Unmodified upstream UVM source flow and both performance gates remain open.
+
+Both PRs remain draft for human review and Contributor Agreement/DCO. No new
+compiler implementation is claimed by this evidence update. Older dated
+results and detailed tables below are historical; use `tracker.yaml` and this
+checkpoint for current status.
+
 ## 2026-09-06 ordered-lane correction
 
 Resume on `codex/uvm-program-integration-wip`, stacked draft PR #42. The

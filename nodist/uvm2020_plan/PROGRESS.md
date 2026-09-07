@@ -4,40 +4,33 @@
 
 # UVM 2020 program progress
 
-## Current checkpoint: 2026-09-06
+## Current checkpoint: 2026-09-07
 
-The corrected lane passed locally: **27/27 tests, zero failures, 30:10**.
-All 16 reduced tests finished before the 11 package/API tests, exactly matching
-the Makefile list. The symlink-safety preflight and all 27 cleanup sentinels
-passed. The phase teardown check reported 1,000 phases, winners, and cleanups.
-`--driver-preserve-order` is explicit in both serial named targets; ordinary
-regressions retain priority scheduling. The new driver regression fails on
-the parent and passes with the correction.
+The declared 27-test UVM contract has accepted local, push, and pull-request
+CI evidence. Both CI matrices passed all 46 jobs at source
+`91089908ad5e464f33676dfd88ffc1e8e266885b`; the PR tested merge
+`4c8c048cfa734dcfad26dd50a624b1e0362af662`. Both have source tree
+`b678cab2a01c6019f1914c2755cd28b22d82658c`, matching retained local validation.
 
-The published implementation is `91089908ad5e464f33676dfd88ffc1e8e266885b`,
-with the identical tree `b678cab2a01c6019f1914c2755cd28b22d82658c` used by
-local validation commit `e9b1b0de6e7ccc09b917efd51c093887d42f0c98`.
-The optimized compiler was rebuilt locally from the unchanged compiler sources.
-Exact commands, compiler digest, timing, pass order, bootstrap details, and
-claim boundaries are retained in
-[ordered-lane-validation-2026-09-06.yaml](ordered-lane-validation-2026-09-06.yaml)
-and the complete whitespace-normalized
-[execution log](run_logs/2026-09-06-uvm2020-order.log).
+The downloaded UVM logs each contain exactly 27 passing tests in Makefile
+order, successful symlink-safety and cleanup checks, and the 1,000-phase
+teardown sentinel. Push elapsed 22:02; PR elapsed 21:17. The retained local
+run passed in 30:10. These are regression durations, not performance grades.
+[CI evidence](ordered-lane-ci-2026-09-07.yaml) records job URLs, source
+provenance, log hashes, pass order, and the exact acceptance sentinels.
 
-Seven formerly pending corpus entries now have local evidence: **107/115
-passed their declared oracles (93.0%), eight blocked, zero pending**. This is a
-mixed compatibility inventory. Two resource tests retain their explicit direct
-numeric-lookup XFAIL, which is not conformance credit. Broader progress remains
-**0/21 criteria, 2/20 milestone exits, and 24/46 gates**.
+The evidence closes the declared M05 class/factory/static-initialization and
+M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
+criteria, 4/20 milestone exits, and 27/46 atomic gates**. The compatibility
+inventory remains **107/115 passing declared oracles, eight blocked**.
+M07 stays open: the resource direct-lookup XFAIL is not conformance credit.
+Unmodified upstream UVM source flow and both performance gates remain open.
 
-Current `build-test` runs
-[34023206800](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023206800)
-and [34023208357](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023208357)
-remain pending completion; format and Python lint passed. Later evidence-only
-commits are not additional tested implementation revisions. The older detailed
-tables and dated results below are historical; their `ENOSPC` limitation and
-priority-sorted execution do not describe this completed local run.
-`tracker.yaml` and the latest `CONTINUATION.md` section own current status.
+Both PRs remain draft for human review and Contributor Agreement/DCO. No new
+compiler implementation is claimed by this evidence update. Older dated
+results and detailed tables below are historical; use `tracker.yaml` and this
+checkpoint for current status.
+
 
 Historical detailed snapshot: **2026-08-09** (PR #41 retains its recorded local and exact-head
 CI closure; stacked PR #42 contains a source-integrated 27-test successor lane
