@@ -22,7 +22,7 @@ test.compile(threads=2 if test.vltmt else 1,
                  '--CFLAGS -O0',
                  '-Wall',
                  *test.uvm2020_flags(dpi=True),
-                 't/t_uvm_dpi_reference.cpp',
+                 't/t_uvm_dpi_reference.c',
              ])
 
 test.execute(all_run_flags=['+UVM_NO_RELNOTES'])
