@@ -3111,6 +3111,7 @@ class RandomizeVisitor final : public VNVisitor {
     std::set<std::string> m_writtenVars;  // Track write_var calls per class to avoid duplicates
     std::map<AstConstraint*, std::set<AstVar*>>
         m_sizeConstrainedArrays;  // Arrays referenced by each lowered constraint
+    std::set<AstClass*> m_preparedConstraintClasses;  // Classes with array sizes lowered
     std::map<AstClass*, AstVar*>
         m_staticConstraintModeVars;  // Static constraint mode vars per class
     std::map<AstClass*, AstVar*> m_staticRandModeVars;  // Static rand mode vars per class
@@ -4765,6 +4766,22 @@ class RandomizeVisitor final : public VNVisitor {
         return false;
     }
 
+    // Prepare inherited constraints before an inline randomize call can force
+    // lowering of the derived class. A base class may not itself be randomized.
+    void prepareClassConstraints(AstClass* const classp) {
+        if (!m_preparedConstraintClasses.emplace(classp).second) return;
+        if (classp->extendsp()) prepareClassConstraints(classp->extendsp()->classp());
+        VL_RESTORER(m_modp);
+        VL_RESTORER(m_constraintp);
+        m_modp = classp;
+        for (AstNode* stmtp = classp->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
+            if (AstConstraint* const constrp = VN_CAST(stmtp, Constraint)) {
+                m_constraintp = constrp;
+                iterateChildren(constrp);
+            }
+        }
+    }
+
     // VISITORS
     void visit(AstNodeModule* nodep) override {
         VL_RESTORER(m_modp);
@@ -4787,6 +4804,7 @@ class RandomizeVisitor final : public VNVisitor {
         m_distNum = 0;
         m_writtenVars.clear();  // Each class has its own set of written variables
 
+        prepareClassConstraints(nodep);
         iterateChildren(nodep);
         if (!nodep->user1()) return;  // Doesn't need randomize, or already processed
         UINFO(9, "Define randomize() for " << nodep);
