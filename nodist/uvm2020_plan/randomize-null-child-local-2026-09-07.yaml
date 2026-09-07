@@ -70,11 +70,17 @@ neighbors:
     - test: t_randomize_method_types_unsup
       scenarios: [vlt, vltmt]
       result: Recursive scalar rand handle causes unbounded compiler expansion. The vlt process exited 137; the vltmt process was terminated at 16 GB resident memory and exited 143.
-  followup: See regression-triage-2026-09-07.yaml for bounded parent reproducers, logs, and the separate recursion correction in development.
+  followup: See regression-triage-2026-09-07.yaml for bounded parent reproducers, logs, and the separate recursion correction published at ab1d4498f.
+static_analysis:
+  status: completed_with_reports
+  revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+  exit_code: 0
+  error_reports: 11
+  comparison: The filename/message/count multiset exactly matches the pre-crash candidate. See regression-triage-2026-09-07.yaml for source-review dispositions; this does not claim a clean static pass.
 acceptance:
   ci: pending
   full_regression: pending
-  cppcheck: pending
+  cppcheck: completed with 11 existing baseline reports; clean static acceptance remains pending
 sources:
   include/verilated_random.cpp: 8c59ed017377aff1f785bf0adad7eab5df8f5449715a3aaeb7a6032d550179d3
   include/verilated_random.h: c034d9c62501382b047331ce415bbc03b7b38f21298b9354d0319b7ce31d5465
@@ -97,6 +103,7 @@ logs:
   /home/holden/verilator-work/randomize-null-lint-py.log: ad0b07ace4e935a32ff6e6ac5066856eeab5450391cc4611234ee0ba09da1384
   /home/holden/verilator-work/randomize-null-focused-final.log: 76f6b97a1bea53f22278bde6373273b3fea8da9aadb8041256f53bfe4c287b04
   /home/holden/verilator-work/randomize-null-causal-final.log: 78c872acdb1b7473d6746aed7cead6ff7e5fdb19e67141b682c522e231ea5bdb
+  /home/holden/verilator-work/randomize-null-cppcheck.log: 99f43fbffba4f2c4db1376edbffcbfea67e7d1ccb5bdfc72371fc825f4ba23dd
 accounting:
   program_criteria: 0/21
   milestone_exits: 4/20

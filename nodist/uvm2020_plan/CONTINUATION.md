@@ -43,14 +43,22 @@ the known recursive negative test, with interventions recorded in
 CI, full regression, and static acceptance remain pending. Explicit dereference errors stay active;
 `randomize(null)` with class/container members remains separately unsupported.
 
-The original cppcheck sweep completed with the same 11 reports as the pre-crash
-candidate; this is not a clean static pass. The null-child sweep is still active.
+The original and frozen null-child cppcheck sweeps completed with the same 11
+reports as the pre-crash candidate; this is not a clean static pass.
 [Triage evidence](regression-triage-2026-09-07.yaml) records the completed results.
 The failure-state worktree was fast-forwarded to `04fc80d15` and its recovered
 changes reapplied cleanly; the original stash and patch remain preserved.
 
-Next work is to honor state-only constraints when no solver variables exist,
-fix associative-array size handling, inspect the active regressions and CI, finish failed-randomization
+The state-only solver correction is published at `04808c883` on
+`codex/randomize-state-constraints`, with 44/44 focused passes and causal failures
+in both new scenarios on the parent runtime. The new test builds with C++14.
+[Local evidence](randomize-state-only-local-2026-09-07.yaml) records its inputs.
+The native build worktree `/home/holden/verilator-work/randomize-recursion-check`
+is now on `codex/randomize-assoc-size`, based on that correction; its associative
+size compiler/test changes remain uncommitted. The recursion compiler binary
+listed above remains preserved for causal comparisons.
+
+Next work is to finish associative-array size handling, inspect the active regressions and CI, finish failed-randomization
 value preservation, then integrate
 the real UVM sequence-item regression and continue the complete milestone
 scope in GOALS.md. The ten pre-crash CI failures must be classified from actual

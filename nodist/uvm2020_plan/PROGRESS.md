@@ -41,9 +41,14 @@ published at `ab1d4498f`: 28/28 focused checks pass, versus four parent aborts i
 the negative scenarios under bounded resources. Its
 [local evidence](randomize-recursion-local-2026-09-07.yaml) includes exact hashes;
 it provides early unsupported-feature diagnostics, not recursive-class support.
-Associative-size handling and state-only solver constraints remain in development.
-The completed recovery cppcheck sweep has the same 11 reports as the pre-crash
-candidate; this is not a clean static pass. Full regression, CI, and static
+The state-only constraint correction is published at `04808c883`: 44/44 focused
+checks pass, including 38 behavioral scenarios and six distribution checks.
+Both new scenarios fail with the parent runtime. False hard constraints now
+fail even when there are no solver variables, and empty model-value queries are
+avoided. [Local evidence](randomize-state-only-local-2026-09-07.yaml) records the
+C++14 build and exact inputs. Associative-size handling remains in development.
+Both the recovery and frozen null-child cppcheck sweeps completed with the same
+11 reports as the pre-crash candidate; this is not a clean static pass. Full regression, CI, and static
 acceptance remain pending. [Local evidence](randomize-null-child-local-2026-09-07.yaml) records
 the exact source, compiler, and log hashes.
 
