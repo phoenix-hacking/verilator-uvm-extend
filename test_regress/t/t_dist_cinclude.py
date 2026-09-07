@@ -21,6 +21,8 @@ if test.verbose:
     print("ST " + files)
 names = {}
 for filename in files.split():
+    if filename.endswith(".c"):  # C translation units require the standard C headers
+        continue
     if "include/vltstd/vpi_user.h" in filename:  # IEEE Standard file - can't change it
         continue
     if "include/gtkwave/" in filename:  # Standard file - can't change it
