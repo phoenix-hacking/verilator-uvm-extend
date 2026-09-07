@@ -882,6 +882,7 @@ public:
         RANDOMIZE_STATE_ENTER,
         RANDOMIZE_STATE_RESTORE,
         RANDOMIZE_STATE_SAVE,
+        RANDOMIZE_STATE_SAVE_ARGUMENT,
         RNG_GET_RANDSTATE,
         RNG_SET_RANDSTATE,
         SCHED_ANY_TRIGGERED,
@@ -1041,6 +1042,7 @@ inline std::ostream& operator<<(std::ostream& os, const VCMethod& rhs) {
            {RANDOMIZE_STATE_ENTER, "enter", false}, \
            {RANDOMIZE_STATE_RESTORE, "restore", false}, \
            {RANDOMIZE_STATE_SAVE, "save", false}, \
+           {RANDOMIZE_STATE_SAVE_ARGUMENT, "saveArgument", false}, \
            {RNG_GET_RANDSTATE, "__Vm_rng.get_randstate", true}, \
            {RNG_SET_RANDSTATE, "__Vm_rng.set_randstate", false}, \
            {SCHED_ANY_TRIGGERED, "anyTriggered", false}, \

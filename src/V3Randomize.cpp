@@ -4650,14 +4650,17 @@ class RandomizeVisitor final : public VNVisitor {
             = new AstForeach{fl, headerp, newNestedStateCalls(elementp, statep, action, names)};
         return new AstBegin{fl, indexp->name() + "__Vscope", loopp, true};
     }
-    AstVar* makeStateTraversal(AstFunc* const funcp, AstClass* const classp,
-                               const StateAction action, const char* const name) {
-        FileLine* const fl = funcp->fileline();
+    AstVar* newStateVar(FileLine* const fl, const char* const name) {
         AstVar* const statep = new AstVar{fl, VVarType::BLOCKTEMP, name, getStateDType(fl)};
         statep->funcLocal(true);
         statep->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
         statep->isInternal(true);
         statep->noSubst(true);
+        return statep;
+    }
+    AstVar* makeStateTraversal(AstFunc* const funcp, AstClass* const classp,
+                               const StateAction action, const char* const name) {
+        AstVar* const statep = newStateVar(funcp->fileline(), name);
         funcp->addStmtsp(statep);
         AstNodeStmt* const callp
             = newStateTaskCall(classp, newStateThisRef(classp), statep, action);
@@ -5657,6 +5660,10 @@ class RandomizeVisitor final : public VNVisitor {
             std::unique_ptr<CaptureVisitor> withCapturep;
             int argn = 0;
             AstWith* const withp = nodep->withp();
+            AstVar* const statep
+                = withp ? newStateVar(nodep->fileline(), "__Vrandomize_state") : nullptr;
+            if (statep) randomizeFuncp->addStmtsp(statep);
+            AstNode* basicStmtsp = nullptr;
             for (const AstArg* argp = nodep->argsp(); argp; argp = VN_AS(argp->nextp(), Arg)) {
                 AstNodeExpr* const exprp = argp->exprp();
                 AstCMethodHard* const basicMethodp = new AstCMethodHard{
@@ -5684,6 +5691,15 @@ class RandomizeVisitor final : public VNVisitor {
                 refvarp->funcLocal(true);
                 refvarp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
                 randomizeFuncp->addStmtsp(refvarp);
+                if (statep) {
+                    AstCMethodHard* const savep = new AstCMethodHard{
+                        exprp->fileline(),
+                        new AstVarRef{exprp->fileline(), statep, VAccess::READWRITE},
+                        VCMethod::RANDOMIZE_STATE_SAVE_ARGUMENT,
+                        new AstVarRef{exprp->fileline(), refvarp, VAccess::READWRITE}};
+                    savep->dtypeSetVoid();
+                    randomizeFuncp->addStmtsp(savep->makeStmt());
+                }
 
                 const size_t width = exprp->width();
                 basicMethodp->addPinsp(
@@ -5693,15 +5709,20 @@ class RandomizeVisitor final : public VNVisitor {
                     new AstConst{nodep->fileline(), AstConst::Unsized64{}, width});
                 basicMethodp->dtypeSetBit();
 
-                randomizeFuncp->addStmtsp(new AstAssign{
-                    nodep->fileline(),
-                    new AstVarRef{nodep->fileline(), VN_AS(randomizeFuncp->fvarp(), Var),
-                                  VAccess::WRITE},
-                    new AstAnd{nodep->fileline(),
-                               new AstVarRef{nodep->fileline(),
-                                             VN_AS(randomizeFuncp->fvarp(), Var), VAccess::READ},
-                               basicMethodp}});
+                basicStmtsp = AstNode::addNext(
+                    basicStmtsp,
+                    new AstAssign{nodep->fileline(),
+                                  new AstVarRef{nodep->fileline(),
+                                                VN_AS(randomizeFuncp->fvarp(), Var),
+                                                VAccess::WRITE},
+                                  new AstAnd{nodep->fileline(),
+                                             new AstVarRef{nodep->fileline(),
+                                                           VN_AS(randomizeFuncp->fvarp(), Var),
+                                                           VAccess::READ},
+                                             basicMethodp}});
             }
+            // Capture every argument before any write, including aliased ref arguments.
+            randomizeFuncp->addStmtsp(basicStmtsp);
             if (withp) {
                 FileLine* const fl = nodep->fileline();
                 withCapturep = std::make_unique<CaptureVisitor>(withp->exprp(), m_modp, nullptr,
@@ -5728,6 +5749,14 @@ class RandomizeVisitor final : public VNVisitor {
                     = new AstAnd{fl, new AstVarRef{fl, fvarp, VAccess::READ}, solverCallp};
                 randomizeFuncp->addStmtsp(
                     new AstAssign{fl, new AstVarRef{fl, fvarp, VAccess::WRITE}, andExprp});
+                AstCMethodHard* const restorep
+                    = new AstCMethodHard{fl, new AstVarRef{fl, statep, VAccess::READWRITE},
+                                         VCMethod::RANDOMIZE_STATE_RESTORE};
+                restorep->dtypeSetVoid();
+                randomizeFuncp->addStmtsp(new AstIf{
+                    fl,
+                    new AstEq{fl, new AstVarRef{fl, fvarp, VAccess::READ}, new AstConst{fl, 0}},
+                    restorep->makeStmt()});
                 // Remove With nodes as processed
                 VL_DO_DANGLING(withp->unlinkFrBack()->deleteTree(), withp);
             }

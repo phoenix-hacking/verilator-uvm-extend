@@ -56,6 +56,26 @@ public:
         if (!m_values.emplace(&value).second) return;
         m_restore.emplace_back([&value, saved = value]() mutable { value = std::move(saved); });
     }
+    /// Scope randomization updates existing elements; preserve their storage and any ref aliases.
+    template <typename T_Value>
+    void saveArgument(T_Value& value) VL_MT_UNSAFE {
+        save(value);
+    }
+    /// Save fixed-array elements, including nested containers.
+    template <typename T_Value, size_t N_Depth>
+    void saveArgument(VlUnpacked<T_Value, N_Depth>& value) VL_MT_UNSAFE {
+        for (size_t index = 0; index < N_Depth; ++index) saveArgument(value[index]);
+    }
+    /// Save existing dynamic-array or queue elements without replacing their storage.
+    template <typename T_Value, size_t N_MaxSize>
+    void saveArgument(VlQueue<T_Value, N_MaxSize>& value) VL_MT_UNSAFE {
+        for (int32_t index = 0; index < value.size(); ++index) saveArgument(value.atWrite(index));
+    }
+    /// Save values at the existing associative-array keys.
+    template <typename T_Key, typename T_Value>
+    void saveArgument(VlAssocArray<T_Key, T_Value>& value) VL_MT_UNSAFE {
+        for (const auto& entry : value) saveArgument(value.at(entry.first));
+    }
     /// Undo failed randomization. Saved handles keep nested objects alive until restoration ends.
     void restore() VL_MT_UNSAFE {
         for (auto it = m_restore.rbegin(); it != m_restore.rend(); ++it) (*it)();
