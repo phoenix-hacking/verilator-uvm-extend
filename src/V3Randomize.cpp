@@ -154,6 +154,7 @@ class RandomizeMarkVisitor final : public VNVisitor {
     using BaseToDerivedMap = std::unordered_map<const AstClass*, DerivedSet>;
 
     BaseToDerivedMap m_baseToDerivedMap;  // Mapping from base classes to classes that extend them
+    std::unordered_set<AstClass*> m_globalClasses;  // Classes processed for nested solving
     AstClass* m_classp = nullptr;  // Current class
     AstNode* m_constraintExprGenp = nullptr;  // Current constraint or constraint if expression
     AstNodeModule* m_modp;  // Current module
@@ -220,8 +221,12 @@ class RandomizeMarkVisitor final : public VNVisitor {
                     }
                     if (classRefp) {
                         AstClass* const rclassp = classRefp->classp();
-                        if (!rclassp->user1()) {
-                            rclassp->user1(IS_RANDOMIZED_GLOBAL);
+                        // Standalone and inline randomization may have marked this class
+                        // already. Nested solving is an independent requirement.
+                        if (m_globalClasses.emplace(rclassp).second) {
+                            if (rclassp->user1() < IS_RANDOMIZED_GLOBAL) {
+                                rclassp->user1(IS_RANDOMIZED_GLOBAL);
+                            }
                             markGlobalConstrainedVars(rclassp);
                             markMembers(rclassp);
                             markDerived(rclassp);
@@ -568,16 +573,16 @@ class RandomizeMarkVisitor final : public VNVisitor {
         if (classp) {
             if (!classp->user1()) classp->user1(IS_RANDOMIZED);
             markMembers(classp);
-            // Clone constraints from all IS_RANDOMIZED_GLOBAL members
+            // Clone constraints from all nested rand class members, including
+            // classes also used by standalone or inline randomization.
             classp->foreachMember([&](AstClass* const, AstVar* const memberVarp) {
                 if (!memberVarp->rand().isRandomizable()) return;
                 const AstNodeDType* const dtypep = memberVarp->dtypep()->skipRefp();
                 const AstClassRefDType* const classRefp = VN_CAST(dtypep, ClassRefDType);
                 if (!classRefp || !classRefp->classp()) return;
                 AstClass* const memberClassp = classRefp->classp();
-                if (memberClassp->user1() != IS_RANDOMIZED_GLOBAL) return;
                 memberVarp->globalConstrained(true);
-                // Clone constraints from this IS_RANDOMIZED_GLOBAL member class
+                // Clone constraints from this nested member class
                 AstVarRef* rootVarRefp
                     = new AstVarRef{nodep->fileline(), classp, memberVarp, VAccess::READ};
                 std::vector<AstVar*> emptyPath;
