@@ -39,11 +39,32 @@ passed locally with the debug compiler and Z3 available. This is not a fresh
 M07 stays open: the resource direct-lookup XFAIL is not conformance credit.
 Unmodified upstream UVM source flow and both performance gates remain open.
 
+Ongoing follow-up validation has exercised all 27 selected tests against the
+unchanged Accellera 2020.3.1 source checkout across one 25-pass/2-failure run
+and two passing DPI retries. The DPI retries use an explicit adapter that
+links upstream common components with Verilator's HDL backend; the upstream
+top-level DPI file has no Verilator backend selector. A fresh ordered run
+with the adapter is pending. This is not yet accepted source-lane closure.
+
+M09 is now in progress. New real UVM constrained-random integration exposed
+compiler failures beyond the accumulated compatibility inventory. Four
+separate fixes are under validation on
+[`codex/uvm-randomization-correctness`](https://github.com/phoenix-hacking/verilator-uvm-extend/tree/codex/uvm-randomization-correctness):
+foreach index diagnostics, inherited array element solving, inherited
+constraint preparation, and inline array resize-and-resolve behavior.
+The inline-array test passes in both simulation modes and with protected
+identifiers; 16 adjacent regression scenarios also pass. Full regression,
+real UVM sequence-item replay, and exact-revision CI remain pending. None of
+these development results advances the formal completion counts above.
+The real UVM item test now completes 64 checked randomized transactions,
+then fails its unsatisfiable-randomization check because `post_randomize`
+is called on failure. That callback defect remains an explicit M09 blocker;
+the test has not reached successful completion or deterministic replay.
+
 Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated
 results and detailed tables below are historical; use `tracker.yaml` and this
 checkpoint for current status.
-
 
 Historical detailed snapshot: **2026-08-09** (PR #41 retains its recorded local and exact-head
 CI closure; stacked PR #42 contains a source-integrated 27-test successor lane
@@ -69,12 +90,12 @@ not mean that the end-to-end UVM program is complete.
 The source-of-truth order is:
 
 1. `tracker.yaml` owns machine-checked statuses and evidence IDs.
-2. `PLAN.md` owns the current PR lane contract and reproduction protocol.
-3. `MATRIX.md` owns accepted evidence and claim boundaries.
-4. `ROADMAP.md`, `SUPPORT_MATRIX.md`, and `roadmap-tracker.yaml` preserve the
+1. `PLAN.md` owns the current PR lane contract and reproduction protocol.
+1. `MATRIX.md` owns accepted evidence and claim boundaries.
+1. `ROADMAP.md`, `SUPPORT_MATRIX.md`, and `roadmap-tracker.yaml` preserve the
    broader pre-PR requirements and dependency plan.
-5. GitHub issues #1-#40 own public work items.
-6. This file combines those sources into an honest status and forecast.
+1. GitHub issues #1-#40 own public work items.
+1. This file combines those sources into an honest status and forecast.
 
 Run this before trusting the exact roll-ups:
 
@@ -166,7 +187,7 @@ and correcting compiler/runtime semantics under realistic UVM pressure.
 | 1 | Focused named-disable/process closure | Pass; unscored | Local, push CI, and PR CI passed 30/30 with cleanup; the implementation has an explicit support envelope. | None inside this focused technical gate; preserve evidence. | 0 |
 | 2 | Current 27-test UVM lane | Workflow-level pull-request CI pass; local pending | Run 31346076613 passed source `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73`; the successful aggregate includes the configured current `uvm2020` job. | Obtain accepted local execution after the `ENOSPC` blocker is removed; do not treat later evidence-only commits as tested. | 1-2 days after executable access |
 | 3 | PR #41 current-head technical CI | Pass | Format succeeded; push and PR `build-test` each passed 46/46, including all 25 former-red shards and all five `dist-vlt-0` jobs. | Keep the tracker-only recording child scoped as untested documentation. | 0 |
-| 4 | Contributor Agreement/DCO | `[----------]` external | Runs 31311244130 and 31311246183 request a human-signed `docs/CONTRIBUTORS` entry. | Human contributor must satisfy repository policy; agents must not edit `docs/CONTRIBUTORS`. | Usually <1 day of human time |
+| 4 | Contributor Agreement/DCO | `[----------]` external | Runs 31311244130 and 31311246183 request a human-signed `docs/CONTRIBUTORS` entry. | Human contributor must satisfy repository policy; agents must not edit `docs/CONTRIBUTORS`. | Usually \<1 day of human time |
 | 5 | Align all planning artifacts | `[########--]` about 80% | Canonical PR files validate; broad pre-PR files and `PROGRESS.md` are published. | Align stale issue bodies, split over-broad gates, and remove namespace ambiguity. | 2-5 days |
 | 6 | M07 config/resource/component closure | `[######----]` source-integrated; 0% formal | Strict config/resource/component and numeric-precedence source tests are present, and workflow-level pull-request CI passed the configured current lane. | Obtain accepted local proof and close the direct-path deviation; a bounded direct-path XFAIL is not conformance. | 2-5 days after executable access |
 
@@ -483,20 +504,20 @@ This is the current dependency-aware order, not a promise that only one item
 can run at a time:
 
 1. Merge-ready PR #41: Ubuntu 22 root fix, golden, regression, CI, human DCO.
-2. M07 config/resource/component acceptance and M05 class/static cleanup.
-3. M02/M03 semantic/API inventories and explicit diagnostics.
-4. M08 TLM and sequence handshake.
-5. M09 constrained-random sequence items with solver/replay.
-6. M11 APB agent, using the completed VIF/config/TLM/sequence layers.
-7. M12 AXI-lite agent.
-8. M13 RAL frontdoor/predictor/built-in smokes.
-9. M10 coverage and M15 SVA, integrated into both protocol agents.
-10. M14 C reference path and accepted VPI/backdoor strategy.
-11. M16 synthetic SoC with reset/CSR/DMA/IRQ/memory/multi-agent traffic.
-12. M17 nightly, selection, documentation, diagnostics, performance, and
-    reproducibility closure.
-13. M18 advanced parity dispositions and M19 claim/issue hygiene.
-14. Requirement-by-requirement final audit proving all 21 criteria.
+1. M07 config/resource/component acceptance and M05 class/static cleanup.
+1. M02/M03 semantic/API inventories and explicit diagnostics.
+1. M08 TLM and sequence handshake.
+1. M09 constrained-random sequence items with solver/replay.
+1. M11 APB agent, using the completed VIF/config/TLM/sequence layers.
+1. M12 AXI-lite agent.
+1. M13 RAL frontdoor/predictor/built-in smokes.
+1. M10 coverage and M15 SVA, integrated into both protocol agents.
+1. M14 C reference path and accepted VPI/backdoor strategy.
+1. M16 synthetic SoC with reset/CSR/DMA/IRQ/memory/multi-agent traffic.
+1. M17 nightly, selection, documentation, diagnostics, performance, and
+   reproducibility closure.
+1. M18 advanced parity dispositions and M19 claim/issue hygiene.
+1. Requirement-by-requirement final audit proving all 21 criteria.
 
 ## Update contract
 

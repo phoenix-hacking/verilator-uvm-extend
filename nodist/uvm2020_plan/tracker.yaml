@@ -1229,12 +1229,22 @@ milestones:
   M09:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10
     title: Constrained-random sequence items
-    status: not_started
+    status: in_progress
     gates:
       M09-G01-CLOSURE:
         title: Deterministic constrained-random sequence-item acceptance passes
         status: pending
         evidence: []
+        claim_boundary: >-
+          Real UVM sequence-item integration is under active local validation.
+          Reduced regressions exposed and now cover foreach diagnostics,
+          inherited array element solving, inherited constraint preparation,
+          and inline array resize-and-resolve behavior. These compiler fixes
+          do not establish integrated UVM acceptance, seed replay, failed-solve
+          callbacks, or performance closure.
+          The real UVM test completes 64 checked transactions but then detects
+          post_randomize being called after an unsatisfiable solve. This is an
+          open correctness failure, not an accepted negative-test oracle.
   M10:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11
     title: Functional coverage from UVM classes
