@@ -9,17 +9,8 @@
 
 import vltest_bootstrap
 
-test.scenarios('simulator')
+test.scenarios('vlt_all')
 
-if not test.have_solver:
-    test.skip("No constraint solver installed")
-
-test.timeout(60)
-for defines in ['', '+define+ASSOC_SIZE_EXPANDED']:
-    test.compile(threads=2 if test.vltmt else 1,
-                 verilator_flags2=[
-                     '-Wall', '-Wno-DECLFILENAME', '--no-timing', '-CFLAGS', '-std=c++14', defines
-                 ])
-    test.execute()
+test.compile(fails=True, expect_filename=test.golden_filename)
 
 test.passes()
