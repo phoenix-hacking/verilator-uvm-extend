@@ -455,12 +455,14 @@ public:
             AstCStmt* const vlprocp = new AstCStmt{nodep->fileline()};
             vlprocp->add("VlProcessRef vlProcess = std::make_shared<VlProcess>();\n");
             vlprocp->add("VlNamedActivationToken vlActivation;\n");
-            vlprocp->add("VlProcessContext __VprocessContext{vlProcess.get()};");
+            vlprocp->add("VlProcessContext __VprocessContext{*vlProcess};");
             nodep->stmtsp()->addHereThisAsNext(vlprocp);
         } else if (nodep->needProcess() && nodep->stmtsp()) {
+            // Every caller supplies a process. Use the non-null context overload so GCC
+            // does not infer a null path before an atomic process-state read.
             // Set current process so VlRNG() constructors in this function seed from it
             AstCStmt* const setProcessp = new AstCStmt{nodep->fileline()};
-            setProcessp->add("VlProcessContext __VprocessContext{vlProcess.get()};");
+            setProcessp->add("VlProcessContext __VprocessContext{*vlProcess};");
             nodep->stmtsp()->addHereThisAsNext(setProcessp);
         }
 
