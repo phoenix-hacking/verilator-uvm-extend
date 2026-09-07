@@ -16,6 +16,7 @@ import pty
 import re
 import resource
 import runpy
+import shlex
 import shutil
 import signal
 import subprocess
@@ -1769,6 +1770,29 @@ class VlTest:
         return "--build-jobs " + str(Args.driver_build_jobs_n) + " --output-groups " + str(
             max(6, Args.driver_build_jobs_n))
 
+    def uvm2020_flags(self, *, package: bool = True, dpi: bool = False) -> list:
+        """Select the bundled UVM artifact or an explicitly requested source tree."""
+        source_root = Args.driver_uvm_source_root
+        source_dir = os.path.join(source_root, 'src') if source_root else 't/uvm/v2020_3_1'
+        include_dir = source_dir if source_root or not package else 't/uvm'
+        flags = ['+incdir+' + shlex.quote(include_dir)]
+        if package:
+            if source_root:
+                if not dpi:
+                    flags += ['+define+UVM_NO_DPI']
+                flags += [shlex.quote(os.path.join(source_dir, 'uvm_pkg.sv'))]
+            else:
+                mode = 'dpi' if dpi else 'nodpi'
+                flags += [f't/uvm/uvm_pkg_all_v2020_3_1_{mode}.svh']
+        if dpi:
+            flags += ['--vpi']
+            if source_root:
+                dpi_include = '-I' + shlex.quote(os.path.join(source_dir, 'dpi'))
+                flags += ['-CFLAGS', shlex.quote(dpi_include), 't/t_uvm_source_dpi.cpp']
+            else:
+                flags += [shlex.quote(os.path.join(source_dir, 'dpi', 'uvm_dpi.cc'))]
+        return flags
+
     @property
     def driver_verilator_flags(self) -> list:
         return Args.passdown_verilator_flags
@@ -3047,6 +3071,9 @@ if __name__ == '__main__':
     parser.add_argument('--driver-preserve-order',
                         action='store_true',
                         help='schedule tests in command-line order instead of priority order')
+    parser.add_argument('--driver-uvm-source-root',
+                        default=None,
+                        help='run UVM 2020 tests against this unmodified upstream source tree')
     parser.add_argument('--fail-max',
                         action='store',
                         default=None,
@@ -3100,6 +3127,17 @@ if __name__ == '__main__':
                             help='scenario-enable ' + scen)
 
     (Args, rest) = parser.parse_known_intermixed_args()
+    if Args.driver_uvm_source_root is not None:
+        if not Args.driver_uvm_source_root:
+            parser.error('--driver-uvm-source-root requires a nonempty path')
+        Args.driver_uvm_source_root = os.path.abspath(
+            os.path.expanduser(Args.driver_uvm_source_root))
+        for uvm_required_file in ('uvm_pkg.sv', 'uvm_macros.svh', 'dpi/uvm_dpi.h',
+                                  'dpi/uvm_common.c', 'dpi/uvm_regex.cc', 'dpi/uvm_svcmd_dpi.c',
+                                  'dpi/uvm_hdl_polling.c'):
+            if not os.path.isfile(
+                    os.path.join(Args.driver_uvm_source_root, 'src', uvm_required_file)):
+                parser.error('--driver-uvm-source-root requires src/' + uvm_required_file)
     if Args.driver_build_jobs is not None and Args.driver_build_jobs < 1:
         parser.error('--driver-build-jobs must be at least 1')
     if Args.driver_clean_before_seed:
