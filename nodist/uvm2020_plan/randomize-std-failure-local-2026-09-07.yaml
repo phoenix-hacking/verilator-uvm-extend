@@ -36,6 +36,7 @@ logs:
   /home/holden/verilator-work/randomize-std-failure-lint-py-final.log: 213fb5ca1d1bdd56d370a8a3974bb911d1f88c11d981a9369ae68f5aee5f287e
   /home/holden/verilator-work/randomize-std-failure-neighbor-tests.txt: 13a2103913e1c8bf93769dcd6a53933c7f2b20e0e78ce88eaf1c1317f2cd1059
   /home/holden/verilator-work/randomize-std-failure-cppcheck-inputs.sha256: b3b7e828313bd476e3181b40fffce6acb46e1f391b5658dd905c09dea101d2b3
+  /home/holden/verilator-work/randomize-std-failure-neighbors.log: b8c8f764941d34d3c93fa3abd3e04438f957f82985d973734f1776e68914ee02
 focused:
   passed: 4
   failed: 0
@@ -53,13 +54,17 @@ causal_parent:
   elapsed: 0:28
   failure: Failed solve changes value to 24; expected prior value 23, at test line 57.
 separate_limitation: Array ref arguments in module functions expose the existing IMPURE diagnostic for generated stdrand. The final alias tests use static class methods; the diagnostic is not fixed here.
-acceptance: Local rollback fix; broader regression, full static analysis, CI, conformance and performance acceptance remain pending.
+acceptance: Local rollback fix; full static analysis, CI, conformance and performance acceptance remain pending.
 neighbors:
-  status: running
+  status: completed
   drivers: 196
   scenarios: 341
+  passed: 341
+  failed: 0
+  elapsed: '64:23'
   manifest: /home/holden/verilator-work/randomize-std-failure-neighbor-tests.txt
   log: /home/holden/verilator-work/randomize-std-failure-neighbors.log
+  sha256: b8c8f764941d34d3c93fa3abd3e04438f957f82985d973734f1776e68914ee02
 static_analysis:
   status: running
   log: /home/holden/verilator-work/randomize-std-failure-cppcheck.log

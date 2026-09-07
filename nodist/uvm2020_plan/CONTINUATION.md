@@ -6,13 +6,21 @@
 
 ## Post-crash resume point: 2026-09-07
 
-Current integration source is `a48169e1b`, with 24 source commits applied
-without conflicts. The main native build is active in
-`/home/holden/verilator-work/integration-recovered-build.log`. Do not change
-compiler inputs while it runs. The two recovered UVM sequence files remain
-untracked and backed up in `integration-recovery-20260907T200409Z`. Run them
-with the combined compiler next. [Combined evidence](integration-recovered-local-2026-09-07.yaml)
-records the source revision; combined validation and release acceptance remain open.
+The 24 recovered source commits were integrated at `a48169e1b`, followed by
+compiler style cleanup at `75580fc39` and the profiler correction at
+`7bbee7b22`. Both native builds completed. The combined focused run passed
+43/44 checks; both attribute checks then passed using `attribute-env.sh`,
+which supplies the missing Clang builtin headers only to attribute analysis.
+Keep that environment separate from GCC model builds.
+The recovered UVM sequence files remain untracked and backed up in
+`integration-recovery-20260907T200409Z`. They are now running against unmodified
+UVM 2020.3.1 at `78c06547a2a0a29b3dc9dcafae62b75b2ff61544`, with DPI/no-DPI,
+vlt/vltmt, and same/different-seed replay. The binary is preserved as
+`/home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6`;
+the log is `uvm-sequence-randomize-source.log`. Do not change their compiler,
+runtime, or test inputs while execution is active.
+[Combined evidence](integration-recovered-local-2026-09-07.yaml) records the
+source and binary hashes; full regression and release acceptance remain open.
 
 The [recovery record](recovery-validation-2026-09-07.yaml) supersedes old local
 session identifiers and full-regression running/completion claims. All eight
@@ -107,13 +115,14 @@ is frozen at published `d513bed19`, based on `001c6ca86`. Four final C++14
 ordinary/protected scenarios pass and all four fail on the unchanged parent;
 six distribution checks pass. It saves all arguments before basic writes and
 restores existing array elements individually so active ref aliases stay valid.
-Its 341-scenario broader regression and full cppcheck are running. The existing
+Its broader regression passed all 341 scenarios in 64:23; full cppcheck is running. The existing
 IMPURE restriction for array references in module functions remains separate;
 the final alias tests use static class methods.
 
 The process-context correction is published at `6eaf8a0c3`, with 10 focused
 passes and four GCC 13 parent failures at explicit `-O2` with CXXFLAGS cleared.
-Its worktree is frozen for 190 neighboring scenarios and full cppcheck. The
+All 190 neighboring scenarios passed in 23:43. Its worktree remains frozen
+for full cppcheck. The
 nullable runtime context overload remains; generated functions use the required
 reference overload. Detailed source/compiler/log hashes are in the new local
 evidence records.
@@ -124,7 +133,14 @@ had consumed 3935 CPU seconds and 13.5 GB virtual memory before limits were
 applied; the failure remains recorded. Clearing inherited CXXFLAGS on the same
 frozen compiler/runtime passes seven of nine replay scenarios, including the
 merge-condition case, four C-split checks, and both untimed profiling checks.
-Both timing-profile scenarios still fail and need independent investigation.
+Both timing-profile scenarios failed because the report parser required a
+public eval/eval_step entry to identify the model. The independent parser fix
+is published at `8e9a9178d` and integrated at `7bbee7b22`: discover root symbols
+when those entries are absent. Its reduced regression fails on the parent;
+eight checks pass, including both real timing-profile scenarios. Full format
+and Python lint pass. [Local evidence](profiler-root-discovery-local-2026-09-07.yaml)
+retains exact inputs and outputs. The profiler worktree remains available at
+`/home/holden/verilator-work/profiler-root-discovery`.
 The replay is bounded to 180 CPU seconds per process and 4 GiB address space.
 
 Next work is to inspect the active regressions and CI, finish broader failed-randomization and process-context

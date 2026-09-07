@@ -48,6 +48,7 @@ logs:
   /home/holden/verilator-work/process-probe-reference-final.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
   /home/holden/verilator-work/process-context-gcc-neighbor-tests.txt: 333a13bdeb8013cb6c3489d9adc3fd2d079736d4cbf727f7bccb2ac2e16082ff
   /home/holden/verilator-work/process-context-gcc-cppcheck-inputs.sha256: aa402fecf7ac641d27d30aec144eb83f497d8371a8d33822b291f07da94aa38e
+  /home/holden/verilator-work/process-context-gcc-neighbors.log: 1fb2850846a52d780b97eeabd67c0adc7d281800e9af55124a034308176b45ba
 focused:
   passed: 10
   failed: 0
@@ -62,7 +63,7 @@ causal_parent:
   elapsed: '1:02'
   failure: GCC 13 -O2 reports stringop-overflow at the atomic process-state read after entering a nullable process context.
 portability: The reduced reference-context probe compiles under C++14 with -O2 and -Werror=stringop-overflow; all four simulator configurations pass.
-acceptance: Local code-generation correction; broader regression, full static analysis, CI, conformance and performance acceptance remain pending.
+acceptance: Local code-generation correction; full static analysis, CI, conformance and performance acceptance remain pending.
 date: '2026-09-07'
 execution_worktree: /home/holden/verilator-work/randomize-recursion-check
 new_gate_credit: 0
@@ -71,11 +72,15 @@ implementation: Generated functions that require a process enter their context t
 reduction: GCC 13 -O2 rejects both the original and split-caller probes. Removing context entry or reading state first avoids the diagnostic. The final reference overload avoids the nullable branch while
   retaining context ordering.
 neighbors:
-  status: running
+  status: completed
   drivers: 103
   scenarios: 190
+  passed: 190
+  failed: 0
+  elapsed: '23:43'
   manifest: /home/holden/verilator-work/process-context-gcc-neighbor-tests.txt
   log: /home/holden/verilator-work/process-context-gcc-neighbors.log
+  sha256: 1fb2850846a52d780b97eeabd67c0adc7d281800e9af55124a034308176b45ba
 static_analysis:
   status: running
   log: /home/holden/verilator-work/process-context-gcc-cppcheck.log

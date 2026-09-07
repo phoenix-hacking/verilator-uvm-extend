@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
 date: '2026-09-07'
-claim_boundary: Combined source checkpoint; the initial native build is running and no combined test acceptance is claimed.
+claim_boundary: Combined native builds completed. The initial focused run passed 43 of 44 checks; both attribute checks passed in a separate replay using the saved Clang environment. UVM sequence execution,
+  full regression, static and CI acceptance remain pending.
 revision: a48169e1b517a24723bb4e09e4dac4811f3ceff2
 source_tree: 5840b4f2303665893bc260a4079ee0ea066bd94a
 include_tree: df0df3deb2d1005e97aef6efe9a7cbe0d8952e8d
@@ -38,11 +39,49 @@ source_commits:
 implementation: Integrate the randomization/foreach chain, compiler/PCH and process-context corrections, attribute-checker fixes, C DPI reference test, HDL backdoor test, and dynamic DPI arrays. Equivalent
   DPI reference commits were selected once.
 build:
-  status: running
+  status: completed
   command: make -C src opt -j1
   configure_flags: [--enable-ccwarn, --enable-longtests]
   log: /home/holden/verilator-work/integration-recovered-build.log
+  compiler: /home/holden/verilator-work/verilator_bin_integration_a48169e1b
+  sha256: 59a230405c33038cd6be1309c58d3a0e78eb1cc7f5c511da74efe36e48a1c76f
+  log_sha256: 8091e7787dc8b66e1356c67b3d3584d67280d5e8a95c5a0338720a341ad04d75
 uvm_sequence_test:
-  status: recovered untracked work; execution pending
+  status: running
   files: [test_regress/t/t_uvm_sequence_randomize.py, test_regress/t/t_uvm_sequence_randomize.v]
+  uvm_source_root: /home/holden/verilator-work/uvm-2020.3.1
+  uvm_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  CXXFLAGS: ''
+  compiler: /home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6
+  log: /home/holden/verilator-work/uvm-sequence-randomize-source.log
+  scenarios: [vlt, vltmt]
+  dpi_modes: [false, true]
+  seeds: [1729, 1729, 2718]
 new_gate_credit: 0
+cleanup_build:
+  revision: 75580fc3971cf0036910f874ad03c5bf0f5c56c7
+  source_tree: 6d43e292ef474b1d7aca352689cf2e39acb4090a
+  include_tree: df0df3deb2d1005e97aef6efe9a7cbe0d8952e8d
+  command: make -C src opt -j2
+  status: completed
+  log: /home/holden/verilator-work/integration-recovered-build-cleanup.log
+  log_sha256: 6f58af0fbffbb6914e1c1257ad3eabbb0101f30a7755cee1abf00b2eff40b19a
+  compiler: /home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6
+  sha256: 38deed9104b160aeb6989f2e33114667610df912b7810db4833b9da50fa4506d
+  changes: Make afterp const and newStateThisRef static; rename the nested constraint-mode local to avoid shadowing.
+focused:
+  passed: 43
+  failed: 1
+  elapsed: '7:47'
+  log: /home/holden/verilator-work/integration-recovered-focused.log
+  sha256: 480b15f2e363bf3e738176e5690932401b9a9bfa71cbac5f30e821e72736b8b6
+  failure: 't_dist_attributes_bad: pip libclang could not locate builtin stddef.h; no compiler/model test failed.'
+attribute_replay:
+  passed: 2
+  failed: 0
+  elapsed: 0:12
+  environment: /home/holden/verilator-work/attribute-env.sh
+  environment_sha256: a037eb076e3266180f9da151d6b74f16458c893dbcda10892027e6c2addb02e4
+  scope: CPLUS_INCLUDE_PATH is set only for this analysis process, not GCC model builds.
+  log: /home/holden/verilator-work/integration-attribute-clang-replay.log
+  sha256: 044423ca972b4d4de292f962d53b13bcebf24d40790b94b9fffdd6f3f7a83f1c

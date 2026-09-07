@@ -8,10 +8,20 @@
 
 The integration branch now contains the 24 recovered source commits at
 `a48169e1b`, including the randomization, foreach, compiler/process-context,
-attribute-checker, DPI, and HDL-backdoor changes. Its native compiler build is
-running; the recovered UVM sequence regression is next.
+attribute-checker, DPI, and HDL-backdoor changes. Its native compiler build
+completed. The combined focused run passed 43/44 checks; both attribute checks
+then passed using the saved Clang environment. Compiler cleanup is committed
+at `75580fc39`. The recovered UVM sequence regression is running against
+unmodified UVM 2020.3.1 in both DPI modes and both simulator scenarios.
 [Integration evidence](integration-recovered-local-2026-09-07.yaml) records the
 combined source revision; component results do not establish combined acceptance.
+
+The profiler correction is published at `8e9a9178d` and integrated at
+`7bbee7b22`. It identifies models from generated root symbols when optimization
+removes public evaluation entries from the profile. The reduced test fails on
+the parent; eight checks pass, including real timing and non-timing profiles
+in both simulator scenarios. [Local evidence](profiler-root-discovery-local-2026-09-07.yaml)
+records the parser results, not simulator-performance measurements.
 
 All eight worktrees and ten uncommitted source/test files survived the host
 crash. Two zero-byte compiler objects were preserved and rebuilt. The two full
@@ -83,12 +93,13 @@ PCH additions versus its associative-size parent; both retain one additional
 
 The scope-randomization rollback correction is published at `d513bed19`, with
 four C++14 ordinary/protected passes and six distribution passes; all four
-final scenarios fail on the unchanged parent. Its 341-scenario broader run
-and full cppcheck are active. [Local evidence](randomize-std-failure-local-2026-09-07.yaml)
+final scenarios fail on the unchanged parent. All 341 broader scenarios passed
+in 64:23; full cppcheck is active. [Local evidence](randomize-std-failure-local-2026-09-07.yaml)
 records preservation of array storage and live references. The process-context
 correction is published at `6eaf8a0c3`, with 10 focused passes and four parent
 compiler failures. Its [local evidence](process-context-gcc-local-2026-09-07.yaml)
-includes the reduced GCC 13/C++14 probe and active 190-scenario broader run.
+includes the reduced GCC 13/C++14 probe and all 190 broader scenarios passing
+in 23:43. Its full cppcheck is active.
 
 Both the recovery and frozen null-child cppcheck sweeps completed with the same
 11 error reports as the pre-crash candidate; this is not a clean static pass. Full regression, CI, and static
