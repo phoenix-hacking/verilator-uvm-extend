@@ -41,7 +41,10 @@ for trial in range(0, trials):
 
     if sys.platform != "darwin":
         test.file_grep(gantt_log, r'CPU info:')
-        test.file_grep(gantt_log, r'NUMA status += (assigned|%Warning: no /proc/cpuinfo)')
+        # Preserve affinity restrictions inherited from the test environment.
+        test.file_grep(
+            gantt_log,
+            r'NUMA status += (assigned|processor affinity already set|%Warning: no /proc/cpuinfo)')
         # False fails occasionally
         # test.file_grep_not(gantt_log, r'%Warning:')  # e.g. There were fewer CPUs (1) than threads (3).
 
