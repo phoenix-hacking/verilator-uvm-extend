@@ -59,16 +59,16 @@ fix passes its causal regression in both simulation modes and 13 existing
 callback/null-randomization scenarios. The nested-constraint fix passes its
 expanded causal regression in both modes and 20 adjacent scenarios.
 
-At `b32871eba`, the real UVM item test passes completely against unchanged
-Accellera 2020.3.1 sources: three runs of 64 checked transactions, with seeds
-1729, 1729, and 2718. The repeated seed produces identical transaction traces;
+At `a9949d7ae`, the real UVM item test passes completely against unchanged
+Accellera 2020.3.1 sources in both single-threaded and multithreaded simulation.
+Each mode passes three runs of 64 checked transactions, with seeds 1729, 1729,
+and 2718: 384 transactions across six runs. The repeated seed produces identical traces;
 the different seed changes them. Modes, failed-solve callbacks, and recovery
-checks pass. This is local single-threaded development evidence using retained
+checks pass. This is local development evidence using retained
 compiler binary SHA-256
-`6731cd4b29bd2b62f5a7413a4ccb2520fe3208a095a17938b45ad08536df3c9e`.
-The latest candidate, `a9949d7ae`, also fixes mixed nested randomization;
-its real UVM test is being rerun in both simulation modes. Full candidate
-regression and exact-revision CI remain pending. The integrated test remains
+`5599913ab5dd2845dfe253faf39731ae7654f413d4312b67dd362bf4e6b880d1`.
+Full candidate regression, static analysis, and exact-revision CI remain
+pending. The integrated test remains
 uncommitted, and none of these development results advances formal completion
 counts or establishes performance.
 

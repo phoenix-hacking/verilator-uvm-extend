@@ -1241,14 +1241,14 @@ milestones:
           inherited array element solving, inherited constraint preparation,
           inline array resize-and-resolve behavior, failed-solve callbacks,
           and mixed standalone/nested constraint processing.
-          At b32871eba a local single-threaded real UVM test passes three runs
-          of 64 checked transactions with seeds 1729, 1729, and 2718. Repeated
-          seeds reproduce the trace, a different seed changes it, and mode,
-          failed-solve callback, and recovery checks pass.
-          The latest candidate a9949d7ae adds the mixed nested-constraint fix
-          with an expanded causal regression and 20 adjacent passing scenarios.
-          Real UVM validation of that candidate in both simulation modes, full
-          candidate regression, and exact-revision CI remain pending. The
+          At a9949d7ae a local real UVM test passes three runs of 64 checked
+          transactions in each of single-threaded and multithreaded simulation,
+          with seeds 1729, 1729, and 2718: 384 transactions across six runs.
+          Within each mode, repeated seeds reproduce the trace, a different
+          seed changes it, and mode, failed-solve callback, and recovery checks
+          pass. The mixed nested-constraint fix also has an expanded causal
+          regression and 20 adjacent passing scenarios. Full candidate
+          regression, static analysis, and exact-revision CI remain pending. The
           integrated test is still uncommitted development work. These results
           do not establish milestone acceptance or performance closure.
   M10:
