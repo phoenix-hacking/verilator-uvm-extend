@@ -767,6 +767,22 @@ expanded_lane:
       ref: validation.ci.runs.historical_fifteen_test_lane
 
 evidence:
+  UVM-BACKDOOR-20260907:
+    claim: >-
+      Clocked RTL backdoor reads, deposits, forces, releases, and injected-fault
+      detection pass in all four local source/bundled UVM configurations.
+      Required exact-revision CI and release regression remain pending.
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - nodist/uvm2020_plan/backdoor-local-2026-09-07.yaml
+      ci_and_regression:
+        required: true
+        status: pending
+        refs:
+          - https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34123664095
   LOCAL-DPI-REFERENCE-20260907:
     claim: >-
       The C reference-model scoreboard path passes locally in both simulation
@@ -1339,8 +1355,17 @@ milestones:
           Legal dynamic input/inout DPI arrays remain under development.
       M14-G03-VPI-BACKDOOR:
         title: Minimal VPI/backdoor support or limitation is accepted
-        status: pending
-        evidence: []
+        status: in_progress
+        evidence: [UVM-BACKDOOR-20260907]
+        implementation_tests:
+          - test_regress/t/t_uvm_hdl_backdoor.py
+        claim_boundary: >-
+          Published at ff023501c2bdc9314021c5867e7ec21e90970115 on
+          codex/uvm-backdoor. All four local configurations pass, including
+          clocked RTL state, memory, deposit/force/release, and fault detection.
+          Required exact-revision CI and release regression remain pending;
+          this gate and the M14 milestone remain open. Mandatory-feature
+          limitations cannot satisfy the full-UVM goal.
   M15:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16
     title: SVA protocol profile

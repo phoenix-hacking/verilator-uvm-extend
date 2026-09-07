@@ -1,0 +1,103 @@
+# DESCRIPTION: Verilator: local clocked UVM HDL backdoor evidence
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-07'
+gate: M14-G03-VPI-BACKDOOR
+status: in_progress
+proof_scope: Local clocked UVM HDL backdoor semantics; required exact-revision CI and release regression
+  remain pending.
+test_revision: ff023501c2bdc9314021c5867e7ec21e90970115
+test_source_tree: e18fd70a1bcecf57e350183978cd1f9fa2e0972c
+test_branch: https://github.com/phoenix-hacking/verilator-uvm-extend/tree/codex/uvm-backdoor
+compiler_binary: /home/holden/verilator-uvm-extend/bin/verilator_bin
+compiler_sha256: 9c79b7e4c2395a3baf9d26afdca34e1dd5c0daba71c0d060ba10c66f22731fe9
+library_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+library_clean_after_tests: true
+results:
+  configurations: 4
+  source_vlt: 1/1 in 5:30
+  source_vltmt: 1/1 in 5:44
+  bundled_vlt_and_vltmt: 2/2 in 11:35
+  per_configuration:
+    reads: 115
+    deposits: 14
+    forces: 16
+    releases: 16
+    clock_cycles: 62
+    injected_dut_fault_detected: true
+  corrupted_dut_rejected_in_each_configuration: true
+semantic_checks:
+- Clocked 31-bit state and 65-bit two-dimensional memory use nonzero bounds.
+- Reads after NBA updates, deposit visibility and retention until the next assignment, and forces across
+  three changing clock assignments are checked.
+- Release-and-read retains forced variable state until the next assignment; release of a continuously
+  driven wire resumes its continuous driver.
+- Deposits into six independent memory words are checked for aliasing after every update.
+- Real UVM run/check phases and the report server require zero errors and fatals in each positive run.
+- The same model with a one-bit injected DUT error must emit a fatal mismatch and no success sentinel.
+artifacts_directory: /home/holden/verilator-work/uvm-backdoor-artifacts
+artifact_manifest: /home/holden/verilator-work/uvm-backdoor-artifacts/manifest-four-modes.json
+artifact_manifest_sha256: d6310c89932b64d41d955980140fc444fe625a4fa5e1b3ac9b4080c0a0409fe2
+files:
+- path: source-vlt/Vt_uvm_hdl_backdoor
+  sha256: 820a9ea516ee5d36f9c252004b26eb9ef02f9ee2b64b98f54ce91016a8349c84
+- path: source-vlt/vlt_compile.log
+  sha256: e93f6e0ed2d3e1016c631f4b454f3934b485034e8e8de877abd37ad8117b92c9
+- path: source-vlt/vlt_sim.log
+  sha256: 505b0784daf9c8b39fe68c428677435147b294edc63a6c79a41cafb4dd69684e
+- path: source-vlt/corrupt.log
+  sha256: 062cd7596011003216d4b828fee6318ed230fc98a05ceae0720db7f590d06588
+- path: source/t_uvm_hdl_backdoor.py
+  sha256: 4dbca05aaf697fe1cad209337eb2f9dda0eb927f9e55cc83a14769f83fd86aa6
+- path: source/t_uvm_hdl_backdoor.v
+  sha256: 483b272e673edfeb588398845ffffbc977f08502828c4ce39ce4566157ac6b02
+- path: source-vlt/driver.log
+  sha256: 6ceef00ee6285c40e3ad5e8155532ba6dd6347128f78b5056f30dcb4433e53c9
+- path: source-vltmt/Vt_uvm_hdl_backdoor
+  sha256: be440b0361ef5b6c62169107422390daa723a5b7d655ab30b480f98fe5b1fc39
+- path: source-vltmt/vlt_compile.log
+  sha256: d58c07de61f327be2e2e09200fdd82db3f0440c29c52eb43da4c52dac13d2fc4
+- path: source-vltmt/vlt_sim.log
+  sha256: 4681a40b480e6419baa104a5129c1472f6918164fc3880600ad2c47d0aa67d6b
+- path: source-vltmt/corrupt.log
+  sha256: c49169b1b273189ab177e0fbb90ceeb3818a23c128fbd53fabb1cae9d9da45e6
+- path: source-vltmt/driver.log
+  sha256: 30d036a2c5e29f2867beb42e286c03c26fd7a196f180f55e8480d64034c528cc
+- path: bundled-vlt/Vt_uvm_hdl_backdoor
+  sha256: 663d460b42cee55f10a5d562e93e5e21f3ddb7471092b7a8cf7a8378f51ff3a3
+- path: bundled-vlt/vlt_compile.log
+  sha256: f15cec22484cb5202de32a9be7b74e253888eb0a44492a013852dedc54f33a51
+- path: bundled-vlt/vlt_sim.log
+  sha256: 1d209fe4daa229a37f1ae3f8117fd11e71c0c30d5880c425ed99899f69c5ea42
+- path: bundled-vlt/corrupt.log
+  sha256: 525aa35be0ff1ed74b13097a085f351ece1cb21fdf5da2c3262bbbdb01451ebb
+- path: bundled-vltmt/Vt_uvm_hdl_backdoor
+  sha256: 354d998538c6e3f83834259e465c4e12f80a395035235c8d400ea48232e8eb26
+- path: bundled-vltmt/vlt_compile.log
+  sha256: c63c8948b3a4eb4e62af21b9c6b60e70a4cda4ded758293879818d4a9127c8e8
+- path: bundled-vltmt/vlt_sim.log
+  sha256: 295e95bbf54a2f225daf88ec27149ed84100ff9cca19a73397600e8d04f44c0a
+- path: bundled-vltmt/corrupt.log
+  sha256: f05d813b81797772645f5b09a9a0471f426cdc198063c0ce83f0ce43894a64ca
+- path: logs/uvm-backdoor-bundled.log
+  sha256: 80d3f65adf464af2959537fc028df95f2a14786bf898788f89a7077e68fda1f3
+ci:
+  status: pending
+  head: ff023501c2bdc9314021c5867e7ec21e90970115
+  run: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34123664095
+  format_status: pass
+  format_run: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34123663885
+required_open_proofs:
+- Exact-revision CI and release regression acceptance.
+- Full M14 closure also requires acceptance of legal dynamic-array DPI support.
+command_cwd: /home/holden/verilator-work/uvm-backdoor/test_regress
+environment: source /home/holden/verilator-work/env.sh; VERILATOR_ROOT=/home/holden/verilator-work/uvm-backdoor;
+  VERILATOR_BIN=/home/holden/verilator-uvm-extend/bin/verilator_bin; unset CXXFLAGS
+source_vlt_command: python3 driver.py --vlt --jobs 1 --driver-build-jobs 1 --driver-uvm-source-root /home/holden/verilator-work/uvm-2020.3.1
+  --obj-suffix=-uvm-backdoor-source t/t_uvm_hdl_backdoor.py
+source_vltmt_command: python3 driver.py --vltmt --jobs 1 --driver-build-jobs 1 --driver-uvm-source-root
+  /home/holden/verilator-work/uvm-2020.3.1 --obj-suffix=-uvm-backdoor-source t/t_uvm_hdl_backdoor.py
+bundled_command: python3 driver.py --vlt --vltmt --jobs 1 --driver-build-jobs 1 --obj-suffix=-uvm-backdoor-bundled
+  t/t_uvm_hdl_backdoor.py

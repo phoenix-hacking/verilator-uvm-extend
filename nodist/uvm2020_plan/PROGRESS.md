@@ -164,9 +164,12 @@ passed packed scalars to unpacked `int[]` formals; it now uses matching
 one-element unpacked arrays and retains all six packed widths through canonical
 DPI vector access. The 15 neighboring passes combine the initial 13 passes
 with both corrected-fixture passes. Seven distribution checks, full formatting,
-and focused Python lint pass. Fresh source dynamic UVM integration passes
-both modes in 12:48 with 720 checked DUT samples and fault detection; bundled
-integration remains running.
+and focused Python lint pass. Fresh dynamic UVM integration passes both modes
+against source UVM in 12:48 and bundled UVM in 10:28: all four configurations
+pass, with 1,440 checked DUT samples and fault detection in each configuration.
+The feature is committed at `9477897b7` on `codex/dpi-dynamic-arrays`.
+Matching sources, binaries, and logs are retained in
+`/home/holden/verilator-work/dpi-dynamic-artifacts/type-validation/manifest-four-modes.json`.
 Broader C++ analysis still has existing runtime findings, and no global
 static-analysis or release-regression pass is claimed.
 An independent baseline probe also confirms incorrect nested `foreach` indices
@@ -175,13 +178,14 @@ for queues under fixed dimensions with nonzero bounds. It is retained at
 defect; the DPI oracle now uses explicit inner indices and checks queue sizes.
 
 The minimal VPI/backdoor gate now has a full-UVM clocked RTL fixture implemented
-at `ff023501c` on `codex/uvm-backdoor`. Both unmodified-source configurations
+at `ff023501c` on `codex/uvm-backdoor`. All four source/bundled configurations
 pass: each checks 115 HDL reads, 14 deposits, 16 forces/releases, and 62 clock
 cycles, including 31-bit state, 65-bit memory, nonzero bounds, memory aliasing,
-and detected injected DUT corruption. Its bundled-library configurations are
-running; no acceptance credit is claimed yet. The source-vlt artifact manifest
-is `/home/holden/verilator-work/uvm-backdoor-artifacts/manifest-source-vlt.json`.
-The backdoor gate and all mandatory full-compliance requirements remain open.
+and detected injected DUT corruption. The [local backdoor evidence](backdoor-local-2026-09-07.yaml)
+records all four configurations and matching retained artifacts. M14-G03 is
+now in progress with local proof passed and required exact-revision CI and
+release regression pending. Formal totals remain 4/20 milestones and 28/46
+atomic gates; the backdoor gate and full-compliance requirements remain open.
 
 Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated
