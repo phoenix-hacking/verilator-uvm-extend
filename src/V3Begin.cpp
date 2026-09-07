@@ -120,7 +120,7 @@ class BeginVisitor final : public VNVisitor {
 
     // VISITORS
     void visit(AstForeach* nodep) override {
-        AstNode* const afterp = nodep->nextp();
+        const AstNode* const afterp = nodep->nextp();
         AstNode* const replacementp = V3Begin::convertToWhile(nodep);
         VL_DANGLING(nodep);
         // Late-generated loops need their new declarations lifted and nested loops lowered.

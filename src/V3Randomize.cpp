@@ -3732,10 +3732,10 @@ class RandomizeVisitor final : public VNVisitor {
         const auto it = m_nestedConstraints.find(constrp);
         if (it != m_nestedConstraints.end()) {
             const NestedConstraint& nested = it->second;
-            const RandomizeMode mode = {.asInt = nested.originalp->user1()};
+            const RandomizeMode randMode = {.asInt = nested.originalp->user1()};
             FileLine* const fl = stmtp->fileline();
             AstNodeExpr* const objectp = nested.newObjectRefp(fl);
-            if (!mode.usesMode) {
+            if (!randMode.usesMode) {
                 stmtp = wrapIfObjectExists(objectp, stmtp);
                 VL_DO_DANGLING(objectp->deleteTree(), objectp);
                 return stmtp;
@@ -3753,7 +3753,7 @@ class RandomizeVisitor final : public VNVisitor {
                 modeRefp = new AstMemberSel{fl, objectp->cloneTree(false), modeVarp};
             }
             AstCMethodHard* const atp = new AstCMethodHard{fl, modeRefp, VCMethod::ARRAY_AT,
-                                                           new AstConst{fl, mode.index}};
+                                                           new AstConst{fl, randMode.index}};
             atp->dtypeSetUInt32();
             stmtp = wrapIfObjectExists(objectp, new AstIf{fl, atp, stmtp});
             VL_DO_DANGLING(objectp->deleteTree(), objectp);
@@ -4538,7 +4538,7 @@ class RandomizeVisitor final : public VNVisitor {
         }
         return m_stateDtypep;
     }
-    AstThisRef* newStateThisRef(AstClass* const classp) {
+    static AstThisRef* newStateThisRef(AstClass* const classp) {
         AstClassRefDType* const dtypep = new AstClassRefDType{classp->fileline(), classp, nullptr};
         v3Global.rootp()->typeTablep()->addTypesp(dtypep);
         return new AstThisRef{classp->fileline(), dtypep};
