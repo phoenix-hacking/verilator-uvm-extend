@@ -47,19 +47,30 @@ top-level DPI file has no Verilator backend selector. A fresh ordered run
 with the adapter is pending. This is not yet accepted source-lane closure.
 
 M09 is now in progress. New real UVM constrained-random integration exposed
-compiler failures beyond the accumulated compatibility inventory. Four
+compiler failures beyond the accumulated compatibility inventory. Six
 separate fixes are under validation on
 [`codex/uvm-randomization-correctness`](https://github.com/phoenix-hacking/verilator-uvm-extend/tree/codex/uvm-randomization-correctness):
 foreach index diagnostics, inherited array element solving, inherited
-constraint preparation, and inline array resize-and-resolve behavior.
+constraint preparation, inline array resize-and-resolve behavior, failed-solve
+post callbacks, and mixed standalone/nested constraint processing.
 The inline-array test passes in both simulation modes and with protected
-identifiers; 16 adjacent regression scenarios also pass. Full regression,
-real UVM sequence-item replay, and exact-revision CI remain pending. None of
-these development results advances the formal completion counts above.
-The real UVM item test now completes 64 checked randomized transactions,
-then fails its unsatisfiable-randomization check because `post_randomize`
-is called on failure. That callback defect remains an explicit M09 blocker;
-the test has not reached successful completion or deterministic replay.
+identifiers; its 16 adjacent regression scenarios also pass. The callback
+fix passes its causal regression in both simulation modes and 13 existing
+callback/null-randomization scenarios. The nested-constraint fix passes its
+expanded causal regression in both modes and 20 adjacent scenarios.
+
+At `b32871eba`, the real UVM item test passes completely against unchanged
+Accellera 2020.3.1 sources: three runs of 64 checked transactions, with seeds
+1729, 1729, and 2718. The repeated seed produces identical transaction traces;
+the different seed changes them. Modes, failed-solve callbacks, and recovery
+checks pass. This is local single-threaded development evidence using retained
+compiler binary SHA-256
+`6731cd4b29bd2b62f5a7413a4ccb2520fe3208a095a17938b45ad08536df3c9e`.
+The latest candidate, `a9949d7ae`, also fixes mixed nested randomization;
+its real UVM test is being rerun in both simulation modes. Full candidate
+regression and exact-revision CI remain pending. The integrated test remains
+uncommitted, and none of these development results advances formal completion
+counts or establishes performance.
 
 Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated

@@ -1239,12 +1239,18 @@ milestones:
           Real UVM sequence-item integration is under active local validation.
           Reduced regressions exposed and now cover foreach diagnostics,
           inherited array element solving, inherited constraint preparation,
-          and inline array resize-and-resolve behavior. These compiler fixes
-          do not establish integrated UVM acceptance, seed replay, failed-solve
-          callbacks, or performance closure.
-          The real UVM test completes 64 checked transactions but then detects
-          post_randomize being called after an unsatisfiable solve. This is an
-          open correctness failure, not an accepted negative-test oracle.
+          inline array resize-and-resolve behavior, failed-solve callbacks,
+          and mixed standalone/nested constraint processing.
+          At b32871eba a local single-threaded real UVM test passes three runs
+          of 64 checked transactions with seeds 1729, 1729, and 2718. Repeated
+          seeds reproduce the trace, a different seed changes it, and mode,
+          failed-solve callback, and recovery checks pass.
+          The latest candidate a9949d7ae adds the mixed nested-constraint fix
+          with an expanded causal regression and 20 adjacent passing scenarios.
+          Real UVM validation of that candidate in both simulation modes, full
+          candidate regression, and exact-revision CI remain pending. The
+          integrated test is still uncommitted development work. These results
+          do not establish milestone acceptance or performance closure.
   M10:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11
     title: Functional coverage from UVM classes
