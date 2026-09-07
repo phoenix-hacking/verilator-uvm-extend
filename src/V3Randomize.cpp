@@ -43,6 +43,7 @@
 #include "V3Task.h"
 #include "V3UniqueNames.h"
 
+#include <array>
 #include <queue>
 #include <tuple>
 #include <utility>
@@ -65,6 +66,7 @@ enum ClassRandom : uint8_t {
 
 static constexpr const char* GLOBAL_CONSTRAINT_SEPARATOR = "__DT__";
 static constexpr const char* BASIC_RANDOMIZE_FUNC_NAME = "__VBasicRand";
+static constexpr const char* NESTED_RANDOMIZE_FUNC_NAME = "__Vrandomize_nested";
 
 // Walk extends chain to find __Vrandmode variable (stored in AstClass::user2p).
 // user2p is only set on the root class where __Vrandmode was created, so
@@ -1497,7 +1499,8 @@ class ConstraintExprVisitor final : public VNVisitor {
                 if (!initTaskp) {
                     varp->user3(true);
                     if (membersel || isArray) {
-                        initTaskp = VN_AS(m_memberMap.findMember(classp, "randomize"), NodeFTask);
+                        initTaskp = VN_AS(
+                            m_memberMap.findMember(classp, NESTED_RANDOMIZE_FUNC_NAME), NodeFTask);
                         // Inherited rand members may belong to a base class
                         // that has no randomize(); use the caller's function
                         if (!initTaskp) initTaskp = m_memberselInitTaskp;
@@ -3260,8 +3263,17 @@ class RandomizeVisitor final : public VNVisitor {
     std::map<AstClass*, AstVar*>
         m_staticConstraintModeVars;  // Static constraint mode vars per class
     std::map<AstClass*, AstVar*> m_staticRandModeVars;  // Static rand mode vars per class
-    std::map<AstClass*, std::pair<bool, bool>>
-        m_prePostWrap;  // Per-handle-type pre/post virtual wrapper presence
+    enum class StateAction : uint8_t { PRE, SAVE, REFRESH, POST };
+    struct StateTask final {
+        AstClass* classp;
+        std::array<std::pair<AstTask*, AstVar*>, 4> methods;
+    };
+    AstCDType* m_stateDtypep = nullptr;  // Runtime randomization snapshot type
+    std::vector<StateTask> m_stateTasks;  // Populate after all generated state fields exist
+    std::unordered_map<AstClass*, size_t> m_stateTaskMap;
+    std::unordered_map<AstClass*, std::vector<AstClass*>> m_derivedClasses;
+    std::unordered_map<const AstNodeDType*, bool> m_stateClassTypes;
+    std::unordered_set<AstVar*> m_internalStateVars;  // Array sizes and basic randc state
 
     // METHODS
     // Check if two nodes are semantically equivalent (not pointer equality):
@@ -3839,6 +3851,7 @@ class RandomizeVisitor final : public VNVisitor {
             = new AstVar{varp->fileline(), VVarType::MEMBER, varp->name() + "__Vrandc", newdtp};
         newp->isInternal(true);
         classp->addStmtsp(newp);
+        m_internalStateVars.emplace(newp);
         UINFO(9, "created " << varp);
         return newp;
     }
@@ -3924,9 +3937,9 @@ class RandomizeVisitor final : public VNVisitor {
             AstMemberDType* const firstMemberp = unionDtp->membersp();
             return newRandStmtsp(fl, exprp, nullptr, outputVarp, offset, firstMemberp);
         } else if (const AstClassRefDType* const classRefDtp = VN_CAST(memberDtp, ClassRefDType)) {
-            AstFunc* const memberFuncp
-                = V3Randomize::newRandomizeFunc(m_memberMap, classRefDtp->classp());
-            AstMethodCall* const callp = new AstMethodCall{fl, exprp, "randomize"};
+            AstFunc* const memberFuncp = V3Randomize::newRandomizeFunc(
+                m_memberMap, classRefDtp->classp(), NESTED_RANDOMIZE_FUNC_NAME);
+            AstMethodCall* const callp = new AstMethodCall{fl, exprp, NESTED_RANDOMIZE_FUNC_NAME};
             callp->taskp(memberFuncp);
             callp->dtypeFrom(memberFuncp);
             AstAssign* const assignp = new AstAssign{
@@ -4016,81 +4029,6 @@ class RandomizeVisitor final : public VNVisitor {
             funcp->addStmtsp(callp->makeStmt());
         }
     }
-    // Per-class virtual wrapper that invokes the class's effective
-    // pre_randomize/post_randomize. IEEE 1800-2023 18.6.2: pre_randomize and
-    // post_randomize "appear to behave as virtual methods" because randomize()
-    // is virtual. The inline `randomize() with` path builds a non-virtual
-    // function on the static handle type, so it dispatches pre/post through
-    // this wrapper to reach the dynamic type's override.
-    AstTask* getCreatePrePostCallback(AstClass* const classp, const string& which) {
-        const string name = "__V" + which;
-        if (AstTask* const existingp = VN_CAST(m_memberMap.findMember(classp, name), Task)) {
-            return existingp;
-        }
-        AstTask* const taskp = new AstTask{classp->fileline(), name, nullptr};
-        taskp->classMethod(true);
-        taskp->isVirtual(classp->isExtended());
-        classp->addMembersp(taskp);
-        m_memberMap.insert(classp, taskp);
-        addPrePostCall(classp, taskp, which);
-        return taskp;
-    }
-    // Build the virtual pre/post wrappers across classp's whole hierarchy so a
-    // `randomize() with` through a base handle dispatches to a derived
-    // override. Returns whether a pre/post wrapper exists anywhere in the
-    // hierarchy (cached per static handle type).
-    std::pair<bool, bool> buildPrePostVirtualWrappers(AstClass* const classp) {
-        const auto cachedIt = m_prePostWrap.find(classp);
-        if (cachedIt != m_prePostWrap.end()) return cachedIt->second;
-        std::vector<AstClass*> hierp{classp};
-        v3Global.rootp()->foreach([&](AstClass* subp) {
-            if (subp != classp && AstClass::isClassExtendedFrom(subp, classp))
-                hierp.push_back(subp);
-        });
-        bool hasPre = false;
-        bool hasPost = false;
-        for (AstClass* const cp : hierp) {
-            if (findPrePostTask(cp, "pre_randomize")) {
-                getCreatePrePostCallback(cp, "pre_randomize");
-                hasPre = true;
-            }
-            if (findPrePostTask(cp, "post_randomize")) {
-                getCreatePrePostCallback(cp, "post_randomize");
-                hasPost = true;
-            }
-        }
-        // Ensure the static handle type owns the slot whenever a subclass
-        // overrides, so the virtual call resolves on a base handle.
-        if (hasPre) getCreatePrePostCallback(classp, "pre_randomize");
-        if (hasPost) getCreatePrePostCallback(classp, "post_randomize");
-        const std::pair<bool, bool> result{hasPre, hasPost};
-        m_prePostWrap.emplace(classp, result);
-        return result;
-    }
-    void addVirtualPrePostCall(AstFunc* const randomizeFuncp, AstClass* const classp,
-                               const string& which) {
-        FileLine* const fl = classp->fileline();
-        AstTask* const wrapperp = getCreatePrePostCallback(classp, which);
-        AstClassRefDType* const refDTypep = new AstClassRefDType{fl, classp, nullptr};
-        v3Global.rootp()->typeTablep()->addTypesp(refDTypep);
-        AstMethodCall* const callp
-            = new AstMethodCall{fl, new AstThisRef{fl, refDTypep}, wrapperp->name(), nullptr};
-        callp->taskp(wrapperp);
-        callp->dtypeSetVoid();
-        if (which == "post_randomize") {
-            addPostCallIfSuccess(randomizeFuncp, callp->makeStmt());
-        } else {
-            randomizeFuncp->addStmtsp(callp->makeStmt());
-        }
-    }
-    // Check if a class (including inherited members) has any rand class-type members
-    bool classHasRandClassMembers(AstClass* classp) {
-        return classp->existsMember([](const AstClass*, const AstVar* varp) {
-            if (!varp->rand().isRandomizable()) return false;
-            const AstNodeDType* const dtypep = varp->dtypep()->skipRefp();
-            return VN_IS(dtypep, ClassRefDType);
-        });
-    }
     // True if this class owns a global constraint: a member-select chain rooted
     // at a rand class-typed handle reaching into a sub-object.
     bool classOwnsGlobalConstraint(const AstClass* classp) const {
@@ -4105,71 +4043,6 @@ class RandomizeVisitor final : public VNVisitor {
                 }
             });
             return owns;
-        });
-    }
-    // Get or create __VrandCb_pre/__VrandCb_post task for nested callbacks
-    AstTask* getCreateNestedCallbackTask(AstClass* classp, const string& suffix) {
-        const string name = "__VrandCb_" + suffix;
-        AstTask* taskp = VN_CAST(m_memberMap.findMember(classp, name), Task);
-        if (taskp) return taskp;
-        taskp = new AstTask{classp->fileline(), name, nullptr};
-        taskp->classMethod(true);
-        classp->addMembersp(taskp);
-        m_memberMap.insert(classp, taskp);
-        return taskp;
-    }
-    // Populate nested callback task body: calls pre/post_randomize on nested rand class members
-    void populateNestedCallbackTask(AstTask* const callbackTaskp, AstClass* const classp,
-                                    const string& cbName) {
-        FileLine* const fl = classp->fileline();
-        classp->foreachMember([&](AstClass* ownerClassp, AstVar* memberVarp) {
-            if (!memberVarp->rand().isRandomizable()) return;
-            const AstNodeDType* const dtypep = memberVarp->dtypep()->skipRefp();
-            const AstClassRefDType* const classRefp = VN_CAST(dtypep, ClassRefDType);
-            if (!classRefp) return;
-            AstClass* const memberClassp = classRefp->classp();
-            if (memberClassp == classp) return;  // Avoid self-reference
-
-            // Force-visit member class if not yet processed
-            if (memberClassp->user1()) {
-                iterate(memberClassp);
-                m_writtenVars.clear();
-            }
-
-            AstNode* stmtsp = nullptr;
-
-            // 1. Call member.pre/post_randomize() if exists in hierarchy
-            if (AstTask* const userFuncp = findPrePostTask(memberClassp, cbName)) {
-                AstMethodCall* const callp = new AstMethodCall{
-                    fl, new AstVarRef{fl, ownerClassp, memberVarp, VAccess::WRITE}, cbName};
-                callp->taskp(userFuncp);
-                callp->dtypeSetVoid();
-                stmtsp = AstNode::addNext(stmtsp, callp->makeStmt());
-            }
-
-            // 2. Call member.__VrandCb_pre/post() for deeper recursion
-            if (classHasRandClassMembers(memberClassp)) {
-                const string suffix = (cbName == "pre_randomize") ? "pre" : "post";
-                AstTask* const nestedTaskp = getCreateNestedCallbackTask(memberClassp, suffix);
-                AstMethodCall* const recurseCallp = new AstMethodCall{
-                    fl, new AstVarRef{fl, ownerClassp, memberVarp, VAccess::WRITE},
-                    nestedTaskp->name()};
-                recurseCallp->taskp(nestedTaskp);
-                recurseCallp->dtypeSetVoid();
-                stmtsp = AstNode::addNext(stmtsp, recurseCallp->makeStmt());
-            }
-
-            if (!stmtsp) return;
-
-            // Wrap in null check
-            AstIf* const nullCheckp = new AstIf{
-                fl,
-                new AstNeq{fl, new AstVarRef{fl, ownerClassp, memberVarp, VAccess::READ},
-                           new AstConst{fl, AstConst::Null{}}},
-                stmtsp};
-
-            // Wrap in rand_mode check
-            callbackTaskp->addStmtsp(wrapIfRandMode(classp, memberVarp, nullCheckp));
         });
     }
     AstTask* newSetupConstraintTask(AstClass* const nodep, const std::string& name) {
@@ -4240,6 +4113,7 @@ class RandomizeVisitor final : public VNVisitor {
             classp->addMembersp(sizeVarp);
             m_memberMap.insert(classp, sizeVarp);
             sizeVarp->user2p(classp);
+            m_internalStateVars.emplace(sizeVarp);
             arrVarp->user4p(sizeVarp);
             wasCreated = true;
         }
@@ -4356,7 +4230,8 @@ class RandomizeVisitor final : public VNVisitor {
                     = memberVarp->globalConstrained()
                           ? V3Randomize::newRandomizeFunc(m_memberMap, classRefp->classp(),
                                                           BASIC_RANDOMIZE_FUNC_NAME)
-                          : V3Randomize::newRandomizeFunc(m_memberMap, classRefp->classp());
+                          : V3Randomize::newRandomizeFunc(m_memberMap, classRefp->classp(),
+                                                          NESTED_RANDOMIZE_FUNC_NAME);
                 AstMethodCall* const callp
                     = memberVarp->globalConstrained()
                           ? new AstMethodCall{fl,
@@ -4365,7 +4240,7 @@ class RandomizeVisitor final : public VNVisitor {
                                               BASIC_RANDOMIZE_FUNC_NAME}
                           : new AstMethodCall{
                                 fl, new AstVarRef{fl, classp, memberVarp, VAccess::WRITE},
-                                "randomize"};
+                                NESTED_RANDOMIZE_FUNC_NAME};
                 callp->taskp(memberFuncp);
                 callp->dtypeFrom(memberFuncp);
                 AstVarRef* const basicFvarRefReadp = basicFvarRefp->cloneTree(false);
@@ -4654,6 +4529,228 @@ class RandomizeVisitor final : public VNVisitor {
             if (hasRegistration) stmtsp = AstNode::addNext(stmtsp, stmtp->cloneTree(false));
         }
         return stmtsp;
+    }
+
+    AstCDType* getStateDType(FileLine* const fl) {
+        if (!m_stateDtypep) {
+            m_stateDtypep = new AstCDType{fl, "VlRandomizeState"};
+            v3Global.rootp()->typeTablep()->addTypesp(m_stateDtypep);
+        }
+        return m_stateDtypep;
+    }
+    AstThisRef* newStateThisRef(AstClass* const classp) {
+        AstClassRefDType* const dtypep = new AstClassRefDType{classp->fileline(), classp, nullptr};
+        v3Global.rootp()->typeTablep()->addTypesp(dtypep);
+        return new AstThisRef{classp->fileline(), dtypep};
+    }
+    bool hasClassState(const AstNodeDType* dtypep) {
+        dtypep = dtypep->skipRefp();
+        const auto cached = m_stateClassTypes.find(dtypep);
+        if (cached != m_stateClassTypes.end()) return cached->second;
+        bool result = VN_IS(dtypep, ClassRefDType);
+        if (dtypep->isNonPackedArray()) {
+            result = hasClassState(dtypep->subDTypep());
+        } else if (const AstStructDType* const structp = VN_CAST(dtypep, StructDType)) {
+            for (const AstMemberDType* memberp = structp->membersp(); memberp && !result;
+                 memberp = VN_AS(memberp->nextp(), MemberDType)) {
+                result = hasClassState(memberp->subDTypep());
+            }
+        }
+        m_stateClassTypes.emplace(dtypep, result);
+        return result;
+    }
+    StateTask getCreateStateTasks(AstClass* const classp) {
+        const auto found = m_stateTaskMap.find(classp);
+        if (found != m_stateTaskMap.end()) return m_stateTasks[found->second];
+        FileLine* const fl = classp->fileline();
+        const auto newTask = [&](const char* const name) {
+            AstVar* const argp = new AstVar{fl, VVarType::PORT, "__Vstate", getStateDType(fl)};
+            argp->direction(VDirection::REF);
+            argp->funcLocal(true);
+            argp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
+            AstTask* const taskp = new AstTask{fl, name, argp};
+            taskp->classMethod(true);
+            taskp->isVirtual(classp->isExtended());
+            classp->addMembersp(taskp);
+            m_memberMap.insert(classp, taskp);
+            return std::make_pair(taskp, argp);
+        };
+        const StateTask tasks{
+            classp,
+            {newTask("__Vpre_randomize_state"), newTask("__Vsave_randomize_state"),
+             newTask("__Vrefresh_randomize_state"), newTask("__Vpost_randomize_state")}};
+        m_stateTaskMap.emplace(classp, m_stateTasks.size());
+        m_stateTasks.push_back(tasks);
+        // A base handle must save and refresh the dynamic object's own fields too.
+        const auto derived = m_derivedClasses.find(classp);
+        if (derived != m_derivedClasses.end()) {
+            for (AstClass* const derivedp : derived->second) getCreateStateTasks(derivedp);
+        }
+        return tasks;
+    }
+    AstNodeStmt* newStateTaskCall(AstClass* const classp, AstNodeExpr* const objectp,
+                                  AstVar* const statep, const StateAction action) {
+        const StateTask tasks = getCreateStateTasks(classp);
+        AstTask* const taskp = tasks.methods[static_cast<size_t>(action)].first;
+        FileLine* const fl = objectp->fileline();
+        AstMethodCall* const callp
+            = new AstMethodCall{fl, objectp, taskp->name(),
+                                new AstArg{fl, "", new AstVarRef{fl, statep, VAccess::READWRITE}}};
+        callp->taskp(taskp);
+        callp->dtypeSetVoid();
+        return callp->makeStmt();
+    }
+    AstNode* newNestedStateCalls(AstNodeExpr* const valuep, AstVar* const statep,
+                                 const StateAction action, V3UniqueNames& names) {
+        FileLine* const fl = valuep->fileline();
+        AstNodeDType* const dtypep = valuep->dtypep()->skipRefp();
+        if (const AstClassRefDType* const classp = VN_CAST(dtypep, ClassRefDType)) {
+            AstNodeExpr* const presentp
+                = new AstNeq{fl, valuep->cloneTree(false), new AstConst{fl, AstConst::Null{}}};
+            return new AstIf{fl, presentp,
+                             newStateTaskCall(classp->classp(), valuep, statep, action)};
+        }
+        if (const AstStructDType* const structp = VN_CAST(dtypep, StructDType)) {
+            AstNode* stmtsp = nullptr;
+            for (AstMemberDType* memberp = structp->membersp(); memberp;
+                 memberp = VN_AS(memberp->nextp(), MemberDType)) {
+                if (!hasClassState(memberp->subDTypep())) continue;
+                AstStructSel* const selp
+                    = new AstStructSel{fl, valuep->cloneTree(false), memberp->name()};
+                selp->dtypep(memberp->subDTypep());
+                stmtsp = AstNode::addNextNull(stmtsp,
+                                              newNestedStateCalls(selp, statep, action, names));
+            }
+            VL_DO_DANGLING(pushDeletep(valuep), valuep);
+            return stmtsp;
+        }
+        UASSERT_OBJ(dtypep->isNonPackedArray(), valuep, "Expected array containing class state");
+        AstNodeDType* const indexDtypep = VN_IS(dtypep, AssocArrayDType)
+                                              ? VN_AS(dtypep, AssocArrayDType)->keyDTypep()
+                                              : valuep->findIntDType();
+        AstVar* const indexp = new AstVar{fl, VVarType::VAR, names.get(""), indexDtypep};
+        indexp->funcLocal(true);
+        indexp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
+        AstNodeExpr* indexRefp = new AstVarRef{fl, indexp, VAccess::READ};
+        AstNodeExpr* elementp;
+        if (const AstUnpackArrayDType* const arrayp = VN_CAST(dtypep, UnpackArrayDType)) {
+            const V3Number offset{fl, 32, static_cast<uint32_t>(arrayp->lo())};
+            indexRefp = new AstSub{fl, indexRefp, new AstConst{fl, offset}};
+            indexRefp->dtypeSetUInt32();
+            elementp = new AstArraySel{fl, valuep->cloneTree(false), indexRefp};
+        } else if (VN_IS(dtypep, AssocArrayDType)) {
+            elementp = new AstAssocSel{fl, valuep->cloneTree(false), indexRefp};
+        } else {
+            elementp
+                = new AstCMethodHard{fl, valuep->cloneTree(false), VCMethod::ARRAY_AT, indexRefp};
+        }
+        elementp->dtypep(dtypep->subDTypep());
+        AstForeachHeader* const headerp = new AstForeachHeader{fl, valuep, indexp};
+        AstForeach* const loopp
+            = new AstForeach{fl, headerp, newNestedStateCalls(elementp, statep, action, names)};
+        return new AstBegin{fl, indexp->name() + "__Vscope", loopp, true};
+    }
+    AstVar* makeStateTraversal(AstFunc* const funcp, AstClass* const classp,
+                               const StateAction action, const char* const name) {
+        FileLine* const fl = funcp->fileline();
+        AstVar* const statep = new AstVar{fl, VVarType::BLOCKTEMP, name, getStateDType(fl)};
+        statep->funcLocal(true);
+        statep->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
+        statep->isInternal(true);
+        statep->noSubst(true);
+        funcp->addStmtsp(statep);
+        AstNodeStmt* const callp
+            = newStateTaskCall(classp, newStateThisRef(classp), statep, action);
+        if (action == StateAction::POST) {
+            addPostCallIfSuccess(funcp, callp);
+        } else {
+            funcp->addStmtsp(callp);
+        }
+        return statep;
+    }
+    AstVar* makeStateSnapshot(AstFunc* const funcp, AstClass* const classp) {
+        // Finish all enabled object callbacks before saving any random values.
+        makeStateTraversal(funcp, classp, StateAction::PRE, "__Vrandomize_pre");
+        return makeStateTraversal(funcp, classp, StateAction::SAVE, "__Vrandomize_state");
+    }
+    void addStateRestore(AstFunc* const funcp, AstClass* const classp, AstVar* const statep) {
+        if (!statep) return;
+        FileLine* const fl = funcp->fileline();
+        AstCMethodHard* const restorep = new AstCMethodHard{
+            fl, new AstVarRef{fl, statep, VAccess::READWRITE}, VCMethod::RANDOMIZE_STATE_RESTORE};
+        restorep->dtypeSetVoid();
+        AstNode* const stmtsp = restorep->makeStmt();
+        stmtsp->addNext(
+            newStateTaskCall(classp, newStateThisRef(classp), statep, StateAction::REFRESH));
+        AstNodeExpr* const failedp = new AstEq{
+            fl, new AstVarRef{fl, VN_AS(funcp->fvarp(), Var), VAccess::READ}, new AstConst{fl, 0}};
+        funcp->addStmtsp(new AstIf{fl, failedp, stmtsp});
+    }
+    void populateStateTasks() {
+        // New child types can add tasks while the pending tasks are populated.
+        for (size_t index = 0; index < m_stateTasks.size(); ++index) {
+            const StateTask tasks = m_stateTasks[index];
+            VL_RESTORER(m_modp);
+            m_modp = tasks.classp;
+            FileLine* const fl = tasks.classp->fileline();
+            for (const StateAction action :
+                 {StateAction::PRE, StateAction::SAVE, StateAction::REFRESH, StateAction::POST}) {
+                AstTask* const taskp = tasks.methods[static_cast<size_t>(action)].first;
+                AstVar* const statep = tasks.methods[static_cast<size_t>(action)].second;
+                AstCMethodHard* const enterp = new AstCMethodHard{
+                    fl, new AstVarRef{fl, statep, VAccess::READWRITE},
+                    VCMethod::RANDOMIZE_STATE_ENTER, newStateThisRef(tasks.classp)};
+                enterp->dtypeSetBit();
+                AstIf* const oncep = new AstIf{fl, enterp, nullptr};
+                taskp->addStmtsp(oncep);
+                if (action == StateAction::PRE) {
+                    if (AstTask* const userp = findPrePostTask(tasks.classp, "pre_randomize")) {
+                        oncep->addThensp((new AstTaskRef{fl, userp})->makeStmt());
+                    }
+                } else if (action == StateAction::SAVE) {
+                    if (AstVar* const genp = getRandomGenerator(tasks.classp)) {
+                        AstCMethodHard* const savep = new AstCMethodHard{
+                            fl,
+                            new AstVarRef{fl, VN_AS(genp->user2p(), NodeModule), genp,
+                                          VAccess::READWRITE},
+                            VCMethod::RANDOMIZER_SAVE_RANDC_STATE,
+                            new AstVarRef{fl, statep, VAccess::READWRITE}};
+                        savep->dtypeSetVoid();
+                        oncep->addThensp(savep->makeStmt());
+                    }
+                } else if (action == StateAction::REFRESH) {
+                    AstFunc* const randomizep = VN_CAST(
+                        m_memberMap.findMember(tasks.classp, NESTED_RANDOMIZE_FUNC_NAME), Func);
+                    oncep->addThensp(cloneVarRegistrations(randomizep));
+                }
+                V3UniqueNames names{"__Vrandstateidx"};
+                tasks.classp->foreachMember([&](AstClass* const ownerp, AstVar* const varp) {
+                    if (!varp->rand().isRandomizable() && !m_internalStateVars.count(varp)) return;
+                    if (action == StateAction::SAVE) {
+                        AstCMethodHard* const savep = new AstCMethodHard{
+                            fl, new AstVarRef{fl, statep, VAccess::READWRITE},
+                            VCMethod::RANDOMIZE_STATE_SAVE,
+                            new AstVarRef{fl, ownerp, varp, VAccess::READWRITE}};
+                        savep->dtypeSetVoid();
+                        oncep->addThensp(savep->makeStmt());
+                    }
+                    if (hasClassState(varp->dtypep())) {
+                        AstNodeStmt* const nestedp = VN_AS(
+                            newNestedStateCalls(new AstVarRef{fl, ownerp, varp, VAccess::READ},
+                                                statep, action, names),
+                            NodeStmt);
+                        oncep->addThensp(action == StateAction::PRE || action == StateAction::POST
+                                             ? wrapIfRandMode(tasks.classp, varp, nestedp)
+                                             : nestedp);
+                    }
+                });
+                if (action == StateAction::POST) {
+                    if (AstTask* const userp = findPrePostTask(tasks.classp, "post_randomize")) {
+                        oncep->addThensp((new AstTaskRef{fl, userp})->makeStmt());
+                    }
+                }
+            }
+        }
     }
 
     // Rewrite a LogIf-of-Dist chain into nested AstConstraintIf. The outermost
@@ -5113,17 +5210,11 @@ class RandomizeVisitor final : public VNVisitor {
         const bool basicFirst = classOwnsGlobalConstraint(nodep);
 
         FileLine* fl = nodep->fileline();
-        AstFunc* const randomizep = V3Randomize::newRandomizeFunc(m_memberMap, nodep);
+        AstFunc* const wrapperp = V3Randomize::newRandomizeFunc(m_memberMap, nodep);
+        AstFunc* const randomizep
+            = V3Randomize::newRandomizeFunc(m_memberMap, nodep, NESTED_RANDOMIZE_FUNC_NAME);
         AstVar* const fvarp = VN_AS(randomizep->fvarp(), Var);
         AstVar* const randModeVarp = getRandModeVarFromClass(nodep);
-        addPrePostCall(nodep, randomizep, "pre_randomize");
-
-        // Call nested pre_randomize on rand class-type members (IEEE 18.4.1)
-        if (classHasRandClassMembers(nodep)) {
-            AstTask* const preTaskp = getCreateNestedCallbackTask(nodep, "pre");
-            populateNestedCallbackTask(preTaskp, nodep, "pre_randomize");
-            randomizep->addStmtsp((new AstTaskRef{fl, preTaskp})->makeStmt());
-        }
 
         // Both IS_RANDOMIZED and IS_RANDOMIZED_GLOBAL classes need full constraint support
         // IS_RANDOMIZED_GLOBAL classes can be randomized independently
@@ -5207,8 +5298,8 @@ class RandomizeVisitor final : public VNVisitor {
             if (nodep->extendsp()) {
                 AstClass* parentClassp = nodep->extendsp()->classp();
                 while (parentClassp) {
-                    AstFunc* const parentRandomizep
-                        = VN_CAST(m_memberMap.findMember(parentClassp, "randomize"), Func);
+                    AstFunc* const parentRandomizep = VN_CAST(
+                        m_memberMap.findMember(parentClassp, NESTED_RANDOMIZE_FUNC_NAME), Func);
                     randomizep->addStmtsp(cloneVarRegistrations(parentRandomizep));
                     parentClassp
                         = parentClassp->extendsp() ? parentClassp->extendsp()->classp() : nullptr;
@@ -5393,14 +5484,24 @@ class RandomizeVisitor final : public VNVisitor {
 
         if (basicFirst) emitResizeFallback();
 
-        // Call nested post_randomize on rand class-type members (IEEE 18.4.1)
-        if (classHasRandClassMembers(nodep)) {
-            AstTask* const postTaskp = getCreateNestedCallbackTask(nodep, "post");
-            populateNestedCallbackTask(postTaskp, nodep, "post_randomize");
-            addPostCallIfSuccess(randomizep, (new AstTaskRef{fl, postTaskp})->makeStmt());
+        // A containing object's wrapper owns callbacks and rollback for all its children.
+        // Nested randomization computes values without invoking those callbacks again.
+        const bool needsState
+            = getRandomGenerator(nodep)
+              || nodep->existsMember([&](const AstClass*, const AstVar* varp) {
+                     return varp->rand().isRandomizable() && hasClassState(varp->dtypep());
+                 });
+        AstVar* const statep = needsState ? makeStateSnapshot(wrapperp, nodep) : nullptr;
+        if (!needsState) addPrePostCall(nodep, wrapperp, "pre_randomize");
+        wrapperp->addStmtsp(
+            new AstAssign{fl, new AstVarRef{fl, VN_AS(wrapperp->fvarp(), Var), VAccess::WRITE},
+                          new AstFuncRef{fl, randomizep}});
+        if (needsState) {
+            addStateRestore(wrapperp, nodep, statep);
+            makeStateTraversal(wrapperp, nodep, StateAction::POST, "__Vrandomize_post");
+        } else {
+            addPrePostCall(nodep, wrapperp, "post_randomize");
         }
-
-        addPrePostCall(nodep, randomizep, "post_randomize");
         nodep->user1(false);
     }
     void visit(AstRandCase* nodep) override {
@@ -5683,28 +5784,8 @@ class RandomizeVisitor final : public VNVisitor {
         AstFunc* const randomizeFuncp = V3Randomize::newRandomizeFunc(
             m_memberMap, classp, m_inlineUniqueNames.get(nodep), false);
 
-        // A base-handle `randomize() with` must still reach a derived
-        // pre/post_randomize. Route them through per-class virtual wrappers
-        // when the static handle type participates in inheritance.
-        const std::pair<bool, bool> prePostWrap = classp->isExtended()
-                                                      ? buildPrePostVirtualWrappers(classp)
-                                                      : std::pair<bool, bool>{false, false};
-        if (prePostWrap.first) {
-            addVirtualPrePostCall(randomizeFuncp, classp, "pre_randomize");
-        } else {
-            addPrePostCall(classp, randomizeFuncp, "pre_randomize");
-        }
-
-        // Call nested pre_randomize on rand class-type members (IEEE 18.4.1)
-        if (classHasRandClassMembers(classp)) {
-            AstTask* const preTaskp = getCreateNestedCallbackTask(classp, "pre");
-            if (!preTaskp->stmtsp()) {
-                populateNestedCallbackTask(preTaskp, classp, "pre_randomize");
-            }
-            randomizeFuncp->addStmtsp((new AstTaskRef{nodep->fileline(), preTaskp})->makeStmt());
-        }
-
         // Detach the expression and prepare variable copies
+        AstVar* const statep = makeStateSnapshot(randomizeFuncp, classp);
         const CaptureVisitor captured{withp->exprp(), m_modp, classp};
         // Add function arguments
         captured.addFunctionArguments(randomizeFuncp);
@@ -5723,7 +5804,7 @@ class RandomizeVisitor final : public VNVisitor {
         if (classGenp) {
             // Clone write_var calls from main randomize() for path-connected variables
             AstFunc* const mainRandomizep
-                = VN_CAST(m_memberMap.findMember(classp, "randomize"), Func);
+                = VN_CAST(m_memberMap.findMember(classp, NESTED_RANDOMIZE_FUNC_NAME), Func);
             randomizeFuncp->addStmtsp(cloneVarRegistrations(mainRandomizep));
             randomizeFuncp->addStmtsp(
                 implementConstraintsClear(randomizeFuncp->fileline(), classGenp));
@@ -5865,21 +5946,9 @@ class RandomizeVisitor final : public VNVisitor {
             randomizeFuncp->addStmtsp(ifp);
         }
 
-        // Call nested post_randomize on rand class-type members (IEEE 18.4.1)
-        if (classHasRandClassMembers(classp)) {
-            AstTask* const postTaskp = getCreateNestedCallbackTask(classp, "post");
-            if (!postTaskp->stmtsp()) {
-                populateNestedCallbackTask(postTaskp, classp, "post_randomize");
-            }
-            addPostCallIfSuccess(randomizeFuncp,
-                                 (new AstTaskRef{nodep->fileline(), postTaskp})->makeStmt());
-        }
+        addStateRestore(randomizeFuncp, classp, statep);
 
-        if (prePostWrap.second) {
-            addVirtualPrePostCall(randomizeFuncp, classp, "post_randomize");
-        } else {
-            addPrePostCall(classp, randomizeFuncp, "post_randomize");
-        }
+        makeStateTraversal(randomizeFuncp, classp, StateAction::POST, "__Vrandomize_post");
 
         // Replace the node with a call to that function
         nodep->name(randomizeFuncp->name());
@@ -5944,6 +6013,11 @@ public:
     explicit RandomizeVisitor(AstNetlist* nodep, NestedConstraintMap& nestedConstraints)
         : m_inlineUniqueNames{"__Vrandwith"}
         , m_nestedConstraints{nestedConstraints} {
+        nodep->foreach([&](AstClass* const classp) {
+            if (classp->extendsp()) {
+                m_derivedClasses[classp->extendsp()->classp()].push_back(classp);
+            }
+        });
         createRandomizeClassVars(nodep);
         // Flag local constraint leaves as solver-owned so __VBasicRand skips them.
         // Runs before any class is lowered. Only a randomized class counts, and
@@ -5964,6 +6038,7 @@ public:
         });
 
         iterate(nodep);
+        populateStateTasks();
         nodep->foreach([&](AstConstraint* constrp) {
             m_sizeConstrainedArrays.erase(constrp);
             m_nestedConstraints.erase(constrp);

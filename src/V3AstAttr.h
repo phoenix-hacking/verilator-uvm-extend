@@ -878,6 +878,10 @@ public:
         RANDOMIZER_CLEAR_VAR_DISABLED,
         RANDOMIZER_MARK_VAR_STATIC,
         RANDOMIZER_SET_STATIC_RANDMODE,
+        RANDOMIZER_SAVE_RANDC_STATE,
+        RANDOMIZE_STATE_ENTER,
+        RANDOMIZE_STATE_RESTORE,
+        RANDOMIZE_STATE_SAVE,
         RNG_GET_RANDSTATE,
         RNG_SET_RANDSTATE,
         SCHED_ANY_TRIGGERED,
@@ -1033,6 +1037,10 @@ inline std::ostream& operator<<(std::ostream& os, const VCMethod& rhs) {
            {RANDOMIZER_CLEAR_VAR_DISABLED, "clear_var_disabled", false}, \
            {RANDOMIZER_MARK_VAR_STATIC, "mark_var_static", false}, \
            {RANDOMIZER_SET_STATIC_RANDMODE, "set_static_randmode", false}, \
+           {RANDOMIZER_SAVE_RANDC_STATE, "saveRandcState", false}, \
+           {RANDOMIZE_STATE_ENTER, "enter", false}, \
+           {RANDOMIZE_STATE_RESTORE, "restore", false}, \
+           {RANDOMIZE_STATE_SAVE, "save", false}, \
            {RNG_GET_RANDSTATE, "__Vm_rng.get_randstate", true}, \
            {RNG_SET_RANDSTATE, "__Vm_rng.set_randstate", false}, \
            {SCHED_ANY_TRIGGERED, "anyTriggered", false}, \

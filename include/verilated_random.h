@@ -28,6 +28,7 @@
 
 #include "verilated.h"
 
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <ostream>
@@ -36,6 +37,33 @@
 #include <unordered_set>
 
 //=============================================================================
+
+/// Values saved after pre_randomize, before any solver or basic randomization writes.
+class VlRandomizeState final {
+    std::unordered_set<const void*> m_objects;  // Objects already traversed
+    std::unordered_set<const void*> m_values;  // Fields already saved through aliases
+    std::vector<std::function<void()>> m_restore;  // Restore in reverse traversal order
+
+public:
+    /// Visit each object once, including aliased or cyclic object graphs.
+    template <typename T_Class>
+    bool enter(const VlClassRef<T_Class>& object) VL_MT_UNSAFE {
+        return m_objects.emplace(object.operator->()).second;
+    }
+    /// Save the complete value, including the contents and size of a container.
+    template <typename T_Value>
+    void save(T_Value& value) VL_MT_UNSAFE {
+        if (!m_values.emplace(&value).second) return;
+        m_restore.emplace_back([&value, saved = value]() mutable { value = std::move(saved); });
+    }
+    /// Undo failed randomization. Saved handles keep nested objects alive until restoration ends.
+    void restore() VL_MT_UNSAFE {
+        for (auto it = m_restore.rbegin(); it != m_restore.rend(); ++it) (*it)();
+        m_restore.clear();
+        m_objects.clear();
+        m_values.clear();
+    }
+};
 
 // VlRandomExpr and subclasses represent expressions for the constraint solver.
 class ArrayInfo final {
@@ -253,6 +281,12 @@ public:
     // Validate the constraints against the current runtime values of every
     // registered rand variable without picking new ones.
     bool next_check_only(VlRNG& rngr);
+
+    /// Preserve cyclic history when a later solve phase can still fail.
+    void saveRandcState(VlRandomizeState& state) VL_MT_UNSAFE {
+        state.save(m_randcUsedValues);
+        state.save(m_randcConstraintHash);
+    }
 
     // ---  Process the key for associative array  ---
 
