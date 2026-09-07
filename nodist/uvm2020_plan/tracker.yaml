@@ -1254,8 +1254,10 @@ milestones:
           at 2dbe3b22c passes a final 32-scenario focused regression, including
           inherited/static modes, separate instances, deeper nesting, protected
           identifiers, empty-parent setters, and the original failure in both
-          modes. Both builds, formatting, Python lint, focused C++ analysis, and
-          both attribute checks pass. The seventh correction also passes the fresh real
+          modes. Both builds, formatting, Python lint, and focused C++ analysis pass.
+          Earlier attribute-check success is withdrawn: its harness returned success
+          despite Clang parse failures from missing builtin headers and an obsolete
+          coroutine flag. Attribute validation remains unproven. The seventh correction also passes the fresh real
           UVM replay in both modes: 384 transactions across the same six seeded
           runs, with repeatability and recovery verified. Artifacts and trace
           hashes are preserved in uvm-random-2dbe3b22c-artifacts. Full regression

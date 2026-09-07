@@ -79,8 +79,11 @@ slots instead of the original child's modes. The correction is published at
 `2dbe3b22c`; its final focused regression passes 32/32, including the original
 CI failure in both modes, inherited/static modes, deeper nesting, independent
 instances, protected identifiers, and setters on empty parents. Optimized
-and debug builds, formatting, Python lint, focused C++ analysis, and both
-attribute checks pass. The fresh real UVM replay at this seventh correction
+and debug builds, formatting, Python lint, and focused C++ analysis pass.
+The earlier reported attribute-check success is withdrawn: the harness returned
+success despite Clang parse failures (missing builtin headers and an obsolete
+coroutine flag). Attribute validation remains unproven until that checker and
+its environment are corrected. The fresh real UVM replay at this seventh correction
 also passes both modes: 384 transactions across the same six seeded runs, with
 repeatability and recovery checks. Its retained compiler SHA-256 is
 `52fdcfcddde4c8d7edf69df07c26e40eb4d610b096f1ae97aaeb748f115a1955`;
@@ -247,7 +250,7 @@ feature; such cases are called out explicitly.
 | C10 | RAL frontdoor mirror and update pass | `[----------]` 0/1, 0% | Not started | No direct evidence. | Register model, maps, adapter, frontdoor read/write, mirror/update, access policies, byte enables, and reset semantics. | 3-6 weeks |
 | C11 | RAL predictor passes | `[----------]` 0/1, 0% | Not started | No direct evidence. | Monitor-to-predictor path, observed/mirrored consistency, error and reset behavior. | 2-4 weeks, overlapping C10 |
 | C12 | Built-in RAL reset, access, and bit-bash smokes pass | `[----------]` 0/1, 0% | Not started | No direct evidence. | Separate reset, access, and bit-bash proofs; current tracker compresses C10-C12 into one gate. | 2-5 weeks, overlapping C10 |
-| C13 | Constrained-random fixed-seed replay passes | `[----------]` 0/2, 0% | Not started | Basic corpus entries exist, but seven solver tests are dependency-blocked. | Solver availability, UVM sequence-item constraints, arrays/objects/modes/diagnostics, seed capture/replay, and SoC integration. | 5-12 weeks |
+| C13 | Constrained-random fixed-seed replay passes | `[----------]` 0/2, 0% | In progress | Seven compiler corrections have focused evidence; real UVM replay passes 384 transactions across six seeded runs at `2dbe3b22c`. | Failed-solve value preservation, null-child handling, complete constraint coverage, full regression/CI, and SoC integration. | 5-12 weeks |
 | C14 | Functional coverage from UVM classes passes | `[----------]` 0/1, 0% | Not started | No direct UVM-class coverage evidence. | Covergroups in classes, subscribers, sampling correctness, bins/crosses, and precise unsupported limits. | 4-10 weeks |
 | C15 | Coverage report and merge pass | `[#####-----]` 2/4, 50.0% prerequisite readiness | Not started | Packaging/CI gates contribute mechanically; no coverage feature passes. | Coverage data/report generation, deterministic merge, CI artifacts, and user workflow. Direct feature progress is 0%. | 5-12 weeks |
 | C16 | APB and AXI-lite protocol assertions pass | `[----------]` 0/1, 0% | Not started | No direct evidence. | Practical SVA subset, APB/AXI properties, pass/fail reductions, monitor agreement, unsupported-construct limits. | 3-8 weeks |
