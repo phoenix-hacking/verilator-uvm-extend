@@ -35,7 +35,7 @@ if not have_clang_check():
 # and are only in "include" folder
 srcfiles = test.glob_some(test.root + "/include/*.cpp")
 srcfiles_str = " ".join(srcfiles)
-clang_args = "-I" + test.root + "/include/ -I" + test.root + "/include/vltstd/ -fcoroutines-ts"
+clang_args = "-I" + test.root + "/include/ -I" + test.root + "/include/vltstd/ -std=c++20"
 
 test.run(logfile=test.run_log_filename,
          tee=True,
