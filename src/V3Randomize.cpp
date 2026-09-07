@@ -3109,7 +3109,8 @@ class RandomizeVisitor final : public VNVisitor {
     std::map<std::string, AstCDType*> m_randcDtypes;  // RandC data type deduplication
     AstConstraint* m_constraintp = nullptr;  // Current constraint
     std::set<std::string> m_writtenVars;  // Track write_var calls per class to avoid duplicates
-    std::map<AstClass*, std::set<AstVar*>> m_sizeConstrainedArrays;  // Per-class arrays
+    std::map<AstConstraint*, std::set<AstVar*>>
+        m_sizeConstrainedArrays;  // Arrays referenced by each lowered constraint
     std::map<AstClass*, AstVar*>
         m_staticConstraintModeVars;  // Static constraint mode vars per class
     std::map<AstClass*, AstVar*> m_staticRandModeVars;  // Static rand mode vars per class
@@ -4812,6 +4813,7 @@ class RandomizeVisitor final : public VNVisitor {
         // IS_RANDOMIZED_GLOBAL classes can be randomized independently
         AstNodeExpr* beginValp = nullptr;
         AstVar* genp = getRandomGenerator(nodep);
+        std::set<AstVar*> sizeArrays;
         if (genp) {
             // Phase 1: Process all constraints (create tasks, run ConstraintExprVisitor)
             // Setup task refs are NOT added to setupAllTaskp here -- done in phase 2
@@ -4832,10 +4834,13 @@ class RandomizeVisitor final : public VNVisitor {
 
                 if (constrp->itemsp()) expandUniqueElementList(constrp->itemsp());
                 if (constrp->itemsp()) lowerDistConstraints(taskp, constrp->itemsp());
-                std::set<AstVar*>& sizeArrays = m_sizeConstrainedArrays[classp];
+                std::set<AstVar*>& constraintSizeArrays = m_sizeConstrainedArrays[constrp];
                 ConstraintExprVisitor{classp,        m_memberMap, constrp->itemsp(),
                                       nullptr,       genp,        randModeVarp,
-                                      m_writtenVars, randomizep,  &sizeArrays};
+                                      m_writtenVars, randomizep,  &constraintSizeArrays};
+                // Inherited constraints may already be lowered into setup tasks.
+                // Their arrays still need resizing and a second element solve.
+                sizeArrays.insert(constraintSizeArrays.begin(), constraintSizeArrays.end());
                 if (constrp->itemsp()) {
                     taskp->addStmtsp(wrapIfConstraintMode(
                         nodep, constrp, constrp->itemsp()->unlinkFrBackWithNext()));
@@ -4971,9 +4976,7 @@ class RandomizeVisitor final : public VNVisitor {
             solverCallp->dtypeSetBit();
             solverCallp->add(new AstVarRef{fl, genModp, genp, VAccess::READWRITE});
             solverCallp->add(".next(__Vm_rng)");
-            const auto sizeArraysIt = m_sizeConstrainedArrays.find(nodep);
-            const bool needsSizePhase
-                = sizeArraysIt != m_sizeConstrainedArrays.end() && !sizeArraysIt->second.empty();
+            const bool needsSizePhase = !sizeArrays.empty();
             if (needsSizePhase) {
                 AstVar* const sizeOkVarp = new AstVar{fl, VVarType::BLOCKTEMP, "__Vsize_ok",
                                                       nodep->findBasicDType(VBasicDTypeKwd::BIT)};
@@ -4999,7 +5002,7 @@ class RandomizeVisitor final : public VNVisitor {
                 }
 
                 // Refresh array element tables after resize
-                for (AstVar* const arrVarp : sizeArraysIt->second) {
+                for (AstVar* const arrVarp : sizeArrays) {
                     // Array elements of class data type are passed to the solver as separate
                     // variables, so passing the original array variable is redundant, because it
                     // won't be referenced
@@ -5051,7 +5054,7 @@ class RandomizeVisitor final : public VNVisitor {
                 AstTaskRef* const setupTaskRefp2 = new AstTaskRef{fl, setupAllTaskp};
                 randomizep->addStmtsp(setupTaskRefp2->makeStmt());
 
-                for (AstVar* const arrVarp : sizeArraysIt->second) {
+                for (AstVar* const arrVarp : sizeArrays) {
                     AstVar* const sizeVarp = VN_CAST(arrVarp->user4p(), Var);
                     if (!sizeVarp) continue;
                     AstCMethodHard* const pinp = new AstCMethodHard{
@@ -5113,9 +5116,7 @@ class RandomizeVisitor final : public VNVisitor {
         randomizep->addStmtsp(new AstAssign{
             fl, fvarRefp, basicFirst ? new AstFuncRef{fl, basicRandomizep} : beginValp});
 
-        const auto sizeArraysIt = m_sizeConstrainedArrays.find(nodep);
-        const bool needsSizePhase
-            = sizeArraysIt != m_sizeConstrainedArrays.end() && !sizeArraysIt->second.empty();
+        const bool needsSizePhase = !sizeArrays.empty();
         // Size-only resize fallback (no element constraint, so no two-pass phase).
         // Must run after the solver .next() that sets the size variable; emit it
         // after whichever assignment below holds the solver call.
@@ -5697,6 +5698,7 @@ public:
 
         iterate(nodep);
         nodep->foreach([&](AstConstraint* constrp) {
+            m_sizeConstrainedArrays.erase(constrp);
             VL_DO_DANGLING(pushDeletep(constrp->unlinkFrBack()), constrp);
         });
     }
