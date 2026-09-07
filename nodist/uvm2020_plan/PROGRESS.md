@@ -99,6 +99,17 @@ The integrated UVM test remains
 uncommitted, and none of these development results advances formal completion
 counts or establishes performance.
 
+A separate build correction at `ff0e5c041` makes user C++ files use the same
+optimization-flag order as precompiled headers. All four explicit override
+regressions fail before the change; those four plus six neighboring build
+scenarios pass afterward (10/10). Optimized/debug builds, full formatting,
+Python lint, and focused C++ analysis pass. The change is published separately
+on `codex/compiler-include-flags`; full regression and CI remain pending.
+The attribute checker is being corrected in a separate worktree: its new causal
+regression covers 14 serial/parallel cases and rejects incomplete parsing,
+failed precompilation, and missing compile commands. Actual source annotation
+validation remains open while the compiler/header environment is corrected.
+
 Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated
 results and detailed tables below are historical; use `tracker.yaml` and this
