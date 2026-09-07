@@ -17,7 +17,7 @@ test.scenarios('dist')
 
 checker_module = runpy.run_path('../nodist/uvm2020_plan/check_tracker.py')
 Checker = checker_module['TrackerChecker']
-document = yaml.load(Path('../nodist/uvm2020_plan/tracker.yaml').read_text(),
+document = yaml.load(Path('../nodist/uvm2020_plan/tracker.yaml').read_text(encoding='utf-8'),
                      Loader=checker_module['UniqueKeySafeLoader'])
 errors, computed = Checker(document).check()
 if errors:
