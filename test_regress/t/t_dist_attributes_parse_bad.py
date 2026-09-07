@@ -24,6 +24,8 @@ header = os.path.abspath(test.obj_dir + '/valid.h')
 mismatch = os.path.abspath(test.obj_dir + '/mismatch.cpp')
 safe_body = os.path.abspath(test.obj_dir + '/safe_body.cpp')
 unsafe_body = os.path.abspath(test.obj_dir + '/unsafe_body.cpp')
+callback_safe = os.path.abspath(test.obj_dir + '/callback_safe.cpp')
+callback_unsafe = os.path.abspath(test.obj_dir + '/callback_unsafe.cpp')
 test.write_wholefile(valid, 'int valid() { return 1; }\n')
 test.write_wholefile(invalid, 'int invalid = ;\n')
 test.write_wholefile(header, 'int header_declaration();\n')
@@ -34,6 +36,14 @@ for source, annotation in ((safe_body, 'MT_SAFE'), (unsafe_body, 'MT_UNSAFE')):
     test.write_wholefile(
         source, 'void callee() __attribute__((annotate("' + annotation + '"))) {}\n'
         'void caller() __attribute__((annotate("MT_SAFE_EXCLUDES"))) { callee(); }\n')
+for source, annotation in ((callback_safe, 'MT_SAFE'), (callback_unsafe, 'MT_UNSAFE')):
+    test.write_wholefile(
+        source, '#include <functional>\n'
+        'void invoke(std::function<void()> callback) __attribute__((annotate("MT_SAFE"))) { '
+        'callback(); }\n'
+        'void callee() __attribute__((annotate("' + annotation + '"))) {}\n'
+        'void caller() __attribute__((annotate("MT_SAFE_EXCLUDES"))) { '
+        'invoke([]() { callee(); }); }\n')
 checker = os.path.abspath(test.root + '/nodist/clang_check_attributes')
 compdb = os.path.abspath(test.obj_dir + '/compile_commands.json')
 test.write_wholefile(compdb, '[]\n')
@@ -53,6 +63,9 @@ for jobs in (1, 2):
         ('mismatch', [mismatch], '-std=c++14', [], r'declaration does not match definition'),
         ('safe_body', [safe_body], '-std=c++14', [], ''),
         ('unsafe_body', [unsafe_body], '-std=c++14', [], r'is mtsafe but calls non-mtsafe'),
+        ('callback_safe', [callback_safe], '-std=c++14', [], ''),
+        ('callback_unsafe', [callback_unsafe], '-std=c++14', [],
+         r'is mtsafe but calls non-mtsafe'),
     ):
         log = test.obj_dir + '/' + case + '_' + str(jobs) + '.log'
         test.run(cmd=[
@@ -65,7 +78,7 @@ for jobs in (1, 2):
             test.file_grep(log, diagnostic)
             if case == 'mismatch':
                 test.file_grep(log, r'Number of functions reported unsafe: (\d+)', 0)
-            elif case == 'unsafe_body':
+            elif case in ('unsafe_body', 'callback_unsafe'):
                 test.file_grep(log, r'Number of functions reported unsafe: (\d+)', 1)
             else:
                 test.file_grep(log, r'Number of files that could not be analyzed: (\d+)', 1)

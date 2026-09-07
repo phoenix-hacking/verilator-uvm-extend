@@ -641,14 +641,6 @@ class CallAnnotationsValidator:
         if self._is_ignored_call(refd):
             return True
 
-        if "std::function" in refd.displayname:
-            # Workaroud for missing support for lambda annotations
-            # in c++11.
-            # If function takes std::function as argument,
-            # assume, that this std::function will be called inside it.
-            self.process_function_definition(node)
-            return False
-
         assert self._call_location is not None
         node_file = os.path.abspath(node.location.file.name)
         self._call_location = self._call_location.copy(file=node_file, line=node.location.line)
