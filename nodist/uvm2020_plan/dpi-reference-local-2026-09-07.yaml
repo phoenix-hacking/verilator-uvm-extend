@@ -1,0 +1,99 @@
+# DESCRIPTION: Verilator: local UVM C reference-scoreboard evidence
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+base_revision: ebcc9fb974d8c00342565cfc20b96d18aab1e3c0
+test_revision: e148bbfbcb8ac5a45d55ff94d5bce8a4abab1fe4
+compiler_binary: /home/holden/verilator-uvm-extend/bin/verilator_bin
+compiler_sha256: 9c79b7e4c2395a3baf9d26afdca34e1dd5c0daba71c0d060ba10c66f22731fe9
+library_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+results:
+  configurations: 4
+  checked_samples_per_configuration: 360
+  checked_samples_total: 1440
+  packets_per_configuration: 24
+  resets_per_configuration: 8
+  corrupted_dut_rejected_in_each_configuration: true
+files:
+- path: source-vlt/Vt_uvm_dpi_reference
+  sha256: 0ad5a68ae36568878bcd2ebc8fe2a7482713595fe6ee9c37497aa8f3032158f8
+- path: source-vlt/vlt_compile.log
+  sha256: da8cb58d2692a417d6988362730a107bb830969ec84aea48580da2614afc00b1
+- path: source-vlt/vlt_sim.log
+  sha256: c2067a8c9700a618f1abe9eb32847fc5dd090a4e5791554f9161df67437ff970
+- path: source-vlt/corrupt.log
+  sha256: 64c3221b772a7a1fb0127f6505c2249d5f255919758f547cb4d3d66a8729aed6
+- path: source-vltmt/Vt_uvm_dpi_reference
+  sha256: 9440c16e5f1987753dff8815ee261953ce030154ab57d66cdde4335967b930d8
+- path: source-vltmt/vlt_compile.log
+  sha256: f8c505a179d168cc94dd81cd9b61110f9cf7b08adae3a7729e04bb0c074b7226
+- path: source-vltmt/vlt_sim.log
+  sha256: 33fce8a37cc2e7329433356fb27090ab0aaac1dc8aa74ea332abac3ed24ceaaa
+- path: source-vltmt/corrupt.log
+  sha256: 96849caadc2f6b073adbbd6493b5fc4c9750a6e6d2d58ee4d81210a76a786f2d
+- path: bundled-vlt/Vt_uvm_dpi_reference
+  sha256: 52629acaa0b7699cf14886e9a5a2eaeefaab9dc563ca0607722ca592debab4b8
+- path: bundled-vlt/vlt_compile.log
+  sha256: 54b192a739e2761e7cc4977db0aaf5324705619ef5ce0f8c2d2f5e3c5a584453
+- path: bundled-vlt/vlt_sim.log
+  sha256: 0def9c8e806b75af1d9d05ec9cb343e729e75429a00ff4190f40860b2276cba0
+- path: bundled-vlt/corrupt.log
+  sha256: 1de1825e60caf8ea275c75f91869f7ca6528657abcaaf35aa8dbd3abf4260a79
+- path: bundled-vltmt/Vt_uvm_dpi_reference
+  sha256: 89268d6dc7a2d69f8f71ac33c0df6828f0d682e5bf15e400959bcf010406b933
+- path: bundled-vltmt/vlt_compile.log
+  sha256: 9e532c1188f5b39d03b18bdc1931e58c5f0159c4044de239360992a350bb1863
+- path: bundled-vltmt/vlt_sim.log
+  sha256: a51d4053d13cf788feea273cb3a1387d73580ae7d58c0047af85f32d1d13f06c
+- path: bundled-vltmt/corrupt.log
+  sha256: fe941fbc79e6b8ee2da9ec13244a493495a49d36e0054e3594a5b2acf80c42d7
+- path: t_uvm_dpi_reference.py
+  sha256: b1ced7be1fb893ee9dfcbf175de901e1b36ddd5266a57f29d4551970fd682f46
+- path: t_uvm_dpi_reference.v
+  sha256: ef4412105f81b422ed972b9a4c6db64269dcb9f142fb97a4483505057726b73d
+- path: t_uvm_dpi_reference.cpp
+  sha256: 4d47339a3afd2976fb6d7c90a30d31bab6caff42419195aa4ecfb3902b9649b6
+boundary: Fixed-array C scoreboard local proof. Dynamic input/inout DPI arrays and full M14/CI acceptance
+  remain open.
+compiler_source_tree: effb873ca9b0ec74e749f8188ffd7d8bb5259ac2
+runtime_source_tree: fe06258a29731f55f10fa64b0430177848969ce2
+schema_version: 1
+date: '2026-09-07'
+accepted_gate: M14-G02-C-REFERENCE
+proof_scope: local C reference-model scoreboard; no CI, full DPI, milestone-exit, or performance acceptance
+test_branch: https://github.com/phoenix-hacking/verilator-uvm-extend/tree/codex/uvm-dpi-reference
+artifacts_directory: /home/holden/verilator-work/uvm-dpi-reference-artifacts
+ci_status: pending
+ci_build_test: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34115316132
+ci_format: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34115315837
+ci_format_status: pass
+library_clean_after_tests: true
+source_command: python3 driver.py --vlt --vltmt --jobs 2 --driver-build-jobs 1 --driver-uvm-source-root
+  /home/holden/verilator-work/uvm-2020.3.1 --obj-suffix=-dpi-ref-source t/t_uvm_dpi_reference.py
+bundled_command: python3 driver.py --vlt --vltmt --jobs 2 --driver-build-jobs 1 --obj-suffix=-dpi-ref-bundled
+  t/t_uvm_dpi_reference.py
+command_cwd: /home/holden/verilator-work/uvm-dpi-reference/test_regress
+environment: source /home/holden/verilator-work/env.sh; VERILATOR_ROOT=/home/holden/verilator-work/uvm-dpi-reference;
+  VERILATOR_BIN=/home/holden/verilator-uvm-extend/bin/verilator_bin; unset CXXFLAGS
+semantic_checks:
+- Clocked DUT byte accumulator checked at every completed cycle against the independent C implementation.
+- Two independent chandle model instances, eight resets, 24 packets, and 360 byte results per configuration.
+- Ascending input and descending output fixed arrays have nonzero bounds; C oracle is checked against
+  hand-derived values 1, 35, and 1410.
+- Eight repeated model lifetimes and live-allocation count returns to zero.
+- DUT fault must produce the DPI_SCOREBOARD fatal mismatch and no success sentinel; UVM fatal exits with
+  status zero.
+open_requirements:
+- Legal dynamic input/inout DPI arrays remain under compiler development.
+- Original dynamic UVM draft used an illegal output dynamic array too; only input-only reduction is used
+  to establish the missing legal feature.
+- Minimal VPI/backdoor gate remains pending.
+- Exact-revision CI and release regression remain pending.
+normative_reference: IEEE 1800-2017 7.7, 35.5.6.1, H.12; https://fpga.mit.edu/6205/_static/F25/documentation/1800-2017.pdf
+driver_logs:
+- file: dpi-reference-source-final.log
+  sha256: 93e10e565c9ffc85f72351dfdd0421de57ea27f422afd7f339d034f2829a5baf
+  summary: '==TESTS DONE, PASSED: Passed 2  Failed 0  Time 5:30'
+- file: dpi-reference-bundled.log
+  sha256: 3daf83f2b83f974ab0d70603cf2b9a6b17990679667f5177052efd77316b1526
+  summary: '==TESTS DONE, PASSED: Passed 2  Failed 0  Time 8:05'

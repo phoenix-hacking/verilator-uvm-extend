@@ -31,7 +31,7 @@ provenance, log hashes, pass order, and the exact acceptance sentinels.
 
 The evidence closes the declared M05 class/factory/static-initialization and
 M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
-criteria, 4/20 milestone exits, and 27/46 atomic gates**. The compatibility
+criteria, 4/20 milestone exits, and 28/46 atomic gates**. The compatibility
 inventory now has **115/115 passing declared oracles, zero blocked**, using
 accumulated evidence. The [eight newly executed tests](dependency-closure-2026-09-07.yaml)
 passed locally with the debug compiler and Z3 available. This is not a fresh
@@ -105,18 +105,46 @@ regressions fail before the change; those four plus six neighboring build
 scenarios pass afterward (10/10). Optimized/debug builds, full formatting,
 Python lint, and focused C++ analysis pass. The change is published separately
 on `codex/compiler-include-flags`; full regression and CI remain pending.
-The attribute-checker corrections are published separately through `117b3f8dd`
-on `codex/attribute-parse-errors`. Their causal regression covers 16 serial/parallel
+The attribute-checker corrections are published separately through `6e9227ea1`
+on `codex/attribute-parse-errors`. Their causal regression covers 20 serial/parallel
 cases and rejects incomplete parsing, failed precompilation, missing compile
 commands, and annotation diagnostics even when the unsafe-call count is zero. With matching Clang 18 builtin and GCC 13 C++ headers, the existing
 negative test also reproduces all 230 expected unsafe-function diagnostics.
 Full formatting and Python lint pass. Actual checks for 16 runtime and six
 compiler source files completed with annotation mismatches and a compiler-file
-parse failure. Positive annotation acceptance remains open. A focused probe also
-shows the checker omits the MT_SAFE property of MT_SAFE_EXCLUDES; its annotation
-model and unity-source selection require correction before interpreting all
-reported mismatches. Broad C++ analysis completed with 11 error-level diagnostics,
+parse failure. Positive annotation acceptance remains open. The MT_SAFE_EXCLUDES
+body-check omission is now corrected, with a failing-before test, four independent
+safe/unsafe body probes, and two passing final regression drivers. Its golden was
+regenerated through the harness. The corrected runtime scan reports 42 unique
+unsafe callees and two annotation mismatches; these require review against the
+actual locking contracts and are not automatically 42 runtime defects. Compiler
+translation-unit selection still needs correction. Broad C++ analysis completed with 11 error-level diagnostics,
 despite exit status zero; those findings require review before acceptance.
+
+Recent implementation work has concentrated on M09 and validation tools. None
+of those local results closes another capability milestone. Seven milestones
+remain not started: M10 coverage, M11 APB, M12 AXI-lite, M13 RAL, M15 protocol
+assertions, M16 synthetic SoC, and M18 advanced parity. Performance acceptance
+still has no verified improvement measurement.
+
+The independent M14 C reference-scoreboard test is published at `e148bbfbc` on
+`codex/uvm-dpi-reference`. It passes all four source/bundled and
+single/multithreaded configurations: 1,440 checked DUT samples, with separate
+model handles, resets, strings, fixed-array arguments with nonzero bounds,
+explicit cleanup, hand-derived reference vectors, and detected injected DUT
+errors. The [retained local evidence](dpi-reference-local-2026-09-07.yaml)
+accepts **M14-G02-C-REFERENCE**, bringing atomic gates from 27/46 to **28/46**.
+This gate specifies the C scoreboard path; CI and full DPI acceptance remain
+separate and pending. M14 now has two of three gates accepted and remains open.
+
+A separate small input-only reproduction confirms missing legal dynamic-array
+DPI support independently of UVM and randomization. The initial integration
+draft also used an output dynamic array, which IEEE 1800-2017 7.7 prohibits;
+that draft is not used as an all-legal positive test. The new compiler work on
+`codex/dpi-dynamic-arrays` targets legal input/inout arrays and queues, including
+empty arrays, nested dimensions, wide values, real numbers, handles, and strings.
+It remains unverified development work. The minimal VPI/backdoor gate and all
+mandatory full-compliance requirements remain open.
 
 Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated

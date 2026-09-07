@@ -217,9 +217,9 @@ issues:
     milestones: [M01, M14, M17]
     progress_basis: accepted_required_gates_in_owned_milestones
     progress:
-      complete: 6
+      complete: 7
       total: 9
-      percent: 66.7
+      percent: 77.8
   40:
     id: A20
     url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/40
@@ -767,6 +767,17 @@ expanded_lane:
       ref: validation.ci.runs.historical_fifteen_test_lane
 
 evidence:
+  LOCAL-DPI-REFERENCE-20260907:
+    claim: >-
+      The C reference-model scoreboard path passes locally in both simulation
+      modes against source and bundled UVM, with checked DUT output, reset,
+      handle isolation, strings, fixed-array bounds, cleanup, and fault detection.
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - nodist/uvm2020_plan/dpi-reference-local-2026-09-07.yaml
   CLASS-STATIC-CLOSURE-20260907:
     claim: Class parameter/static specialization identity, field access accounting, and parameterized UVM
       factory acceptance pass locally and in canonical CI.
@@ -1314,8 +1325,18 @@ milestones:
         evidence: [LOCAL-UVM-SMOKE-0001]
       M14-G02-C-REFERENCE:
         title: C reference-model scoreboard path passes
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-DPI-REFERENCE-20260907]
+        implementation_tests:
+          - test_regress/t/t_uvm_dpi_reference.py
+        claim_boundary: >-
+          Published at e148bbfbcb8ac5a45d55ff94d5bce8a4abab1fe4 on
+          codex/uvm-dpi-reference; not merged into this integration checkout yet.
+          All four source/bundled and single/multithreaded configurations pass,
+          checking 1,440 DUT samples in total and detecting an injected fault
+          in every configuration. This accepts the local C scoreboard gate;
+          it does not claim CI, full DPI support, or M14 milestone closure.
+          Legal dynamic input/inout DPI arrays remain under development.
       M14-G03-VPI-BACKDOOR:
         title: Minimal VPI/backdoor support or limitation is accepted
         status: pending
@@ -1998,9 +2019,9 @@ progress:
     total: 20
     percent: 20.0
   gates:
-    complete: 27
+    complete: 28
     total: 46
-    percent: 58.7
+    percent: 60.9
   lane:
     complete: 11
     total: 11
