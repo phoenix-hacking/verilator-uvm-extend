@@ -105,15 +105,18 @@ regressions fail before the change; those four plus six neighboring build
 scenarios pass afterward (10/10). Optimized/debug builds, full formatting,
 Python lint, and focused C++ analysis pass. The change is published separately
 on `codex/compiler-include-flags`; full regression and CI remain pending.
-The attribute-checker correction is published separately at `d616fad10` on
-`codex/attribute-parse-errors`. Its causal regression covers 14 serial/parallel
-cases and rejects incomplete parsing, failed precompilation, and missing compile
-commands. With matching Clang 18 builtin and GCC 13 C++ headers, the existing
+The attribute-checker corrections are published separately through `117b3f8dd`
+on `codex/attribute-parse-errors`. Their causal regression covers 16 serial/parallel
+cases and rejects incomplete parsing, failed precompilation, missing compile
+commands, and annotation diagnostics even when the unsafe-call count is zero. With matching Clang 18 builtin and GCC 13 C++ headers, the existing
 negative test also reproduces all 230 expected unsafe-function diagnostics.
-Full formatting and Python lint pass. Actual annotation checks for 16 runtime
-and six compiler source files remain running; no positive annotation acceptance
-is claimed. The broad C++ analysis has also reported error diagnostics requiring
-review; its exit status alone will not count as acceptance.
+Full formatting and Python lint pass. Actual checks for 16 runtime and six
+compiler source files completed with annotation mismatches and a compiler-file
+parse failure. Positive annotation acceptance remains open. A focused probe also
+shows the checker omits the MT_SAFE property of MT_SAFE_EXCLUDES; its annotation
+model and unity-source selection require correction before interpreting all
+reported mismatches. Broad C++ analysis completed with 11 error-level diagnostics,
+despite exit status zero; those findings require review before acceptance.
 
 Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated
