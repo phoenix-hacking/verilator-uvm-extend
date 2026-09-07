@@ -67,6 +67,7 @@ test.write_wholefile(ccjson_file, ccjson_str)
 test.run(
     logfile=test.run_log_filename,
     tee=True,
+    fails=True,
     # With `--verilator-root` set to the current directory
     # (i.e. `test_regress`) the script will skip annotation issues in
     # headers from the `../include` directory.
