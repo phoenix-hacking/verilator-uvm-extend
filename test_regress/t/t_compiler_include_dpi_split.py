@@ -12,9 +12,10 @@ import vltest_bootstrap
 test.scenarios('vlt')
 test.top_filename = "t/t_compiler_include_dpi.v"
 
+# Override the harness OPT_FAST=-O0; PCH and user sources must agree.
 test.compile(v_flags2=["t/t_compiler_include_dpi.cpp"],
              verilator_flags2=[
-                 "-Wall -Wno-DECLFILENAME --compiler-include",
+                 "--CFLAGS -O1", "-Wall -Wno-DECLFILENAME --compiler-include",
                  test.t_dir + "/t_compiler_include_dpi.h", "--output-split 1"
              ])
 

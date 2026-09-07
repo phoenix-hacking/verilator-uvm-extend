@@ -11,10 +11,11 @@ import vltest_bootstrap
 
 test.scenarios('vlt')
 
+# Override the harness OPT_FAST=-O0; PCH and user sources must agree.
 test.compile(make_top_shell=False,
              make_main=False,
              verilator_flags2=[
-                 "--exe", test.pli_filename, "--compiler-include",
+                 "--CFLAGS -O1", "--exe", test.pli_filename, "--compiler-include",
                  test.t_dir + "/t_compiler_include.h", "--output-split 0"
              ])
 

@@ -757,8 +757,9 @@ public:
             // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
             of.puts(basename + ".o: " + cppfile + " " + compilerIncludePch + "\n");
 
+            // Match the FAST/PCH rules so user flags override OPT_FAST consistently.
             // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-            of.puts("\t$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) "
+            of.puts("\t$(OBJCACHE) $(CXX) $(OPT_FAST) $(CXXFLAGS) $(CPPFLAGS) "
                     + compilerIncludeFlag + " -c -o $@ $<\n");
         }
 

@@ -13,10 +13,11 @@ test.scenarios('vlt')
 test.pli_filename = "t/t_compiler_include.cpp"
 test.top_filename = "t/t_compiler_include.v"
 
+# Override the harness OPT_FAST=-O0; PCH and user sources must agree.
 test.compile(make_top_shell=False,
              make_main=False,
              verilator_flags2=[
-                 "--exe", test.pli_filename, "--compiler-include",
+                 "--CFLAGS -O1", "--exe", test.pli_filename, "--compiler-include",
                  test.t_dir + "/t_compiler_include.h", "--output-split 1"
              ])
 
