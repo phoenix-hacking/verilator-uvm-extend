@@ -29,10 +29,14 @@ reproducer configurations. Formatting and Python lint pass. The
 and the 174-driver, 304-scenario neighbor run, which completed with 300 passes
 and four failures. The associative-array size test fails in both scenarios on
 the preserved parent too; the recursive-class negative test exhausts memory.
-Logs are in `/home/holden/verilator-work/randomize-null-neighbors.log`. A separate
-recursion check is being developed in
-`/home/holden/verilator-work/randomize-recursion-check`;
-bounded parent runs reproduce both the original and expanded negative tests.
+Logs are in `/home/holden/verilator-work/randomize-null-neighbors.log`. The
+recursion correction is published at `ab1d4498f` on
+`codex/randomize-recursion-check`, with 28/28 focused passes and causal 0/4 parent
+results under resource limits. It diagnoses self, mutual, and inherited rand
+class recursion before constraint expansion. The
+[local evidence](randomize-recursion-local-2026-09-07.yaml) preserves exact source,
+binary, and log hashes. Its optimized compiler is retained as
+`/home/holden/verilator-work/verilator_bin_recursive_ab1d4498f`.
 The frozen foreach full regression has a process-specific memory/CPU guard for
 the known recursive negative test, with interventions recorded in
 `/home/holden/verilator-work/foreach-recursion-resource-limits.log`.
@@ -45,8 +49,8 @@ candidate; this is not a clean static pass. The null-child sweep is still active
 The failure-state worktree was fast-forwarded to `04fc80d15` and its recovered
 changes reapplied cleanly; the original stash and patch remain preserved.
 
-Next work is to validate the recursion correction, fix associative-array size
-handling, inspect the active regressions and CI, finish failed-randomization
+Next work is to honor state-only constraints when no solver variables exist,
+fix associative-array size handling, inspect the active regressions and CI, finish failed-randomization
 value preservation, then integrate
 the real UVM sequence-item regression and continue the complete milestone
 scope in GOALS.md. The ten pre-crash CI failures must be classified from actual

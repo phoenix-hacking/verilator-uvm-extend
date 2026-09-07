@@ -36,7 +36,12 @@ All four original-reproducer configurations abort on the preserved parent.
 Formatting and Python lint pass. The broader run completed 304 scenarios from
 174 existing drivers: 300 passed and four failed. Both associative-array size
 failures reproduce with the preserved parent, and both recursive-class negative
-scenarios expose unbounded compiler expansion. Separate fixes are in development.
+scenarios expose unbounded compiler expansion. The recursion correction is now
+published at `ab1d4498f`: 28/28 focused checks pass, versus four parent aborts in
+the negative scenarios under bounded resources. Its
+[local evidence](randomize-recursion-local-2026-09-07.yaml) includes exact hashes;
+it provides early unsupported-feature diagnostics, not recursive-class support.
+Associative-size handling and state-only solver constraints remain in development.
 The completed recovery cppcheck sweep has the same 11 reports as the pre-crash
 candidate; this is not a clean static pass. Full regression, CI, and static
 acceptance remain pending. [Local evidence](randomize-null-child-local-2026-09-07.yaml) records

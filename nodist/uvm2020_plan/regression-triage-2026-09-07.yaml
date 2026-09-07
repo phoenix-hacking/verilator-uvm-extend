@@ -27,7 +27,7 @@ recursion:
   limits: Each process inherits a 3 GiB address-space limit and CPU limits of 30 seconds soft and 35 seconds hard; the complete command has a 100-second wall limit.
   cause: Constraint cloning follows scalar rand class members before the old self-member check. A self edge appends constraints while traversing the same class; indirect edges and generated enum/callback
     traversal also require cycle detection.
-  status: Early class recursion check and additional negative/positive coverage are in development in codex/randomize-recursion-check.
+  status: Published at ab1d4498f with 28 focused passes and four bounded parent aborts; see randomize-recursion-local-2026-09-07.yaml. Broader acceptance remains pending.
   existing_behavior_check: Expanded t_randomize_subobj_enum passes both parent scenarios in 0:12, covering shared leaf types, non-rand parent references, and an instantiated recursive class that is never
     randomized.
 full_regression:
