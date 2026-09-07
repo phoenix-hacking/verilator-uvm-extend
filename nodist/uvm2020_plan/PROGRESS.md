@@ -4,6 +4,31 @@
 
 # UVM 2020 program progress
 
+## Post-crash recovery: 2026-09-07
+
+All eight worktrees and ten uncommitted source/test files survived the host
+crash. Two zero-byte compiler objects were preserved and rebuilt. The two full
+regression runs stopped with unfinished aggregate results; their older nested
+test-completion markers do not establish suite completion.
+
+The nested `foreach` correction is published at `3b36d58dc` on
+`codex/foreach-nonzero-indices`. It selects every enclosing container, normalizes
+fixed-array bounds, retains selected element types, and queries selected string
+lengths. The final test passes all four ordinary/protected and vlt/vltmt
+configurations, versus four failures with the preserved parent compiler.
+All 21 adjacent scenarios and five distribution checks pass; full formatting
+and Python lint pass. Full regression, new-branch CI, and broad static-analysis
+acceptance remain open. The [recovery evidence](recovery-validation-2026-09-07.yaml)
+records source and binary hashes, commands, logs, and unfinished work.
+
+M00 and M01 already satisfy their baseline gates. Their issue reconciliation
+uses the revalidated tracker/manifest, source build, retained three-smoke passes,
+matching local/push/PR log hashes, and the successful canonical UVM CI job.
+This corrects issue hygiene without increasing the existing **4/20 milestone
+exits, 28/46 atomic gates, or 0/21 program criteria**. Failed-randomization state
+preservation, the null rand-child failure, broader integration, and the final
+compliance/performance goals remain unfinished.
+
 ## Explicit compliance and performance goals
 
 The [goal contract](GOALS.md) defines **G-UVM: full IEEE 1800.2-2020 UVM

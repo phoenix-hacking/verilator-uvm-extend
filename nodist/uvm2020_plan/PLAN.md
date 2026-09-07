@@ -31,7 +31,7 @@ provenance, log hashes, pass order, and the exact acceptance sentinels.
 
 The evidence closes the declared M05 class/factory/static-initialization and
 M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
-criteria, 4/20 milestone exits, and 27/46 atomic gates**. The compatibility
+criteria, 4/20 milestone exits, and 28/46 atomic gates**. The compatibility
 inventory now has **115/115 passing declared oracles, zero blocked**, using
 accumulated evidence. The [eight newly executed tests](dependency-closure-2026-09-07.yaml)
 passed locally with the debug compiler and Z3 available. This is not a fresh
@@ -43,7 +43,6 @@ Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated
 results and detailed tables below are historical; use `tracker.yaml` and this
 checkpoint for current status.
-
 
 This plan tracks one resource-capped regression lane for the vendored,
 concatenated UVM 2020.3.1 package. It advances issue #21 package-elaboration
@@ -93,23 +92,23 @@ implementation dependency order, not another completion denominator. Their
 order is:
 
 1. `M0` baseline/dashboard;
-2. `M1` packages, macros, and source locations;
-3. `M2` scheduler, processes, `$finish`, `wait`, and `fork`;
-4. `M3` classes, factory, and static initialization;
-5. `M4` interfaces, virtual interfaces, and clocking blocks;
-6. `M5` configuration and resource databases;
-7. `M6` components, build/connect, and reporting;
-8. `M7` TLM;
-9. `M8` sequences, sequencers, and drivers;
-10. `M9` constrained randomization;
-11. `M10` APB agent;
-12. `M11` AXI-lite agent;
-13. `M12` RAL frontdoor and predictor;
-14. `M13` functional coverage, reporting, and merge;
-15. `M14` SVA profile;
-16. `M15` DPI, VPI, and backdoor;
-17. `M16` synthetic SoC; and
-18. `M17` packaging, documentation, and performance.
+1. `M1` packages, macros, and source locations;
+1. `M2` scheduler, processes, `$finish`, `wait`, and `fork`;
+1. `M3` classes, factory, and static initialization;
+1. `M4` interfaces, virtual interfaces, and clocking blocks;
+1. `M5` configuration and resource databases;
+1. `M6` components, build/connect, and reporting;
+1. `M7` TLM;
+1. `M8` sequences, sequencers, and drivers;
+1. `M9` constrained randomization;
+1. `M10` APB agent;
+1. `M11` AXI-lite agent;
+1. `M12` RAL frontdoor and predictor;
+1. `M13` functional coverage, reporting, and merge;
+1. `M14` SVA profile;
+1. `M15` DPI, VPI, and backdoor;
+1. `M16` synthetic SoC; and
+1. `M17` packaging, documentation, and performance.
 
 `tracker.yaml` owns atomic statuses and evidence references. Its checker
 derives all roll-ups so documentation does not become a second source of
@@ -267,6 +266,7 @@ python3 driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --drive
   t/t_uvm_hello_all_v2020_3_1_dpi.py \
   t/t_uvm_dpi_v2020_3_1.py
 ```
+
 The child regression process plants `interrupted.gch` in each dedicated
 object directory immediately before that test is cleaned. It then atomically
 renames the complete directory to a process- and time-unique quarantine,

@@ -172,6 +172,24 @@ successor_pull_request:
   claim: source_preservation_and_twenty_seven_test_lane_integration
   broader_program_relation: independent_from_zero_of_twenty_one_program_criteria
 issues:
+  1:
+    id: M00
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/1
+    title: Source-tree build and reproducible baseline
+    status: pass
+    claim: completed_source_build_and_disposition_baseline
+    milestones: [M00]
+    progress_basis: accepted_required_gates_in_owned_milestones
+    progress: {complete: 4, total: 4, percent: 100.0}
+  2:
+    id: M01
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/2
+    title: Existing UVM smoke baseline
+    status: pass
+    claim: completed_original_smoke_baseline
+    milestones: [M01]
+    progress_basis: accepted_required_gates_in_owned_milestones
+    progress: {complete: 3, total: 3, percent: 100.0}
   5:
     id: M04
     url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/5

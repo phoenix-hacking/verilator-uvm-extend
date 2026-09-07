@@ -1,0 +1,107 @@
+# DESCRIPTION: Verilator: Post-crash recovery and nested foreach validation
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Focused nested-foreach correctness and reconciliation of already accepted baseline
+  milestones. Full regression, new-branch CI, broad static acceptance, and both final goals remain open.
+recovery:
+  snapshot: /home/holden/verilator-work/recovery-20260907T133852Z
+  worktrees: 8
+  uncommitted_files_preserved: 10
+  git_connectivity_check: pass
+  invalid_optimized_objects: [V3UndrivenCapture.o, V3Unknown.o]
+  invalid_object_disposition: Zero-byte objects preserved in the recovery snapshot and rebuilt.
+  inspected_optimized_objects: 163
+  old_local_processes: stopped
+  interrupted_full_regressions:
+    baseline: {passed: 5331, failed: 51, skipped: 38, left: 1257, running_at_last_report: 2}
+    candidate: {passed: 4182, failed: 28, skipped: 6, left: 2473, running_at_last_report: 2}
+  full_regression_note: These are unfinished aggregate snapshots, not completed suites or counts of
+    confirmed compiler defects. Nested one-test completion markers do not establish full completion.
+foreach:
+  branch: codex/foreach-nonzero-indices
+  revision: 3b36d58dc4960c092fed854724c3220698207f92
+  parent: 2dbe3b22c00d78e0b73c05969b53f158e413abe4
+  source_tree: 45a63ec3fb3a0b3857f57e945a784f8d55960aa3
+  worktree: /home/holden/verilator-work/foreach-nonzero-indices
+  compiler_sha256: b0d0971d414df3726b216f70182249074bff0f1287749ccdd7167fdeb05448f1
+  compiler_version: Verilator 5.051 devel rev vUNKNOWN-built20260907-2dbe3b22c (mod)
+  provenance: The source and tests validated before committing match the published revision. The
+    binary revision string predates the commit; its hash identifies the tested compiler.
+  toolchain:
+    compiler: conda-forge GCC 13.4.0-20
+    python: 3.12.14
+    solver: Z3 5.1.0
+    kernel: Linux 5.15.0-139-generic
+    configure: --enable-ccwarn --enable-longtests
+    environment: source /home/holden/verilator-work/env.sh; set VERILATOR_ROOT to this worktree
+    build: make -C src opt -j2
+  sources:
+    src/V3Begin.cpp: 2049e6577bb84ee4f53c08fd92e05c07658bc4ed489ab87d8d14994e75fc69c9
+    test_regress/t/t_foreach_nonzero_nested.py: 19c0d1b1c50d28a6fa02e64affa537d58e962d2bcb515a48eb39316eb7d2c49a
+    test_regress/t/t_foreach_nested_protect_ids.py: 5de6cc8d66115341786b0af5156d2b54a242a2a7524a39a6951826c5948f51ba
+    test_regress/t/t_foreach_nonzero_nested.v: 6f777d42388612f6e969f60a1bffb425f1684059cec86f175463ee679cb0d581
+  focused:
+    command: python driver.py --vlt --vltmt --jobs=1 --driver-build-jobs=2 --quiet
+      t/t_foreach_nonzero_nested.py t/t_foreach_nested_protect_ids.py
+    execution_directory: test_regress
+    passed: 4
+    failed: 0
+    elapsed: '0:11'
+    coverage: Nonzero, negative, ascending, and descending fixed bounds; fixed arrays containing queues,
+      dynamic arrays, associative arrays, and strings; class members; dynamic/fixed/queue and
+      associative/fixed/string nesting; empty containers; repeated population; protected identifiers.
+  causal_parent:
+    compiler: /home/holden/verilator-work/verilator_bin_nested_mode_final
+    compiler_sha256: 52fdcfcddde4c8d7edf69df07c26e40eb4d610b096f1ae97aaeb748f115a1955
+    environment: VERILATOR_BIN points to the preserved parent compiler; all other source/runtime inputs
+      match the focused run; --obj-suffix=-recovery-parent isolates generated files.
+    passed: 0
+    failed: 4
+    elapsed: '0:12'
+    failure: Generated C++ calls associative first() on the enclosing fixed array instead of its
+      selected element.
+  neighbors:
+    command: python driver.py --vlt --vltmt --jobs=2 --driver-build-jobs=1 --quiet
+      t/t_foreach.py t/t_foreach_array.py t/t_foreach_bad.py t/t_foreach_blkname.py
+      t/t_foreach_class.py t/t_foreach_const.py t/t_foreach_delete.py t/t_foreach_iface.py
+      t/t_foreach_nested.py t/t_foreach_nindex_bad.py t/t_foreach_noivar.py t/t_foreach_noivar_bad.py
+      t/t_foreach_sideeff_uvm.py t/t_foreach_type_bad.py
+    passed: 21
+    failed: 0
+    elapsed: '0:25'
+    note: The count reflects each existing driver's declared scenarios; not every driver declares vltmt.
+  distribution:
+    tests: [t_dist_cppstyle, t_dist_copyright, t_dist_whitespace, t_dist_portability, t_dist_cinclude]
+    passed: 5
+    failed: 0
+  formatting: make format passed; two unrelated formatter-only runtime whitespace changes reverted
+  python_lint: make lint-py passed
+  cppcheck: Running with two workers and generated headers from src/obj_opt; broad acceptance remains
+    pending. Existing runtime diagnostics must still be reviewed regardless of tool exit status.
+  log_directory: /home/holden/verilator-work
+  log_sha256:
+    foreach-nonzero-recovery-build-clean-objects.log: e4c64a90297bbc551c0690e999bc18b97fa9717d4ac2fdb751a87278657b4c10
+    foreach-nonzero-recovery-build-formatted.log: 8564d18b750ae4e79340c7ba6a86d2f1727c596773cfe2b990bb1a3a0463fe54
+    foreach-nonzero-recovery-format-complete.log: 7f6ab2de463fcbccb018ee9158a82ffb2b97f528848d2e4dc5a93ea0ef313303
+    foreach-nonzero-recovery-lint-py.log: f8538e5eab75b7a32c339baf4b8c21b867badae4a70f15cde7ec6cc3aaf356c9
+    foreach-nonzero-recovery-expanded.log: f7800fa74d0d0a1928565084964f11bc26bd3cb6d4516667b1c692cc271bd190
+    foreach-nonzero-recovery-causal-before.log: a1a8d08313bfbda511a1ee05249f69b44f4f6ecbbbc1c0be0da1f4a0592f4dd8
+    foreach-nonzero-recovery-neighbors.log: e07aa7a3e76ef3260a4e0629a68d5743b8931efa817156f0b5a052d443498048
+    foreach-nonzero-recovery-distribution.log: babc40f62e5f795bb6935b6b9f8fcfff2f8142512549b0cc19aaab28099bd635
+baseline_issue_reconciliation:
+  milestones: [M00, M01]
+  reason: Both milestones already pass in tracker.yaml; their GitHub issues retained obsolete 0% bodies.
+  checks:
+    tracker: check_tracker.py passes; program 0/21, milestone exits 4/20, atomic gates 28/46
+    baseline_manifest: baseline_runner.py validate passes; full=72 reduced=69 quick=8
+    source_build: The recovered optimized source compiler builds successfully with the metadata above.
+    local_smoke: All three original UVM smoke tests pass in the retained 27-test ordered log.
+    canonical_ci: Push and PR raw-log hashes match ordered-lane-ci-2026-09-07.yaml; both contain the
+      three original smoke passes and complete 27/27 results. PR job 101460640739 Test step is still
+      reported successful by GitHub.
+  local_log_sha256: 9315abba3c0c9c2452ef581c46c5b11c419dcf287b1be9ed2992be157feb4e6d
+  push_log_sha256: 582094f3b6da8e2b4a3a53f22ce7ec591ab8aa86cb7227293fe07ba28bc5a9b9
+  pr_log_sha256: d680ee372aa651d1145f086f2a8a6ce3f881b5d0403cae87f373c39a217e6b6a
+  gate_counts_changed: false

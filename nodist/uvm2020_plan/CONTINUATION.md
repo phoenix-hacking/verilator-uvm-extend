@@ -4,6 +4,24 @@
 
 # UVM 2020 continuation ledger
 
+## Post-crash resume point: 2026-09-07
+
+The [recovery record](recovery-validation-2026-09-07.yaml) supersedes old local
+session identifiers and full-regression running/completion claims. All eight
+worktrees survived; uncommitted work is backed up under
+`/home/holden/verilator-work/recovery-20260907T133852Z`. The interrupted
+nested-foreach implementation is now committed and pushed at `3b36d58dc`, with
+4/4 focused passes, causal 0/4 parent results, 21 adjacent passes, and five
+distribution passes. Full formatting and Python lint pass. Full regression,
+CI, and broad static acceptance remain pending.
+
+Next implementation work remains failed-randomization value preservation and
+the null rand-child abort, followed by integration and the complete milestone
+scope in GOALS.md. The ten pre-crash CI failures must be classified from actual
+job logs; available shutdown/cancellation evidence is not semantic acceptance.
+M00/M01 baseline issue reconciliation changes no accepted-gate totals. Use
+PROGRESS.md and the recovery record for current development state.
+
 This file is the durable handoff record for pull requests #41 and #42. It records
 published checkpoints, exact evidence boundaries, unresolved design issues, and
 the next reproducible action. It deliberately does not treat historical CI as
@@ -40,7 +58,7 @@ provenance, log hashes, pass order, and the exact acceptance sentinels.
 
 The evidence closes the declared M05 class/factory/static-initialization and
 M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
-criteria, 4/20 milestone exits, and 27/46 atomic gates**. The compatibility
+criteria, 4/20 milestone exits, and 28/46 atomic gates**. The compatibility
 inventory now has **115/115 passing declared oracles, zero blocked**, using
 accumulated evidence. The [eight newly executed tests](dependency-closure-2026-09-07.yaml)
 passed locally with the debug compiler and Z3 available. This is not a fresh
@@ -59,7 +77,7 @@ Resume on `codex/uvm-program-integration-wip`, stacked draft PR #42. The
 starting head was `4906f041ddd73e53099393a9d7155414d1458f0a`.
 
 The job-list endpoint with `per_page=100` recovered all 46 jobs from run
-31346076613. UVM job
+31346076613\. UVM job
 [93328492250](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31346076613/job/93328492250)
 passed all 27 members in 27:01, including the symlink-safety preflight and
 cleanup postcheck. Its source head was `b09ff3e78f97e928907b8f2929bf8bacab6b16bd`
@@ -106,9 +124,7 @@ The compiler version was
 `Verilator 5.051 devel rev vUNKNOWN-built20260906-4906f041d`, SHA-256
 `bc3b0a11063ab31e39712b3008b92620208799008015b5b6a54b47f790f0a27b`.
 No compiler source changed between that build and the ordered-lane patch.
-The successful bootstrap commands were `LEX=true YACC=true ./configure
---enable-longtests --enable-ccwarn`, then `CPATH=/workspace/scratch/86e4a45a0d74/tmp/build-include
-make -C src opt -j8 OBJCACHE=`. All 163 compiler objects were rebuilt after
+The successful bootstrap commands were `LEX=true YACC=true ./configure --enable-longtests --enable-ccwarn`, then `CPATH=/workspace/scratch/86e4a45a0d74/tmp/build-include make -C src opt -j8 OBJCACHE=`. All 163 compiler objects were rebuilt after
 removing local object, dependency, and PCH files. Only the matching generated
 parser/lexer inputs were reused. Package installation had failed on restricted
 user/group operations; overriding CPPFLAGS then hid normal include paths and
@@ -127,7 +143,7 @@ conformance. No broader milestone or criterion is promoted.
 Format run 34023206562 and both Python lint jobs passed. Push `build-test`
 run 34023206800 and PR run 34023208357 remain in progress. Their UVM jobs are
 101460515806 and 101460640739; named-disable jobs are 101460515894 and
-101460640736. Do not promote the current CI gate until those runs finish.
+101460640736\. Do not promote the current CI gate until those runs finish.
 The Contributor Agreement checks still require human action.
 
 Next, collect the pending CI results at published implementation revision
@@ -302,10 +318,10 @@ focused regressions passed that parent.
 The failing timing tree showed the exact post-`V3Task` prefix:
 
 1. the fork kill hook;
-2. a generated `std::process::self()` call;
-3. one generated process-reference output-commit assignment;
-4. the semantically marked named-disable queue push; and
-5. the source branch body.
+1. a generated `std::process::self()` call;
+1. one generated process-reference output-commit assignment;
+1. the semantically marked named-disable queue push; and
+1. the source branch body.
 
 The launch checkpoint had recognized only the direct call-output form. The
 hotfix accepts exactly one optional, non-timing output-commit assignment and
@@ -940,23 +956,23 @@ together:
 1. A named sequential begin/task activation is disable-eligible only while that
    activation is executing. A later disable of a completed activation has no
    effect.
-2. A named fork needs its own tree-completion lifetime so a disable can still
+1. A named fork needs its own tree-completion lifetime so a disable can still
    reach live branches and descendants.
-3. Concurrent and recursive activations need distinct membership groups.
+1. Concurrent and recursive activations need distinct membership groups.
    Process-identity dedup alone cannot represent overlapping activations.
-4. Dynamically created descendants must inherit the activation token while the
+1. Dynamically created descendants must inherit the activation token while the
    target remains active.
-5. Registry membership must not be the only strong owner of the general process
+1. Registry membership must not be the only strong owner of the general process
    tree. A finished named block may leave a `join_none` descendant blocked in
    `wait(0)`; dropping named-disable membership must not let a later
    `wait fork` complete incorrectly.
-6. `disableAll` must atomically drain activation groups and deduplicate the
+1. `disableAll` must atomically drain activation groups and deduplicate the
    process forest before callbacks can resume or destroy frames.
-7. Direct `PROCESS_DISABLE_ALL` operations inside `always` procedures must
+1. Direct `PROCESS_DISABLE_ALL` operations inside `always` procedures must
    also be visible to the split/reorder barriers.
-8. An in-scope disable of a named begin inside an automatic task must reach all
+1. An in-scope disable of a named begin inside an automatic task must reach all
    concurrent activations, not just perform a local `AstJumpGo` in the caller.
-9. Any compiler-generated child boundary around a named begin must not strand
+1. Any compiler-generated child boundary around a named begin must not strand
    `return`, `break`, or `continue` jumps whose targets remain outside that
    boundary.
 

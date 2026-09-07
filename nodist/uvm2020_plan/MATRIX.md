@@ -31,7 +31,7 @@ provenance, log hashes, pass order, and the exact acceptance sentinels.
 
 The evidence closes the declared M05 class/factory/static-initialization and
 M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
-criteria, 4/20 milestone exits, and 27/46 atomic gates**. The compatibility
+criteria, 4/20 milestone exits, and 28/46 atomic gates**. The compatibility
 inventory now has **115/115 passing declared oracles, zero blocked**, using
 accumulated evidence. The [eight newly executed tests](dependency-closure-2026-09-07.yaml)
 passed locally with the debug compiler and Z3 available. This is not a fresh
@@ -43,7 +43,6 @@ Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated
 results and detailed tables below are historical; use `tracker.yaml` and this
 checkpoint for current status.
-
 
 The first table records the original three-test pull request #41 proof
 boundary. The current focused 15-test two-scenario target has passing local
