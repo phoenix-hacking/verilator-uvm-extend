@@ -133,6 +133,12 @@ union RandomizeMode final {
     int asInt;  // Representation as int to be stored in nodep->user*
 };
 
+struct NestedConstraint final {
+    AstConstraint* originalp;  // Constraint whose mode controls the cloned body
+    std::vector<AstVar*> path;  // Member path from the containing object to its owner
+};
+using NestedConstraintMap = std::unordered_map<const AstConstraint*, NestedConstraint>;
+
 //######################################################################
 // Visitor that marks classes needing a randomize() method
 
@@ -155,6 +161,7 @@ class RandomizeMarkVisitor final : public VNVisitor {
 
     BaseToDerivedMap m_baseToDerivedMap;  // Mapping from base classes to classes that extend them
     std::unordered_set<AstClass*> m_globalClasses;  // Classes processed for nested solving
+    NestedConstraintMap& m_nestedConstraints;  // Origin and object path of cloned constraints
     AstClass* m_classp = nullptr;  // Current class
     AstNode* m_constraintExprGenp = nullptr;  // Current constraint or constraint if expression
     AstNodeModule* m_modp;  // Current module
@@ -314,6 +321,15 @@ class RandomizeMarkVisitor final : public VNVisitor {
 
         AstConstraint* const cloneConstrp = constrp->cloneTree(false);
         cloneConstrp->name(newName);
+        NestedConstraint nested{constrp, {rootVarRefp->varp()}};
+        nested.path.insert(nested.path.end(), newPath.begin(), newPath.end());
+        const auto nestedIt = m_nestedConstraints.find(constrp);
+        if (nestedIt != m_nestedConstraints.end()) {
+            nested.originalp = nestedIt->second.originalp;
+            nested.path.insert(nested.path.end(), nestedIt->second.path.begin(),
+                               nestedIt->second.path.end());
+        }
+        m_nestedConstraints.emplace(cloneConstrp, std::move(nested));
         cloneConstrp->foreach([&](AstVarRef* varRefp) {
             if (varRefp->varp()->isClassMember()) {
                 AstNodeExpr* const chainp = buildMemberSelChain(rootVarRefp, newPath);
@@ -739,7 +755,8 @@ class RandomizeMarkVisitor final : public VNVisitor {
 
 public:
     // CONSTRUCTORS
-    explicit RandomizeMarkVisitor(AstNode* nodep) {
+    explicit RandomizeMarkVisitor(AstNode* nodep, NestedConstraintMap& nestedConstraints)
+        : m_nestedConstraints{nestedConstraints} {
         iterateConst(nodep);
         markAllDerived();
         setPackageRefs();
@@ -3117,6 +3134,7 @@ class RandomizeVisitor final : public VNVisitor {
     std::map<AstConstraint*, std::set<AstVar*>>
         m_sizeConstrainedArrays;  // Arrays referenced by each lowered constraint
     std::set<AstClass*> m_preparedConstraintClasses;  // Classes with array sizes lowered
+    NestedConstraintMap& m_nestedConstraints;  // Origin and object path of cloned constraints
     std::map<AstClass*, AstVar*>
         m_staticConstraintModeVars;  // Static constraint mode vars per class
     std::map<AstClass*, AstVar*> m_staticRandModeVars;  // Static rand mode vars per class
@@ -3381,6 +3399,9 @@ class RandomizeVisitor final : public VNVisitor {
                 // index overlap. If the index > 0, it's already been set.
                 if (AstConstraint* const constrp = VN_CAST(memberp, Constraint)) {
                     hasConstraints = true;
+                    // A flattened body uses its original sub-object's mode slot.
+                    // It is not a separately controllable constraint of this object.
+                    if (m_nestedConstraints.count(constrp)) return;
                     RandomizeMode constraintMode = {.asInt = memberp->user1()};
                     if (!constraintMode.usesMode) return;
                     if (constraintMode.index == 0) {
@@ -3535,9 +3556,16 @@ class RandomizeVisitor final : public VNVisitor {
     }
     static AstNode* makeModeSetLoop(FileLine* const fl, AstNodeExpr* const lhsp,
                                     AstNodeExpr* const rhsp, bool inTask) {
-        AstVar* const iterVarp = new AstVar{fl, VVarType::BLOCKTEMP, "i", lhsp->findUInt32DType()};
+        AstVar* const iterVarp
+            = new AstVar{fl, VVarType::BLOCKTEMP, "__VmodeIndex", lhsp->findUInt32DType()};
         iterVarp->funcLocal(inTask);
         iterVarp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
+        // Evaluate the argument once, including when this class has no local
+        // constraints and its only solver constraints belong to sub-objects.
+        AstVar* const valueVarp
+            = new AstVar{fl, VVarType::BLOCKTEMP, "__VmodeValue", rhsp->dtypep()};
+        valueVarp->funcLocal(inTask);
+        valueVarp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
         AstCMethodHard* const sizep = new AstCMethodHard{fl, lhsp, VCMethod::DYN_SIZE, nullptr};
         sizep->dtypeSetUInt32();
         AstCMethodHard* const setp
@@ -3545,6 +3573,8 @@ class RandomizeVisitor final : public VNVisitor {
                                  new AstVarRef{fl, iterVarp, VAccess::READ}};
         setp->dtypeSetUInt32();
         AstNode* const stmtsp = iterVarp;
+        stmtsp->addNext(valueVarp);
+        stmtsp->addNext(new AstAssign{fl, new AstVarRef{fl, valueVarp, VAccess::WRITE}, rhsp});
         stmtsp->addNext(
             new AstAssign{fl, new AstVarRef{fl, iterVarp, VAccess::WRITE}, new AstConst{fl, 0}});
 
@@ -3552,7 +3582,7 @@ class RandomizeVisitor final : public VNVisitor {
         stmtsp->addNext(loopp);
         loopp->addStmtsp(new AstLoopTest{
             fl, loopp, new AstLt{fl, new AstVarRef{fl, iterVarp, VAccess::READ}, sizep}});
-        loopp->addStmtsp(new AstAssign{fl, setp, rhsp});
+        loopp->addStmtsp(new AstAssign{fl, setp, new AstVarRef{fl, valueVarp, VAccess::READ}});
         loopp->addStmtsp(new AstAssign{
             fl, new AstVarRef{fl, iterVarp, VAccess::WRITE},
             new AstAdd{fl, new AstConst{fl, 1}, new AstVarRef{fl, iterVarp, VAccess::READ}}});
@@ -3565,6 +3595,35 @@ class RandomizeVisitor final : public VNVisitor {
         return VN_AS(wrapIfMode(rmode, modeVarp, stmtp), NodeStmt);
     }
     AstNode* wrapIfConstraintMode(AstClass* classp, AstConstraint* const constrp, AstNode* stmtp) {
+        const auto it = m_nestedConstraints.find(constrp);
+        if (it != m_nestedConstraints.end()) {
+            const NestedConstraint& nested = it->second;
+            const RandomizeMode mode = {.asInt = nested.originalp->user1()};
+            if (!mode.usesMode) return stmtp;
+            FileLine* const fl = stmtp->fileline();
+            AstClass* const ownerp
+                = VN_AS(nested.path.back()->dtypep()->skipRefp(), ClassRefDType)->classp();
+            AstVar* const modeVarp = nested.originalp->isStatic()
+                                         ? getStaticConstraintModeVar(ownerp)
+                                         : getConstraintModeVar(ownerp);
+            AstNodeExpr* modeRefp = nullptr;
+            if (nested.originalp->isStatic()) {
+                modeRefp = new AstVarRef{fl, VN_AS(modeVarp->user2p(), NodeModule), modeVarp,
+                                         VAccess::READ};
+            } else {
+                AstVar* const rootp = nested.path.front();
+                modeRefp
+                    = new AstVarRef{fl, VN_AS(rootp->user2p(), NodeModule), rootp, VAccess::READ};
+                for (size_t i = 1; i < nested.path.size(); ++i) {
+                    modeRefp = new AstMemberSel{fl, modeRefp, nested.path[i]};
+                }
+                modeRefp = new AstMemberSel{fl, modeRefp, modeVarp};
+            }
+            AstCMethodHard* const atp = new AstCMethodHard{fl, modeRefp, VCMethod::ARRAY_AT,
+                                                           new AstConst{fl, mode.index}};
+            atp->dtypeSetUInt32();
+            return new AstIf{fl, atp, stmtp};
+        }
         const RandomizeMode rmode = {.asInt = constrp->user1()};
         AstVar* const modeVarp = constrp->isStatic() ? getStaticConstraintModeVar(classp)
                                                      : getConstraintModeVar(classp);
@@ -5322,7 +5381,7 @@ class RandomizeVisitor final : public VNVisitor {
             // Use correct mode variable based on whether constraint is static
             AstVar* const constraintModeVarp = (constrp && constrp->isStatic())
                                                    ? getStaticConstraintModeVar(classp)
-                                                   : getConstraintModeVar(classp);
+                                                   : getCreateConstraintModeVar(classp);
             AstNodeExpr* const lhsp
                 = makeModeAssignLhs(nodep->fileline(), classp, fromp, constraintModeVarp);
             replaceWithModeAssign(nodep, constrp, lhsp);
@@ -5766,8 +5825,9 @@ class RandomizeVisitor final : public VNVisitor {
 
 public:
     // CONSTRUCTORS
-    explicit RandomizeVisitor(AstNetlist* nodep)
-        : m_inlineUniqueNames{"__Vrandwith"} {
+    explicit RandomizeVisitor(AstNetlist* nodep, NestedConstraintMap& nestedConstraints)
+        : m_inlineUniqueNames{"__Vrandwith"}
+        , m_nestedConstraints{nestedConstraints} {
         createRandomizeClassVars(nodep);
         // Flag local constraint leaves as solver-owned so __VBasicRand skips them.
         // Runs before any class is lowered. Only a randomized class counts, and
@@ -5790,6 +5850,7 @@ public:
         iterate(nodep);
         nodep->foreach([&](AstConstraint* constrp) {
             m_sizeConstrainedArrays.erase(constrp);
+            m_nestedConstraints.erase(constrp);
             VL_DO_DANGLING(pushDeletep(constrp->unlinkFrBack()), constrp);
         });
     }
@@ -5802,8 +5863,9 @@ public:
 void V3Randomize::randomizeNetlist(AstNetlist* nodep) {
     UINFO(2, __FUNCTION__ << ":");
     {
-        const RandomizeMarkVisitor markVisitor{nodep};
-        const RandomizeVisitor randomizeVisitor{nodep};
+        NestedConstraintMap nestedConstraints;
+        const RandomizeMarkVisitor markVisitor{nodep, nestedConstraints};
+        const RandomizeVisitor randomizeVisitor{nodep, nestedConstraints};
     }
     V3Global::dumpCheckGlobalTree("randomize", 0, dumpTreeEitherLevel() >= 3);
 }
