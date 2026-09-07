@@ -80,11 +80,18 @@ slots instead of the original child's modes. The correction is published at
 CI failure in both modes, inherited/static modes, deeper nesting, independent
 instances, protected identifiers, and setters on empty parents. Optimized
 and debug builds, formatting, Python lint, focused C++ analysis, and both
-attribute checks pass. Full regression, new CI, and a fresh real UVM replay
-for this seventh correction remain pending. Another confirmed
+attribute checks pass. The fresh real UVM replay at this seventh correction
+also passes both modes: 384 transactions across the same six seeded runs, with
+repeatability and recovery checks. Its retained compiler SHA-256 is
+`52fdcfcddde4c8d7edf69df07c26e40eb4d610b096f1ae97aaeb748f115a1955`;
+logs, model binaries, and trace hashes are preserved under
+`/home/holden/verilator-work/uvm-random-2dbe3b22c-artifacts`.
+Full regression and new CI for this correction remain pending. Another confirmed
 open defect is value preservation after failed randomization: an unsatisfiable
 call changes an unconstrained scalar, and a failed array-element solve leaves
 the array resized and a scalar changed. Value preservation remains unfixed.
+A separate null-child probe aborts while registering nested constraint variables
+on both the sixth and seventh compiler revisions; that edge case remains open.
 The integrated UVM test remains
 uncommitted, and none of these development results advances formal completion
 counts or establishes performance.

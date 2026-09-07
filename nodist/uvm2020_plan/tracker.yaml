@@ -1255,9 +1255,14 @@ milestones:
           inherited/static modes, separate instances, deeper nesting, protected
           identifiers, empty-parent setters, and the original failure in both
           modes. Both builds, formatting, Python lint, focused C++ analysis, and
-          both attribute checks pass. Full regression, new CI, and a fresh real
-          UVM replay remain pending. A separate probe confirmed failed randomization
-          changes scalar values and array size; value preservation remains open. The
+          both attribute checks pass. The seventh correction also passes the fresh real
+          UVM replay in both modes: 384 transactions across the same six seeded
+          runs, with repeatability and recovery verified. Artifacts and trace
+          hashes are preserved in uvm-random-2dbe3b22c-artifacts. Full regression
+          and new CI remain pending. A separate probe confirmed failed randomization
+          changes scalar values and array size; value preservation remains open. A null
+          rand-child probe also aborts during nested variable registration on both
+          the sixth and seventh revisions; that edge case remains open. The
           integrated test is still uncommitted development work. These results
           do not establish milestone acceptance or performance closure.
   M10:
