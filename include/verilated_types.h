@@ -502,6 +502,10 @@ class VlProcessContext final {
     const bool m_owner;
 
 public:
+    /// Enter a context for a generated function that requires a process.
+    explicit VlProcessContext(VlProcess& process) VL_MT_UNSAFE : m_processp{&process},
+                                                                 m_owner{process.enter()} {}
+    /// Enter an optional process context.
     explicit VlProcessContext(VlProcess* processp)
         : m_processp{processp}
         , m_owner{processp && processp->enter()} {}
