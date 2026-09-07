@@ -148,6 +148,9 @@ class VlAnnotations:
                     result.mt_start = True
                 elif displayname == "MT_SAFE":
                     result.mt_safe = True
+                elif displayname == "MT_SAFE_EXCLUDES":
+                    result.mt_safe = True
+                    result.excludes = True
                 elif displayname == "MT_STABLE":
                     result.stable_tree = True
                 elif displayname == "MT_SAFE_POSTINIT":
@@ -166,7 +169,7 @@ class VlAnnotations:
                     result.release = True
                 elif displayname == "REQUIRES":
                     result.requires = True
-                elif displayname in ["EXCLUDES", "MT_SAFE_EXCLUDES"]:
+                elif displayname == "EXCLUDES":
                     result.excludes = True
                 elif displayname == "GUARDED_BY":
                     result.guarded = True

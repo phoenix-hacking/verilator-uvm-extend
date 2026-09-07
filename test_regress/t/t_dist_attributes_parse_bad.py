@@ -22,12 +22,18 @@ valid = os.path.abspath(test.obj_dir + '/valid.cpp')
 invalid = os.path.abspath(test.obj_dir + '/invalid.cpp')
 header = os.path.abspath(test.obj_dir + '/valid.h')
 mismatch = os.path.abspath(test.obj_dir + '/mismatch.cpp')
+safe_body = os.path.abspath(test.obj_dir + '/safe_body.cpp')
+unsafe_body = os.path.abspath(test.obj_dir + '/unsafe_body.cpp')
 test.write_wholefile(valid, 'int valid() { return 1; }\n')
 test.write_wholefile(invalid, 'int invalid = ;\n')
 test.write_wholefile(header, 'int header_declaration();\n')
 test.write_wholefile(
     mismatch, 'void mismatch();\n'
     'void mismatch() __attribute__((annotate("MT_SAFE"))) {}\n')
+for source, annotation in ((safe_body, 'MT_SAFE'), (unsafe_body, 'MT_UNSAFE')):
+    test.write_wholefile(
+        source, 'void callee() __attribute__((annotate("' + annotation + '"))) {}\n'
+        'void caller() __attribute__((annotate("MT_SAFE_EXCLUDES"))) { callee(); }\n')
 checker = os.path.abspath(test.root + '/nodist/clang_check_attributes')
 compdb = os.path.abspath(test.obj_dir + '/compile_commands.json')
 test.write_wholefile(compdb, '[]\n')
@@ -45,6 +51,8 @@ for jobs in (1, 2):
          ['--compile-commands-dir=' + os.path.dirname(compdb)
           ], r'%Error: reading compile commands failed:'),
         ('mismatch', [mismatch], '-std=c++14', [], r'declaration does not match definition'),
+        ('safe_body', [safe_body], '-std=c++14', [], ''),
+        ('unsafe_body', [unsafe_body], '-std=c++14', [], r'is mtsafe but calls non-mtsafe'),
     ):
         log = test.obj_dir + '/' + case + '_' + str(jobs) + '.log'
         test.run(cmd=[
@@ -57,6 +65,8 @@ for jobs in (1, 2):
             test.file_grep(log, diagnostic)
             if case == 'mismatch':
                 test.file_grep(log, r'Number of functions reported unsafe: (\d+)', 0)
+            elif case == 'unsafe_body':
+                test.file_grep(log, r'Number of functions reported unsafe: (\d+)', 1)
             else:
                 test.file_grep(log, r'Number of files that could not be analyzed: (\d+)', 1)
         else:
