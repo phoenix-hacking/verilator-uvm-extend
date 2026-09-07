@@ -1,0 +1,93 @@
+---
+# DESCRIPTION: Verilator: Nullable rand child local correctness evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Local correctness evidence for absent and replaced rand child handles. Broader randomization tests, full regression, CI, static-analysis acceptance, failed-solve rollback, and final compliance/performance
+  goals remain open.
+branch: codex/randomize-null-child
+revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+tree: 7e510c71f8aa247edaf0cec21723087fe6b22a3c
+source_tree: e2ecfea5a4dd5a6ad4f829326aedf52f9514b830
+parent: b9f9fcc753bae8a91e167c5636a0c6785b27057e
+worktree: /home/holden/verilator-work/randomize-null-child
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_null_child_04fc80d
+  sha256: 5e313ae8197a0bd9dac88f9b076d2a9c02b09c588ebe82479c6a1761115487d4
+  version: Verilator 5.051 devel rev vUNKNOWN-built20260907-3b36d58dc (mod)
+  provenance: The validated source and test files match the published revision. The version string predates the commit; the preserved binary hash identifies the tested compiler.
+  configure: --enable-ccwarn --enable-longtests
+  build: make -C src opt -j2
+  toolchain: Conda-forge GCC 13.4.0-20; Python 3.12.14; Z3 5.1.0
+implementation:
+  - Guard each prefix of the implicitly included constraint owner before registering its members or evaluating its constraint modes and body.
+  - Remove old scalar, array, and struct-leaf bindings before registering current child storage after pre_randomize callbacks.
+  - Retain explicit null dereference diagnostics in ordinary, inline, and nested constraints.
+  - Preserve inherited handle ownership, registration mode updates, and enum restrictions in shared constraint setup.
+  - Keep cyclic history during binding refresh; failed-solve rollback and complete alias/cyclic-state conformance remain separate open work.
+focused:
+  passed: 15
+  failed: 0
+  elapsed: '1:18'
+  behavioral_scenarios: 10
+  distribution_checks: 5
+  scenarios: [vlt, vltmt, dist]
+  command: python driver.py --vlt --vltmt --dist --jobs=2 --driver-build-jobs=1 --quiet t/t_randomize_null_child.py t/t_randomize_null_child_protect.py t/t_randomize_null_member_bad.py t/t_randomize_null_inline_bad.py
+    t/t_randomize_null_nested_bad.py t/t_dist_cppstyle.py t/t_dist_copyright.py t/t_dist_whitespace.py t/t_dist_portability.py t/t_dist_cinclude.py
+  execution_directory: test_regress
+  coverage: Null, allocated, replaced, and released handles; negative/nonzero fixed bounds and dynamic arrays; 7-bit scalars, 65-bit values, and enums; inherited and nested owners; sibling isolation; constraint/rand
+    modes; callback replacements; ordinary and inline solves; protected identifiers; explicit null errors.
+  goldens: Generated from actual harness output with HARNESS_UPDATE_GOLDEN=1 and then validated with updates disabled.
+causal_parent:
+  revision: c325d9c0dda118983fd0adfe5866df8b559970d4
+  source_tree: 63960ac34a566cd4ded03e8c686192deec57fc34
+  equivalence: The tested foreach revision and this branch parent have identical compiler source trees.
+  compiler: /home/holden/verilator-work/verilator_bin_before_null_child
+  compiler_sha256: 774791274070efe3e3fe6638431b8cdb32858545c8c76eafdb857d0675c3a1ea
+  passed: 0
+  failed: 4
+  elapsed: 0:51
+  failure: All four original-reproducer executions abort with Null pointer dereferenced, including protected identifiers.
+  environment: VERILATOR_BIN selects the preserved parent; source/runtime inputs otherwise match the final focused run; --obj-suffix=-final-before isolates outputs.
+formatting: make format and nodist/verilog_format passed; unrelated formatter-only changes to verilated_types.h and verilated_vpi.cpp were reverted.
+python_lint: make lint-py passed
+neighbors:
+  status: running
+  selected_drivers: 174
+  declared_scenarios: 304
+  manifest: /home/holden/verilator-work/randomize-null-neighbor-tests.txt
+  manifest_sha256: 31dc84e725291484277b2c33bdf489b73edf1ff57528152902eb2bea384301d4
+  live_log: /home/holden/verilator-work/randomize-null-neighbors.log
+  command: python driver.py --vlt --vltmt --jobs=2 --driver-build-jobs=1 --quiet <tests from manifest>
+acceptance:
+  ci: pending
+  full_regression: pending
+  cppcheck: pending
+sources:
+  include/verilated_random.cpp: 8c59ed017377aff1f785bf0adad7eab5df8f5449715a3aaeb7a6032d550179d3
+  include/verilated_random.h: c034d9c62501382b047331ce415bbc03b7b38f21298b9354d0319b7ce31d5465
+  src/V3AstAttr.h: 267573e1aacb455c006e013080d4ceaf3512c18fa94a9574ca39830560f05392
+  src/V3Randomize.cpp: 0ffc7dbf7ea1537d1740177d8fda8b69b8723c7566e4713afb7930670880d3d0
+  test_regress/t/t_randomize_null_child.py: b789b9ab54787ba73695bcbf5de5e24f1d93a1b45643b8a965808376d382867a
+  test_regress/t/t_randomize_null_child.v: fa3b53ef103e1a1cbf50fc802b6bd5cc5ec16ef741125856f61e4f6fe7299980
+  test_regress/t/t_randomize_null_child_protect.py: 44cc96c5a65f1289cf3aaa993c0dc2dd1c763ccaeb02b5773ae57477e3c9b524
+  test_regress/t/t_randomize_null_inline_bad.out: 569ccda3cb545d45bdb885d96ec4c39210ede641f3b7889f342cf93dc4ea5079
+  test_regress/t/t_randomize_null_inline_bad.py: f48510e8534707bd7df6fb9eea9ec8351ae864e717c27fdaaa12c57047b63c09
+  test_regress/t/t_randomize_null_member_bad.out: ff6d84e2603a3eeddbcc937b4282a1d697e4a90a759033b7fb09ea4cc5425a2d
+  test_regress/t/t_randomize_null_member_bad.py: df43131fa1e822889a319a3e00912d109d1fc74396c71504a3ab5773ed490d9d
+  test_regress/t/t_randomize_null_member_bad.v: 9b3d5d9bd80d1d3bad3b5e0d8ac0614ccee49d7d716188b338b43053f3e10441
+  test_regress/t/t_randomize_null_nested_bad.out: ff6d84e2603a3eeddbcc937b4282a1d697e4a90a759033b7fb09ea4cc5425a2d
+  test_regress/t/t_randomize_null_nested_bad.py: cbb7cee44ede89df6cfc15cd43915f154a95ab58bfe53a04c35738e3e1f3a1d0
+logs:
+  /home/holden/verilator-work/randomize-null-build-formatted.log: c7210233331c17cd68db818d1f56235aad2fe9865aeaae3332e95bf815696e86
+  /home/holden/verilator-work/randomize-null-format.log: adfd242c3cbd33a95500e83398e8271dd5cb6ab2053d6029f9183e2e1b69d4b0
+  /home/holden/verilator-work/randomize-null-verilog-format.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/randomize-null-lint-py.log: ad0b07ace4e935a32ff6e6ac5066856eeab5450391cc4611234ee0ba09da1384
+  /home/holden/verilator-work/randomize-null-focused-final.log: 76f6b97a1bea53f22278bde6373273b3fea8da9aadb8041256f53bfe4c287b04
+  /home/holden/verilator-work/randomize-null-causal-final.log: 78c872acdb1b7473d6746aed7cead6ff7e5fdb19e67141b682c522e231ea5bdb
+accounting:
+  program_criteria: 0/21
+  milestone_exits: 4/20
+  atomic_gates: 28/46
+  new_gate_credit: 0

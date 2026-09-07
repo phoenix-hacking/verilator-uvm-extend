@@ -10,16 +10,33 @@ The [recovery record](recovery-validation-2026-09-07.yaml) supersedes old local
 session identifiers and full-regression running/completion claims. All eight
 worktrees survived; uncommitted work is backed up under
 `/home/holden/verilator-work/recovery-20260907T133852Z`. The interrupted
-nested-foreach implementation is now committed and pushed at `3b36d58dc`, with
+nested-foreach implementation was committed and pushed at `3b36d58dc`, with
 4/4 focused passes, causal 0/4 parent results, 21 adjacent passes, and five
 distribution passes. Full formatting and Python lint pass. Full regression,
-CI, and broad static acceptance remain pending.
+CI, and broad static acceptance remain pending. The constraint-array width
+follow-up is pushed at `c325d9c0d`; six foreach scenarios and five distribution
+checks pass, with causal failures in both new scenarios on the previous compiler.
+The complete `make test` run is active in the foreach worktree, logging to
+`/home/holden/verilator-work/foreach-complete-regression.log`. Do not infer
+completion from nested one-test markers.
 
-Next implementation work remains failed-randomization value preservation and
-the null rand-child abort, followed by integration and the complete milestone
+The null rand-child fix is pushed at `04fc80d15` in
+`/home/holden/verilator-work/randomize-null-child`. Its parent `b9f9fcc75` carries
+the same foreach correction as `c325d9c0d`. Ten behavioral scenarios and five
+distribution checks pass; the preserved parent aborts in all four original
+reproducer configurations. Formatting and Python lint pass. The
+[local evidence](randomize-null-child-local-2026-09-07.yaml) includes exact hashes
+and the 174-driver, 304-scenario neighbor run, which is still active in
+`/home/holden/verilator-work/randomize-null-neighbors.log`. CI, full regression,
+and static acceptance remain pending. Explicit dereference errors stay active;
+`randomize(null)` with class/container members remains separately unsupported.
+
+Next work is to inspect the active regressions and CI, complete static-analysis
+classification, finish failed-randomization value preservation, then integrate
+the real UVM sequence-item regression and continue the complete milestone
 scope in GOALS.md. The ten pre-crash CI failures must be classified from actual
 job logs; available shutdown/cancellation evidence is not semantic acceptance.
-M00/M01 baseline issue reconciliation changes no accepted-gate totals. Use
+M00/M01 issues #1 and #2 are closed; reconciliation changes no accepted-gate totals. Use
 PROGRESS.md and the recovery record for current development state.
 
 This file is the durable handoff record for pull requests #41 and #42. It records
