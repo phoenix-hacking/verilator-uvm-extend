@@ -4766,6 +4766,86 @@ class RandomizeVisitor final : public VNVisitor {
         return false;
     }
 
+    AstNode* newArrayRegistrations(FileLine* const fl, AstVar* const genp,
+                                   const std::set<AstVar*>& sizeArrays) {
+        AstNodeModule* const genModp = VN_AS(genp->user2p(), NodeModule);
+        AstNode* stmtsp = nullptr;
+        // Refresh array element tables after resize
+        for (AstVar* const arrVarp : sizeArrays) {
+            // Array elements of class data type are passed to the solver as separate
+            // variables, so passing the original array variable is redundant, because it
+            // won't be referenced
+            if (isDynArrOfClassTypeRecurse(arrVarp->dtypep())) {
+                const uint32_t unpackedDims = arrVarp->dtypep()->dimensions(false).second;
+                if (unpackedDims > 1) {
+                    arrVarp->v3warn(
+                        E_UNSUPPORTED,
+                        "Unsupported: Nested array element access in global constraint");
+                }
+                continue;
+            }
+            AstCMethodHard* const methodp
+                = new AstCMethodHard{fl, new AstVarRef{fl, genModp, genp, VAccess::READWRITE},
+                                     VCMethod::RANDOMIZER_WRITE_VAR};
+            methodp->dtypeSetVoid();
+
+            AstNodeModule* const classp = VN_AS(arrVarp->user2p(), NodeModule);
+            AstVarRef* const varRefp = new AstVarRef{fl, classp, arrVarp, VAccess::WRITE};
+            varRefp->classOrPackagep(classp);
+            methodp->addPinsp(varRefp);
+
+            uint32_t dimension = 0;
+            if (VN_IS(arrVarp->dtypep(), UnpackArrayDType)
+                || VN_IS(arrVarp->dtypep(), DynArrayDType) || VN_IS(arrVarp->dtypep(), QueueDType)
+                || VN_IS(arrVarp->dtypep(), AssocArrayDType)) {
+                const std::pair<uint32_t, uint32_t> dims
+                    = arrVarp->dtypep()->dimensions(/*includeBasic=*/true);
+                dimension = dims.second;
+            }
+
+            AstNodeDType* tmpDtypep = arrVarp->dtypep();
+            while (tmpDtypep->isNonPackedArray()) tmpDtypep = tmpDtypep->subDTypep();
+            const size_t width = tmpDtypep->width();
+
+            methodp->addPinsp(new AstConst{fl, AstConst::Unsized64{}, width});
+            AstNodeExpr* const varnamep = new AstCExpr{
+                fl, AstCExpr::Pure{}, "\"" + arrVarp->name() + "\"", arrVarp->width()};
+            varnamep->dtypep(arrVarp->dtypep());
+            methodp->addPinsp(varnamep);
+            methodp->addPinsp(new AstConst{fl, AstConst::Unsized64{}, dimension});
+
+            stmtsp = AstNode::addNext(stmtsp, methodp->makeStmt());
+        }
+        return stmtsp;
+    }
+    AstNode* newArraySizePins(FileLine* const fl, AstVar* const genp,
+                              const std::set<AstVar*>& sizeArrays) {
+        AstNodeModule* const genModp = VN_AS(genp->user2p(), NodeModule);
+        AstNode* stmtsp = nullptr;
+        for (AstVar* const arrVarp : sizeArrays) {
+            AstVar* const sizeVarp = VN_CAST(arrVarp->user4p(), Var);
+            if (!sizeVarp) continue;
+            AstCMethodHard* const pinp
+                = new AstCMethodHard{fl, new AstVarRef{fl, genModp, genp, VAccess::READWRITE},
+                                     VCMethod::RANDOMIZER_PIN_VAR};
+            pinp->dtypeSetVoid();
+            AstCExpr* const namep
+                = new AstCExpr{fl, AstCExpr::Pure{}, "\"" + sizeVarp->name() + "\""};
+            namep->dtypeSetUInt32();
+            pinp->addPinsp(namep);
+            pinp->addPinsp(
+                new AstConst{fl, AstConst::Unsized64{}, static_cast<uint64_t>(sizeVarp->width())});
+            // sizeVarp may live in a base class when the constrained
+            // array is inherited; route VarRef through its declaring
+            // class so V3Scope can resolve it.
+            AstVarRef* const sizeVarRefp = new AstVarRef{fl, sizeVarp, VAccess::READ};
+            sizeVarRefp->classOrPackagep(VN_AS(sizeVarp->user2p(), NodeModule));
+            pinp->addPinsp(sizeVarRefp);
+            stmtsp = AstNode::addNext(stmtsp, pinp->makeStmt());
+        }
+        return stmtsp;
+    }
+
     // Prepare inherited constraints before an inline randomize call can force
     // lowering of the derived class. A base class may not itself be randomized.
     void prepareClassConstraints(AstClass* const classp) {
@@ -5019,80 +5099,14 @@ class RandomizeVisitor final : public VNVisitor {
                     randomizep->addStmtsp(ifp);
                 }
 
-                // Refresh array element tables after resize
-                for (AstVar* const arrVarp : sizeArrays) {
-                    // Array elements of class data type are passed to the solver as separate
-                    // variables, so passing the original array variable is redundant, because it
-                    // won't be referenced
-                    if (isDynArrOfClassTypeRecurse(arrVarp->dtypep())) {
-                        const uint32_t unpackedDims = arrVarp->dtypep()->dimensions(false).second;
-                        if (unpackedDims > 1) {
-                            arrVarp->v3warn(
-                                E_UNSUPPORTED,
-                                "Unsupported: Nested array element access in global constraint");
-                        }
-                        continue;
-                    }
-                    AstCMethodHard* const methodp = new AstCMethodHard{
-                        fl, new AstVarRef{fl, genModp, genp, VAccess::READWRITE},
-                        VCMethod::RANDOMIZER_WRITE_VAR};
-                    methodp->dtypeSetVoid();
-
-                    AstNodeModule* const classp = VN_AS(arrVarp->user2p(), NodeModule);
-                    AstVarRef* const varRefp = new AstVarRef{fl, classp, arrVarp, VAccess::WRITE};
-                    varRefp->classOrPackagep(classp);
-                    methodp->addPinsp(varRefp);
-
-                    uint32_t dimension = 0;
-                    if (VN_IS(arrVarp->dtypep(), UnpackArrayDType)
-                        || VN_IS(arrVarp->dtypep(), DynArrayDType)
-                        || VN_IS(arrVarp->dtypep(), QueueDType)
-                        || VN_IS(arrVarp->dtypep(), AssocArrayDType)) {
-                        const std::pair<uint32_t, uint32_t> dims
-                            = arrVarp->dtypep()->dimensions(/*includeBasic=*/true);
-                        dimension = dims.second;
-                    }
-
-                    AstNodeDType* tmpDtypep = arrVarp->dtypep();
-                    while (tmpDtypep->isNonPackedArray()) tmpDtypep = tmpDtypep->subDTypep();
-                    const size_t width = tmpDtypep->width();
-
-                    methodp->addPinsp(new AstConst{fl, AstConst::Unsized64{}, width});
-                    AstNodeExpr* const varnamep = new AstCExpr{
-                        fl, AstCExpr::Pure{}, "\"" + arrVarp->name() + "\"", arrVarp->width()};
-                    varnamep->dtypep(arrVarp->dtypep());
-                    methodp->addPinsp(varnamep);
-                    methodp->addPinsp(new AstConst{fl, AstConst::Unsized64{}, dimension});
-
-                    randomizep->addStmtsp(methodp->makeStmt());
-                }
+                randomizep->addStmtsp(newArrayRegistrations(fl, genp, sizeArrays));
 
                 // Rebuild constraints after resize and pin size variables
                 randomizep->addStmtsp(implementConstraintsClear(fl, genp));
                 AstTaskRef* const setupTaskRefp2 = new AstTaskRef{fl, setupAllTaskp};
                 randomizep->addStmtsp(setupTaskRefp2->makeStmt());
 
-                for (AstVar* const arrVarp : sizeArrays) {
-                    AstVar* const sizeVarp = VN_CAST(arrVarp->user4p(), Var);
-                    if (!sizeVarp) continue;
-                    AstCMethodHard* const pinp = new AstCMethodHard{
-                        fl, new AstVarRef{fl, genModp, genp, VAccess::READWRITE},
-                        VCMethod::RANDOMIZER_PIN_VAR};
-                    pinp->dtypeSetVoid();
-                    AstCExpr* const namep
-                        = new AstCExpr{fl, AstCExpr::Pure{}, "\"" + sizeVarp->name() + "\""};
-                    namep->dtypeSetUInt32();
-                    pinp->addPinsp(namep);
-                    pinp->addPinsp(new AstConst{fl, AstConst::Unsized64{},
-                                                static_cast<uint64_t>(sizeVarp->width())});
-                    // sizeVarp may live in a base class when the constrained
-                    // array is inherited; route VarRef through its declaring
-                    // class so V3Scope can resolve it.
-                    AstVarRef* const sizeVarRefp = new AstVarRef{fl, sizeVarp, VAccess::READ};
-                    sizeVarRefp->classOrPackagep(VN_AS(sizeVarp->user2p(), NodeModule));
-                    pinp->addPinsp(sizeVarRefp);
-                    randomizep->addStmtsp(pinp->makeStmt());
-                }
+                randomizep->addStmtsp(newArraySizePins(fl, genp, sizeArrays));
 
                 // Final pass: solve full constraints with sizes pinned
                 AstCExpr* const solverCallp2 = new AstCExpr{fl};
@@ -5473,6 +5487,16 @@ class RandomizeVisitor final : public VNVisitor {
         const CaptureVisitor captured{withp->exprp(), m_modp, classp};
         // Add function arguments
         captured.addFunctionArguments(randomizeFuncp);
+        randomizeFuncp->addStmtsp(localGenp);
+        AstBegin* const setupBlockp = new AstBegin{nodep->fileline(), "", nullptr, false};
+        randomizeFuncp->addStmtsp(setupBlockp);
+        std::set<AstVar*> sizeArrays;
+        classp->foreachMember([&](AstClass* const, AstConstraint* const constrp) {
+            const auto it = m_sizeConstrainedArrays.find(constrp);
+            if (it != m_sizeConstrainedArrays.end()) {
+                sizeArrays.insert(it->second.begin(), it->second.end());
+            }
+        });
 
         // Add constraints clearing code
         if (classGenp) {
@@ -5495,9 +5519,10 @@ class RandomizeVisitor final : public VNVisitor {
             }
             randomizeFuncp->addStmtsp(
                 implementConstraintsClear(randomizeFuncp->fileline(), classGenp));
+        } else {
+            randomizeFuncp->addStmtsp(
+                implementConstraintsClear(randomizeFuncp->fileline(), localGenp));
         }
-
-        randomizeFuncp->addStmtsp(localGenp);
 
         AstFunc* const basicRandomizeFuncp
             = V3Randomize::newRandomizeFunc(m_memberMap, classp, BASIC_RANDOMIZE_FUNC_NAME);
@@ -5562,18 +5587,17 @@ class RandomizeVisitor final : public VNVisitor {
                 // class so V3Scope can resolve them.
                 AstNodeModule* const arrClassp = VN_AS(arrVarp->user2p(), NodeModule);
                 AstNodeModule* const sizeClassp = VN_AS(sizeVarp->user2p(), NodeModule);
+                if (sizeArrays.emplace(arrVarp).second
+                    && !VN_IS(arrVarp->dtypep()->skipRefp(), AssocArrayDType)) {
+                    AstCMethodHard* const resizep = new AstCMethodHard{
+                        fl, new AstVarRef{fl, arrClassp, arrVarp, VAccess::READWRITE},
+                        VCMethod::DYN_RESIZE,
+                        new AstVarRef{fl, sizeClassp, sizeVarp, VAccess::READ}};
+                    resizep->dtypep(methodp->findVoidDType());
+                    inlineResizeStmtsp
+                        = AstNode::addNext(inlineResizeStmtsp, new AstStmtExpr{fl, resizep});
+                }
                 if (wasCreated) {
-                    // Generate resize for dynamic arrays/queues (not assoc arrays)
-                    if (!VN_IS(arrVarp->dtypep()->skipRefp(), AssocArrayDType)) {
-                        AstCMethodHard* const resizep = new AstCMethodHard{
-                            fl, new AstVarRef{fl, arrClassp, arrVarp, VAccess::READWRITE},
-                            VCMethod::DYN_RESIZE,
-                            new AstVarRef{fl, sizeClassp, sizeVarp, VAccess::READ}};
-                        resizep->dtypep(methodp->findVoidDType());
-                        inlineResizeStmtsp
-                            = AstNode::addNext(inlineResizeStmtsp, new AstStmtExpr{fl, resizep});
-                    }
-
                     // Append size >= 0 constraint so ConstraintExprVisitor processes it
                     capturedTreep->addNext(createSizeGteZeroConstraint(fl, sizeVarp));
                 }
@@ -5587,9 +5611,13 @@ class RandomizeVisitor final : public VNVisitor {
 
         {
             expandUniqueElementList(capturedTreep);
-            ConstraintExprVisitor{classp,    m_memberMap,  capturedTreep, randomizeFuncp,
-                                  localGenp, randModeVarp, m_writtenVars, nullptr};
+            ConstraintExprVisitor{classp,         m_memberMap, capturedTreep,
+                                  randomizeFuncp, localGenp,   randModeVarp,
+                                  m_writtenVars,  nullptr,     &sizeArrays};
         }
+        // Preserve all class and inline setup for rebuilding after array resize.
+        // Cloning the block also relinks its generated foreach temporaries.
+        setupBlockp->addStmtsp(setupBlockp->nextp()->unlinkFrBackWithNext());
 
         // Call the solver and set return value
         AstCExpr* const solverCallp = new AstCExpr{nodep->fileline()};
@@ -5601,13 +5629,35 @@ class RandomizeVisitor final : public VNVisitor {
             new AstVarRef{nodep->fileline(), VN_AS(randomizeFuncp->fvarp(), Var), VAccess::WRITE},
             new AstAnd{nodep->fileline(), basicRandomizeFuncCallp, solverCallp}});
 
-        // Resize constrained arrays only when solver succeeds, mirroring
-        // the class-level if(__Vsize_ok) guard pattern
-        if (inlineResizeStmtsp) {
+        AstNode* resizeStmtsp = nullptr;
+        if (AstTask* const resizeTaskp
+            = VN_CAST(m_memberMap.findMember(classp, "__Vresize_constrained_arrays"), Task)) {
+            resizeStmtsp = (new AstTaskRef{nodep->fileline(), resizeTaskp})->makeStmt();
+        }
+        resizeStmtsp = AstNode::addNextNull(resizeStmtsp, inlineResizeStmtsp);
+        if (!sizeArrays.empty()) {
+            // Refresh class registrations before copying into the local solver;
+            // inline registrations are rebuilt along with the captured constraints.
+            resizeStmtsp = AstNode::addNextNull(
+                resizeStmtsp,
+                newArrayRegistrations(nodep->fileline(), classGenp ? classGenp : localGenp,
+                                      sizeArrays));
+            resizeStmtsp = AstNode::addNext(resizeStmtsp, setupBlockp->cloneTree(false));
+            resizeStmtsp = AstNode::addNextNull(
+                resizeStmtsp, newArraySizePins(nodep->fileline(), localGenp, sizeArrays));
+            resizeStmtsp = AstNode::addNext(
+                resizeStmtsp,
+                new AstAssign{nodep->fileline(),
+                              new AstVarRef{nodep->fileline(), VN_AS(randomizeFuncp->fvarp(), Var),
+                                            VAccess::WRITE},
+                              solverCallp->cloneTree(false)});
+        }
+        // Failed size solves must not resize arrays or invoke a second solver.
+        if (resizeStmtsp) {
             AstVar* const retVarp = VN_AS(randomizeFuncp->fvarp(), Var);
             AstIf* const ifp = new AstIf{nodep->fileline(),
                                          new AstVarRef{nodep->fileline(), retVarp, VAccess::READ},
-                                         inlineResizeStmtsp, nullptr};
+                                         resizeStmtsp, nullptr};
             randomizeFuncp->addStmtsp(ifp);
         }
 
