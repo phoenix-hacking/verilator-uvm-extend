@@ -187,6 +187,7 @@ class RandomizeMarkVisitor final : public VNVisitor {
 
     BaseToDerivedMap m_baseToDerivedMap;  // Mapping from base classes to classes that extend them
     std::unordered_set<AstClass*> m_globalClasses;  // Classes processed for nested solving
+    std::unordered_map<AstClass*, bool> m_checkedRandClasses;  // Class recursion check finished
     NestedConstraintMap& m_nestedConstraints;  // Origin and object path of cloned constraints
     AstClass* m_classp = nullptr;  // Current class
     AstNode* m_constraintExprGenp = nullptr;  // Current constraint or constraint if expression
@@ -237,7 +238,35 @@ class RandomizeMarkVisitor final : public VNVisitor {
         }
         return false;
     }
-    void markMembers(const AstClass* nodep) {
+    // Constraint cloning and enum/callback generation expand scalar rand handles at compile
+    // time. Break recursive paths before any of those traversals, including inherited members.
+    void checkRandClassRecursion(AstClass* const classp) {
+        if (!m_checkedRandClasses.emplace(classp, false).second) return;
+        classp->foreachMember([&](AstClass* const ownerp, AstVar* const varp) {
+            if (!varp->rand().isRandomizable()) return;
+            const AstClassRefDType* const classRefp
+                = VN_CAST(varp->dtypep()->skipRefp(), ClassRefDType);
+            if (!classRefp) return;
+            AstClass* const memberClassp = classRefp->classp();
+            const auto it = m_checkedRandClasses.find(memberClassp);
+            if (it != m_checkedRandClasses.end() && !it->second) {
+                if (memberClassp == ownerp) {
+                    varp->v3warn(E_UNSUPPORTED, "Unsupported: random member variable with the "
+                                                "type of the containing class");
+                } else {
+                    varp->v3warn(E_UNSUPPORTED, "Unsupported: recursive rand class member "
+                                                    << varp->prettyNameQ() << ".");
+                }
+                // Later passes must not attempt to expand the unsupported edge.
+                varp->rand(VRandAttr::NONE);
+                return;
+            }
+            checkRandClassRecursion(memberClassp);
+        });
+        m_checkedRandClasses.at(classp) = true;
+    }
+    void markMembers(AstClass* const nodep) {
+        checkRandClassRecursion(nodep);
         for (const AstClass* classp = nodep; classp;
              classp = classp->extendsp() ? classp->extendsp()->classp() : nullptr) {
             for (AstNode* memberp = classp->stmtsp(); memberp; memberp = memberp->nextp()) {
@@ -4281,12 +4310,6 @@ class RandomizeVisitor final : public VNVisitor {
             if (memberVarp->user3()) return;  // Handled in constraints
             const AstNodeDType* const dtypep = memberVarp->dtypep()->skipRefp();
             if (const AstClassRefDType* const classRefp = VN_CAST(dtypep, ClassRefDType)) {
-                if (classRefp->classp() == nodep) {
-                    memberVarp->v3warn(E_UNSUPPORTED,
-                                       "Unsupported: random member variable with the "
-                                       "type of the containing class");
-                    return;
-                }
                 AstFunc* const memberFuncp
                     = memberVarp->globalConstrained()
                           ? V3Randomize::newRandomizeFunc(m_memberMap, classRefp->classp(),
