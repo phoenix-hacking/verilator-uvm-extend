@@ -19,4 +19,16 @@ test.run(cmd=[
 
 test.files_identical(test.obj_dir + "/profcfuncs.log", test.golden_filename)
 
+# Profiles need not contain the public evaluation entry points after optimization.
+profile = test.file_contents(test.t_dir + "/t_profcfunc.gprof")
+profile = re.sub(r'^.*::eval(?:_step)?\(.*\n', '', profile, flags=re.MULTILINE)
+test.write_wholefile(test.obj_dir + "/no_eval.gprof", profile)
+test.run(cmd=[
+    "cd " + test.obj_dir + " && " + os.environ["VERILATOR_ROOT"] +
+    "/bin/verilator_profcfunc no_eval.gprof > profcfuncs_no_eval.log"
+],
+         check_finished=False)
+test.files_identical(test.obj_dir + "/profcfuncs_no_eval.log",
+                     test.golden_filename.replace(".out", "_no_eval.out"))
+
 test.passes()
