@@ -164,8 +164,9 @@ passed packed scalars to unpacked `int[]` formals; it now uses matching
 one-element unpacked arrays and retains all six packed widths through canonical
 DPI vector access. The 15 neighboring passes combine the initial 13 passes
 with both corrected-fixture passes. Seven distribution checks, full formatting,
-and focused Python lint pass. Fresh source/bundled dynamic UVM integration
-is running; the earlier 2/2 integration result does not validate these newer edits.
+and focused Python lint pass. Fresh source dynamic UVM integration passes
+both modes in 12:48 with 720 checked DUT samples and fault detection; bundled
+integration remains running.
 Broader C++ analysis still has existing runtime findings, and no global
 static-analysis or release-regression pass is claimed.
 An independent baseline probe also confirms incorrect nested `foreach` indices
