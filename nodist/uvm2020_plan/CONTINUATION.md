@@ -26,13 +26,28 @@ the same foreach correction as `c325d9c0d`. Ten behavioral scenarios and five
 distribution checks pass; the preserved parent aborts in all four original
 reproducer configurations. Formatting and Python lint pass. The
 [local evidence](randomize-null-child-local-2026-09-07.yaml) includes exact hashes
-and the 174-driver, 304-scenario neighbor run, which is still active in
-`/home/holden/verilator-work/randomize-null-neighbors.log`. CI, full regression,
-and static acceptance remain pending. Explicit dereference errors stay active;
+and the 174-driver, 304-scenario neighbor run, which completed with 300 passes
+and four failures. The associative-array size test fails in both scenarios on
+the preserved parent too; the recursive-class negative test exhausts memory.
+Logs are in `/home/holden/verilator-work/randomize-null-neighbors.log`. A separate
+recursion check is being developed in
+`/home/holden/verilator-work/randomize-recursion-check`;
+bounded parent runs reproduce both the original and expanded negative tests.
+The frozen foreach full regression has a process-specific memory/CPU guard for
+the known recursive negative test, with interventions recorded in
+`/home/holden/verilator-work/foreach-recursion-resource-limits.log`.
+CI, full regression, and static acceptance remain pending. Explicit dereference errors stay active;
 `randomize(null)` with class/container members remains separately unsupported.
 
-Next work is to inspect the active regressions and CI, complete static-analysis
-classification, finish failed-randomization value preservation, then integrate
+The original cppcheck sweep completed with the same 11 reports as the pre-crash
+candidate; this is not a clean static pass. The null-child sweep is still active.
+[Triage evidence](regression-triage-2026-09-07.yaml) records the completed results.
+The failure-state worktree was fast-forwarded to `04fc80d15` and its recovered
+changes reapplied cleanly; the original stash and patch remain preserved.
+
+Next work is to validate the recursion correction, fix associative-array size
+handling, inspect the active regressions and CI, finish failed-randomization
+value preservation, then integrate
 the real UVM sequence-item regression and continue the complete milestone
 scope in GOALS.md. The ten pre-crash CI failures must be classified from actual
 job logs; available shutdown/cancellation evidence is not semantic acceptance.

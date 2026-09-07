@@ -33,9 +33,13 @@ handles inherited members and inline enum restrictions. Ten behavioral scenarios
 and five distribution checks pass, including fixed and dynamic child arrays,
 replacement/release, nested and sibling handles, modes, and protected identifiers.
 All four original-reproducer configurations abort on the preserved parent.
-Formatting and Python lint pass. The broader run selects 174 existing drivers
-and 304 declared scenarios; full regression, CI, and static acceptance remain
-pending. [Local evidence](randomize-null-child-local-2026-09-07.yaml) records
+Formatting and Python lint pass. The broader run completed 304 scenarios from
+174 existing drivers: 300 passed and four failed. Both associative-array size
+failures reproduce with the preserved parent, and both recursive-class negative
+scenarios expose unbounded compiler expansion. Separate fixes are in development.
+The completed recovery cppcheck sweep has the same 11 reports as the pre-crash
+candidate; this is not a clean static pass. Full regression, CI, and static
+acceptance remain pending. [Local evidence](randomize-null-child-local-2026-09-07.yaml) records
 the exact source, compiler, and log hashes.
 
 M00 and M01 issues #1 and #2 are closed after revalidating their baseline gates.

@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
 date: '2026-09-07'
-claim_boundary: Local correctness evidence for absent and replaced rand child handles. Broader randomization tests, full regression, CI, static-analysis acceptance, failed-solve rollback, and final compliance/performance
-  goals remain open.
+claim_boundary: Local correctness evidence for absent and replaced rand child handles. Broader randomization acceptance, full regression, CI, static-analysis acceptance, failed-solve rollback, and final
+  compliance/performance goals remain open.
 branch: codex/randomize-null-child
 revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
 tree: 7e510c71f8aa247edaf0cec21723087fe6b22a3c
@@ -53,13 +53,24 @@ causal_parent:
 formatting: make format and nodist/verilog_format passed; unrelated formatter-only changes to verilated_types.h and verilated_vpi.cpp were reverted.
 python_lint: make lint-py passed
 neighbors:
-  status: running
+  status: completed_with_failures
+  passed: 300
+  failed: 4
+  elapsed: '31:56'
   selected_drivers: 174
   declared_scenarios: 304
   manifest: /home/holden/verilator-work/randomize-null-neighbor-tests.txt
   manifest_sha256: 31dc84e725291484277b2c33bdf489b73edf1ff57528152902eb2bea384301d4
   live_log: /home/holden/verilator-work/randomize-null-neighbors.log
   command: python driver.py --vlt --vltmt --jobs=2 --driver-build-jobs=1 --quiet <tests from manifest>
+  failures:
+    - test: t_randomize_assoc_size
+      scenarios: [vlt, vltmt]
+      result: Simulation aborts without diagnostic output; both scenarios also fail with the preserved c325d9c0d parent compiler.
+    - test: t_randomize_method_types_unsup
+      scenarios: [vlt, vltmt]
+      result: Recursive scalar rand handle causes unbounded compiler expansion. The vlt process exited 137; the vltmt process was terminated at 16 GB resident memory and exited 143.
+  followup: See regression-triage-2026-09-07.yaml for bounded parent reproducers, logs, and the separate recursion correction in development.
 acceptance:
   ci: pending
   full_regression: pending

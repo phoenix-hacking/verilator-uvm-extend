@@ -70,7 +70,7 @@ foreach:
     failed: 0
   formatting: make format passed; two unrelated formatter-only runtime whitespace changes reverted
   python_lint: make lint-py passed
-  cppcheck: Running with two workers and generated headers from src/obj_opt; broad acceptance remains pending. Existing runtime diagnostics must still be reviewed regardless of tool exit status.
+  cppcheck: Completed with 11 error reports, matching the pre-crash candidate by filename, message, and multiplicity. See regression-triage-2026-09-07.yaml; this is not a clean static-analysis pass.
   log_directory: /home/holden/verilator-work
   log_sha256:
     foreach-nonzero-recovery-build-clean-objects.log: e4c64a90297bbc551c0690e999bc18b97fa9717d4ac2fdb751a87278657b4c10
@@ -138,4 +138,4 @@ foreach_width_followup:
     status: pending
     build_test_run: 34138166747
     format_run: 34138166623
-  static_acceptance: pending; original full cppcheck remains active with existing baseline findings
+  static_acceptance: pending; the completed recovery cppcheck sweep has 11 existing baseline reports
