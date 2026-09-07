@@ -6,6 +6,14 @@
 
 ## Post-crash resume point: 2026-09-07
 
+Current integration source is `a48169e1b`, with 24 source commits applied
+without conflicts. The main native build is active in
+`/home/holden/verilator-work/integration-recovered-build.log`. Do not change
+compiler inputs while it runs. The two recovered UVM sequence files remain
+untracked and backed up in `integration-recovery-20260907T200409Z`. Run them
+with the combined compiler next. [Combined evidence](integration-recovered-local-2026-09-07.yaml)
+records the source revision; combined validation and release acceptance remain open.
+
 The [recovery record](recovery-validation-2026-09-07.yaml) supersedes old local
 session identifiers and full-regression running/completion claims. All eight
 worktrees survived; uncommitted work is backed up under
@@ -44,7 +52,7 @@ CI, full regression, and static acceptance remain pending. Explicit dereference 
 `randomize(null)` with class/container members remains separately unsupported.
 
 The original and frozen null-child cppcheck sweeps completed with the same 11
-reports as the pre-crash candidate; this is not a clean static pass.
+error reports as the pre-crash candidate; this is not a clean static pass.
 [Triage evidence](regression-triage-2026-09-07.yaml) records the completed results.
 The failure-state worktree was fast-forwarded to `04fc80d15` and its recovered
 changes reapplied cleanly; the original stash and patch remain preserved.
@@ -56,8 +64,9 @@ in both new scenarios on the parent runtime. The new test builds with C++14.
 The associative-size correction is published at `b392c1065` on
 `codex/randomize-assoc-size`. The native build worktree
 `/home/holden/verilator-work/randomize-recursion-check` was frozen for that completed run.
-It is now at `982bae429` on `codex/compiler-pch-flags`; the associative-size
-compiler and completed evidence remain preserved. The PCH correction passes
+It is now at `6eaf8a0c3` on `codex/process-context-gcc`; the associative-size
+and PCH compilers and completed evidence remain preserved. The PCH source
+checkpoint is `982bae429` on `codex/compiler-pch-flags`. The PCH correction passes
 9/9 focused checks and 12/12 neighboring build scenarios. Full cppcheck reports
 the same 11 baseline error findings. [Local evidence](compiler-pch-flags-local-2026-09-07.yaml)
 records the parent failure with CXXFLAGS cleared and an explicit `-CFLAGS -O1`
@@ -85,23 +94,41 @@ one callback per attempt. The C++14 ordinary/protected tests cover nested
 containers, static and derived fields, resizing, modes, and cyclic history.
 [Local evidence](randomize-failure-state-local-2026-09-07.yaml) records exact
 source/compiler hashes and retained logs. The 196-driver neighboring regression
-passed all 347 scenarios in 36:10 against the frozen source. Full cppcheck is
-still running, and the GitHub format workflow passed.
+passed all 347 scenarios in 36:10 against the frozen source. Full cppcheck
+completed with 11 unchanged error reports and two added style reports
+(`afterp` can be const; `newStateThisRef` can be static). The GitHub format
+workflow passed.
 The earlier partial cppcheck run was stopped for the callback correction; it
-is not acceptance evidence. Full repository regression, CI, and scope
-`std::randomize` rollback remain unfinished.
+is not acceptance evidence. Full repository regression and CI acceptance
+remain unfinished.
 
 The scope-randomization worktree `/home/holden/verilator-work/randomize-std-failure`
-is on `codex/randomize-std-failure`, based on `001c6ca86`. Its new C++14
-ordinary/protected test fails all four configurations on the preserved parent
-compiler. The implementation saves all arguments before basic writes and
+is frozen at published `d513bed19`, based on `001c6ca86`. Four final C++14
+ordinary/protected scenarios pass and all four fail on the unchanged parent;
+six distribution checks pass. It saves all arguments before basic writes and
 restores existing array elements individually so active ref aliases stay valid.
-It is uncommitted and has no passing candidate evidence yet; the initial native
-build is running in `randomize-std-failure-build.log` with one build worker.
+Its 341-scenario broader regression and full cppcheck are running. The existing
+IMPURE restriction for array references in module functions remains separate;
+the final alias tests use static class methods.
 
-Next work is to inspect the active regressions and CI, finish broader failed-randomization
-validation and scope-randomization restoration, then integrate
-the real UVM sequence-item regression and continue the complete milestone
+The process-context correction is published at `6eaf8a0c3`, with 10 focused
+passes and four GCC 13 parent failures at explicit `-O2` with CXXFLAGS cleared.
+Its worktree is frozen for 190 neighboring scenarios and full cppcheck. The
+nullable runtime context overload remains; generated functions use the required
+reference overload. Detailed source/compiler/log hashes are in the new local
+evidence records.
+
+The frozen full regression also has a guard for GCC compiling only
+`t_opt_merge_cond_blowup` in its original object directory. The initial compiler
+had consumed 3935 CPU seconds and 13.5 GB virtual memory before limits were
+applied; the failure remains recorded. Clearing inherited CXXFLAGS on the same
+frozen compiler/runtime passes seven of nine replay scenarios, including the
+merge-condition case, four C-split checks, and both untimed profiling checks.
+Both timing-profile scenarios still fail and need independent investigation.
+The replay is bounded to 180 CPU seconds per process and 4 GiB address space.
+
+Next work is to inspect the active regressions and CI, finish broader failed-randomization and process-context
+validation, then execute and integrate the real UVM sequence-item regression and continue the complete milestone
 scope in GOALS.md. The ten pre-crash CI failures must be classified from actual
 job logs; available shutdown/cancellation evidence is not semantic acceptance.
 M00/M01 issues #1 and #2 are closed; reconciliation changes no accepted-gate totals. Use

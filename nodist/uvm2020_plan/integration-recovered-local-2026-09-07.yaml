@@ -1,0 +1,48 @@
+---
+# DESCRIPTION: Verilator: Recovered source integration checkpoint
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Combined source checkpoint; the initial native build is running and no combined test acceptance is claimed.
+revision: a48169e1b517a24723bb4e09e4dac4811f3ceff2
+source_tree: 5840b4f2303665893bc260a4079ee0ea066bd94a
+include_tree: df0df3deb2d1005e97aef6efe9a7cbe0d8952e8d
+parent: 23a6adf1057e5a07425c30ff6e361e1c90216200
+recovery_backup: /home/holden/verilator-work/integration-recovery-20260907T200409Z
+source_commits:
+  - cd2a852774b3c5f29e917ec0cce29d8638d251ce Treat foreach indices as implicitly driven
+  - e67b8124cb2a53f7481d21ccf387de146ada7e3f Retain inherited array constraints for element solving
+  - 55b0f4e8121a54ab3719737e38bb0bb930780d08 Prepare inherited constraints before inline randomization
+  - 914412a14a25c0afc2106ebcb98c374fffc351a3 Resize and resolve arrays during inline randomization
+  - dce46f86434e4f29c132feee8feaca4ab609160a Skip post-randomize callbacks after failed solving
+  - 50d4ecf117e0469cbd5cb1e702fa0d9cf00a1f79 Preserve nested constraints after independent randomization
+  - d85f3c74d1ffba63f1ad84bc8aca6454bd5b2446 Preserve child constraint modes during nested solving
+  - 8b7564bea2f1257af1079b5a3918bbe54bb4696f Fix nested foreach container selection
+  - e7a71558c54c60d648d93498942fbda20d42ffa6 Keep generated foreach bounds fully sized
+  - 4919ed676d5a8a792b71a90bf1c26ab373013ec7 Handle absent and replaced rand child objects
+  - f05f6be8bc4ae1f542993b2772970c1abbc3b820 Reject recursive rand class paths before expanding constraints
+  - 179b351395d8c5d34086e0611d5291023ae779d8 Evaluate constraints with no registered random variables
+  - aaae6458daa03f19a6b61925a9791f85a7999ac9 Fix associative array size constraints and storage refresh
+  - b0a73fce6c5a227571fb2229d8dc9055849e1b58 Preserve state and callbacks after failed class randomization
+  - 5fb8e0900419e08f891ea14716f838cba1e0191a Restore scope randomization arguments after failed solving
+  - bf029efa1a21d20695c898035d1dc221bfe05d7d Match user C++ optimization flags to precompiled headers
+  - 7f48a04a0767968335988b30264f43fb304323f4 Use required process references for generated execution contexts
+  - 7f777ee53d021ac6a0c73b4487e2f456b220d35a Fail attribute validation when source analysis is incomplete
+  - 18236476626b8fca4d971a26a92f14b235a20db6 Reject attribute diagnostics even when unsafe-call count is zero
+  - 1973ccada04805b5f3f4a66e4335e75e9fb34a65 Check unsafe calls inside mutex-excluding thread-safe functions
+  - c367ddbea2b3ee968352eef9b51964a061dc59ae Test UVM scoreboarding with a stateful C DPI reference model
+  - a1570aeee4651a03f9491ac84a64e56db01cd2ad Keep the DPI reference model as a C translation unit
+  - 4575fe59bae999ffc8a994fe1484b3e53e8061a2 Test UVM HDL backdoor operations against clocked RTL
+  - a48169e1b517a24723bb4e09e4dac4811f3ceff2 Support dynamic arrays and queues in DPI open-array arguments
+implementation: Integrate the randomization/foreach chain, compiler/PCH and process-context corrections, attribute-checker fixes, C DPI reference test, HDL backdoor test, and dynamic DPI arrays. Equivalent
+  DPI reference commits were selected once.
+build:
+  status: running
+  command: make -C src opt -j1
+  configure_flags: [--enable-ccwarn, --enable-longtests]
+  log: /home/holden/verilator-work/integration-recovered-build.log
+uvm_sequence_test:
+  status: recovered untracked work; execution pending
+  files: [test_regress/t/t_uvm_sequence_randomize.py, test_regress/t/t_uvm_sequence_randomize.v]
+new_gate_credit: 0

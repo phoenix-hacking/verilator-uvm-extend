@@ -6,6 +6,13 @@
 
 ## Post-crash recovery: 2026-09-07
 
+The integration branch now contains the 24 recovered source commits at
+`a48169e1b`, including the randomization, foreach, compiler/process-context,
+attribute-checker, DPI, and HDL-backdoor changes. Its native compiler build is
+running; the recovered UVM sequence regression is next.
+[Integration evidence](integration-recovered-local-2026-09-07.yaml) records the
+combined source revision; component results do not establish combined acceptance.
+
 All eight worktrees and ten uncommitted source/test files survived the host
 crash. Two zero-byte compiler objects were preserved and rebuilt. The two full
 regression runs stopped with unfinished aggregate results; their older nested
@@ -63,8 +70,9 @@ exact parent compiler/runtime. It restores values and bindings after failure,
 preserves callback initialization, and handles aliased objects, nested
 containers, static/derived fields, and cyclic history. The
 [local evidence](randomize-failure-state-local-2026-09-07.yaml) includes the
-callback regression found and corrected during review. The broader run passed all 347 scenarios in 36:10. Full cppcheck is active;
-full regression, CI, and scope-randomization rollback remain open. The compiler-include flag-ordering correction is published at `982bae429`,
+callback regression found and corrected during review. The broader run passed all 347 scenarios in 36:10. Full cppcheck completed
+with the same 11 baseline errors and two additional style reports. Full
+regression and CI acceptance remain open. The compiler-include flag-ordering correction is published at `982bae429`,
 with 9/9 focused checks and 12/12 neighboring build scenarios passing. Its
 full cppcheck has the same 11 baseline error reports. The
 [local evidence](compiler-pch-flags-local-2026-09-07.yaml) records the independent
@@ -72,6 +80,15 @@ parent failure using an explicit optimization override; full regression and
 CI acceptance remain open. An audit of all diagnostic severities found no
 PCH additions versus its associative-size parent; both retain one additional
 `shadowFunction` style report versus the pre-crash candidate.
+
+The scope-randomization rollback correction is published at `d513bed19`, with
+four C++14 ordinary/protected passes and six distribution passes; all four
+final scenarios fail on the unchanged parent. Its 341-scenario broader run
+and full cppcheck are active. [Local evidence](randomize-std-failure-local-2026-09-07.yaml)
+records preservation of array storage and live references. The process-context
+correction is published at `6eaf8a0c3`, with 10 focused passes and four parent
+compiler failures. Its [local evidence](process-context-gcc-local-2026-09-07.yaml)
+includes the reduced GCC 13/C++14 probe and active 190-scenario broader run.
 
 Both the recovery and frozen null-child cppcheck sweeps completed with the same
 11 error reports as the pre-crash candidate; this is not a clean static pass. Full regression, CI, and static

@@ -40,11 +40,30 @@ full_regression:
     scope: Only the exact foreach compiler executable running t_randomize_method_types_unsup.v; other tests and compilers are unaffected.
     limits: 3 GiB address space and 60 additional CPU seconds, with a 65-second hard CPU limit.
     accounting: Any guarded termination remains a failing test. The source is unchanged and no test is silently skipped.
+  merge_condition_resource_guard:
+    script: /home/holden/verilator-work/guard-merge-cond-regression.py
+    log: /home/holden/verilator-work/foreach-merge-cond-resource-limits.log
+    scope: Only cc1plus compiling Vt_opt_merge_cond_blowup__ALL.cpp in the frozen original vlt object directory.
+    initial_cpu_seconds: 3935
+    initial_virtual_bytes: 13518794752
+    initial_limits: 30 additional CPU seconds (hard +5); current address space +256 MiB. Future matching compilers receive at least 4 GiB and 90 additional CPU seconds.
+    accounting: Termination remains a failure. Original source/test inputs are unchanged.
+  clean_cxxflags_replay:
+    revision: c325d9c0dda118983fd0adfe5866df8b559970d4
+    CXXFLAGS: ''
+    passed: 7
+    failed: 2
+    elapsed: '4:37'
+    log: /home/holden/verilator-work/foreach-clean-cxxflags-replay.log
+    sha256: 5e558b61691a3a9a63ede30e7ef329c885cac51ba2eb0af1523f9e731cffccdd
+    passed_cases: [t_flag_csplit (vlt/vltmt), t_flag_csplit_groups (vlt/vltmt), t_prof (vlt/vltmt), t_opt_merge_cond_blowup (vlt)]
+    remaining_failures: t_prof_timing in both modes has no expected VBlock t_prof entry. This is not resolved by clearing inherited optimization flags.
+    limits: 180 CPU seconds per process and 4 GiB address space; no core dumps.
 cppcheck:
   status: completed_with_reports
   error_reports: 11
   baseline_error_reports: 11
-  comparison: The multiset of filename, diagnostic message, and multiplicity exactly matches candidate-cppcheck.log.
+  comparison: Error-severity filename/message/count multiset matches candidate-cppcheck.log; other diagnostic severities are recorded in the newer local evidence.
   provenance: The recovery sweep began before the foreach width follow-up. Retain it as a baseline comparison, not an independent claim of clean static acceptance at a frozen final revision. The frozen
     null-child sweep also completed with the identical multiset of 11 reports at 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c.
   command: make cppcheck CPPCHECK_JOBS=2 CPPCHECK_INC='-I./include -I./include/fstcpp -I./include/vltstd -I./src/obj_opt -I./src' CPPCHECK_CACHE=/home/holden/verilator-work/foreach-nonzero-cppcheck-cache

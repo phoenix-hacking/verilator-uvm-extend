@@ -61,7 +61,11 @@ neighbors:
   distribution_drivers: 6
   source_frozen_at: 001c6ca86d4cad2d8b770c0b1bf1f72658e82e99
 static_analysis:
-  status: running
+  status: completed_with_reports
+  exit_code: 0
+  error_reports: 11
+  comparison: Error, warning, performance, and portability diagnostics match the associative-size parent. Two style reports are added, for a const pointer in V3Begin and a static helper in V3Randomize.
+  diagnostic_counts: {error: 11, warning: 63, style: 2265, performance: 114, portability: 16, information: 186}
   log: /home/holden/verilator-work/randomize-failure-state-cppcheck-callbacks.log
 acceptance:
   full_regression: pending; separate foreach run tests c325d9c0d
@@ -107,3 +111,6 @@ logs:
   /home/holden/verilator-work/snapshot-child-callback-parent-sim.log: 9762af61ee2aca1dc40de0e842d60c9568e1d88c47ff11f905b5b8b9ffcacde9
   /home/holden/verilator-work/snapshot-child-callback-candidate-sim.log: 20a1e30781b1a38b6290c3a9e8de9666f61aa421e551ed4e801b7fcd844b88e0
   /home/holden/verilator-work/randomize-failure-state-neighbors.log: 3b09cd28a398ebb56344d998b260501f900a3440f24228cd1fbfa54626176b5a
+  /home/holden/verilator-work/randomize-failure-state-cppcheck-callbacks.log: 9430c4cd79b120e21533f2646b22fa963dfe5318e9d9cc7ac2c5221574db63ae
+  /home/holden/verilator-work/randomize-failure-state-cppcheck-comparison.json: a35e6c9415c8716dfc00323c387c44526e040a7f5fa5a464abebc5d044c000a6
+  /home/holden/verilator-work/randomize-failure-state-cppcheck-callbacks-inputs.sha256: 6695a781a4e49661c70b8265c8ec116a7a5ee65bc2e0f490be128c008bce0c63
