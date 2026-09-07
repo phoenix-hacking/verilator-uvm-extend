@@ -105,10 +105,15 @@ regressions fail before the change; those four plus six neighboring build
 scenarios pass afterward (10/10). Optimized/debug builds, full formatting,
 Python lint, and focused C++ analysis pass. The change is published separately
 on `codex/compiler-include-flags`; full regression and CI remain pending.
-The attribute checker is being corrected in a separate worktree: its new causal
-regression covers 14 serial/parallel cases and rejects incomplete parsing,
-failed precompilation, and missing compile commands. Actual source annotation
-validation remains open while the compiler/header environment is corrected.
+The attribute-checker correction is published separately at `d616fad10` on
+`codex/attribute-parse-errors`. Its causal regression covers 14 serial/parallel
+cases and rejects incomplete parsing, failed precompilation, and missing compile
+commands. With matching Clang 18 builtin and GCC 13 C++ headers, the existing
+negative test also reproduces all 230 expected unsafe-function diagnostics.
+Full formatting and Python lint pass. Actual annotation checks for 16 runtime
+and six compiler source files remain running; no positive annotation acceptance
+is claimed. The broad C++ analysis has also reported error diagnostics requiring
+review; its exit status alone will not count as acceptance.
 
 Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated
