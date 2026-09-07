@@ -486,8 +486,11 @@ bool VlRandomizer::next_check_only(VlRNG& rngr) {
 }
 
 bool VlRandomizer::next(VlRNG& rngr) {
-    if (!m_checkOnly && m_vars.empty() && m_unique_arrays.empty()) return true;
-    if (m_checkOnly && m_vars.empty()) return true;  // No rand members: trivially SAT
+    // Predicates over state still need checking when there are no random variables.
+    if (m_vars.empty() && m_unique_arrays.empty() && m_constraints.empty()
+        && m_softConstraints.empty()) {
+        return true;
+    }
     for (const std::string& baseName : m_unique_arrays) {
         const auto it = m_vars.find(baseName);
         const uint32_t size = m_unique_array_sizes.at(baseName);
@@ -630,7 +633,7 @@ bool VlRandomizer::next(VlRNG& rngr) {
             return false;
         }
 
-        if (!m_checkOnly) {
+        if (!m_checkOnly && !m_vars.empty()) {
             bool hasArray = false;
             for (const auto& var : m_vars) {
                 if (var.second->dimension() > 0) {
@@ -788,6 +791,9 @@ bool VlRandomizer::parseSolution(std::iostream& os, bool log) {
         VL_WARN_MT(__FILE__, __LINE__, "randomize", str.c_str());
         return false;
     }
+
+    // State-only constraints have no assignments to retrieve from the model.
+    if (m_vars.empty()) return true;
 
     os << "(get-value (";
     for (const auto& var : m_vars) {
