@@ -1,0 +1,14 @@
+%Error-UNSUPPORTED: t/t_randomize_recursive_unsup.v:9:15: Unsupported: random member variable with the type of the containing class
+                                                        : ... note: In instance 't'
+    9 |   rand self_t child;
+      |               ^~~~~
+                    ... For error description see https://verilator.org/warn/UNSUPPORTED?v=latest
+%Error-UNSUPPORTED: t/t_randomize_recursive_unsup.v:22:15: Unsupported: recursive rand class member 'child'.
+                                                         : ... note: In instance 't'
+   22 |   rand left_t child;
+      |               ^~~~~
+%Error-UNSUPPORTED: t/t_randomize_recursive_unsup.v:28:16: Unsupported: recursive rand class member 'child'.
+                                                         : ... note: In instance 't'
+   28 |   rand Derived child;
+      |                ^~~~~
+%Error: Exiting due to
