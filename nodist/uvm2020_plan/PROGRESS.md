@@ -52,8 +52,11 @@ refreshes array storage after callbacks, handles empty arrays, and follows
 typedefs through nested random arrays. All four parent configurations fail;
 allowing the parent's unused-generated-variable warning through reproduces
 four simulation SIGSEGVs. [Local evidence](randomize-assoc-size-local-2026-09-07.yaml)
-records the C++14/protected runs and the active 318-check neighboring regression.
-Full cppcheck at this revision has the same 11 baseline reports.
+records the C++14/protected runs and the completed neighboring regression:
+318/318 checks passed in 21:15, comprising 312 behavioral scenarios and six
+distribution checks. Full cppcheck at this revision has the same 11 baseline
+reports. Format CI passed; build/test CI is pending and Contributor Agreement
+CI failed.
 Both the recovery and frozen null-child cppcheck sweeps completed with the same
 11 reports as the pre-crash candidate; this is not a clean static pass. Full regression, CI, and static
 acceptance remain pending. [Local evidence](randomize-null-child-local-2026-09-07.yaml) records

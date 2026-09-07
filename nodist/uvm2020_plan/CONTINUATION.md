@@ -55,10 +55,10 @@ in both new scenarios on the parent runtime. The new test builds with C++14.
 [Local evidence](randomize-state-only-local-2026-09-07.yaml) records its inputs.
 The associative-size correction is published at `b392c1065` on
 `codex/randomize-assoc-size`. The native build worktree
-`/home/holden/verilator-work/randomize-recursion-check` is clean and frozen there
-for the 318-check neighboring regression in
+`/home/holden/verilator-work/randomize-recursion-check` is clean and frozen there.
+The neighboring regression completed 318/318 checks in 21:15, logged in
 `/home/holden/verilator-work/randomize-assoc-size-neighbors.log`. Its 12 focused
-checks pass; full cppcheck completed with the same 11 baseline reports. The
+checks also pass; full cppcheck completed with the same 11 baseline reports. The
 [local evidence](randomize-assoc-size-local-2026-09-07.yaml) records exact inputs.
 The compiler is preserved as
 `/home/holden/verilator-work/verilator_bin_assoc_b392c1065`.
@@ -69,7 +69,12 @@ reproduces all four original simulation SIGSEGVs.
 The failure-state worktree was advanced to `b392c1065`; its five recovered changes
 reapplied cleanly. The patch and stash `07b6e82f6d2daa93366fbeffba1dceedb18b17da`
 are retained under `/home/holden/verilator-work/randomize-failure-state-before-assoc*`.
-Snapshot wiring and restoration remain unfinished.
+Snapshot wiring and restoration are now under implementation, with an optimized
+compiler build in `/home/holden/verilator-work/randomize-failure-state-build-snapshot.log`.
+The C++14 ordinary/protected failed-state test fails all four scenarios on the
+preserved `b392c1065` compiler, because a 31-bit random value changes after failure.
+The recovered runtime snapshot definitions were present but unused in that test.
+This remains development work without passing implementation evidence.
 
 Next work is to inspect the active regressions and CI, finish failed-randomization
 value preservation, then integrate

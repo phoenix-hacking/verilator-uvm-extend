@@ -71,7 +71,7 @@ static_analysis:
   command: make cppcheck CPPCHECK_JOBS=2 CPPCHECK_INC='-I./include -I./include/fstcpp -I./include/vltstd -I./src/obj_opt -I./src' CPPCHECK_CACHE=/home/holden/verilator-work/randomize-assoc-size-cppcheck-cache
   dispositions: See regression-triage-2026-09-07.yaml. This is not a claim of a report-free static pass.
 neighbors:
-  status: running
+  status: completed
   selected_behavioral_drivers: 178
   distribution_drivers: 6
   scenarios: 318
@@ -79,6 +79,10 @@ neighbors:
   log: /home/holden/verilator-work/randomize-assoc-size-neighbors.log
   command: python driver.py --vlt --vltmt --dist --jobs=2 --driver-build-jobs=1 --quiet <tests from manifest> <six focused distribution tests>
   source_frozen_at: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+  passed: 318
+  failed: 0
+  elapsed: '21:15'
+  behavioral_scenarios: 312
 acceptance:
   full_regression: pending; the separate full foreach run tests c325d9c0d
   ci: pending
@@ -118,3 +122,14 @@ logs:
   /home/holden/verilator-work/randomize-assoc-size-evidence/vltmt-t_randomize_assoc_size-sim.log: 3948a2c45616adc5b5c4022074ea74fe191af99201b5d9575ea9701c9d17ac22
   /home/holden/verilator-work/randomize-assoc-size-evidence/vltmt-t_randomize_assoc_size_protect-gcc.log: 00a38702c91d191e703221dadfe411358dae63b17b16ecfcd0ef78d69b98ed67
   /home/holden/verilator-work/randomize-assoc-size-evidence/vltmt-t_randomize_assoc_size_protect-sim.log: c9cf7f2379f178db6a41c44866e8c2d8451067174f0dd461132c2e39ad918a70
+  /home/holden/verilator-work/randomize-assoc-size-neighbors.log: b78afdb275d0a7780cd7b9cbe1a810e0b1e07803e05ab8fb76aa392c98b4cbe4
+ci:
+  format:
+    run: 34149001400
+    status: success
+  build_test:
+    run: 34149001529
+    status: pending
+  contributor_agreement:
+    run: 34149001440
+    status: failure
