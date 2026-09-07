@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
 schema_version: 2
-updated: 2026-08-09
+updated: 2026-09-07
 objective: evidence-backed UVM 2020 support for complex SoC verification
 repository: phoenix-hacking/verilator-uvm-extend
 
@@ -757,6 +757,14 @@ evidence:
         refs:
         - expanded_lane.current_validation.ci
         - nodist/uvm2020_plan/ordered-lane-ci-2026-09-07.yaml
+  LOCAL-DEPENDENCY-CLOSURE-20260907:
+    claim: Eight previously blocked compatibility oracles pass with solver and debug compiler available
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs:
+          - nodist/uvm2020_plan/dependency-closure-2026-09-07.yaml
   LOCAL-ORDERED-UVM-LANE-20260906:
     claim: Local declared-oracle compatibility evidence; bounded resource XFAIL disclosed, not conformance
     proofs:
@@ -1455,8 +1463,8 @@ corpus:
         evidence: [FULL-BASELINE-0001]
       t_class_dead_varscope_uaf:
         implemented: true
-        status: blocked
-        evidence: [FULL-BASELINE-0001]
+        status: pass
+        evidence: [LOCAL-DEPENDENCY-CLOSURE-20260907]
       t_class_extends:
         implemented: true
         status: pass
@@ -1527,16 +1535,16 @@ corpus:
         evidence: [FULL-BASELINE-0001]
       t_constraint_global_nested_member:
         implemented: true
-        status: blocked
-        evidence: [FULL-BASELINE-0001]
+        status: pass
+        evidence: [LOCAL-DEPENDENCY-CLOSURE-20260907]
       t_constraint_global_randMode:
         implemented: true
-        status: blocked
-        evidence: [FULL-BASELINE-0001]
+        status: pass
+        evidence: [LOCAL-DEPENDENCY-CLOSURE-20260907]
       t_constraint_global_randmode_subobj:
         implemented: true
-        status: blocked
-        evidence: [FULL-BASELINE-0001]
+        status: pass
+        evidence: [LOCAL-DEPENDENCY-CLOSURE-20260907]
       t_covergroup_embedded_unsup:
         implemented: true
         status: pass
@@ -1623,12 +1631,12 @@ corpus:
         evidence: [FULL-BASELINE-0001]
       t_randomize:
         implemented: true
-        status: blocked
-        evidence: [FULL-BASELINE-0001]
+        status: pass
+        evidence: [LOCAL-DEPENDENCY-CLOSURE-20260907]
       t_randomize_class_inherit_size_foreach:
         implemented: true
-        status: blocked
-        evidence: [FULL-BASELINE-0001]
+        status: pass
+        evidence: [LOCAL-DEPENDENCY-CLOSURE-20260907]
       t_randomize_local_param:
         implemented: true
         status: pass
@@ -1647,12 +1655,12 @@ corpus:
         evidence: [FULL-BASELINE-0001]
       t_randomize_shift_distribution:
         implemented: true
-        status: blocked
-        evidence: [FULL-BASELINE-0001]
+        status: pass
+        evidence: [LOCAL-DEPENDENCY-CLOSURE-20260907]
       t_randomize_std_param_extends:
         implemented: true
-        status: blocked
-        evidence: [FULL-BASELINE-0001]
+        status: pass
+        evidence: [LOCAL-DEPENDENCY-CLOSURE-20260907]
       t_randstate_func:
         implemented: true
         status: pass
@@ -1913,13 +1921,13 @@ progress:
   corpus:
     planned: 115
     implemented: 115
-    executed: 107
-    passed: 107
+    executed: 115
+    passed: 115
     failed: 0
-    blocked: 8
-    execution_percent: 93.0
+    blocked: 0
+    execution_percent: 100.0
     pass_percent: 100.0
-    verified_percent: 93.0
+    verified_percent: 100.0
 
 validation:
   scope: historical_records_only_not_current_head_validation

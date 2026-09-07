@@ -31,7 +31,10 @@ provenance, log hashes, pass order, and the exact acceptance sentinels.
 The evidence closes the declared M05 class/factory/static-initialization and
 M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
 criteria, 4/20 milestone exits, and 27/46 atomic gates**. The compatibility
-inventory remains **107/115 passing declared oracles, eight blocked**.
+inventory now has **115/115 passing declared oracles, zero blocked**, using
+accumulated evidence. The [eight newly executed tests](dependency-closure-2026-09-07.yaml)
+passed locally with the debug compiler and Z3 available. This is not a fresh
+115-test run and does not close the constrained-random UVM item milestone.
 M07 stays open: the resource direct-lookup XFAIL is not conformance credit.
 Unmodified upstream UVM source flow and both performance gates remain open.
 
