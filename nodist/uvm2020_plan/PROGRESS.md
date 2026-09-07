@@ -46,7 +46,14 @@ checks pass, including 38 behavioral scenarios and six distribution checks.
 Both new scenarios fail with the parent runtime. False hard constraints now
 fail even when there are no solver variables, and empty model-value queries are
 avoided. [Local evidence](randomize-state-only-local-2026-09-07.yaml) records the
-C++14 build and exact inputs. Associative-size handling remains in development.
+C++14 build and exact inputs. The associative-size correction is published at
+`b392c1065`, with 12/12 focused checks passing. It evaluates existing key counts,
+refreshes array storage after callbacks, handles empty arrays, and follows
+typedefs through nested random arrays. All four parent configurations fail;
+allowing the parent's unused-generated-variable warning through reproduces
+four simulation SIGSEGVs. [Local evidence](randomize-assoc-size-local-2026-09-07.yaml)
+records the C++14/protected runs and the active 318-check neighboring regression.
+Full cppcheck at this revision has the same 11 baseline reports.
 Both the recovery and frozen null-child cppcheck sweeps completed with the same
 11 reports as the pre-crash candidate; this is not a clean static pass. Full regression, CI, and static
 acceptance remain pending. [Local evidence](randomize-null-child-local-2026-09-07.yaml) records

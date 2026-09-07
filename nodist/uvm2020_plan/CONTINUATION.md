@@ -53,12 +53,25 @@ The state-only solver correction is published at `04808c883` on
 `codex/randomize-state-constraints`, with 44/44 focused passes and causal failures
 in both new scenarios on the parent runtime. The new test builds with C++14.
 [Local evidence](randomize-state-only-local-2026-09-07.yaml) records its inputs.
-The native build worktree `/home/holden/verilator-work/randomize-recursion-check`
-is now on `codex/randomize-assoc-size`, based on that correction; its associative
-size compiler/test changes remain uncommitted. The recursion compiler binary
-listed above remains preserved for causal comparisons.
+The associative-size correction is published at `b392c1065` on
+`codex/randomize-assoc-size`. The native build worktree
+`/home/holden/verilator-work/randomize-recursion-check` is clean and frozen there
+for the 318-check neighboring regression in
+`/home/holden/verilator-work/randomize-assoc-size-neighbors.log`. Its 12 focused
+checks pass; full cppcheck completed with the same 11 baseline reports. The
+[local evidence](randomize-assoc-size-local-2026-09-07.yaml) records exact inputs.
+The compiler is preserved as
+`/home/holden/verilator-work/verilator_bin_assoc_b392c1065`.
+The exact-parent worktree `/home/holden/verilator-work/randomize-assoc-parent-check`
+is detached at `04808c883`, with the final positive test sources copied in. All
+four configurations fail; suppressing only the unused-generated-variable warning
+reproduces all four original simulation SIGSEGVs.
+The failure-state worktree was advanced to `b392c1065`; its five recovered changes
+reapplied cleanly. The patch and stash `07b6e82f6d2daa93366fbeffba1dceedb18b17da`
+are retained under `/home/holden/verilator-work/randomize-failure-state-before-assoc*`.
+Snapshot wiring and restoration remain unfinished.
 
-Next work is to finish associative-array size handling, inspect the active regressions and CI, finish failed-randomization
+Next work is to inspect the active regressions and CI, finish failed-randomization
 value preservation, then integrate
 the real UVM sequence-item regression and continue the complete milestone
 scope in GOALS.md. The ten pre-crash CI failures must be classified from actual

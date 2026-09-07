@@ -18,7 +18,7 @@ associative_size:
   parent_result: Both t_randomize_assoc_size scenarios fail; 0 passed, 2 failed in 0:50.
   parent_environment: VERILATOR_BIN selects the preserved compiler; runtime inputs are the unchanged 04fc80d15 headers and library sources in the recursion worktree.
   investigation: Generated StringKeyTest::init registers a pointer to its local __Vdata_size. The later solver writes through that expired pointer. A debugger run confirms SIGSEGV during the initial block.
-  status: Correction pending; associative size must reflect existing keys rather than become a freely solved size variable.
+  status: Correction published at b392c1065 with 12 focused passes and four parent failures. Existing key counts are evaluated as state; see randomize-assoc-size-local-2026-09-07.yaml.
 recursion:
   parent_revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
   parent_compiler: /home/holden/verilator-work/verilator_bin_null_child_04fc80d
@@ -102,6 +102,10 @@ failed_state_recovery:
   patch: /home/holden/verilator-work/randomize-failure-state-before-rebase-20260907.patch
   result: The recovered changes applied cleanly after fast-forwarding the branch. Both expanded post-unsat scenarios still fail because an unconstrained 31-bit member changes after a failed solve.
   status: Runtime snapshot helpers and compiler bookkeeping remain unfinished; restore and array-binding refresh are not implemented.
+  subsequent_base: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+  subsequent_stash: 07b6e82f6d2daa93366fbeffba1dceedb18b17da
+  subsequent_patch: /home/holden/verilator-work/randomize-failure-state-before-assoc.patch
+  subsequent_result: All five recovered changes reapplied cleanly after advancing to the associative-size correction. Snapshot wiring remains unfinished.
 new_gate_credit: 0
 logs_and_recovery_files:
   /home/holden/verilator-work/randomize-null-neighbors.log: ac2d629bfa08954149022c061138e0c4171148fc82c460731cc215786c6d50ce
