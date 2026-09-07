@@ -673,9 +673,11 @@ AstNode* V3Begin::convertToWhile(AstForeach* nodep) {
                 if (VN_IS(adtypep, UnpackArrayDType)) {
                     // Width has already run: ArraySel needs a normalized storage index.
                     // Descend every fixed dimension before querying a nested container.
+                    V3Number low{nodep, 32};
+                    low.isSigned(true);
+                    low.setLongS(adtypep->declRange().lo());
                     AstNodeExpr* const indexp = new AstSub{
-                        fl, new AstVarRef{fl, varp, VAccess::READ},
-                        new AstConst{fl, AstConst::Signed32{}, adtypep->declRange().lo()}};
+                        fl, new AstVarRef{fl, varp, VAccess::READ}, new AstConst{fl, low}};
                     subfromp = new AstArraySel{fl, subfromp, indexp};
                 }
             } else if (const AstBasicDType* const adtypep = VN_CAST(fromDtp, BasicDType)) {
