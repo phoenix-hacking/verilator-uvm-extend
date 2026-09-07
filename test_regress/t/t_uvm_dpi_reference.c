@@ -1,4 +1,4 @@
-// -*- mode: C++; c-file-style: "cc-mode" -*-
+// -*- mode: C; c-file-style: "cc-mode" -*-
 // DESCRIPTION: Verilator: Stateful C reference model for the UVM DPI scoreboard
 //
 // This file ONLY is placed under the Creative Commons Public Domain.
@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Keep the model C-compatible; the regression build links it as C++.
+// Keep the model C-compatible; the regression links it through the C DPI ABI.
 typedef struct {
     uint32_t checksum;
     char name[64];
