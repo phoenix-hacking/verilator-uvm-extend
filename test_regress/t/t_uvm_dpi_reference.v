@@ -48,7 +48,11 @@ module t;
     input chandle handle,
     input int count,
     input byte unsigned bytes[],
+`ifdef DPI_REFERENCE_DYNAMIC
+    inout int unsigned expected[]
+`else
     output int unsigned expected[]
+`endif
   );
   import "DPI-C" function int dpi_reference_delete(input chandle handle);
   import "DPI-C" function int dpi_reference_live();
@@ -97,8 +101,13 @@ module t;
     endfunction
 
     virtual function void write(observed_packet packet);
+`ifdef DPI_REFERENCE_DYNAMIC
+      byte unsigned bytes[];
+      int unsigned expected[];
+`else
       byte unsigned bytes[31];
       int unsigned expected[31];
+`endif
       if (packet.reset) begin
         `checkd(dpi_reference_reset(models[packet.lane]), 0)
         `checkd(packet.results.size(), 1)
@@ -107,7 +116,12 @@ module t;
         return;
       end
       if (packet.bytes.size() > 31) `uvm_fatal("DPI_MODEL", "packet exceeds the reference buffer")
+`ifdef DPI_REFERENCE_DYNAMIC
+      bytes = packet.bytes;
+      expected = new[packet.bytes.size()];
+`else
       foreach (packet.bytes[i]) bytes[i] = packet.bytes[i];
+`endif
       `checkd(packet.results.size(), packet.bytes.size())
       `checkd(dpi_reference_step(models[packet.lane], packet.bytes.size(), bytes, expected),
               packet.bytes.size())
@@ -242,6 +256,10 @@ module t;
     uvm_report_server reports;
     byte unsigned known_bytes[3:5];
     int unsigned known_results[7:5];
+`ifdef DPI_REFERENCE_DYNAMIC
+    byte unsigned empty_bytes[];
+    int unsigned empty_results[];
+`endif
 
     uvm_config_db#(virtual reference_bus)::set(null, "uvm_test_top", "vif", bus);
     uvm_root::get().set_finish_on_completion(0);
@@ -265,6 +283,9 @@ module t;
       handle = dpi_reference_new(name);
       if (handle == null) `stop;
       `checks(dpi_reference_name(handle), name)
+`ifdef DPI_REFERENCE_DYNAMIC
+      `checkd(dpi_reference_step(handle, 0, empty_bytes, empty_results), 0)
+`endif
       `checkd(dpi_reference_step(handle, 0, known_bytes, known_results), 0)
       `checkd(dpi_reference_step(handle, 4, known_bytes, known_results), -3)
       `checkd(dpi_reference_step(handle, 3, known_bytes, known_results), 3)

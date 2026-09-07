@@ -782,7 +782,13 @@ string AstVar::vlPropDecl(const string& propName) const {
     std::vector<int> plims;  // Packed dimension limits
     std::vector<int> ulims;  // Unpacked dimension limits
 
-    if (const AstBasicDType* const bdtypep = basicp()) {
+    const AstNodeDType* valueDtypep = dtypep()->skipRefp();
+    while (VN_IS(valueDtypep, UnpackArrayDType) || VN_IS(valueDtypep, DynArrayDType)
+           || VN_IS(valueDtypep, QueueDType)) {
+        valueDtypep = valueDtypep->subDTypep()->skipRefp();
+    }
+    const AstBasicDType* const bdtypep = valueDtypep->basicp();
+    if (bdtypep) {
         for (const AstNodeDType* dtp = dtypep(); dtp;) {
             dtp = dtp->skipRefp();  // Skip AstRefDType/AstTypedef, or return same node
             if (const AstNodeArrayDType* const adtypep = VN_CAST(dtp, NodeArrayDType)) {
@@ -794,6 +800,11 @@ string AstVar::vlPropDecl(const string& propName) const {
                     ulims.push_back(adtypep->declRange().right());
                 }
                 dtp = adtypep->subDTypep();
+            } else if (VN_IS(dtp, DynArrayDType) || VN_IS(dtp, QueueDType)) {
+                // Runtime access supplies the current bounds of variable dimensions.
+                ulims.push_back(0);
+                ulims.push_back(0);
+                dtp = dtp->subDTypep();
             } else {
                 if (bdtypep->isRanged()) {
                     plims.push_back(bdtypep->left());
@@ -833,8 +844,13 @@ string AstVar::vlPropDecl(const string& propName) const {
     out += "static const VerilatedVarProps ";
     out += propName;
     out += "(";
-    out += vlEnumType();  // VLVT_UINT32 etc
+    out += (bdtypep && bdtypep->keyword().isCHandle()) ? "VLVT_PTR" : valueDtypep->vlEnumType();
     out += ", " + vlEnumDir();  // VLVD_IN etc
+    if (!basicp() && bdtypep) {
+        if (bdtypep->keyword().isDpiCLayout()) out += "|VLVF_DPI_CLAY";
+        if (bdtypep->isSigned()) out += "|VLVF_SIGNED";
+        if (bdtypep->keyword() == VBasicDTypeKwd::BIT) out += "|VLVF_BITVAR";
+    }
 
     if (!ulims.empty()) {
         out += ", VerilatedVarProps::Unpacked{}";

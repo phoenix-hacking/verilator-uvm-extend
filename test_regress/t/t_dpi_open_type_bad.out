@@ -1,0 +1,47 @@
+%Error: t/t_dpi_open_type_bad.v:20:13: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'int'.
+   20 |     consume(scalar);
+      |             ^~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_dpi_open_type_bad.v:21:13: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'real$[]'.
+   21 |     consume(reals);
+      |             ^~~~~
+%Error: t/t_dpi_open_type_bad.v:22:13: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'byte$[$]'.
+   22 |     consume(bytes);
+      |             ^~~~~
+%Error: t/t_dpi_open_type_bad.v:23:13: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'int$[]'.
+   23 |     consume(unsigned_values);
+      |             ^~~~~~~~~~~~~~~
+%Error: t/t_dpi_open_type_bad.v:24:13: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'integer$[]'.
+   24 |     consume(four_state);
+      |             ^~~~~~~~~~
+%Error: t/t_dpi_open_type_bad.v:25:13: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'int$[]$[]'.
+   25 |     consume(two_dimensions);
+      |             ^~~~~~~~~~~~~~
+%Error: t/t_dpi_open_type_bad.v:26:13: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'int$[int]'.
+   26 |     consume(associative);
+      |             ^~~~~~~~~~~
+%Error: t/t_dpi_open_type_bad.v:27:13: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'real$[0:2]'.
+   27 |     consume(fixed_reals);
+      |             ^~~~~~~~~~~
+%Error: t/t_dpi_open_type_bad.v:28:18: DPI open-array argument 'values' has incompatible dimensions or element type (IEEE 1800-2017 7.7, 35.5.6.1).
+                                     : ... note: In instance 't'
+                                     : ... Expected 'UNSIZEDARRAYDTYPE' but connection is 'int$[0:1]$[]'.
+   28 |     consume_rows(wrong_rows);
+      |                  ^~~~~~~~~~
+%Error: Exiting due to

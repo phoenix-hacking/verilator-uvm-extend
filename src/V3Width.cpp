@@ -7352,6 +7352,8 @@ class WidthVisitor final : public VNVisitor {
     }
     // Makes sure that port and pin have same size and same datatype
     void checkUnpackedArrayArgs(AstVar* portp, AstNode* pinp) {
+        // Open arrays are checked dimension by dimension before specializing the import.
+        if (hasOpenArrayDTypeRecurse(portp->dtypep())) return;
         if (AstUnpackArrayDType* const portDtypep
             = VN_CAST(portp->dtypep()->skipRefp(), UnpackArrayDType)) {
             if (AstUnpackArrayDType* const pinDtypep
@@ -7430,11 +7432,11 @@ class WidthVisitor final : public VNVisitor {
                     // Connection list is now incorrect (has extra args in it).
                     goto reloop;  // so exit early; next loop will correct it
                 }  //
-                else if (portp->basicp() && portp->basicp()->keyword() == VBasicDTypeKwd::STRING
+                else if (VN_IS(portp->dtypep()->skipRefp(), BasicDType)
+                         && portp->basicp()->keyword() == VBasicDTypeKwd::STRING
                          && !VN_IS(pinp, CvtPackString)
                          && !VN_IS(pinp, SFormatF)  // Already generates a string
-                         && !VN_IS(portp->dtypep(), UnpackArrayDType)  // Unpacked array must match
-                         && !(VN_IS(pinp, VarRef)
+                         && !(VN_IS(pinp, VarRef) && VN_AS(pinp, VarRef)->varp()->basicp()
                               && VN_AS(pinp, VarRef)->varp()->basicp()->keyword()
                                      == VBasicDTypeKwd::STRING)) {
                     UINFO(4, "   Add CvtPackString: " << pinp);
@@ -7458,7 +7460,9 @@ class WidthVisitor final : public VNVisitor {
                 if (!pinp) continue;  // Argument error we'll find later
                 // Change data types based on above accept completion
                 if (nodep->taskp()->dpiImport()) checkUnpackedArrayArgs(portp, pinp);
-                if (portp->isDouble()) VL_DO_DANGLING(spliceCvtD(pinp), pinp);
+                if (VN_IS(portp->dtypep()->skipRefp(), BasicDType) && portp->isDouble()) {
+                    VL_DO_DANGLING(spliceCvtD(pinp), pinp);
+                }
             }
         }
         // Stage 3
@@ -10017,6 +10021,39 @@ class WidthVisitor final : public VNVisitor {
         }
     }
 
+    static bool dpiOpenArrayMatches(const AstNodeDType* formalp, const AstNodeDType* actualp,
+                                    std::vector<int>& runtimeSizes) {
+        formalp = formalp->skipRefp();
+        actualp = actualp->skipRefp();
+        while (VN_IS(formalp, UnsizedArrayDType) || VN_IS(formalp, UnpackArrayDType)) {
+            if (!(VN_IS(actualp, UnpackArrayDType) || VN_IS(actualp, DynArrayDType)
+                  || VN_IS(actualp, QueueDType))) {
+                return false;
+            }
+            int runtimeSize = 0;
+            if (const AstUnpackArrayDType* const fixedp = VN_CAST(formalp, UnpackArrayDType)) {
+                if (const AstUnpackArrayDType* const actualFixedp
+                    = VN_CAST(actualp, UnpackArrayDType)) {
+                    if (fixedp->elementsConst() != actualFixedp->elementsConst()) return false;
+                } else {
+                    runtimeSize = fixedp->elementsConst();
+                }
+            }
+            runtimeSizes.push_back(runtimeSize);
+            formalp = formalp->subDTypep()->skipRefp();
+            actualp = actualp->subDTypep()->skipRefp();
+        }
+        if (actualp->isNonPackedArray()) return false;
+        // IEEE 1800-2017 6.22.2: integral elements may have different packed shapes.
+        if (formalp->isIntegralOrPacked() || actualp->isIntegralOrPacked()) {
+            return formalp->isIntegralOrPacked() && actualp->isIntegralOrPacked()
+                   && formalp->width() == actualp->width()
+                   && formalp->isFourstate() == actualp->isFourstate()
+                   && formalp->isSigned() == actualp->isSigned();
+        }
+        return formalp->similarDType(actualp);
+    }
+
     void makeOpenArrayShell(AstNodeFTaskRef* nodep) {
         UINFO(4, "Replicate openarray function " << nodep->taskp());
         AstNodeFTask* const oldTaskp = nodep->taskp();
@@ -10036,9 +10073,48 @@ class WidthVisitor final : public VNVisitor {
         for (const auto& tconnect : tconnects) {
             AstVar* const portp = tconnect.first;
             const AstArg* const argp = tconnect.second;
-            const AstNode* const pinp = argp->exprp();
+            AstNodeExpr* const pinp = argp->exprp();
             if (!pinp) continue;  // Argument error we'll find later
-            if (hasOpenArrayDTypeRecurse(portp->dtypep())) portp->dtypep(pinp->dtypep());
+            if (hasOpenArrayDTypeRecurse(portp->dtypep())) {
+                std::vector<int> runtimeSizes;
+                if (!dpiOpenArrayMatches(portp->dtypep(), pinp->dtypep(), runtimeSizes)) {
+                    pinp->v3error("DPI open-array argument "
+                                  << portp->prettyNameQ()
+                                  << " has incompatible dimensions or element type (IEEE "
+                                     "1800-2017 7.7, 35.5.6.1).\n"
+                                  << pinp->warnMore() << "... Expected "
+                                  << portp->dtypep()->prettyDTypeNameQ() << " but connection is "
+                                  << pinp->dtypep()->prettyDTypeNameQ() << ".");
+                    runtimeSizes.clear();
+                }
+                if (portp->direction() == VDirection::OUTPUT) {
+                    for (const AstNodeDType* dtp = pinp->dtypep(); dtp; dtp = dtp->subDTypep()) {
+                        dtp = dtp->skipRefp();
+                        if (VN_IS(dtp, DynArrayDType) || VN_IS(dtp, QueueDType)) {
+                            pinp->v3error("Dynamic array or queue cannot be passed to DPI output "
+                                          "open-array argument "
+                                          << portp->prettyNameQ() << " (IEEE 1800-2017 7.7).");
+                            break;
+                        }
+                    }
+                }
+                portp->dtypep(pinp->dtypep());
+                // Check the bound argument inside the specialized wrapper. Keeping the
+                // actual expression unchanged preserves inout lvalues and evaluates it once.
+                while (!runtimeSizes.empty() && !runtimeSizes.back()) runtimeSizes.pop_back();
+                if (!runtimeSizes.empty()) {
+                    AstCStmt* const checkp
+                        = new AstCStmt{pinp->fileline(), "VL_DPI_CHECK_OPEN_ARRAY("};
+                    checkp->add(new AstVarRef{pinp->fileline(), portp, VAccess::READ});
+                    checkp->add(", {");
+                    for (size_t dim = 0; dim < runtimeSizes.size(); ++dim) {
+                        if (dim) checkp->add(", ");
+                        checkp->add(cvtToStr(runtimeSizes[dim]));
+                    }
+                    checkp->add("});\n");
+                    newTaskp->addStmtsp(checkp);
+                }
+            }
         }
     }
 

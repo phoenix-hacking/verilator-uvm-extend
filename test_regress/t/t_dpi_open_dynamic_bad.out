@@ -1,0 +1,10 @@
+%Error: t/t_dpi_open_dynamic_bad.v:14:20: Dynamic array or queue cannot be passed to DPI output open-array argument 'values' (IEEE 1800-2017 7.7).
+                                        : ... note: In instance 't'
+   14 |     invalid_output(dynamic_values);
+      |                    ^~~~~~~~~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_dpi_open_dynamic_bad.v:15:20: Dynamic array or queue cannot be passed to DPI output open-array argument 'values' (IEEE 1800-2017 7.7).
+                                        : ... note: In instance 't'
+   15 |     invalid_output(queue_values);
+      |                    ^~~~~~~~~~~~
+%Error: Exiting due to

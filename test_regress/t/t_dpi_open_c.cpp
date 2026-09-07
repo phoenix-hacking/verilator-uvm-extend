@@ -70,7 +70,7 @@ extern void dpii_open_int_u1(int u, const svOpenArrayHandle i, const svOpenArray
 extern void dpii_open_int_u2(int u, const svOpenArrayHandle i, const svOpenArrayHandle o);
 extern void dpii_open_int_u3(int u, const svOpenArrayHandle i, const svOpenArrayHandle o);
 
-extern void dpii_oba(const svOpenArrayHandle i, const svOpenArrayHandle o);
+extern void dpii_oba(int width, const svOpenArrayHandle i, const svOpenArrayHandle o);
 
 extern int dpii_failure();
 }
@@ -299,13 +299,17 @@ void dpii_open_int_u3(int u, const svOpenArrayHandle i, const svOpenArrayHandle 
 }
 
 void dpii_oba(int width, const svOpenArrayHandle i, const svOpenArrayHandle o) {
+    TEST_CHECK_HEX_EQ(svDimensions(i), 1);
+    TEST_CHECK_HEX_EQ(svSize(i, 1), 1);
     TEST_CHECK_HEX_EQ(svLeft(i, 0), width - 1);
     TEST_CHECK_HEX_EQ(svHigh(i, 0), width - 1);
     TEST_CHECK_HEX_EQ(svRight(i, 0), 0);
     TEST_CHECK_HEX_EQ(svLow(i, 0), 0);
+    svBitVecVal ibv[2] = {};
+    svBitVecVal obv[2] = {};
+    svGetBitArrElem1VecVal(ibv, i, 0);
     for (int bit = 0; bit < width; ++bit) {
-        const svBitVecVal* const ibvp = static_cast<svBitVecVal*>(svGetArrayPtr(i));
-        svBitVecVal* const obvp = static_cast<svBitVecVal*>(svGetArrayPtr(o));
-        svPutBitselBit(obvp, bit, svGetBitselBit(ibvp, bit) ? 0 : 1);
+        svPutBitselBit(obv, bit, svGetBitselBit(ibv, bit) ? 0 : 1);
     }
+    svPutBitArrElem1VecVal(o, obv, 0);
 }
