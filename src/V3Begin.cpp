@@ -120,7 +120,14 @@ class BeginVisitor final : public VNVisitor {
 
     // VISITORS
     void visit(AstForeach* nodep) override {
-        VL_DO_DANGLING(V3Begin::convertToWhile(nodep), nodep);
+        AstNode* const afterp = nodep->nextp();
+        AstNode* const replacementp = V3Begin::convertToWhile(nodep);
+        VL_DANGLING(nodep);
+        // Late-generated loops need their new declarations lifted and nested loops lowered.
+        for (AstNode *nextp, *stmtp = replacementp; stmtp && stmtp != afterp; stmtp = nextp) {
+            nextp = stmtp->nextp();
+            iterate(stmtp);
+        }
     }
     void visit(AstNodeAssign* nodep) override {
         // Keep begin under assignment (in nodep->timingControlp())
@@ -527,6 +534,7 @@ static AstNode* createForeachLoop(AstNodeForeach* /*nodep*/, AstNode* bodysp, bo
     if (arrayMayResize) {
         sizeVarp = new AstVar{fl, VVarType::BLOCKTEMP, varp->name() + "__Vloopsize",
                               varp->findUInt32DType()};
+        sizeVarp->funcLocal(varp->isFuncLocal());
         sizeVarp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
         sizeVarp->usedLoopIdx(true);  // Not technically an index, but used only inside loop
         varp->addNext(sizeVarp);
@@ -570,12 +578,14 @@ static AstNode* createForeachAssoc(FileLine* fl, AstVar* varp, AstNodeExpr* subf
     AstNode* loopp = varp;
     AstVar* const next_varp  // Iterator containing next element (to handle mid-array delete)
         = new AstVar{fl, VVarType::BLOCKTEMP, varp->name() + "__Vnext", varp};
+    next_varp->funcLocal(varp->isFuncLocal());
     next_varp->usedLoopIdx(true);
     next_varp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
     loopp->addNext(next_varp);
 
     AstVar* const more_varp  // bool var. 0 = loop empty/done, 1 = continue with loop
         = new AstVar{fl, VVarType::BLOCKTEMP, varp->name() + "__Vmore", VFlagBitPacked{}, 1};
+    more_varp->funcLocal(varp->isFuncLocal());
     more_varp->usedLoopIdx(true);  // Not technically an index, but used only inside loop
     more_varp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
     loopp->addNext(more_varp);
