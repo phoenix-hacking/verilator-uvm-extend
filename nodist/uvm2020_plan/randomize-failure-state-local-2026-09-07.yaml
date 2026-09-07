@@ -1,0 +1,104 @@
+---
+# DESCRIPTION: Verilator: Failed randomization state and callback local evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Local failed-class-randomization value retention and callback ordering. Broader regression, CI, full conformance, and performance acceptance remain open.
+branch: codex/randomize-failure-state
+revision: 001c6ca86d4cad2d8b770c0b1bf1f72658e82e99
+parent: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+tree: 9db63a5b0b99f8ad0e717fecc22f854e263f84eb
+source_tree: 9f7b67e7aa17a0abcc9c2ad751ed6a968be5179f
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_failure_001c6ca86
+  sha256: 6fc3d0f5a5071ff08834dd5cbff3fec62189c1bd83193fc1827fa1aa62e4ce48
+execution_worktree: /home/holden/verilator-work/randomize-failure-state
+implementation:
+  - Snapshot random values and internal array-size/randc state after all enabled pre_randomize callbacks; restore failures and refresh solver bindings.
+  - Traverse aliases once, preserve static fields and dynamic object types, and retain original handles while restoring nested containers.
+  - Separate nested solving from callbacks so child initialization precedes the snapshot and post callbacks require success of the containing randomization.
+  - Lower late-generated foreach loops with function-local temporaries and scope lifting.
+focused:
+  passed: 10
+  failed: 0
+  elapsed: 0:54
+  log: /home/holden/verilator-work/randomize-failure-state-focused-callbacks-final.log
+  simulation_scenarios: 4
+  build_and_simulation_runs: 8
+  distribution_checks: 6
+  coverage: Scalar and 65-bit values; callback overrides; rand modes; inherited and base-handle calls; failed resizing and subsequent recovery; fixed/dynamic/queue/associative arrays; nested arrays and
+    structs; aliases, static fields and randc history; replaced containers and child callbacks.
+causal_parent:
+  revision: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+  worktree: /home/holden/verilator-work/randomize-failure-parent-check
+  compiler: /home/holden/verilator-work/verilator_bin_assoc_b392c1065
+  passed: 0
+  failed: 4
+  elapsed: '1:24'
+  log: /home/holden/verilator-work/randomize-failure-state-before-callbacks-final.log
+  failure: The first failed solve changes free_value to 1124141848; expected the previous value 124076833, at test line 258.
+review_regression:
+  finding: The initial snapshot candidate erased a child pre_randomize change when the child was stored in an array. The parent preserved it.
+  reproducer: /home/holden/verilator-work/snapshot-child-callback.v
+  evidence: /home/holden/verilator-work/snapshot-child-callback-results.json
+  initial_candidate_archive: /home/holden/verilator-work/randomize-failure-state-pre-callback-review
+  resolution: The committed expanded test covers this case, enabled fields, suppressed child post callbacks, and one callback per aliased object.
+  initial_cppcheck: Stopped intentionally with exit 143 for the callback correction; its partial log is not full static-analysis evidence.
+portability:
+  flags: [--no-timing, -CFLAGS, -std=c++14]
+  verification: All four retained expanded compile logs select C++14 last and VM_TIMING=0; all four simulation logs contain the completion sentinel.
+formatting: Full make format, Verilog formatting, Python lint, and git diff --check pass. Two unrelated formatter-only runtime changes were inspected and restored.
+neighbors:
+  status: running
+  drivers: 196
+  manifest: /home/holden/verilator-work/randomize-failure-state-neighbor-tests.txt
+  log: /home/holden/verilator-work/randomize-failure-state-neighbors.log
+  scenarios: 347
+  distribution_drivers: 6
+  source_frozen_at: 001c6ca86d4cad2d8b770c0b1bf1f72658e82e99
+static_analysis:
+  status: running
+  log: /home/holden/verilator-work/randomize-failure-state-cppcheck-callbacks.log
+acceptance:
+  full_regression: pending; separate foreach run tests c325d9c0d
+  ci: pending
+  std_randomize_rollback: not included in this class-method correction
+  new_gate_credit: 0
+ci:
+  format:
+    run: 34153694590
+    status: queued
+  build_test:
+    run: 34153694745
+    status: queued
+  contributor_agreement:
+    run: 34153694606
+    status: queued
+sources:
+  include/verilated_random.h: 9908f085439bc4cae20234938d6e54b29928f9a7653790c1b47188c85c6f5930
+  src/V3AstAttr.h: 59b1a1d0f78190c8be5caeef9b15cc329b00a66371d23946d8dd67fc69be7369
+  src/V3Begin.cpp: 6d56c88ca5683c0dd0f302933626489ba1997cc21c309af4f5657ccc0a799d6e
+  src/V3Randomize.cpp: bf20fb0d967a602cfab33fe57aaab33c6081cd2dc07e5f1bc9a027ba9a2d4abf
+  test_regress/t/t_randomize_post_unsat.py: 3819125e20b0821615d8dab6e61b1cb8ab9f143e2abc6969ebea88b85329cf42
+  test_regress/t/t_randomize_post_unsat.v: 74cbd03ad50f7c54fc476c83e3979b1e01fed7a6a69a6a0724da6d80f14e948a
+  test_regress/t/t_randomize_post_unsat_protect.py: 73879367aedc6361138787ef087ec348b43ce4bc7463d900643c48891344bea1
+logs:
+  /home/holden/verilator-work/randomize-failure-state-evidence/vlt-t_randomize_post_unsat-gcc.log: 4e822e6e0c46fac5b910407c8696720ef7be776f22378632d465ba0c39214ac7
+  /home/holden/verilator-work/randomize-failure-state-evidence/vlt-t_randomize_post_unsat-sim.log: cb04d0155116dfa84b5d86872cd68e7fb06b52feae1ea4dc084ad1953eff7f96
+  /home/holden/verilator-work/randomize-failure-state-evidence/vlt-t_randomize_post_unsat_protect-gcc.log: df6c76e140475a0b85e1c3ccc5434e494211007e3e1cee69f8e2ff266139b706
+  /home/holden/verilator-work/randomize-failure-state-evidence/vlt-t_randomize_post_unsat_protect-sim.log: f53935d20c7538db7a30c9ed00b1d9373248d19f817bd320e3cc8abddb64c8ea
+  /home/holden/verilator-work/randomize-failure-state-evidence/vltmt-t_randomize_post_unsat-gcc.log: 565819af7dd6cd65ae868e1a3a340e26d9505ed6a4c203b092adcc5a5b6bd785
+  /home/holden/verilator-work/randomize-failure-state-evidence/vltmt-t_randomize_post_unsat-sim.log: cb04d0155116dfa84b5d86872cd68e7fb06b52feae1ea4dc084ad1953eff7f96
+  /home/holden/verilator-work/randomize-failure-state-evidence/vltmt-t_randomize_post_unsat_protect-gcc.log: a3070a01857e086ebeeae5fb410685c2c2b97fccf32bf28f4ddc418fc92ffbb5
+  /home/holden/verilator-work/randomize-failure-state-evidence/vltmt-t_randomize_post_unsat_protect-sim.log: b7375ed092a1e1c406483dc33a5e4f71b2319bf2efe6ca2822c6527c0ba982df
+  /home/holden/verilator-work/randomize-failure-state-focused-callbacks-final.log: ae1e4adf91e7bb75ef5e42f3932d36156c8ee555ccf6fdf9730197006bc72b9d
+  /home/holden/verilator-work/randomize-failure-state-before-callbacks-final.log: 993fd91f0c967ed2954be7e51a81bc7529830ff00c932c74c8b6e10d222dc524
+  /home/holden/verilator-work/randomize-failure-state-format-callbacks.log: 94366c471fe0802394433537e2d3e4ed3c4fe5fa3c031add3ca62b6aabe6d5e5
+  /home/holden/verilator-work/randomize-failure-state-lint-py-callbacks.log: 89ff0117282aec44d8828b2382d56561c2ebe8789b6d2c48dd867aab968560a4
+  /home/holden/verilator-work/randomize-failure-state-build-callbacks-final.log: 305cde2ee7eba6c6222acc1cdfc6b474d2847699fa6be6efbe5d00b6f193de1d
+  /home/holden/verilator-work/randomize-failure-state-neighbor-tests.txt: 13a2103913e1c8bf93769dcd6a53933c7f2b20e0e78ce88eaf1c1317f2cd1059
+  /home/holden/verilator-work/snapshot-child-callback.v: cae2331d4e1b6f94e32b0eecb9db46693bc508e462c0eb02fbce84dd2e550d4d
+  /home/holden/verilator-work/snapshot-child-callback-results.json: 0b2620705eb469f6b13f5eca3cf0709430654da89b2cd0c5619370fb22c4c028
+  /home/holden/verilator-work/snapshot-child-callback-parent-sim.log: 9762af61ee2aca1dc40de0e842d60c9568e1d88c47ff11f905b5b8b9ffcacde9
+  /home/holden/verilator-work/snapshot-child-callback-candidate-sim.log: 20a1e30781b1a38b6290c3a9e8de9666f61aa421e551ed4e801b7fcd844b88e0

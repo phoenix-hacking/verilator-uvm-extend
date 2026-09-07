@@ -55,7 +55,10 @@ in both new scenarios on the parent runtime. The new test builds with C++14.
 [Local evidence](randomize-state-only-local-2026-09-07.yaml) records its inputs.
 The associative-size correction is published at `b392c1065` on
 `codex/randomize-assoc-size`. The native build worktree
-`/home/holden/verilator-work/randomize-recursion-check` is clean and frozen there.
+`/home/holden/verilator-work/randomize-recursion-check` was frozen for that completed run.
+It is now reused on `codex/compiler-pch-flags` for the independently reproduced
+compiler-include optimization-flag ordering failure; the associative-size
+compiler and completed evidence remain preserved.
 The neighboring regression completed 318/318 checks in 21:15, logged in
 `/home/holden/verilator-work/randomize-assoc-size-neighbors.log`. Its 12 focused
 checks also pass; full cppcheck completed with the same 11 baseline reports. The
@@ -69,15 +72,23 @@ reproduces all four original simulation SIGSEGVs.
 The failure-state worktree was advanced to `b392c1065`; its five recovered changes
 reapplied cleanly. The patch and stash `07b6e82f6d2daa93366fbeffba1dceedb18b17da`
 are retained under `/home/holden/verilator-work/randomize-failure-state-before-assoc*`.
-Snapshot wiring and restoration are now under implementation, with an optimized
-compiler build in `/home/holden/verilator-work/randomize-failure-state-build-snapshot.log`.
-The C++14 ordinary/protected failed-state test fails all four scenarios on the
-preserved `b392c1065` compiler, because a 31-bit random value changes after failure.
-The recovered runtime snapshot definitions were present but unused in that test.
-This remains development work without passing implementation evidence.
+The failed-class-randomization correction is published at `001c6ca86` on
+`codex/randomize-failure-state`, with 10/10 focused checks passing and 0/4 on
+the exact parent compiler/runtime using the final tests. The initial snapshot
+implementation exposed a child callback regression; the final implementation
+finishes all enabled pre callbacks before taking the snapshot and defers all
+post callbacks until the containing randomization succeeds. Aliases receive
+one callback per attempt. The C++14 ordinary/protected tests cover nested
+containers, static and derived fields, resizing, modes, and cyclic history.
+[Local evidence](randomize-failure-state-local-2026-09-07.yaml) records exact
+source/compiler hashes and retained logs. The 196-driver, 347-scenario
+neighboring regression and full cppcheck are running against the frozen source.
+The earlier partial cppcheck run was stopped for the callback correction; it
+is not acceptance evidence. Full repository regression, CI, and scope
+`std::randomize` rollback remain unfinished.
 
-Next work is to inspect the active regressions and CI, finish failed-randomization
-value preservation, then integrate
+Next work is to inspect the active regressions and CI, finish broader failed-randomization
+validation and the compiler-include correction, then integrate
 the real UVM sequence-item regression and continue the complete milestone
 scope in GOALS.md. The ten pre-crash CI failures must be classified from actual
 job logs; available shutdown/cancellation evidence is not semantic acceptance.
