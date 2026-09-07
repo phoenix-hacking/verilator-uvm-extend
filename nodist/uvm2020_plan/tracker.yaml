@@ -1250,8 +1250,13 @@ milestones:
           regression and 20 adjacent passing scenarios. Full candidate
           regression and static analysis remain running. Candidate CI exposed
           a t_constraint_mode regression in both modes: cloned constraints use
-          parent mode slots instead of their original child's modes. A correction
-          is in development. A separate probe confirmed failed randomization
+          parent mode slots instead of their original child's modes. The correction
+          at 2dbe3b22c passes a final 32-scenario focused regression, including
+          inherited/static modes, separate instances, deeper nesting, protected
+          identifiers, empty-parent setters, and the original failure in both
+          modes. Both builds, formatting, Python lint, focused C++ analysis, and
+          both attribute checks pass. Full regression, new CI, and a fresh real
+          UVM replay remain pending. A separate probe confirmed failed randomization
           changes scalar values and array size; value preservation remains open. The
           integrated test is still uncommitted development work. These results
           do not establish milestone acceptance or performance closure.

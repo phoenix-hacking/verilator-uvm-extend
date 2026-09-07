@@ -51,12 +51,13 @@ CI validation remains pending; the resource direct-lookup XFAIL is still outside
 conformance credit.
 
 M09 is now in progress. New real UVM constrained-random integration exposed
-compiler failures beyond the accumulated compatibility inventory. Six
+compiler failures beyond the accumulated compatibility inventory. Seven
 separate fixes are under validation on
 [`codex/uvm-randomization-correctness`](https://github.com/phoenix-hacking/verilator-uvm-extend/tree/codex/uvm-randomization-correctness):
 foreach index diagnostics, inherited array element solving, inherited
 constraint preparation, inline array resize-and-resolve behavior, failed-solve
-post callbacks, and mixed standalone/nested constraint processing.
+post callbacks, mixed standalone/nested constraint processing, and nested
+constraint-mode ownership.
 The inline-array test passes in both simulation modes and with protected
 identifiers; its 16 adjacent regression scenarios also pass. The callback
 fix passes its causal regression in both simulation modes and 13 existing
@@ -74,11 +75,16 @@ compiler binary SHA-256
 The full candidate regression and static analysis remain running. Candidate
 CI at `a9949d7ae` exposed a reproducible `t_constraint_mode` failure in both
 simulation modes: flattened child constraints read independent parent mode
-slots instead of the original child's modes. A correction and expanded
-regression are in development in a separate worktree. Another confirmed
+slots instead of the original child's modes. The correction is published at
+`2dbe3b22c`; its final focused regression passes 32/32, including the original
+CI failure in both modes, inherited/static modes, deeper nesting, independent
+instances, protected identifiers, and setters on empty parents. Optimized
+and debug builds, formatting, Python lint, focused C++ analysis, and both
+attribute checks pass. Full regression, new CI, and a fresh real UVM replay
+for this seventh correction remain pending. Another confirmed
 open defect is value preservation after failed randomization: an unsatisfiable
 call changes an unconstrained scalar, and a failed array-element solve leaves
-the array resized and a scalar changed. Neither defect is claimed fixed.
+the array resized and a scalar changed. Value preservation remains unfixed.
 The integrated UVM test remains
 uncommitted, and none of these development results advances formal completion
 counts or establishes performance.
