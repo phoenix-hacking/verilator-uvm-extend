@@ -12,7 +12,7 @@ import vltest_bootstrap
 test.scenarios('simulator')
 test.top_filename = "t/t_flag_main.v"
 
-test.compile(verilator_flags2=['--binary --runtime-debug'])
+test.compile(verilator_flags2=['--binary --runtime-debug', '-CFLAGS -O2'])
 
 test.execute()
 

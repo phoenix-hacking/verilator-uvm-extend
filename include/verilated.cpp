@@ -383,8 +383,8 @@ void VL_FFLUSH_MT() VL_MT_SAFE {
 }
 
 template <typename... snprintf_args_ts>
-static size_t _vl_snprintf_string(std::string& str, const char* format,
-                                  snprintf_args_ts... args) VL_MT_SAFE {
+static size_t VL_ATTR_NONNULL(2) _vl_snprintf_string(std::string& str, const char* format,
+                                                     snprintf_args_ts... args) VL_MT_SAFE {
     constexpr size_t FIRST_TRY_SIZE = 128;
     str.resize(FIRST_TRY_SIZE);
     const size_t req_size = VL_SNPRINTF(&str[0], FIRST_TRY_SIZE + 1, format, args...);
