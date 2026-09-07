@@ -143,8 +143,44 @@ draft also used an output dynamic array, which IEEE 1800-2017 7.7 prohibits;
 that draft is not used as an all-legal positive test. The new compiler work on
 `codex/dpi-dynamic-arrays` targets legal input/inout arrays and queues, including
 empty arrays, nested dimensions, wide values, real numbers, handles, and strings.
-It remains unverified development work. The minimal VPI/backdoor gate and all
-mandatory full-compliance requirements remain open.
+The initial dynamic-array snapshot passed 22 focused/neighbor DPI configurations,
+including C++14 builds, protected identifiers, and out-of-bounds access. Its debug
+compiler passed all seven new configurations. The dynamic-array C scoreboard passed
+both simulation modes against unmodified Accellera source, checking 720 DUT
+samples and detecting the injected DUT fault in each mode. Artifacts and the
+uncommitted source-index tree are retained in
+`/home/holden/verilator-work/dpi-dynamic-artifacts/manifest-initial.json`.
+These are local development results, not another accepted gate or milestone.
+The C source packaging correction is now published at `635aabd5d`; the model
+is a `.c` translation unit, the C-header distribution rule recognizes it, and
+source-UVM integration passes both modes after the rename. The correction is
+integrated into the dynamic-array development branch at `4fddc5ce5`.
+Further type validation exposed nine invalid DPI actual arguments that were
+previously accepted. The candidate now diagnoses these and adds runtime checks
+for sized formal dimensions connected to variable-sized actuals. These newer
+changes pass all eight new configurations with both optimized and debug
+compilers, plus 15 neighboring configurations. The old `t_dpi_open` fixture
+passed packed scalars to unpacked `int[]` formals; it now uses matching
+one-element unpacked arrays and retains all six packed widths through canonical
+DPI vector access. The 15 neighboring passes combine the initial 13 passes
+with both corrected-fixture passes. Seven distribution checks, full formatting,
+and focused Python lint pass. Fresh source/bundled dynamic UVM integration
+is running; the earlier 2/2 integration result does not validate these newer edits.
+Broader C++ analysis still has existing runtime findings, and no global
+static-analysis or release-regression pass is claimed.
+An independent baseline probe also confirms incorrect nested `foreach` indices
+for queues under fixed dimensions with nonzero bounds. It is retained at
+`/home/holden/verilator-work/foreach-nonzero-probe` and remains an open compiler
+defect; the DPI oracle now uses explicit inner indices and checks queue sizes.
+
+The minimal VPI/backdoor gate now has a full-UVM clocked RTL fixture implemented
+at `ff023501c` on `codex/uvm-backdoor`. Both unmodified-source configurations
+pass: each checks 115 HDL reads, 14 deposits, 16 forces/releases, and 62 clock
+cycles, including 31-bit state, 65-bit memory, nonzero bounds, memory aliasing,
+and detected injected DUT corruption. Its bundled-library configurations are
+running; no acceptance credit is claimed yet. The source-vlt artifact manifest
+is `/home/holden/verilator-work/uvm-backdoor-artifacts/manifest-source-vlt.json`.
+The backdoor gate and all mandatory full-compliance requirements remain open.
 
 Both PRs remain draft for human review and Contributor Agreement/DCO. No new
 compiler implementation is claimed by this evidence update. Older dated
