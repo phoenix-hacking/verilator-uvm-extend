@@ -1280,38 +1280,28 @@ milestones:
         title: Deterministic constrained-random sequence-item acceptance passes
         status: pending
         evidence: []
+        implementation_tests: [test_regress/t/t_uvm_sequence_randomize.py]
         claim_boundary: >-
-          Real UVM sequence-item integration is under active local validation.
-          Reduced regressions exposed and now cover foreach diagnostics,
-          inherited array element solving, inherited constraint preparation,
-          inline array resize-and-resolve behavior, failed-solve callbacks,
-          and mixed standalone/nested constraint processing.
-          At a9949d7ae a local real UVM test passes three runs of 64 checked
-          transactions in each of single-threaded and multithreaded simulation,
-          with seeds 1729, 1729, and 2718: 384 transactions across six runs.
-          Within each mode, repeated seeds reproduce the trace, a different
-          seed changes it, and mode, failed-solve callback, and recovery checks
-          pass. The mixed nested-constraint fix also has an expanded causal
-          regression and 20 adjacent passing scenarios. Full candidate
-          regression and static analysis remain running. Candidate CI exposed
-          a t_constraint_mode regression in both modes: cloned constraints use
-          parent mode slots instead of their original child's modes. The correction
-          at 2dbe3b22c passes a final 32-scenario focused regression, including
-          inherited/static modes, separate instances, deeper nesting, protected
-          identifiers, empty-parent setters, and the original failure in both
-          modes. Both builds, formatting, Python lint, and focused C++ analysis pass.
-          Earlier attribute-check success is withdrawn: its harness returned success
-          despite Clang parse failures from missing builtin headers and an obsolete
-          coroutine flag. Attribute validation remains unproven. The seventh correction also passes the fresh real
-          UVM replay in both modes: 384 transactions across the same six seeded
-          runs, with repeatability and recovery verified. Artifacts and trace
-          hashes are preserved in uvm-random-2dbe3b22c-artifacts. Full regression
-          and new CI remain pending. A separate probe confirmed failed randomization
-          changes scalar values and array size; value preservation remains open. A null
-          rand-child probe also aborts during nested variable registration on both
-          the sixth and seventh revisions; that edge case remains open. The
-          integrated test is still uncommitted development work. These results
-          do not establish milestone acceptance or performance closure.
+          The real UVM sequence-item test is committed at d01193d80.
+          Unmodified UVM 2020.3.1 passes all four DPI/thread configurations:
+          12 seeded runs and 768 checked transactions. Every configuration
+          reproduces the trace with seed 1729 and changes it with seed 2718.
+          Modes, callbacks, nested constrained objects, dynamic payloads,
+          failed inline solving and recovery are checked. Detailed hashes
+          and retained logs are in uvm-sequence-source-local-2026-09-07.yaml.
+          Failed class and scope randomization now preserve state in reduced
+          C++14 ordinary/protected regressions, with 347 and 341 neighboring
+          scenarios passing. Null-child handling and recursive-path diagnostics
+          are covered separately. Attribute validation rejects parse failures
+          and passes with the required local Clang headers. The separate
+          module-function array-ref IMPURE limitation remains documented.
+          The dedicated uvm2020-randomize-source CI target checks both DPI
+          modes and both simulator scenarios from a pinned clean upstream
+          checkout, and requires an installed solver. Complete repository
+          regression and current-source CI remain pending. The UVM evidence
+          predates the runtime formatting annotation at 5a3bdae03; it does
+          not establish full combined-source, conformance or performance
+          acceptance.
   M10:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11
     title: Functional coverage from UVM classes
@@ -1365,12 +1355,14 @@ milestones:
           - test_regress/t/t_uvm_dpi_reference.py
         claim_boundary: >-
           Published at e148bbfbcb8ac5a45d55ff94d5bce8a4abab1fe4 on
-          codex/uvm-dpi-reference; not merged into this integration checkout yet.
+          codex/uvm-dpi-reference, then integrated at c367ddbea with the
+          C-translation-unit correction at a1570aeee.
           All four source/bundled and single/multithreaded configurations pass,
           checking 1,440 DUT samples in total and detecting an injected fault
           in every configuration. This accepts the local C scoreboard gate;
           it does not claim CI, full DPI support, or M14 milestone closure.
-          Legal dynamic input/inout DPI arrays remain under development.
+          Dynamic input/inout DPI arrays are integrated at a48169e1b;
+          combined regression and current-source CI remain pending.
       M14-G03-VPI-BACKDOOR:
         title: Minimal VPI/backdoor support or limitation is accepted
         status: in_progress
@@ -1379,7 +1371,7 @@ milestones:
           - test_regress/t/t_uvm_hdl_backdoor.py
         claim_boundary: >-
           Published at ff023501c2bdc9314021c5867e7ec21e90970115 on
-          codex/uvm-backdoor. All four local configurations pass, including
+          codex/uvm-backdoor and integrated at 4575fe59b. All four local configurations pass, including
           clocked RTL state, memory, deposit/force/release, and fault detection.
           Required exact-revision CI and release regression remain pending;
           this gate and the M14 milestone remain open. Mandatory-feature

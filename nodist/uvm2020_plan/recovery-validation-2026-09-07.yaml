@@ -128,12 +128,18 @@ foreach_width_followup:
     /home/holden/verilator-work/foreach-width-build-formatted.log: 8564d18b750ae4e79340c7ba6a86d2f1727c596773cfe2b990bb1a3a0463fe54
     /home/holden/verilator-work/foreach-width-verilog-format-final.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
   full_regression:
-    status: running
+    status: completed_with_failures
     command: make -j2 test DRIVER_FLAGS='--jobs=2 --driver-build-jobs=1 --quiet --rerun'
     live_log: /home/holden/verilator-work/foreach-complete-regression.log
     compiler_sha256: 774791274070efe3e3fe6638431b8cdb32858545c8c76eafdb857d0675c3a1ea
-    note: Fresh full-suite invocation with both optimized and debug compilers. Root smoke and regression targets overlap under make -j2; the initial t_a2_first_sc archive-index failure coincided with their
-      concurrent writes. Classify the final rerun result before acceptance.
+    passed: 6655
+    failed: 33
+    failed_first: 34
+    skipped: 8
+    elapsed: '391:10'
+    evidence: foreach-full-regression-local-2026-09-07.yaml
+    note: Full-suite invocation with both optimized and debug compilers. Root smoke and regression targets overlapped under make -j2; the initial t_a2_first_sc archive-index failure passed on rerun. The
+      33 final failures remain recorded. This frozen run predates the later integrated corrections.
   ci:
     status: pending
     build_test_run: 34138166747

@@ -1,0 +1,152 @@
+---
+# DESCRIPTION: Verilator: Superseded component CI cancellation record
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+reason: Component changes are integrated. Superseded workflows had 20 running jobs and 173 queued jobs; prioritize combined-source validation.
+completed_before:
+  success: 166
+  failure: 18
+running_before: 20
+queued_before: 173
+runs_before:
+  - run: 34138166747
+    branch: codex/foreach-nonzero-indices
+    sha: c325d9c0dda118983fd0adfe5866df8b559970d4
+    status: queued
+    jobs:
+      completed: 40
+      in_progress: 5
+      queued: 1
+    completed_conclusions:
+      success: 32
+      failure: 8
+  - run: 34139308654
+    branch: codex/randomize-null-child
+    sha: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+    status: in_progress
+    jobs:
+      completed: 43
+      in_progress: 3
+    completed_conclusions:
+      success: 33
+      failure: 10
+  - run: 34145642366
+    branch: codex/randomize-state-constraints
+    sha: 04808c88324fe3c1089d00c9fc35f3e8dc963657
+    status: queued
+    jobs:
+      completed: 37
+      in_progress: 2
+      queued: 7
+    completed_conclusions:
+      success: 37
+  - run: 34149001529
+    branch: codex/randomize-assoc-size
+    sha: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+    status: queued
+    jobs:
+      completed: 18
+      in_progress: 2
+      queued: 26
+    completed_conclusions:
+      success: 18
+  - run: 34153694745
+    branch: codex/randomize-failure-state
+    sha: 001c6ca86d4cad2d8b770c0b1bf1f72658e82e99
+    status: queued
+    jobs:
+      completed: 15
+      in_progress: 4
+      queued: 27
+    completed_conclusions:
+      success: 15
+  - run: 34155462593
+    branch: codex/compiler-pch-flags
+    sha: 982bae42940da7e7e06cc63e211ead68ec18e318
+    status: queued
+    jobs:
+      completed: 13
+      queued: 31
+      in_progress: 2
+    completed_conclusions:
+      success: 13
+  - run: 34157282425
+    branch: codex/randomize-std-failure
+    sha: d513bed19b06233f220d67142d7f0adedd4e02eb
+    status: queued
+    jobs:
+      completed: 9
+      queued: 35
+      in_progress: 2
+    completed_conclusions:
+      success: 9
+  - run: 34157649775
+    branch: codex/process-context-gcc
+    sha: 6eaf8a0c371f2be81420fe23393b1685e3570da8
+    status: queued
+    jobs:
+      completed: 9
+      queued: 37
+    completed_conclusions:
+      success: 9
+  - run: 34162113124
+    branch: codex/profiler-root-discovery
+    sha: d7b52e0f3969b0f9f50f2cc049f0b77588699385
+    status: queued
+    jobs:
+      queued: 9
+    completed_conclusions: {}
+runs_after:
+  - conclusion: cancelled
+    databaseId: 34138166747
+    headSha: c325d9c0dda118983fd0adfe5866df8b559970d4
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34138166747
+  - conclusion: cancelled
+    databaseId: 34139308654
+    headSha: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34139308654
+  - conclusion: cancelled
+    databaseId: 34145642366
+    headSha: 04808c88324fe3c1089d00c9fc35f3e8dc963657
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34145642366
+  - conclusion: cancelled
+    databaseId: 34149001529
+    headSha: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34149001529
+  - conclusion: cancelled
+    databaseId: 34153694745
+    headSha: 001c6ca86d4cad2d8b770c0b1bf1f72658e82e99
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34153694745
+  - conclusion: cancelled
+    databaseId: 34155462593
+    headSha: 982bae42940da7e7e06cc63e211ead68ec18e318
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34155462593
+  - conclusion: cancelled
+    databaseId: 34157282425
+    headSha: d513bed19b06233f220d67142d7f0adedd4e02eb
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34157282425
+  - conclusion: cancelled
+    databaseId: 34157649775
+    headSha: 6eaf8a0c371f2be81420fe23393b1685e3570da8
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34157649775
+  - conclusion: cancelled
+    databaseId: 34162113124
+    headSha: d7b52e0f3969b0f9f50f2cc049f0b77588699385
+    status: completed
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34162113124
+artifacts:
+  /home/holden/verilator-work/ci-superseded-component-checkpoints/summary-before.json: 8361ce90797a29758532a9a5d60d80f8d5372ab442075bc93990b30011f9fa46
+  /home/holden/verilator-work/ci-superseded-component-checkpoints/summary-after.json: 1354edd529949a6dff7b16d50893c3b50e0a5c5c4618b1ced9585660a75390a2
+  /home/holden/verilator-work/ci-superseded-component-checkpoints/cancellation-requests.json: 7572ffb9b4015828bc01c093b835a489bf4d620247615d379576dddb7fab5cee
+claim_boundary: Intentional cancellation is not acceptance. All completed failures retain their failure status. Detailed pre-cancellation job metadata remains local and completed job logs remain on GitHub.
+new_gate_credit: 0

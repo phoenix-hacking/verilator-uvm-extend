@@ -11,8 +11,12 @@ The integration branch now contains the 24 recovered source commits at
 attribute-checker, DPI, and HDL-backdoor changes. Its native compiler build
 completed. The combined focused run passed 43/44 checks; both attribute checks
 then passed using the saved Clang environment. Compiler cleanup is committed
-at `75580fc39`. The recovered UVM sequence regression is running against
-unmodified UVM 2020.3.1 in both DPI modes and both simulator scenarios.
+at `75580fc39`. The recovered UVM sequence regression is committed at
+`d01193d80` and passes against unmodified UVM 2020.3.1 in all four DPI/thread
+configurations: 12 seeded runs and 768 checked transactions. Repeated seeds
+reproduce the trace and the different seed changes it in every configuration.
+A dedicated `uvm2020-randomize-source` CI job now requires a solver, pins the
+upstream checkout, and checks that the UVM source remains clean.
 [Integration evidence](integration-recovered-local-2026-09-07.yaml) records the
 combined source revision; component results do not establish combined acceptance.
 
@@ -22,6 +26,29 @@ removes public evaluation entries from the profile. The reduced test fails on
 the parent; eight checks pass, including real timing and non-timing profiles
 in both simulator scenarios. [Local evidence](profiler-root-discovery-local-2026-09-07.yaml)
 records the parser results, not simulator-performance measurements.
+
+The runtime formatting correction is published at `d69a86352` and integrated
+at `5a3bdae03`. It declares the private helper's format pointer nonnull and
+passes the GCC 13 sanitizer reproducer in both scenarios; both fail on the
+parent. Fifteen simulator checks and six distribution checks pass after
+preparing the standalone compiler-header check. GCC and Clang C++14 builds
+pass, and runtime cppcheck has no added or removed diagnostics. Two further
+trace sanitizer replays pass with the original inherited optimization flags.
+[Runtime evidence](runtime-format-contract-local-2026-09-07.yaml) records the
+initial header-setup failure and separate replay. The UVM run above used the
+preceding runtime; full validation of the combined source remains required.
+
+The NUMA profiling regression now accepts the runtime's inherited-affinity
+status. Its parent fails the case and all six candidate checks pass.
+[Local evidence](gantt-affinity-local-2026-09-07.yaml) records the unchanged
+runtime and the retained no-assignment and invalid-strategy assertions.
+
+Older component CI runs were intentionally cancelled after preserving their
+completed results, freeing runners for the integrated branch. The
+[cancellation record](ci-superseded-components-2026-09-07.yaml) retains the
+18 completed failures and makes no acceptance claim for cancelled work.
+Cached objects from inactive completed runs were cleared to provide space
+for the next complete regression; the integration evidence records the audit.
 
 All eight worktrees and ten uncommitted source/test files survived the host
 crash. Two zero-byte compiler objects were preserved and rebuilt. The two full
@@ -39,7 +66,10 @@ acceptance remain open. A follow-up constraint-array test found an unresolved
 minimum width in the generated storage offset; the offset now uses a fully
 sized constant. Both new scenarios fail on `3b36d58dc` and pass with the follow-up;
 the combined six foreach and five distribution checks pass. The complete
-repository regression is running on the corrected branch. The
+repository regression finished on this frozen branch with 6,655 passes,
+33 failures, and eight skips in 391:10. One additional initial failure passed
+on rerun. [Full-run evidence](foreach-full-regression-local-2026-09-07.yaml)
+preserves the failures; later component fixes still require a combined run. The
 [recovery evidence](recovery-validation-2026-09-07.yaml)
 records source and binary hashes, commands, logs, and unfinished work.
 

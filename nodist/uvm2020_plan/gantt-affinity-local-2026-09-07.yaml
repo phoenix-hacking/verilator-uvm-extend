@@ -1,0 +1,44 @@
+---
+# DESCRIPTION: Verilator: Inherited CPU affinity regression evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+branch: codex/profiler-root-discovery
+revision: d7b52e0f3969b0f9f50f2cc049f0b77588699385
+parent: 8e9a9178d471431942a45bb8903d1e74c413b8a1
+integration_revision: 11ee4314930eddacb81d611e753c1e909b4dc7ad
+implementation: Accept the runtime status indicating inherited processor affinity. The regression still checks CPU information, explicit no-assignment behavior, and invalid-strategy diagnostics.
+source:
+  path: test_regress/t/t_gantt_numa.py
+  sha256: bb2e0ecd98c80a0463043b19d7dee466668fe7c9982120c294cf94509a4a7500
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_integration_a48169e1b
+  sha256: 59a230405c33038cd6be1309c58d3a0e78eb1cc7f5c511da74efe36e48a1c76f
+  source_tree: 5840b4f2303665893bc260a4079ee0ea066bd94a
+  include_tree: df0df3deb2d1005e97aef6efe9a7cbe0d8952e8d
+parent_result:
+  passed: 0
+  failed: 1
+  elapsed: 0:26
+  failure: The runtime reports processor affinity already set, which the original test rejected.
+candidate_result:
+  passed: 6
+  failed: 0
+  elapsed: 0:51
+  CXXFLAGS: ''
+environment:
+  affinity: [0, 2, 3, 4, 5, 6, 7]
+  logical_cpus: 8
+logs:
+  /home/holden/verilator-work/gantt-affinity-parent.log: b4e723ca3133b52ddb0f5a41e94299549d50367e6252c0e92a65688921333bd8
+  /home/holden/verilator-work/gantt-affinity-focused.log: a7b1920b3dd8d0be23f0376e33f611eed1c5282a68fbf8479a455f29ab0f018f
+  /home/holden/verilator-work/gantt-affinity-lint-py.log: e93f15457e5d283d09eddffb086a105f25a98d9a56dd3af5b98ddc64e8bc4999
+  /home/holden/verilator-work/profiler-root-discovery/test_regress/obj_vltmt/t_gantt_numanuma-parent/gantt.log: 30b1381141cabce292995cedceb4097eec0e1c0ac88273229b46f255b9140f06
+  /home/holden/verilator-work/profiler-root-discovery/test_regress/obj_vltmt/t_gantt_numanuma-final/gantt.log: 842c1dd75af8712b562ad35182cf3312da9a3d64ce18a1c5ea00838cd0665c37
+  /home/holden/verilator-work/profiler-root-discovery/test_regress/obj_vltmt/t_gantt_numanuma-final/gantt_numa_none.log: d74d384c482e79c2a798ef3db061a143b6fc8ada867ef28f5239b7463a0cca61
+  /home/holden/verilator-work/profiler-root-discovery/test_regress/obj_vltmt/t_gantt_numanuma-final/gantt_numa_invalid.log: 4cc4928fedb9a41a0aa196a82bc3521a549410cfa5706a453aadf6f7d9333d40
+format: Existing complete formatting plus yapf on the changed driver; diff check passed.
+lint_py: passed
+claim_boundary: Local profiling regression portability correction. No runtime scheduling or simulator-performance change is claimed. Full repository and new-branch CI acceptance remain pending.
+new_gate_credit: 0

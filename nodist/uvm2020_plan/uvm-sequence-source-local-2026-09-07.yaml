@@ -1,0 +1,149 @@
+---
+# DESCRIPTION: Verilator: Unmodified-source UVM sequence-item acceptance evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+compiler_revision: 75580fc39
+source_tree: 6d43e292ef474b1d7aca352689cf2e39acb4090a
+include_tree: df0df3deb2d1005e97aef6efe9a7cbe0d8952e8d
+compiler: /home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6
+compiler_sha256: 38deed9104b160aeb6989f2e33114667610df912b7810db4833b9da50fa4506d
+uvm_source_root: /home/holden/verilator-work/uvm-2020.3.1
+uvm_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+uvm_worktree_clean: true
+sources:
+  t_uvm_sequence_randomize.py: 85aa0b9fff8adf4230f1fde427fa948766c11e24f69d94a5e41ed1e129d479af
+  t_uvm_sequence_randomize.v: ebfd87aeb4c4c5955c8a9764d4adb9927533a9d7b70eb2a14fb4a759bc8c282b
+scenario_passes: 2
+scenario_failures: 0
+capture_limitations: The first vlt/no-DPI build log was overwritten before observation. The mislabeled vlt-nodpi-compile.log snapshot is excluded from build evidence; all 12 complete simulation logs are retained.
+configurations: 4
+seeded_runs: 12
+transactions: 768
+elapsed: '36:13'
+CXXFLAGS: ''
+command: python driver.py --vlt --vltmt --jobs=1 --driver-build-jobs=1 --quiet --obj-suffix uvm-sequence-source --driver-uvm-source-root /home/holden/verilator-work/uvm-2020.3.1 t/t_uvm_sequence_randomize.py
+aggregate_log:
+  path: /home/holden/verilator-work/uvm-sequence-randomize-source.log
+  sha256: eec4abbea0fe5fe687356e02a076218637a6fdf0be6c0701ac84a28267f70849
+results:
+  - scenario: vlt
+    dpi: false
+    runs:
+      - seed: 1729
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vlt-nodpi-replay-0.log
+        sha256: a0a4c4355aa56e062ccdd04d33e6522b2b3131cc6294c892a2858a3a3fb943cf
+        trace_sha256: 628d2f6fcc662673367532e7d9f6e07300959fcbfe09b7e46b548fb8e8a0e2a7
+        transactions: 64
+      - seed: 1729
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vlt-nodpi-replay-1.log
+        sha256: e1c394b5fb87927841cb4b499233ed5b39a7b4f6963bbcb28bc6878c7f7dc9e4
+        trace_sha256: 628d2f6fcc662673367532e7d9f6e07300959fcbfe09b7e46b548fb8e8a0e2a7
+        transactions: 64
+      - seed: 2718
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vlt-nodpi-replay-2.log
+        sha256: b1aeed176ff82dad0fa7eac663aecff4fa12ea5e568be8ae02582f5b4788c6ce
+        trace_sha256: cbb95f53db4c526bffeb7265b08d402143847fcefc4eed2793e030a522dceedc
+        transactions: 64
+    same_seed_identical: true
+    different_seed_changes_trace: true
+  - scenario: vlt
+    dpi: true
+    runs:
+      - seed: 1729
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vlt-dpi-replay-0.log
+        sha256: 64c0a2fd744d72e88fbc11ee5a7c47badc8000ab561a0ce703e376079dfc519f
+        trace_sha256: 628d2f6fcc662673367532e7d9f6e07300959fcbfe09b7e46b548fb8e8a0e2a7
+        transactions: 64
+      - seed: 1729
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vlt-dpi-replay-1.log
+        sha256: 9ec4a06e5db87c8b53023c4636a6e05c9751eb96077b594f6355928df9300bfc
+        trace_sha256: 628d2f6fcc662673367532e7d9f6e07300959fcbfe09b7e46b548fb8e8a0e2a7
+        transactions: 64
+      - seed: 2718
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vlt-dpi-replay-2.log
+        sha256: eb07b10903e1cca0dda62993379995c4060367e96e7cf605907139e747d7f673
+        trace_sha256: cbb95f53db4c526bffeb7265b08d402143847fcefc4eed2793e030a522dceedc
+        transactions: 64
+    same_seed_identical: true
+    different_seed_changes_trace: true
+  - scenario: vltmt
+    dpi: false
+    runs:
+      - seed: 1729
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-nodpi-replay-0.log
+        sha256: 01edf3f8aba5c7dad0ee402a1971978009eeaec069065a37d10c004a8bcb4ee2
+        trace_sha256: 628d2f6fcc662673367532e7d9f6e07300959fcbfe09b7e46b548fb8e8a0e2a7
+        transactions: 64
+      - seed: 1729
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-nodpi-replay-1.log
+        sha256: 5426fa8c9aa08562565d67e3f0cd5f6663b39537ce0349d51bd798c029bd6b07
+        trace_sha256: 628d2f6fcc662673367532e7d9f6e07300959fcbfe09b7e46b548fb8e8a0e2a7
+        transactions: 64
+      - seed: 2718
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-nodpi-replay-2.log
+        sha256: 792618e8e8fe777bda78cd911546ba21f5d5d576c08b92a7bc528601ec856041
+        trace_sha256: cbb95f53db4c526bffeb7265b08d402143847fcefc4eed2793e030a522dceedc
+        transactions: 64
+    same_seed_identical: true
+    different_seed_changes_trace: true
+  - scenario: vltmt
+    dpi: true
+    runs:
+      - seed: 1729
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-dpi-replay-0.log
+        sha256: 357299c70c2b27a81646276ca241e421b9514c4052c3f56b72d4aaa5951b27cc
+        trace_sha256: 628d2f6fcc662673367532e7d9f6e07300959fcbfe09b7e46b548fb8e8a0e2a7
+        transactions: 64
+      - seed: 1729
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-dpi-replay-1.log
+        sha256: 0f8c3fd19db67b28da878c41ba54be5dc65a5d73776670325bd2aed05f5cb87d
+        trace_sha256: 628d2f6fcc662673367532e7d9f6e07300959fcbfe09b7e46b548fb8e8a0e2a7
+        transactions: 64
+      - seed: 2718
+        log: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-dpi-replay-2.log
+        sha256: caf5f35e0bca2ac1b0c3b57085406d0126ef16f5601a8d25e1c6ed6a68b947fe
+        trace_sha256: cbb95f53db4c526bffeb7265b08d402143847fcefc4eed2793e030a522dceedc
+        transactions: 64
+    same_seed_identical: true
+    different_seed_changes_trace: true
+build_logs:
+  vlt-dpi:
+    log: /home/holden/verilator-work/uvm-sequence-source-evidence/vlt-dpi-compile.log
+    sha256: e891ca1b5939c0aa35bdf335fc6d48b4dc3ba8bff69c190f0ddb29754898e774
+  vltmt-nodpi:
+    log: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-nodpi-compile.log
+    sha256: 1042b108733b497f8aa1127879550b70442e14496d628dac1e73c25d37b836fc
+  vltmt-dpi:
+    log: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-dpi-compile.log
+    sha256: d73d3d42640037a8ddfa97d5079e71c3e90ed509be7a6af40908be2601e8af9d
+build_log_limitation: The first vlt/no-DPI compile log was overwritten before observation. The mislabeled snapshot contains VPI=1 and is excluded. Its three simulation logs and their passing sentinels are
+  retained.
+models:
+  vlt:
+    path: /home/holden/verilator-work/uvm-sequence-source-evidence/vlt-dpi-model
+    sha256: 678f0b033aaa82d6da60d5d03d477f75a9e61e46d1f04bf20c6ef2d2f1d57696
+  vltmt:
+    path: /home/holden/verilator-work/uvm-sequence-source-evidence/vltmt-dpi-model
+    sha256: 9713e6486426b77c10f72c614d53075aee8fdf044356e5dbd248d7ab5b2bd742
+claim_boundary: Real unmodified-source UVM sequence-item integration and deterministic replay passed locally. Full repository regression, current-source CI, conformance and performance gates remain open.
+date: '2026-09-07'
+revision: d01193d80f4ba87d33413eea7cd1e5d8f56218ff
+new_gate_credit: 0
+ci_target:
+  name: uvm2020-randomize-source
+  local_status: Recipe dry-run, solver preflight, shell syntax, tracker validation, and cleanup-safety checks passed; the four underlying configurations were executed directly. Exact target execution remains
+    for CI.
+  workflow: Ubuntu 26.04 GCC matrix; pinned upstream checkout and clean-source verification; solver absence is an error.
+format: passed
+lint_py: passed
+distribution:
+  passed: 6
+  failed: 0
+  elapsed: 0:08
+validation_logs:
+  /home/holden/verilator-work/uvm-sequence-integration-format.log: 3d8c86da80114fb1efbed76cc8ffd464f620154e4e716ac2276e0fe2134e85c8
+  /home/holden/verilator-work/uvm-sequence-integration-lint-py.log: 4b4dfbe8db052d6bdf92946a492f5a8638f292a3c5e044b2ba6fd6afe957b807
+  /home/holden/verilator-work/uvm-sequence-integration-distribution.log: 698e642da1a4a836223088765c258053cab9cdce9cd9b2bd443afc22c011f737
+  /home/holden/verilator-work/uvm-sequence-source-target-tracker.log: 84b51c73d48a5fc4a67ed2f1219ae6d6d8e04b36c5f7ee49b023147ce62c4104
+  /home/holden/verilator-work/uvm-sequence-source-cleanup-safety.log: 2ec04c7b79da79769809ded47f128bf2c9bf39fa27bf2279bf1fde610b08c767

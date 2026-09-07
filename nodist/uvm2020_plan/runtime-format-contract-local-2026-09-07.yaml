@@ -1,0 +1,91 @@
+---
+# DESCRIPTION: Verilator: Runtime nonnull format contract local evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+branch: codex/runtime-format-contract
+revision: d69a86352272e96d0f8bdd7f63eec19c23edfaf5
+parent: 7bbee7b221dbbe246b2db618651d46bcb1a3aa99
+source_tree: 6d43e292ef474b1d7aca352689cf2e39acb4090a
+include_tree: 1b08d0d7ec4336848de232555d7e16de80fe411a
+integration_revision: 5a3bdae035d815c669b6f3bf30b1ea08f23b86cf
+implementation: Declare the private snprintf helper format pointer nonnull through a portable compiler attribute. Make the runtime-debug test request -O2 explicitly so the GCC sanitizer diagnostic is reproducible
+  without inherited flags.
+sources:
+  include/verilated.cpp: c803ea359bfe73d7275f1b72ac24711fe93ee5111eb9cc643e2f84fe21d0f8fc
+  include/verilatedos.h: de15736435365f2fc5c27473d43fdcb784cbdef8b0cc1daf1d89343b5ad8db99
+  test_regress/t/t_flag_runtime_debug.py: b925b8d49fdd81c5a4bffefb6d224f77c494c5fca6ed3d195335ff97f68aa0c7
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6
+  sha256: 38deed9104b160aeb6989f2e33114667610df912b7810db4833b9da50fa4506d
+  compiler_source_unchanged: true
+causal_parent:
+  passed: 0
+  failed: 2
+  elapsed: '4:23'
+  CXXFLAGS: ''
+  failure: GCC 13 rejects the original formatting helper with null format string under -O2 and runtime sanitizers.
+focused:
+  passed: 20
+  failed: 1
+  elapsed: '14:53'
+  behavioral_passes: 15
+  distribution_passes: 5
+  CXXFLAGS: ''
+  failure: Standalone compiler-header check could not enter the unbuilt src/obj_dbg directory.
+header_replay:
+  passed: 1
+  failed: 0
+  elapsed: 0:00
+  preparation: Generated AST/parser and revision headers, then compiled all 163 standalone compiler headers with -j1 before invoking the harness again.
+portability:
+  gcc_cxx14: passed
+  clang_cxx14: passed
+  command_flags: -std=c++14 -O2 -DVM_TIMING=0 -Iinclude -Iinclude/vltstd -c include/verilated.cpp
+static_analysis:
+  parent_counts:
+    information: 14
+    warning: 23
+    style: 137
+    performance: 13
+    error: 4
+  candidate_counts:
+    information: 14
+    warning: 23
+    style: 137
+    performance: 13
+    error: 4
+  added: []
+  removed: []
+  scope: Complete runtime cppcheck target; source positions ignored in diagnostic comparison.
+logs:
+  /home/holden/verilator-work/runtime-format-contract-parent.log: e54759e0d907f54e4a65da8ca02e6074e27be91203cd669ef834a389e9ad8f2c
+  /home/holden/verilator-work/runtime-format-contract-focused-final.log: 2335dcf9e26b0bdb6b01282f75a4f9a9a16aff9193fa15e912562f68e387c732
+  /home/holden/verilator-work/runtime-format-contract-header-replay.log: 5fadd8ba96e201c0d4567b6ae1cde29995b2a9b481f2a745ac68115744303f59
+  /home/holden/verilator-work/runtime-format-contract-header-compile-final.log: b7373e50c177ccae23a2a94cc6acea03326809e1fb2499017353a52d0b6d918b
+  /home/holden/verilator-work/runtime-format-contract-format.log: 12bb2ab580d05c42056b11b7fa98d4bfd08c88b3373b8c277ce6ae67055e6d6a
+  /home/holden/verilator-work/runtime-format-contract-lint-py.log: b70dd9163da42dbabffe4d50fd4392c4a18b050a8e3b45016136b5b80fd0d124
+  /home/holden/verilator-work/runtime-format-contract-cxx14-gcc.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/runtime-format-contract-cxx14-clang.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/runtime-format-contract-cppcheck-parent.log: 385e5b913e59b7f9a8f4d103fe34b2c1d700ef9cc92aa0020ec6322ae7ea68b4
+  /home/holden/verilator-work/runtime-format-contract-cppcheck.log: 313f7e18d8b4761d6b53845f3ff6dad49cd3d9e9c95833e2148f8507c4f2421d
+  /home/holden/verilator-work/runtime-format-contract-cppcheck-comparison.json: 67169d78bb67abd28c1b9b9a5b9066385927f44c23aad8c81dedadf34df8c021
+  /home/holden/verilator-work/snprintf-full-runtime-original-command.json: 6c7935e08aea13c8fa995b47364431129ce4341713bc2a02b77f2b0f5cfcb16e
+  /home/holden/verilator-work/snprintf-full-runtime-original.log: e313bb71e2bc711588ad063e3c0c6e74d33ee7a6b2ee6a402dc685b203d76e6b
+  /home/holden/verilator-work/snprintf-full-runtime-original-result.json: a61f9789a8540009a219caa4513133292bca7c9d5bc4f88221059b112dec0853
+  /home/holden/verilator-work/snprintf-full-runtime-nonnull-command.json: d4d17f533d134ffaf71afd521b52892688b85f631b6b63a7fd4ac9b008909db1
+  /home/holden/verilator-work/snprintf-full-runtime-nonnull.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/snprintf-full-runtime-nonnull-result.json: 7638ae157fbbbc9373cf138e288d44badb2a0a81311a93159896d653e19f9046
+  /home/holden/verilator-work/runtime-format-contract-trace-replay.log: d89c1cdaac63eb45364fb6a41e876dd247a6db25b8e34c449d2e98078725de1f
+new_gate_credit: 0
+claim_boundary: Local runtime build correction. Runtime cppcheck retains four error reports and other unchanged findings; it is not report-free. Full repository, CI, conformance and performance acceptance
+  remain open. The UVM sequence evidence uses the preceding runtime tree.
+additional_trace_replay:
+  status: completed
+  log: /home/holden/verilator-work/runtime-format-contract-trace-replay.log
+  scope: Two additional failures in the frozen full regression stopped at the same formatting diagnostic. Replay retains the original Conda optimization flags.
+  passed: 2
+  failed: 0
+  elapsed: '5:59'
+  sha256: d89c1cdaac63eb45364fb6a41e876dd247a6db25b8e34c449d2e98078725de1f

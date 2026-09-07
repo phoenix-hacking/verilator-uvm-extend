@@ -12,15 +12,47 @@ compiler style cleanup at `75580fc39` and the profiler correction at
 43/44 checks; both attribute checks then passed using `attribute-env.sh`,
 which supplies the missing Clang builtin headers only to attribute analysis.
 Keep that environment separate from GCC model builds.
-The recovered UVM sequence files remain untracked and backed up in
-`integration-recovery-20260907T200409Z`. They are now running against unmodified
+The recovered UVM sequence files are committed at `d01193d80` and backed up in
+`integration-recovery-20260907T200409Z`. They passed against unmodified
 UVM 2020.3.1 at `78c06547a2a0a29b3dc9dcafae62b75b2ff61544`, with DPI/no-DPI,
-vlt/vltmt, and same/different-seed replay. The binary is preserved as
+vlt/vltmt, and same/different-seed replay: 12 runs and 768 transactions in
+36:13. The binary is preserved as
 `/home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6`;
-the log is `uvm-sequence-randomize-source.log`. Do not change their compiler,
-runtime, or test inputs while execution is active.
+the log is `uvm-sequence-randomize-source.log`. Source, binary, simulation,
+and trace hashes are recorded in
+[UVM sequence evidence](uvm-sequence-source-local-2026-09-07.yaml).
+Three build logs are retained; the first no-DPI build log was overwritten
+before observation, and its mislabeled snapshot is excluded. All 12 complete
+simulation logs are retained. The new `uvm2020-randomize-source` CI target
+executes all four configurations from a pinned clean upstream checkout.
 [Combined evidence](integration-recovered-local-2026-09-07.yaml) records the
 source and binary hashes; full regression and release acceptance remain open.
+
+Current compiler source is unchanged from `75580fc39`, but the shared runtime
+header and formatting helper changed at integrated `5a3bdae03` (component
+`d69a86352`). The explicit nonnull format contract fixes the GCC 13 sanitizer
+warning. Fifteen simulator checks pass, plus five initial distribution checks
+and the standalone-header replay after generating build prerequisites. Both
+GCC and Clang C++14 builds pass; runtime cppcheck has identical diagnostic
+multisets, including four existing errors. Two further trace sanitizer
+replays pass with the original Conda flags. The component worktree is frozen
+at `/home/holden/verilator-work/runtime-format-contract`.
+Build both native variants and start the next complete regression from this
+combined source with `/home/holden/verilator-work/regression-env.sh`. That
+environment clears inherited optimization flags and supplies the saved
+Clang headers only to `clang_check_attributes`; its two attribute checks pass
+and GCC parent include paths remain unset. The UVM evidence predates this
+runtime annotation and does not replace combined-source validation.
+
+Nine superseded component CI runs were cancelled after their job metadata
+and completed results were saved. The integrated branch is the current CI
+target; [cancellation evidence](ci-superseded-components-2026-09-07.yaml)
+records 20 running and 173 queued jobs at the snapshot, without treating any
+cancelled job as passed. Older per-component CI status fields are historical.
+The completed-build cache cleanup removed only .o/.gch/.a files from inactive
+test object directories. Its audit and receipt are under
+`/home/holden/verilator-work/completed-build-cache-cleanup-*`; source, log,
+compiler-binary and model-executable evidence remains available.
 
 The [recovery record](recovery-validation-2026-09-07.yaml) supersedes old local
 session identifiers and full-regression running/completion claims. All eight
@@ -32,9 +64,11 @@ distribution passes. Full formatting and Python lint pass. Full regression,
 CI, and broad static acceptance remain pending. The constraint-array width
 follow-up is pushed at `c325d9c0d`; six foreach scenarios and five distribution
 checks pass, with causal failures in both new scenarios on the previous compiler.
-The complete `make test` run is active in the foreach worktree, logging to
-`/home/holden/verilator-work/foreach-complete-regression.log`. Do not infer
-completion from nested one-test markers.
+The complete `make test` run finished in the frozen foreach worktree with
+6,655 passes, 33 failures, and eight skips in 391:10; one additional initial
+failure passed on rerun. [Full-run evidence](foreach-full-regression-local-2026-09-07.yaml)
+records all final failures and the resource guards. This run predates the
+subsequent fixes and does not establish acceptance of the integrated source.
 
 The null rand-child fix is pushed at `04fc80d15` in
 `/home/holden/verilator-work/randomize-null-child`. Its parent `b9f9fcc75` carries

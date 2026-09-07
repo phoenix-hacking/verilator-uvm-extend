@@ -1,0 +1,84 @@
+# DESCRIPTION: Verilator: Frozen foreach full-regression result
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+status: completed_with_failures
+revision: c325d9c0dda118983fd0adfe5866df8b559970d4
+source_tree: 63960ac34a566cd4ded03e8c686192deec57fc34
+include_tree: fe06258a29731f55f10fa64b0430177848969ce2
+test_tree: b650023b0d2910eb76c946ec734aee437749865b
+worktree: /home/holden/verilator-work/foreach-nonzero-indices
+worktree_clean: true
+command: make -j2 test DRIVER_FLAGS='--jobs=2 --driver-build-jobs=1 --quiet --rerun'
+configure_flags:
+- --enable-ccwarn
+- --enable-longtests
+result:
+  passed: 6655
+  failed: 33
+  failed_first: 34
+  skipped: 8
+  elapsed: '391:10'
+  root_make_exit_code: 2
+log: /home/holden/verilator-work/foreach-complete-regression.log
+sha256: e60b363bb3c55fcd82b376844b4075204b50f3252f4b9f87118e0f0f8da97c86
+final_failures:
+- dist/t_dist_attributes_bad
+- dist/t_dist_contributors
+- vlt/t_compiler_include
+- vlt/t_compiler_include_dpi
+- vlt/t_compiler_include_dpi_split
+- vlt/t_compiler_include_split
+- vlt/t_dfg_oob_array_access
+- vlt/t_flag_csplit
+- vlt/t_flag_csplit_groups
+- vlt/t_flag_runtime_debug
+- vlt/t_opt_merge_cond_blowup
+- vlt/t_process_always_comb_identity
+- vlt/t_process_always_comb_self
+- vlt/t_prof
+- vlt/t_prof_timing
+- vlt/t_randomize_assoc_size
+- vlt/t_randomize_method_types_unsup
+- vlt/t_timing_eval_act
+- vlt/t_trace_ub_misaligned_address
+- vlt/t_wait_iface_vif
+- vltmt/t_dfg_oob_array_access
+- vltmt/t_flag_csplit
+- vltmt/t_flag_csplit_groups
+- vltmt/t_flag_runtime_debug
+- vltmt/t_gantt_numa
+- vltmt/t_process_always_comb_identity
+- vltmt/t_process_always_comb_self
+- vltmt/t_prof
+- vltmt/t_prof_timing
+- vltmt/t_randomize_assoc_size
+- vltmt/t_randomize_method_types_unsup
+- vltmt/t_trace_ub_misaligned_address
+- vltmt/t_wait_iface_vif
+recovered_initial_failure:
+  test: vlt/t_a2_first_sc
+  note: The initial archive-index failure coincided with concurrent root smoke and full-regression writes under
+    make -j2. It passed on rerun; the next root make test invocation must serialize these prerequisites.
+resource_guards:
+  scope: Only the original recursive rand-class negative test and the oversized merge-condition generated C++ compile
+    were bounded. Interventions and their failures remain in the results.
+  recursive_log: /home/holden/verilator-work/foreach-recursion-resource-limits.log
+  recursive_log_sha256: b418c6709be4b54886b1faebdad8c11a2e3750d0f768906a3576834557f2966a
+  merge_cond_log: /home/holden/verilator-work/foreach-merge-cond-resource-limits.log
+  merge_cond_log_sha256: dd0e84f0f6983c1def0963069841bad234192097bb0505924416e3b5d1b229a7
+latest_failure_triage:
+  test: t_wait_iface_vif in vlt and vltmt
+  diagnostic: GCC 13 stringop-overflow at VlProcess::state atomic load in generated interface code.
+  candidate_replay: Both scenarios passed in 0:20 against frozen runtime-format-contract d69a86352 and the preserved
+    75580fc39 compiler, retaining the original Conda CXXFLAGS. This is a combined-candidate replay, not an isolated
+    causal comparison for the process-context commit.
+  passed: 2
+  failed: 0
+  log: /home/holden/verilator-work/runtime-format-contract-wait-vif-replay.log
+  sha256: a65b7af2e3e41b815c6455801b22495b1acdba0895083c3a8055862d44afe3db
+new_gate_credit: 0
+claim_boundary: Completed full regression of the older frozen foreach source. The 33 final failures prevent acceptance.
+  Several have later component corrections, which do not retroactively change this result or establish combined-source,
+  conformance, CI, or performance acceptance.
