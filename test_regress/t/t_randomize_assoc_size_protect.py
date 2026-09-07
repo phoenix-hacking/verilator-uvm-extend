@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# DESCRIPTION: Verilator: Verilog Test driver/expect definition
+# DESCRIPTION: Verilator: Associative size constraints with protected identifiers
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of either the GNU Lesser General Public License Version 3
@@ -9,17 +9,17 @@
 
 import vltest_bootstrap
 
-test.scenarios('simulator')
-
+test.scenarios('vlt', 'vltmt')
 if not test.have_solver:
-    test.skip("No constraint solver installed")
+    test.skip('No constraint solver installed')
 
 test.timeout(60)
+test.top_filename = 't/t_randomize_assoc_size.v'
 for defines in ['', '+define+ASSOC_SIZE_EXPANDED']:
     test.compile(threads=2 if test.vltmt else 1,
                  verilator_flags2=[
-                     '-Wall', '-Wno-DECLFILENAME', '--no-timing', '-CFLAGS', '-std=c++14', defines
+                     '-Wall', '-Wno-DECLFILENAME', '--no-timing', '-CFLAGS', '-std=c++14',
+                     '--protect-ids', defines
                  ])
     test.execute()
-
 test.passes()

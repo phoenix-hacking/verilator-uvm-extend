@@ -415,9 +415,13 @@ bool VlRandomVar::set(const std::string& idx, const std::string& val) const {
 }
 
 void VlRandomizer::randomConstraint(std::ostream& os, VlRNG& rngr, int bits) {
-    const IData hash = VL_RANDOM_RNG_I(rngr) & ((1 << bits) - 1);
     int varBits = 0;
     for (const auto& var : m_vars) varBits += var.second->totalWidth();
+    if (varBits == 0) {
+        os << "true";
+        return;
+    }
+    const IData hash = VL_RANDOM_RNG_I(rngr) & ((1 << bits) - 1);
     os << "(= #b";
     for (int i = bits - 1; i >= 0; i--) os << (VL_BITISSET_I(hash, i) ? '1' : '0');
     if (bits > 1) os << " (concat";
@@ -792,8 +796,11 @@ bool VlRandomizer::parseSolution(std::iostream& os, bool log) {
         return false;
     }
 
-    // State-only constraints have no assignments to retrieve from the model.
-    if (m_vars.empty()) return true;
+    // State-only constraints and empty arrays have no model values to retrieve.
+    if (std::none_of(m_vars.begin(), m_vars.end(),
+                     [](const auto& var) { return var.second->totalWidth() > 0; })) {
+        return true;
+    }
 
     os << "(get-value (";
     for (const auto& var : m_vars) {
