@@ -355,6 +355,10 @@ public:
     // Clear disabled state for a variable
     void clear_var_disabled(const char* name) { m_disabledVars.erase(name); }
 
+    /// Remove a variable binding and its registered struct or array elements.
+    /// Keep cyclic history when refreshing bindings to the same object.
+    void clear_var(const std::string& name);
+
     // ---  write_var to register variables  ---
     // Register scalar variable (non-struct, basic type)
     template <typename T>

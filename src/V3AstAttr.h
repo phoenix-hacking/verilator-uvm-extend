@@ -873,6 +873,7 @@ public:
         RANDOMIZER_SOLVE_BEFORE,
         RANDOMIZER_PIN_VAR,
         RANDOMIZER_WRITE_VAR,
+        RANDOMIZER_CLEAR_VAR,
         RANDOMIZER_SET_VAR_DISABLED,
         RANDOMIZER_CLEAR_VAR_DISABLED,
         RANDOMIZER_MARK_VAR_STATIC,
@@ -1027,6 +1028,7 @@ inline std::ostream& operator<<(std::ostream& os, const VCMethod& rhs) {
            {RANDOMIZER_SOLVE_BEFORE, "solveBefore", false}, \
            {RANDOMIZER_PIN_VAR, "pin_var", false}, \
            {RANDOMIZER_WRITE_VAR, "write_var", false}, \
+           {RANDOMIZER_CLEAR_VAR, "clear_var", false}, \
            {RANDOMIZER_SET_VAR_DISABLED, "set_var_disabled", false}, \
            {RANDOMIZER_CLEAR_VAR_DISABLED, "clear_var_disabled", false}, \
            {RANDOMIZER_MARK_VAR_STATIC, "mark_var_static", false}, \

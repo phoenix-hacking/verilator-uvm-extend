@@ -915,6 +915,27 @@ void VlRandomizer::clearConstraints() {
     // Keep m_vars for class member randomization
 }
 
+void VlRandomizer::clear_var(const std::string& name) {
+    const auto eraseVar = [this](decltype(m_vars)::iterator it) {
+        if (it->second->dimension() > 0) clear_arr_table(it->first);
+        m_disabledVars.erase(it->first);
+        m_staticVars.erase(it->first);
+        m_randcVarNames.erase(it->first);
+        return m_vars.erase(it);
+    };
+    const auto it = m_vars.find(name);
+    if (it != m_vars.end()) eraseVar(it);
+    // A struct or an array of structs registers leaves below its base name.
+    // Ordered ranges avoid scanning unrelated variables on each refresh.
+    for (const char separator : {'.', '['}) {
+        const std::string prefix = name + separator;
+        auto pos = m_vars.lower_bound(prefix);
+        while (pos != m_vars.end() && pos->first.compare(0, prefix.size(), prefix) == 0) {
+            pos = eraseVar(pos);
+        }
+    }
+}
+
 void VlRandomizer::clearAll() {
     m_constraints.clear();
     m_softConstraints.clear();
