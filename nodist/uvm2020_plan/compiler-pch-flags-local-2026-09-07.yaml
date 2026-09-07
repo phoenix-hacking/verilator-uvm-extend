@@ -1,0 +1,75 @@
+---
+# DESCRIPTION: Verilator: Compiler-include PCH flag ordering local evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Local generated user-C++/PCH flag consistency; full repository regression and CI acceptance remain pending.
+branch: codex/compiler-pch-flags
+revision: 982bae42940da7e7e06cc63e211ead68ec18e318
+parent: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+tree: ca1fdfb83c77b76fe6b45ecddae66f6aab867b9a
+source_tree: 3f8d7eb7e6d2256cd651e57c2c746d85ba617ceb
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_pch_982bae429
+  sha256: c277158a5a859a23a43b97f94c7b766cab836e884f2b86ff97da554ecaf6ee3f
+sources:
+  src/V3EmitMk.cpp: 4b74cea30a1cb8df8ca2e647be42e12c4adede5c61c69ab20e60fd93c8f112e1
+  test_regress/t/t_compiler_include.py: bc2d57876715ecfb74196bd9fbae66356f28f4151fd839d34b2ccf7aa8127b61
+logs:
+  /home/holden/verilator-work/compiler-pch-flags-build.log: 99712871ef3f7ee728e6d449fac3acf97fbd14dbc4c295df90286c78aa7171f3
+  /home/holden/verilator-work/compiler-pch-flags-format.log: d83b472892c2beca5f254ac6d46229b303d139a5f087cce7e927fcaf74961dfc
+  /home/holden/verilator-work/compiler-pch-flags-lint-py.log: 866816dcc57a4333866321e1b8a0f2ba3ba903ef8ceb6f99d57f059ed6b03c37
+  /home/holden/verilator-work/compiler-pch-flags-parent.log: 19368fb994610ec2d844ae39528896c50b2c38fafd70e24e1998ad0c2e2b5f93
+  /home/holden/verilator-work/compiler-pch-flags-focused.log: 968ce66b6d7463483db222dc93c52008ae3072679bd27d0fc7676be9f2bccd80
+  /home/holden/verilator-work/compiler-pch-flags-neighbors.log: 3150e4bffcff606da942c8a97f674d246ed64c9615ef3672ffb48ab616388c33
+  /home/holden/verilator-work/compiler-pch-flags-cppcheck.log: 68def023c46821d2ccb68c8d8346c42e93d0bbce3c97f672a6f5be02660ddd78
+  /home/holden/verilator-work/compiler-pch-flags-cppcheck-inputs.sha256: b98cd34e3490d3d7183d12e7a6f578b82e1751d2886fdae4ccc66671f3e7e48e
+  /home/holden/verilator-work/compiler-pch-flags-cppcheck-comparison.json: 2740627770e7f827b6884548f9da0830870e15679ad6ea865b46c7650f1d263a
+  /home/holden/verilator-work/compiler-pch-flags-evidence/parent-gcc.log: ac0b98bbd6a048cc0e01048e251cbc3c78c08812d166e4d7804e906f49d33b7e
+  /home/holden/verilator-work/compiler-pch-flags-evidence/parent-sim.log: ad72453313d7ee8fdfd27e84c196beb4ece2c3c2caa4090661c79a5b7d0a82d0
+  /home/holden/verilator-work/compiler-pch-flags-evidence/candidate-gcc.log: 4e21e93f871d5400c0a746caad33ed40a9a91839687dd047a649fc17ce607c43
+  /home/holden/verilator-work/compiler-pch-flags-evidence/candidate-sim.log: ad72453313d7ee8fdfd27e84c196beb4ece2c3c2caa4090661c79a5b7d0a82d0
+  /home/holden/verilator-work/compiler-pch-flags-cppcheck-all-severities.json: 8f71f91f1e78ce0955109d15a96d531b5994d7599c1e815aa5573434ad5fed81
+focused:
+  passed: 9
+  failed: 0
+  elapsed: '1:52'
+neighbors:
+  passed: 12
+  failed: 0
+  elapsed: '8:02'
+static_analysis:
+  exit_code: 0
+  error_reports: 11
+  comparison: Error-severity filename/message/count multiset matches candidate-cppcheck.log. Across all non-information severities, no additions or removals versus the associative-size parent.
+  diagnostic_counts: {error: 11, warning: 63, style: 2263, performance: 114, portability: 16, information: 186}
+  baseline_difference: One inherited shadowFunction style report in V3Randomize.cpp versus the pre-crash baseline; generated-header directory names and information checker counts also differ.
+causal_parent:
+  revision: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+  compiler: /home/holden/verilator-work/verilator_bin_assoc_b392c1065
+  CXXFLAGS: ''
+  passed: 0
+  failed: 1
+  elapsed: 0:21
+  failure: The original variant passes; the -CFLAGS -O1 variant fails because the source uses -O0 while its header uses -O1.
+execution_worktree: /home/holden/verilator-work/randomize-recursion-check
+implementation: Place OPT_FAST before CXXFLAGS and CPPFLAGS in generated user-source rules, matching all normal and precompiled-header rules in verilated.mk. User optimization overrides then apply consistently.
+validation_notes:
+  focused: Four compiler-include scenarios and five distribution checks; the primary scenario runs both the original and explicit -O1 variants.
+  neighbors: PCH split, compiler gcc/clang code-generation options, and hierarchical/protected libraries in both supported simulator modes. The native toolchain is GCC 13.4; selecting --compiler clang here
+    is not a separate native Clang build.
+  formatting: Full make format, make lint-py, and git diff --check pass. The two unrelated runtime whitespace-only formatter changes were restored.
+  static_analysis: Complete make cppcheck, including all 163 compiler sources, matches the baseline error-severity filename/message/count multiset exactly. The all-severity audit records the inherited style
+    difference; this is not a report-free static pass.
+ci:
+  format:
+    run: 34155462427
+    status: queued
+  build_test:
+    run: 34155462593
+    status: queued
+  contributor_agreement:
+    run: 34155462452
+    status: queued
+new_gate_credit: 0

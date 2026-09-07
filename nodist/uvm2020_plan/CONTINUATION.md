@@ -56,12 +56,15 @@ in both new scenarios on the parent runtime. The new test builds with C++14.
 The associative-size correction is published at `b392c1065` on
 `codex/randomize-assoc-size`. The native build worktree
 `/home/holden/verilator-work/randomize-recursion-check` was frozen for that completed run.
-It is now reused on `codex/compiler-pch-flags` for the independently reproduced
-compiler-include optimization-flag ordering failure; the associative-size
-compiler and completed evidence remain preserved.
+It is now at `982bae429` on `codex/compiler-pch-flags`; the associative-size
+compiler and completed evidence remain preserved. The PCH correction passes
+9/9 focused checks and 12/12 neighboring build scenarios. Full cppcheck reports
+the same 11 baseline error findings. [Local evidence](compiler-pch-flags-local-2026-09-07.yaml)
+records the parent failure with CXXFLAGS cleared and an explicit `-CFLAGS -O1`
+override. New-branch full regression and CI acceptance remain open.
 The neighboring regression completed 318/318 checks in 21:15, logged in
 `/home/holden/verilator-work/randomize-assoc-size-neighbors.log`. Its 12 focused
-checks also pass; full cppcheck completed with the same 11 baseline reports. The
+checks also pass; full cppcheck completed with the same 11 baseline error reports. The
 [local evidence](randomize-assoc-size-local-2026-09-07.yaml) records exact inputs.
 The compiler is preserved as
 `/home/holden/verilator-work/verilator_bin_assoc_b392c1065`.
@@ -81,14 +84,23 @@ post callbacks until the containing randomization succeeds. Aliases receive
 one callback per attempt. The C++14 ordinary/protected tests cover nested
 containers, static and derived fields, resizing, modes, and cyclic history.
 [Local evidence](randomize-failure-state-local-2026-09-07.yaml) records exact
-source/compiler hashes and retained logs. The 196-driver, 347-scenario
-neighboring regression and full cppcheck are running against the frozen source.
+source/compiler hashes and retained logs. The 196-driver neighboring regression
+passed all 347 scenarios in 36:10 against the frozen source. Full cppcheck is
+still running, and the GitHub format workflow passed.
 The earlier partial cppcheck run was stopped for the callback correction; it
 is not acceptance evidence. Full repository regression, CI, and scope
 `std::randomize` rollback remain unfinished.
 
+The scope-randomization worktree `/home/holden/verilator-work/randomize-std-failure`
+is on `codex/randomize-std-failure`, based on `001c6ca86`. Its new C++14
+ordinary/protected test fails all four configurations on the preserved parent
+compiler. The implementation saves all arguments before basic writes and
+restores existing array elements individually so active ref aliases stay valid.
+It is uncommitted and has no passing candidate evidence yet; the initial native
+build is running in `randomize-std-failure-build.log` with one build worker.
+
 Next work is to inspect the active regressions and CI, finish broader failed-randomization
-validation and the compiler-include correction, then integrate
+validation and scope-randomization restoration, then integrate
 the real UVM sequence-item regression and continue the complete milestone
 scope in GOALS.md. The ten pre-crash CI failures must be classified from actual
 job logs; available shutdown/cancellation evidence is not semantic acceptance.

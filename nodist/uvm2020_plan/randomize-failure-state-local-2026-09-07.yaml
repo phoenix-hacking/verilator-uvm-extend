@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
 date: '2026-09-07'
-claim_boundary: Local failed-class-randomization value retention and callback ordering. Broader regression, CI, full conformance, and performance acceptance remain open.
+claim_boundary: Local failed-class-randomization value retention and callback ordering. Full repository regression, CI, full conformance, and performance acceptance remain open.
 branch: codex/randomize-failure-state
 revision: 001c6ca86d4cad2d8b770c0b1bf1f72658e82e99
 parent: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
@@ -50,7 +50,10 @@ portability:
   verification: All four retained expanded compile logs select C++14 last and VM_TIMING=0; all four simulation logs contain the completion sentinel.
 formatting: Full make format, Verilog formatting, Python lint, and git diff --check pass. Two unrelated formatter-only runtime changes were inspected and restored.
 neighbors:
-  status: running
+  status: passed
+  passed: 347
+  failed: 0
+  elapsed: '36:10'
   drivers: 196
   manifest: /home/holden/verilator-work/randomize-failure-state-neighbor-tests.txt
   log: /home/holden/verilator-work/randomize-failure-state-neighbors.log
@@ -68,7 +71,8 @@ acceptance:
 ci:
   format:
     run: 34153694590
-    status: queued
+    status: completed
+    conclusion: success
   build_test:
     run: 34153694745
     status: queued
@@ -102,3 +106,4 @@ logs:
   /home/holden/verilator-work/snapshot-child-callback-results.json: 0b2620705eb469f6b13f5eca3cf0709430654da89b2cd0c5619370fb22c4c028
   /home/holden/verilator-work/snapshot-child-callback-parent-sim.log: 9762af61ee2aca1dc40de0e842d60c9568e1d88c47ff11f905b5b8b9ffcacde9
   /home/holden/verilator-work/snapshot-child-callback-candidate-sim.log: 20a1e30781b1a38b6290c3a9e8de9666f61aa421e551ed4e801b7fcd844b88e0
+  /home/holden/verilator-work/randomize-failure-state-neighbors.log: 3b09cd28a398ebb56344d998b260501f900a3440f24228cd1fbfa54626176b5a

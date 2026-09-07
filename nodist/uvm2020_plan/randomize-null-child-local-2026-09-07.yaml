@@ -76,7 +76,10 @@ static_analysis:
   revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
   exit_code: 0
   error_reports: 11
-  comparison: The filename/message/count multiset exactly matches the pre-crash candidate. See regression-triage-2026-09-07.yaml for source-review dispositions; this does not claim a clean static pass.
+  other_severities: One additional shadowFunction style report versus the pre-crash candidate; warning, performance, and portability diagnostics are unchanged after normalizing generated-header directory
+    names.
+  comparison: The error-severity filename/message/count multiset exactly matches the pre-crash candidate. See regression-triage-2026-09-07.yaml for source-review dispositions; this does not claim a clean
+    static pass.
 acceptance:
   ci: pending
   full_regression: pending

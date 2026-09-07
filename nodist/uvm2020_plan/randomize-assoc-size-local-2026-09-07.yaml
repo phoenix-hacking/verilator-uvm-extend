@@ -66,7 +66,9 @@ static_analysis:
   scope: 'Complete make cppcheck targets: coverage utility, examples, runtime, and all 163 compiler sources.'
   exit_code: 0
   error_reports: 11
-  comparison: Filename/message/count multiset exactly matches both candidate-cppcheck.log and randomize-null-cppcheck.log; no added or removed reports.
+  other_severities: One additional shadowFunction style report versus the pre-crash candidate; warning, performance, and portability diagnostics are unchanged after normalizing generated-header directory
+    names.
+  comparison: Error-severity filename/message/count multiset exactly matches both candidate-cppcheck.log and randomize-null-cppcheck.log; no added or removed error reports.
   cache: Copied the completed null-child cache into a separate cache; cppcheck revalidates source inputs. The two changed source hashes were recorded before the run and rechecked afterward.
   command: make cppcheck CPPCHECK_JOBS=2 CPPCHECK_INC='-I./include -I./include/fstcpp -I./include/vltstd -I./src/obj_opt -I./src' CPPCHECK_CACHE=/home/holden/verilator-work/randomize-assoc-size-cppcheck-cache
   dispositions: See regression-triage-2026-09-07.yaml. This is not a claim of a report-free static pass.

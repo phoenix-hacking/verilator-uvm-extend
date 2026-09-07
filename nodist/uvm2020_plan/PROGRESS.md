@@ -55,7 +55,7 @@ four simulation SIGSEGVs. [Local evidence](randomize-assoc-size-local-2026-09-07
 records the C++14/protected runs and the completed neighboring regression:
 318/318 checks passed in 21:15, comprising 312 behavioral scenarios and six
 distribution checks. Full cppcheck at this revision has the same 11 baseline
-reports. Format CI passed; build/test CI is pending and Contributor Agreement
+error reports. Format CI passed; build/test CI is pending and Contributor Agreement
 CI failed.
 The failed-class-randomization correction is published at `001c6ca86`, with
 10/10 focused checks passing and failures in all four final scenarios on the
@@ -63,13 +63,18 @@ exact parent compiler/runtime. It restores values and bindings after failure,
 preserves callback initialization, and handles aliased objects, nested
 containers, static/derived fields, and cyclic history. The
 [local evidence](randomize-failure-state-local-2026-09-07.yaml) includes the
-callback regression found and corrected during review. The broader 347-scenario
-run and full cppcheck are active; full regression, CI, and scope-randomization
-rollback remain open. The compiler-include flag-ordering failure from the full
-regression has also been reproduced independently and is under correction.
+callback regression found and corrected during review. The broader run passed all 347 scenarios in 36:10. Full cppcheck is active;
+full regression, CI, and scope-randomization rollback remain open. The compiler-include flag-ordering correction is published at `982bae429`,
+with 9/9 focused checks and 12/12 neighboring build scenarios passing. Its
+full cppcheck has the same 11 baseline error reports. The
+[local evidence](compiler-pch-flags-local-2026-09-07.yaml) records the independent
+parent failure using an explicit optimization override; full regression and
+CI acceptance remain open. An audit of all diagnostic severities found no
+PCH additions versus its associative-size parent; both retain one additional
+`shadowFunction` style report versus the pre-crash candidate.
 
 Both the recovery and frozen null-child cppcheck sweeps completed with the same
-11 reports as the pre-crash candidate; this is not a clean static pass. Full regression, CI, and static
+11 error reports as the pre-crash candidate; this is not a clean static pass. Full regression, CI, and static
 acceptance remain pending. [Local evidence](randomize-null-child-local-2026-09-07.yaml) records
 the exact source, compiler, and log hashes.
 
