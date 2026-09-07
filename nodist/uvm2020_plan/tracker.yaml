@@ -4,8 +4,58 @@
 
 schema_version: 2
 updated: 2026-09-07
-objective: evidence-backed UVM 2020 support for complex SoC verification
+objective: Full IEEE 1800.2-2020 UVM compliance and measured production performance optimization
 repository: phoenix-hacking/verilator-uvm-extend
+
+goals:
+  G-UVM:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/43
+    title: Full IEEE 1800.2-2020 UVM compliance
+    status: in_progress
+    contract: nodist/uvm2020_plan/GOALS.md
+    checks:
+      inventory:
+        status: pending
+        evidence: []
+      source:
+        status: pending
+        evidence: []
+      semantics:
+        status: pending
+        evidence: []
+      integration:
+        status: pending
+        evidence: []
+      independent_oracles:
+        status: pending
+        evidence: []
+      release:
+        status: pending
+        evidence: []
+  G-PERF:
+    issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/44
+    title: Measured production performance optimization
+    status: in_progress
+    contract: nodist/uvm2020_plan/GOALS.md
+    checks:
+      baselines:
+        status: pending
+        evidence: []
+      workloads:
+        status: pending
+        evidence: []
+      measurements:
+        status: pending
+        evidence: []
+      improvement:
+        status: pending
+        evidence: []
+      regression_limits:
+        status: pending
+        evidence: []
+      ci:
+        status: pending
+        evidence: []
 
 accounting_policy:
   primary_unit: fully_verified_atomic_gate

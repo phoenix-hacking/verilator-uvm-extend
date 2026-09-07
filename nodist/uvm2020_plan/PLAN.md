@@ -4,6 +4,16 @@
 
 # UVM 2020.3.1 regression plan
 
+## Explicit compliance and performance goals
+
+The [goal contract](GOALS.md) defines **G-UVM: full IEEE 1800.2-2020 UVM
+compliance** and **G-PERF: measured production performance optimization**.
+Both remain in progress, with zero of six final acceptance checks accepted
+for each. These checks supplement the existing program gates. Documented
+mandatory-feature limitations cannot satisfy full compliance, and regression
+durations cannot satisfy performance acceptance. `check_tracker.py` rejects
+a goal marked pass without its required checks, evidence, and prerequisites.
+
 ## Current checkpoint: 2026-09-07
 
 The declared 27-test UVM contract has accepted local, push, and pull-request

@@ -24,6 +24,11 @@ Objective alignment:
 | SoC verification pressure | S5 | Protocol And SoC Matrix synthetic SoC rows. |
 | Professional support envelope | S6 | Known static risks, update contract, CI/performance/dashboard rows. |
 
+The current [full-compliance and performance goals](GOALS.md) supersede
+this historical snapshot wherever a documented limitation was sufficient
+for a narrower support claim. Mandatory UVM deviations remain blockers to
+full compliance.
+
 ## Competitive Claim Matrix
 
 This table defines what "competitive" means for this plan. It is intentionally

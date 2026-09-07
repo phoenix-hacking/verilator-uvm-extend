@@ -15,6 +15,11 @@ ledger paths, and run references are not current-state claims. Use
 `tracker.yaml` plus `PROGRESS.md` for the broader 0/21 program state, and
 `PLAN.md` for the current PR lane contract.
 
+The current [full-compliance and performance goals](GOALS.md) supersede
+this historical snapshot wherever a documented limitation was sufficient
+for a narrower support claim. Mandatory UVM deviations remain blockers to
+full compliance.
+
 ## Top-Level Objective
 
 The objective is to make this Verilator checkout capable of running a serious
