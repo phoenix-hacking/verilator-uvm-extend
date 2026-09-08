@@ -359,14 +359,12 @@ module t;
 
   component_cfg active_cfg_h;
   component_cfg passive_cfg_h;
-  bit numeric_direct_fixed;
-  bit numeric_direct_xfail;
 
   initial begin
     uvm_resource_pool pool;
-    uvm_resource#(int) numeric_high;
-    uvm_resource#(int) numeric_low;
-    uvm_resource#(int) numeric_selected;
+    uvm_resource #(int) numeric_high;
+    uvm_resource #(int) numeric_low;
+    uvm_resource #(int) numeric_selected;
     uvm_resource_types::rsrc_q_t numeric_matches;
     int numeric_value;
     uvm_component top_component;
@@ -386,50 +384,37 @@ module t;
     passive_cfg_h.drive_value = 8'h00;
     passive_cfg_h.expected_value = 8'h3c;
 
-    uvm_config_db#(component_cfg)::set(
-        null, "uvm_test_top.env.active_agent", "cfg", active_cfg_h);
-    uvm_config_db#(component_cfg)::set(
-        null, "uvm_test_top.env.passive_agent", "cfg", passive_cfg_h);
+    uvm_config_db#(component_cfg)::set(null, "uvm_test_top.env.active_agent", "cfg", active_cfg_h);
+    uvm_config_db#(component_cfg)::set(null, "uvm_test_top.env.passive_agent", "cfg",
+                                       passive_cfg_h);
     uvm_config_db#(int)::set(null, "uvm_test_top.env.*", "depth_value", 101);
-    uvm_config_db#(int)::set(
-        null, "uvm_test_top.env.active_agent.monitor", "runtime_value", 401);
-    uvm_config_db#(int)::set(
-        null, "uvm_test_top.env.unmatched.*", "unmatched_only", 999);
+    uvm_config_db#(int)::set(null, "uvm_test_top.env.active_agent.monitor", "runtime_value", 401);
+    uvm_config_db#(int)::set(null, "uvm_test_top.env.unmatched.*", "unmatched_only", 999);
 
-    uvm_resource_db#(int)::set(
-        "uvm_test_top.env.*", "shared_resource", 11);
-    uvm_resource_db#(int)::set_override(
-        "uvm_test_top.env.active_agent.*", "shared_resource", 22);
-    uvm_resource_db#(int)::set(
-        "uvm_test_top.env.active_agent.*", "shared_resource", 33);
-    uvm_resource_db#(int)::set(
-        "uvm_test_top.other.*", "isolated_resource", 77);
+    uvm_resource_db#(int)::set("uvm_test_top.env.*", "shared_resource", 11);
+    uvm_resource_db#(int)::set_override("uvm_test_top.env.active_agent.*", "shared_resource", 22);
+    uvm_resource_db#(int)::set("uvm_test_top.env.active_agent.*", "shared_resource", 33);
+    uvm_resource_db#(int)::set("uvm_test_top.other.*", "isolated_resource", 77);
 
     pool = uvm_resource_pool::get();
-    numeric_low = new("numeric_precedence", "uvm_test_top.env");
+    numeric_low = new("numeric_precedence");
     numeric_low.write(100);
-    pool.set(numeric_low);
-    numeric_low.precedence = 100;
-    numeric_high = new("numeric_precedence", "uvm_test_top.env");
+    pool.set_scope(numeric_low, "uvm_test_top.env");
+    pool.set_precedence(numeric_low, 100);
+    numeric_high = new("numeric_precedence");
     numeric_high.write(200);
-    pool.set(numeric_high);
-    numeric_high.precedence = 200;
-    numeric_matches = pool.lookup_name(
-        "uvm_test_top.env", "numeric_precedence",
-        uvm_resource#(int)::get_type(), 0);
+    pool.set_scope(numeric_high, "uvm_test_top.env");
+    pool.set_precedence(numeric_high, 200);
+    numeric_matches = pool.lookup_name("uvm_test_top.env", "numeric_precedence",
+                                       uvm_resource#(int)::get_type(), 0);
     numeric_selected = uvm_resource#(int)::get_highest_precedence(numeric_matches);
     if (numeric_selected == null || numeric_selected.read() != 200)
       $fatal(1, "portable highest-precedence resource lookup failed");
     if (!uvm_resource_db#(int)::read_by_name(
-            "uvm_test_top.env", "numeric_precedence", numeric_value))
+            "uvm_test_top.env", "numeric_precedence", numeric_value
+        ))
       $fatal(1, "direct numeric resource lookup failed");
-    if (numeric_value == 200)
-      numeric_direct_fixed = 1'b1;
-    else if (numeric_value == 100) begin
-      numeric_direct_xfail = 1'b1;
-      $write("** UVM RESOURCE NUMERIC DIRECT XFAIL (ACCELLERA 2020.3.1) **\n");
-    end else
-      $fatal(1, "direct numeric resource lookup returned an unknown value");
+    `checkd(numeric_value, 200)
 
     uvm_root::get().set_finish_on_completion(1'b0);
     run_test("config_resource_test");
@@ -439,11 +424,8 @@ module t;
       $fatal(1, "could not recover the completed UVM test");
     if (!top_test.check_seen || !top_test.report_seen)
       $fatal(1, "mandatory check/report sentinels did not fire");
-    if (top_test.env.active_cfg != active_cfg_h
-        || top_test.env.passive_cfg != passive_cfg_h)
+    if (top_test.env.active_cfg != active_cfg_h || top_test.env.passive_cfg != passive_cfg_h)
       $fatal(1, "module-to-environment config handle identity was not preserved");
-    if (!(numeric_direct_fixed ^ numeric_direct_xfail))
-      $fatal(1, "numeric direct-path disposition was not exclusive");
 
     report_server = uvm_report_server::get_server();
     `checkd(report_server.get_severity_count(UVM_ERROR), 0)

@@ -16,14 +16,17 @@ test.top_filename = 't/t_uvm_config_resource_component.v'
 if test.have_dev_gcov:
     test.skip("Test suite intended for full dev coverage without needing this test")
 
-test.compile(v_flags2=[
-    "--binary",
-    test.build_jobs_groups,
-    "--CFLAGS -O0",
-    "-Wall",
-    *test.uvm2020_flags(),
-])
+for dpi in (False, True):
+    test.compile(v_flags2=[
+        "--binary",
+        test.build_jobs_groups,
+        "--CFLAGS -O0",
+        "-Wall",
+        *test.uvm2020_flags(dpi=dpi),
+    ],
+                 threads=2 if test.vltmt else 1)
 
-test.execute(all_run_flags=['' if test.verbose else '+UVM_NO_RELNOTES'])
-test.file_grep_count(test.run_log_filename, r'^\*\* UVM CONFIG RESOURCE COMPONENT PASSED \*\*$', 1)
+    log = test.obj_dir + ('/sim_dpi.log' if dpi else '/sim_nodpi.log')
+    test.execute(all_run_flags=['' if test.verbose else '+UVM_NO_RELNOTES'], logfile=log)
+    test.file_grep_count(log, r'^\*\* UVM CONFIG RESOURCE COMPONENT PASSED \*\*$', 1)
 test.passes()
