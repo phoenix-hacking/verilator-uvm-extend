@@ -4,6 +4,34 @@
 
 # UVM 2020 continuation ledger
 
+## Recursive patterns and source protocol checkpoint: 2026-09-08
+
+Compiler source `bf891338a` re-enables the enum-pattern regression by fixing
+recursive type/default keys and protected structure initializer names. Broad
+GCC validation passes 98/98 scenarios and targeted Clang/C++14 passes 14/14;
+full Python lint and distribution checks pass. Separate LCOV/HTML and NUMA
+reruns pass 4/4, leaving two attribute-audit skips open. Historical regression
+rows and formal **7/20, 31/46, 3/21** acceptance totals are unchanged.
+
+The source protocol target at this compiler passes all four APB and extended
+AXI/RAL configurations in 13:50: 12 seeded positives and 22 negatives. Exact
+native and 9,774 source-input hashes stayed unchanged; pinned UVM was clean
+before and after, and stale-artifact checks passed. This supersedes the earlier
+named target's limited AXI transport scope, while retaining that older result.
+
+Full cppcheck completed after AST, Bison and both lexer inputs were generated.
+The final cached run has no missing-input or parsing diagnostics and verifies
+498 input hashes. Its 1,058 unique findings include ten error-level reports in
+unchanged files; the changed-file comparison is 19 versus 19 with none added.
+Two earlier attempts had incomplete generated inputs and are explicitly
+excluded from complete-analysis claims. See
+[evidence](regression-skip-closure-local-2026-09-08.yaml).
+
+Integrate the component, rebuild the combined native compiler, and preserve
+exact-revision validation. CI and fresh complete regression remain open, along
+with broader RAL policies/maps, coverage, assertions, normative requirements,
+static-analysis findings and controlled performance acceptance.
+
 ## AXI acceptance and completed regression: 2026-09-08
 
 AXI RAL and class coverage are committed at `cd75adad3`, with published

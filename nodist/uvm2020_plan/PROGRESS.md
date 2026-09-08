@@ -24,6 +24,27 @@ The accumulated compatibility inventory has 115/115 passing declared
 oracles, including negative tests and bounded XFAIL handling; it does not
 establish full compliance. Direct resource lookup remains a normative blocker.
 
+## Latest validation checkpoint
+
+Compiler source `bf891338a` fixes recursive assignment-pattern type/default
+keys and protected structure initializer names. The strengthened enum fixture
+and neighboring array/structure tests pass **98/98 GCC scenarios** and
+**14/14 Clang/C++14 scenarios**, with full Python lint and distribution checks.
+Isolated LCOV/HTML and NUMA dependencies also pass their four scenarios.
+Six historical skips now have passing reruns; the two attribute audits remain
+open, and the original regression inventory below retains its actual results.
+
+The named pinned-source protocol target also passes **4/4 in 13:50** with
+this compiler: 12 seeded positives and 22 negatives, including the extended
+2,468-transfer AXI/RAL fixture. All 9,774 recorded source inputs and the native
+binary stayed unchanged, and source UVM remained clean before and after.
+Full cppcheck completed with all generated inputs present and no parsing or
+missing-input diagnostics. It retains 1,058 unique findings, including ten
+error-level reports in files identical to the parent. The changed-file
+comparison is 19 versus 19, with none added or removed. This does not close
+broader static-analysis or release requirements. See
+[skip-closure evidence](regression-skip-closure-local-2026-09-08.yaml).
+
 ## New accepted capability
 
 **M06, M11 and M12, with C06, C07 and C08, pass their declared local acceptance.**
@@ -98,7 +119,8 @@ source inputs, native binaries, stage logs and 6,738 status hashes.
 Failures are contributor certification and CMake FST discovery in both modes;
 the CMake cases pass against the combined candidate. Skips cover the disabled
 enum-pattern test, NUMA/LCOV dependencies and missing attribute compilation
-databases. These remain open release work. [Final regression evidence](integration-resume-final-2026-09-08.yaml)
+databases. Six skips have the passing follow-up evidence above; the two attribute
+audits and complete release regression remain open. [Final regression evidence](integration-resume-final-2026-09-08.yaml)
 preserves each disposition. This is not a fresh continuous full-regression pass.
 
 After completion and evidence verification, 78.40 GiB of disposable regression
@@ -121,7 +143,7 @@ intervals, memory limits and dedicated performance CI remain required.
 ## Next technical work
 
 1. Complete current combined-source CI and retain exact-revision evidence.
-1. Resolve the eight remaining skip dispositions, close compiler/runtime
+1. Close the two remaining attribute-audit skips and compiler/runtime
    safety findings and run a fresh full regression at the final combined revision.
 1. Extend RAL policies/maps and the full assertion/monitor profile without
    relaxing their oracles.
