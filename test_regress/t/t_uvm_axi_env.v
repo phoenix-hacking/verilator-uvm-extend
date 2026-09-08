@@ -181,6 +181,8 @@ module t;
     int b_delay;
     int r_delay;
     int ordering;
+    time aw_accepted_at;
+    time w_accepted_at;
     function new(string name = "axi_item");
       super.new(name);
     endfunction
@@ -202,10 +204,20 @@ module t;
     int writes;
     int reads;
     int cancelled;
+    time last_clock;
+    int aligned_requests;
+    int immediate_requests;
     function new(string name, uvm_component parent);
       super.new(name, parent);
     endfunction
+    task tick();
+      @(vif.driver_cb);
+      last_clock = $time;
+    endtask
     task reset_bus();
+      // RAL can request reset between edges. Align before driving reset so
+      // all three asserted cycles are visible through the clocking inputs.
+      if ($time != last_clock) tick();
       vif.driver_cb.reset_n <= 0;
       vif.driver_cb.awvalid <= 0;
       vif.driver_cb.wvalid <= 0;
@@ -213,32 +225,34 @@ module t;
       vif.driver_cb.bready <= 0;
       vif.driver_cb.rready <= 0;
       if ($test$plusargs("AXI_CORRUPT_RESET")) vif.driver_cb.awvalid <= 1;
-      repeat (3) @(vif.driver_cb);
+      repeat (3) tick();
       vif.driver_cb.reset_n <= 1;
-      @(vif.driver_cb);
+      tick();
     endtask
     task send_aw(axi_item req);
-      repeat (req.aw_delay) @(vif.driver_cb);
+      repeat (req.aw_delay) tick();
       vif.driver_cb.awaddr <= req.addr;
       vif.driver_cb.awprot <= 0;
       vif.driver_cb.awvalid <= 1;
-      do @(vif.driver_cb); while (!vif.driver_cb.awready);
+      do tick(); while (!vif.driver_cb.awready);
+      req.aw_accepted_at = $time;
       vif.driver_cb.awvalid <= 0;
     endtask
     task send_w(axi_item req);
-      repeat (req.w_delay) @(vif.driver_cb);
+      repeat (req.w_delay) tick();
       vif.driver_cb.wdata <= req.data;
       vif.driver_cb.wstrb <= req.strb;
       vif.driver_cb.wvalid <= 1;
-      do @(vif.driver_cb); while (!vif.driver_cb.wready);
+      do tick(); while (!vif.driver_cb.wready);
+      req.w_accepted_at = $time;
       vif.driver_cb.wvalid <= 0;
     endtask
     task send_ar(axi_item req);
-      repeat (req.ar_delay) @(vif.driver_cb);
+      repeat (req.ar_delay) tick();
       vif.driver_cb.araddr <= req.read_addr;
       vif.driver_cb.arprot <= 0;
       vif.driver_cb.arvalid <= 1;
-      do @(vif.driver_cb); while (!vif.driver_cb.arready);
+      do tick(); while (!vif.driver_cb.arready);
       vif.driver_cb.arvalid <= 0;
     endtask
     task write_transfer(axi_item req, axi_item rsp);
@@ -246,45 +260,68 @@ module t;
         send_aw(req);
         send_w(req);
       join
-      do @(vif.driver_cb); while (!vif.driver_cb.bvalid);
-      repeat (req.b_delay) @(vif.driver_cb);
+      do tick(); while (!vif.driver_cb.bvalid);
+      repeat (req.b_delay) tick();
       vif.driver_cb.bready <= 1;
-      @(vif.driver_cb);
+      tick();
       rsp.response = vif.driver_cb.bresp;
       if (!vif.driver_cb.bvalid) `uvm_fatal("AXI_DRIVER", "write response was withdrawn")
       vif.driver_cb.bready <= 0;
       writes++;
-      $display("AXI_TRACE W %0h %0h %0h %0d", req.addr, req.data, req.strb, rsp.response);
+      rsp.ordering = req.aw_accepted_at < req.w_accepted_at ? 0
+                     : (req.aw_accepted_at > req.w_accepted_at ? 1 : 2);
+      $display("AXI_TRACE W %0h %0h %0h %0d %0d", req.addr, req.data, req.strb, rsp.response,
+               rsp.ordering);
     endtask
     task read_transfer(axi_item req, axi_item rsp);
       send_ar(req);
-      do @(vif.driver_cb); while (!vif.driver_cb.rvalid);
-      repeat (req.r_delay) @(vif.driver_cb);
+      do tick(); while (!vif.driver_cb.rvalid);
+      repeat (req.r_delay) tick();
       vif.driver_cb.rready <= 1;
-      @(vif.driver_cb);
+      tick();
       rsp.read_response = vif.driver_cb.rresp;
       rsp.read_data = vif.driver_cb.rdata;
+      if ($test$plusargs("AXI_CORRUPT_RAL_RESPONSE")) rsp.read_data ^= 32'b1;
+      // RAL requests use one direction. Normalize their response just like
+      // monitor transactions; combined transport requests retain both results.
+      if (!req.wr) begin
+        rsp.data = rsp.read_data;
+        rsp.response = rsp.read_response;
+      end
       if (!vif.driver_cb.rvalid) `uvm_fatal("AXI_DRIVER", "read response was withdrawn")
       vif.driver_cb.rready <= 0;
       reads++;
-      $display("AXI_TRACE R %0h %0h 0 %0d", req.read_addr, rsp.read_data, rsp.read_response);
+      $display("AXI_TRACE R %0h %0h 0 %0d 0", req.read_addr, rsp.read_data, rsp.read_response);
     endtask
     virtual task run_phase(uvm_phase phase);
-      @(vif.driver_cb);
+      tick();
       reset_bus();
       forever begin
         axi_item req;
         axi_item rsp;
         seq_item_port.get_next_item(req);
+        // A clocking output issued between edges is applied at the next
+        // clocking event. Align before asserting VALID so READY at that event
+        // cannot be mistaken for a transfer that the DUT has not sampled.
+        if ($time != last_clock) begin
+          tick();
+          aligned_requests++;
+        end
+        else immediate_requests++;
         rsp = axi_item::type_id::create("response");
         rsp.set_id_info(req);
+        rsp.wr = req.wr;
+        rsp.rd = req.rd;
+        rsp.addr = req.wr ? req.addr : req.read_addr;
+        rsp.data = req.data;
+        rsp.strb = req.strb;
         if (req.cancel) begin
           // AW is accepted without W, while a separate read waits for RREADY.
           fork
             send_aw(req);
             send_ar(req);
           join
-          do @(vif.driver_cb); while (!vif.driver_cb.rvalid);
+          do tick(); while (!vif.driver_cb.rvalid);
           if (vif.driver_cb.bvalid)
             `uvm_fatal("AXI_CANCEL", "write response preceded its write data")
           reset_bus();
@@ -478,6 +515,24 @@ module t;
     endfunction
   endclass
 
+  class axi_coverage extends uvm_subscriber #(axi_item);
+    `uvm_component_utils(axi_coverage)
+    covergroup transfers with function sample (bit wr, bit err, bit [3:0] strobes, int order);
+      direction: coverpoint wr;
+      response: coverpoint err;
+      byte_enables: coverpoint strobes iff (wr) {bins masks[] = {[0 : 15]};}
+      channel_order: coverpoint order iff (wr) {bins orders[] = {[0 : 2]};}
+      outcome: cross direction, response;
+    endgroup
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+      transfers = new;
+    endfunction
+    virtual function void write(axi_item item);
+      if (!item.reset) transfers.sample(item.wr, item.response != 0, item.strb, item.ordering);
+    endfunction
+  endclass
+
   class axi_agent extends uvm_agent;
     `uvm_component_utils(axi_agent)
     axi_config cfg;
@@ -563,12 +618,16 @@ module t;
     endtask
   endclass
 
+  `include "t_uvm_axi_ral.vh"
+
   class axi_test extends uvm_test;
     `uvm_component_utils(axi_test)
     axi_agent active_agent;
     axi_agent passive_agent;
     axi_scoreboard active_scoreboard;
     axi_scoreboard passive_scoreboard;
+    axi_coverage coverage;
+    axi_ral_helper ral;
     axi_sequence sequence_h;
     function new(string name, uvm_component parent);
       super.new(name, parent);
@@ -579,16 +638,21 @@ module t;
       passive_agent = axi_agent::type_id::create("passive_agent", this);
       active_scoreboard = axi_scoreboard::type_id::create("active_scoreboard", this);
       passive_scoreboard = axi_scoreboard::type_id::create("passive_scoreboard", this);
+      coverage = axi_coverage::type_id::create("coverage", this);
+      ral = axi_ral_helper::type_id::create("ral", this);
     endfunction
     virtual function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
       active_agent.monitor.observed.connect(active_scoreboard.analysis_export);
       passive_agent.monitor.observed.connect(passive_scoreboard.analysis_export);
+      passive_agent.monitor.observed.connect(coverage.analysis_export);
+      ral.attach(active_agent, passive_agent, active_scoreboard, passive_scoreboard);
     endfunction
     virtual task run_phase(uvm_phase phase);
       phase.raise_objection(this);
       sequence_h = axi_sequence::type_id::create("sequence_h");
       sequence_h.start(active_agent.sequencer);
+      ral.run_checks();
       repeat (3) @(active_agent.cfg.monitor_vif.monitor_cb);
       phase.drop_objection(this);
     endtask
@@ -597,21 +661,31 @@ module t;
       if (passive_agent.driver != null || passive_agent.sequencer != null)
         `uvm_fatal("AXI_PASSIVE", "passive agent contains active components")
       if (sequence_h.writes != 50 || sequence_h.reads != 146
-          || active_agent.driver.writes != 50 || active_agent.driver.reads != 146
-          || active_agent.monitor.writes != 50 || active_agent.monitor.reads != 146
-          || passive_agent.monitor.writes != 50 || passive_agent.monitor.reads != 146
-          || active_scoreboard.writes != 50 || active_scoreboard.reads != 146
-          || passive_scoreboard.writes != 50 || passive_scoreboard.reads != 146)
+          || ral.writes != 1152 || ral.reads != 1120 || ral.completed != 2272
+          || active_agent.driver.writes != 1202 || active_agent.driver.reads != 1266
+          || active_agent.monitor.writes != 1202 || active_agent.monitor.reads != 1266
+          || passive_agent.monitor.writes != 1202 || passive_agent.monitor.reads != 1266
+          || active_scoreboard.writes != 1202 || active_scoreboard.reads != 1266
+          || passive_scoreboard.writes != 1202 || passive_scoreboard.reads != 1266)
         `uvm_fatal("AXI_COUNT",
                    "driver, monitors and scoreboards did not complete every transaction")
       if (sequence_h.cancelled != 1 || active_agent.driver.cancelled != 1
           || active_agent.monitor.cancelled_aw != 1 || active_agent.monitor.cancelled_read != 1
           || passive_agent.monitor.cancelled_aw != 1 || passive_agent.monitor.cancelled_read != 1
-          || active_scoreboard.resets != 2 || passive_scoreboard.resets != 2)
+          || active_scoreboard.resets != 5 || passive_scoreboard.resets != 5)
         `uvm_fatal("AXI_RESET", "reset did not discard partial AW and outstanding R transactions")
-      if (active_agent.monitor.reset_cycles < 6
+      if (active_agent.monitor.reset_cycles < 15
           || active_agent.monitor.reset_cycles != passive_agent.monitor.reset_cycles)
-        `uvm_fatal("AXI_RESET", "both monitors must check every cycle of both reset intervals")
+        `uvm_fatal("AXI_RESET", $sformatf(
+                   "reset cycle counts active=%0d passive=%0d expected at least 15 each",
+                   active_agent.monitor.reset_cycles,
+                   passive_agent.monitor.reset_cycles
+                   ))
+      if (active_agent.driver.aligned_requests == 0 || active_agent.driver.immediate_requests == 0)
+        `uvm_fatal("AXI_TIMING", "off-edge and immediate requests were not exercised")
+      if (coverage.transfers.get_inst_coverage() != 100.0)
+        `uvm_fatal("AXI_COVERAGE",
+                   "direction, response, byte masks, channel order or cross bins are missing")
       if (active_scoreboard.errors != 4 || passive_scoreboard.errors != 4
           || active_scoreboard.digest != passive_scoreboard.digest)
         `uvm_fatal("AXI_PASSIVE", "active/passive observations or error counts differ")
@@ -628,7 +702,7 @@ module t;
           || active_agent.monitor.overlap_cycles != passive_agent.monitor.overlap_cycles)
         `uvm_fatal("AXI_OVERLAP", "reads and writes did not overlap")
       $display(
-          "AXI_SENTINEL reads=146 writes=50 errors=4 resets=2 cancel_aw=1 cancel_r=1 orders=%0d,%0d,%0d stalls=%0d,%0d,%0d,%0d,%0d overlap=%0d",
+          "AXI_SENTINEL reads=1266 writes=1202 errors=4 resets=5 cancel_aw=1 cancel_r=1 orders=%0d,%0d,%0d stalls=%0d,%0d,%0d,%0d,%0d overlap=%0d",
           active_agent.monitor.order_counts[0], active_agent.monitor.order_counts[1],
           active_agent.monitor.order_counts[2], active_agent.monitor.stalled[0],
           active_agent.monitor.stalled[1], active_agent.monitor.stalled[2],
@@ -658,7 +732,7 @@ module t;
     $finish;
   end
   initial begin
-    #100000;
+    #1000000;
     $fatal(1, "AXI environment timed out");
   end
 endmodule
