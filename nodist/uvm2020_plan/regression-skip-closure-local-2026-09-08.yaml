@@ -1,0 +1,258 @@
+---
+# DESCRIPTION: Verilator: Regression skip closure and recursive pattern validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+evidence_id: LOCAL-REGRESSION-SKIP-CLOSURE-20260908
+date: '2026-09-08'
+observed_utc: '2026-09-08T05:37:30.100168+00:00'
+status: behavioral_validation_passed_static_analysis_pending
+source_revision: bf891338a078581875b719dbc99f81bed484d12d
+base_revision: 471351e7b0389798aba8d277a0c76229c74c7cbd
+branch: codex/regression-skip-closure
+changes:
+  - Recursively apply type/default assignment-pattern keys through arrays and packed/unpacked structures, preserving member/index precedence and matching aggregate defaults.
+  - Recognize array and packed-vector type keys; retain enum identity while resolving typedefs.
+  - Use protected structure member names in generated designated initializers.
+  - Re-enable the enum-pattern test, add runtime-varying nonzero values and mixed fields, and add a protected-ID variant.
+standard_basis:
+  edition: IEEE 1800-2017
+  clauses: [10.9.1, 10.9.2]
+  local_source: /home/holden/verilator-work/uvm-class-coverage-evidence/1800-2017.pdf
+native_compiler:
+  path: /home/holden/verilator-work/regression-skip-closure/bin/verilator_bin
+  sha256: 45fca9766fba609bb12af21107cafeea16dc9ca56b9064f58e6db971aa4eb23a
+  retained_path: /home/holden/verilator-work/regression-skip-closure-evidence/verilator_bin-45fca9766fba
+  build: Optimized GCC 13.4.0; --enable-ccwarn --enable-longtests; warnings are errors
+  build_exit_code: 0
+  build_log: /home/holden/verilator-work/skip-closure-opt-protect-build.log
+  build_log_sha256: cd48a966818330d3c64fca177079729ff494203eb5bd43f33b1ddacae11a3215
+  source_hashes:
+    src/V3Width.cpp: ae3b020d9a457dd3ca34189ee0e3fa025cc16d304cba51255db1ba182c33e669
+    src/V3EmitCFunc.h: 616688cb3fd3f35f58b848ed34e172420c9f0e576ad5550af75cebe57441bd3f
+parent_evidence:
+  original_fixture_gcc13: 2/2 pass; skip-closure-enum-gcc.log
+  original_fixture_clang18: 0 pass/2 fail, exit 10; skip-closure-enum-clang18.log. Scalar brace elision in an aggregate designated initializer triggers -Wmissing-braces/-Wc99-designator under -Werror.
+  strengthened_fixture: The unchanged parent rejects valid array and packed-vector type keys, exit 10; skip-closure-enum-parent-final.log.
+  retained_manifest: /home/holden/verilator-work/regression-skip-closure-evidence/parent-enum/manifest.json
+  development_failures:
+    - An early fixture used direct string/chandle keys outside simple_type grammar; changed to typedef keys. That parse failure is not semantic parent proof.
+    - The initial candidate timed out because the harness did not recognize input clk on the module declaration line; changed to the standard separate input line.
+    - Protected-ID compilation exposed original member names in designated initializers; the emitter fix uses the same protected names as member declarations.
+validation:
+  gcc13_core:
+    pass: 4
+    fail: 0
+    duration: 0:45
+    log: /home/holden/verilator-work/skip-closure-enum-final-gcc.log
+  gcc13_broad:
+    drivers: 57
+    pass: 98
+    fail: 0
+    skip: 0
+    duration: '5:47'
+  clang18_cxx14:
+    drivers: 7
+    pass: 14
+    fail: 0
+    skip: 0
+    duration: '1:17'
+  stages:
+    patterns-gcc13:
+      command:
+        - /home/holden/verilator-work/toolchain/bin/python
+        - driver.py
+        - --jobs=1
+        - --driver-build-jobs=1
+        - --quiet
+        - --vlt
+        - --vltmt
+        - --driver-clean-before
+        - --obj-suffix=-patterns-gcc13
+        - t/t_array_pattern_2d.py
+        - t/t_array_pattern_bad.py
+        - t/t_array_pattern_bad2.py
+        - t/t_array_pattern_bad3.py
+        - t/t_array_pattern_concat.py
+        - t/t_array_pattern_default_recursive.py
+        - t/t_array_pattern_enum.py
+        - t/t_array_pattern_enum_prot.py
+        - t/t_array_pattern_packed.py
+        - t/t_array_pattern_scalar_bad.py
+        - t/t_array_pattern_side_effect.py
+        - t/t_array_pattern_unpacked.py
+        - t/t_struct_anon.py
+        - t/t_struct_array.py
+        - t/t_struct_array_assignment.py
+        - t/t_struct_array_assignment_delayed.py
+        - t/t_struct_assign.py
+        - t/t_struct_circ_bad.py
+        - t/t_struct_clk.py
+        - t/t_struct_cons_cast.py
+        - t/t_struct_contents.py
+        - t/t_struct_contents_bad.py
+        - t/t_struct_genfor.py
+        - t/t_struct_init.py
+        - t/t_struct_init_bad.py
+        - t/t_struct_init_trace.py
+        - t/t_struct_initial_assign.py
+        - t/t_struct_initial_assign_public.py
+        - t/t_struct_literal_param.py
+        - t/t_struct_negate.py
+        - t/t_struct_nest.py
+        - t/t_struct_nest_uarray.py
+        - t/t_struct_notfound_bad.py
+        - t/t_struct_packed_init_bad.py
+        - t/t_struct_packed_sysfunct.py
+        - t/t_struct_packed_value_list.py
+        - t/t_struct_packed_write_read.py
+        - t/t_struct_param.py
+        - t/t_struct_param_overflow.py
+        - t/t_struct_pat.py
+        - t/t_struct_pat_toomany_bad.py
+        - t/t_struct_pat_width.py
+        - t/t_struct_port.py
+        - t/t_struct_portsel.py
+        - t/t_struct_type_bad.py
+        - t/t_struct_unaligned.py
+        - t/t_struct_unpacked.py
+        - t/t_struct_unpacked_array.py
+        - t/t_struct_unpacked_clean.py
+        - t/t_struct_unpacked_init.py
+        - t/t_struct_unpacked_init_param.py
+        - t/t_struct_unpacked_param.py
+        - t/t_struct_unused.py
+        - t/t_struct_with_param_class.py
+        - t/t_structu_dataType_assignment.py
+        - t/t_structu_dataType_assignment_bad.py
+        - t/t_structu_wide.py
+      cwd: /home/holden/verilator-work/regression-skip-closure/test_regress
+      started_utc: '2026-09-08T05:16:32.609649+00:00'
+      log: /home/holden/verilator-work/skip-closure-patterns-gcc13.log
+      environment:
+        CC: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-cc
+        CXX: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-c++
+        CPPFLAGS:
+        CXXFLAGS: ''
+        USER_CPPFLAGS: -I/home/holden/verilator-work/toolchain/include
+        USER_LDFLAGS: -L/home/holden/verilator-work/toolchain/lib
+        VERILATOR_ROOT: /home/holden/verilator-work/regression-skip-closure
+        VERILATOR_BIN: /home/holden/verilator-work/regression-skip-closure/bin/verilator_bin
+      pid: 1472489
+      exit_code: 0
+      finished_utc: '2026-09-08T05:22:20.580625+00:00'
+      sha256: 7f2485d111c4ff5d53a7bb4dfa4cd50e9c452a7d5e5d00ab5f42b7415e4b4832
+    patterns-clang18-configure:
+      command: [./configure, --enable-ccwarn, --enable-longtests]
+      cwd: /home/holden/verilator-work/regression-skip-closure
+      started_utc: '2026-09-08T05:22:21.277042+00:00'
+      log: /home/holden/verilator-work/skip-closure-patterns-clang18-configure.log
+      environment:
+        CC: /home/holden/verilator-work/clang18/bin/clang --gcc-install-dir=/home/holden/verilator-work/toolchain/lib/gcc/x86_64-conda-linux-gnu/13.4.0
+        CXX: /home/holden/verilator-work/clang18/bin/clang++ --gcc-install-dir=/home/holden/verilator-work/toolchain/lib/gcc/x86_64-conda-linux-gnu/13.4.0
+        CPPFLAGS: -I/home/holden/verilator-work/toolchain/include
+        CXXFLAGS: ''
+        USER_CPPFLAGS: -I/home/holden/verilator-work/toolchain/include
+        USER_LDFLAGS: -L/home/holden/verilator-work/toolchain/lib
+        VERILATOR_ROOT: /home/holden/verilator-work/regression-skip-closure
+        VERILATOR_BIN: /home/holden/verilator-work/regression-skip-closure/bin/verilator_bin
+      pid: 1479379
+      exit_code: 0
+      finished_utc: '2026-09-08T05:22:34.339560+00:00'
+      sha256: ba41d6c547b8f59484fd50375a48a75ae6852d2a5d659ce4dcbdc96fd818eac6
+    patterns-clang18-cxx14:
+      command:
+        - /home/holden/verilator-work/toolchain/bin/python
+        - driver.py
+        - --jobs=1
+        - --driver-build-jobs=1
+        - --quiet
+        - --vlt
+        - --vltmt
+        - --driver-clean-before
+        - --obj-suffix=-patterns-clang18-cxx14
+        - t/t_array_pattern_enum.py
+        - t/t_array_pattern_enum_prot.py
+        - t/t_array_pattern_default_recursive.py
+        - t/t_array_pattern_packed.py
+        - t/t_struct_pat.py
+        - t/t_struct_init.py
+        - t/t_struct_unpacked_param.py
+      cwd: /home/holden/verilator-work/regression-skip-closure/test_regress
+      started_utc: '2026-09-08T05:22:35.356570+00:00'
+      log: /home/holden/verilator-work/skip-closure-patterns-clang18-cxx14.log
+      environment:
+        CC: /home/holden/verilator-work/clang18/bin/clang --gcc-install-dir=/home/holden/verilator-work/toolchain/lib/gcc/x86_64-conda-linux-gnu/13.4.0
+        CXX: /home/holden/verilator-work/clang18/bin/clang++ --gcc-install-dir=/home/holden/verilator-work/toolchain/lib/gcc/x86_64-conda-linux-gnu/13.4.0
+        CPPFLAGS:
+        CXXFLAGS: ''
+        USER_CPPFLAGS: -I/home/holden/verilator-work/toolchain/include -std=c++14
+        USER_LDFLAGS: -L/home/holden/verilator-work/toolchain/lib
+        VERILATOR_ROOT: /home/holden/verilator-work/regression-skip-closure
+        VERILATOR_BIN: /home/holden/verilator-work/regression-skip-closure/bin/verilator_bin
+      pid: 1481268
+      exit_code: 0
+      finished_utc: '2026-09-08T05:23:52.863706+00:00'
+      sha256: 9ab8e800e6341dbff3300eed43a602940697885af08f26ea250bb2b57efa96e2
+  unchanged_inputs: true
+  verified_input_files: 10068
+  input_manifest: /home/holden/verilator-work/regression-skip-closure-evidence/inputs.json
+  input_manifest_sha256: d242e4ba601d979eab40f6b2c11299c2a9270f85ab6e1d725dcbc9cfc35324da
+  result_manifest: /home/holden/verilator-work/regression-skip-closure-evidence/results.json
+  result_manifest_sha256: c691cc56949f329c491735ee7bb99ea892f30d8da4960cf2fdf9c56fff02b94b
+  python_lint:
+    command: make lint-py
+    exit_code: 0
+    log: /home/holden/verilator-work/skip-closure-lint-py.log
+  distribution:
+    pass: 3
+    fail: 0
+    tests: [t_dist_uvm_goals, t_dist_copyright, t_dist_whitespace]
+    log: /home/holden/verilator-work/skip-closure-distribution.log
+  formatting: [clang-format-18 on changed compiler files, yapf on both drivers, nodist/verilog_format on the fixture]
+dependency_skip_reruns:
+  pass: 4
+  fail: 0
+  skip: 0
+  duration: 0:17
+  tests: [t_cover_line_cc in vlt/vltmt, t_benchmark_mux4k_onecpu in vlt/vltmt]
+  native_sha256: e3b68fdf0319ddfd778edb7bf7a57cb70c8d84b6b0372426848da3f04ec26d48
+  model_compiler: Clang 18
+  tools:
+    lcov: 2.5-0
+    genhtml: 2.5-0
+    numactl: 2.0.18
+  isolated_prefix: /home/holden/verilator-work/regression-extras
+  utility_path: /home/holden/verilator-work/regression-extras-tools
+  checks: [Exact annotated-source and LCOV goldens, Actual HTML generation, Actual memory-node0 and CPU0 binding]
+  retained_manifest: /home/holden/verilator-work/regression-skip-closure-evidence/extras/manifest.json
+  version_parser: LCOV 2.5 does not reproduce a parser defect; no version-parser change was made.
+static_analysis:
+  incomplete_attempt:
+    status: stopped
+    exit_code: 2
+    log: /home/holden/verilator-work/skip-closure-cppcheck.log
+    reason: Generated headers were absent from obj_dbg, the default cppcheck include path. Missing headers and a preprocessor error made this attempt incomplete.
+  corrected_full_attempt:
+    status: running
+    command: make cppcheck CPPCHECK_JOBS=2 CPPCHECK_CACHE=/home/holden/verilator-work/regression-skip-closure-evidence/cppcheck-generated-cache
+    log: /home/holden/verilator-work/skip-closure-cppcheck-generated.log
+    prerequisite: make -C src/obj_dbg -f ../Makefile_obj serial completed successfully
+  parent_comparison:
+    status: completed
+    exit_code: 0
+    scope: [src/V3Width.cpp, src/V3EmitCFunc.cpp, src/V3EmitCImp.cpp]
+    log: /home/holden/verilator-work/skip-closure-cppcheck-parent.log
+  claim_boundary: Corrected full cppcheck completion and changed-file diagnostic comparison remain pending.
+space_recovery:
+  completed_build_files_removed: 715
+  allocated_bytes_released: 1891053568
+  retained_artifacts_verified_before_and_after: 662
+  manifest: /home/holden/verilator-work/regression-skip-closure-evidence/completed-pattern-build-cleanup.json
+  additional_cleanup: Removed isolated extras download archives and index cache, then verified installed utilities.
+claim_boundaries:
+  - Six historical skips have separate passing reruns. The original segmented 6727-pass/8-skip/3-failure inventory remains unchanged.
+  - Two attribute-audit skips still need complete compilation databases and actual source/runtime audit closure.
+  - No milestone, gate, program criterion, full UVM compliance or performance acceptance is awarded.
+  - Current-head CI, combined UVM protocol reruns, full regression and corrected full cppcheck remain separate requirements.
