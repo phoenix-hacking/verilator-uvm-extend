@@ -5578,7 +5578,8 @@ class WidthVisitor final : public VNVisitor {
                         } else if (AstNodeDType* nodedtypep = VN_CAST(patp->keyp(), NodeDType)) {
                             // data_type: default_value
                             userIterate(nodedtypep, WidthVP{SELF, BOTH}.p());
-                            const string dtype = nodedtypep->dtypep()->prettyDTypeName(true);
+                            const string dtype
+                                = nodedtypep->dtypep()->skipRefToEnump()->prettyDTypeName(true);
                             // Override stored default_value
                             dtypemap[dtype] = patp;
                         } else {
@@ -5611,16 +5612,10 @@ class WidthVisitor final : public VNVisitor {
                  memp = VN_AS(memp->nextp(), MemberDType)) {
                 const auto it = patmap.find(memp);
                 if (it == patmap.end()) {  // default or default_type assignment
-                    if (AstNodeUOrStructDType* const memp_nested_vdtypep
-                        = VN_CAST(memp->virtRefDTypep(), NodeUOrStructDType)) {
-                        newp = nestedvalueConcat_patternUOrStruct(memp_nested_vdtypep, defaultp,
-                                                                  newp, nodep, dtypemap);
-                    } else {
-                        AstPatMember* const patp = defaultPatp_patternUOrStruct(
-                            nodep, memp, vdtypep, defaultp, dtypemap);
-                        newp = valueConcat_patternUOrStruct(patp, newp, memp, nodep);
-                        if (patp) VL_DO_DANGLING(pushDeletep(patp), patp);
-                    }
+                    AstPatMember* const patp
+                        = defaultPatp_patternUOrStruct(nodep, memp, vdtypep, defaultp, dtypemap);
+                    newp = valueConcat_patternUOrStruct(patp, newp, memp, nodep);
+                    if (patp) VL_DO_DANGLING(pushDeletep(patp), patp);
                 } else {  // member assignment
                     newp = valueConcat_patternUOrStruct(it->second, newp, memp, nodep);
                 }
@@ -5633,10 +5628,11 @@ class WidthVisitor final : public VNVisitor {
                 AstPatMember* patp = nullptr;
                 if (it == patmap.end()) {  // Default or default_type assignment
                     patp = defaultPatp_patternUOrStruct(nodep, memp, vdtypep, defaultp, dtypemap);
-                    pushDeletep(patp);
+                    if (patp) pushDeletep(patp);
                 } else {
                     patp = it->second;  // Member assignment
                 }
+                if (!patp) continue;  // Missing member already diagnosed
                 patp->dtypep(memp);
                 AstNodeExpr* const valuep = patternMemberValueIterate(patp);
                 AstConsPackMember* const cpmp
@@ -5652,39 +5648,12 @@ class WidthVisitor final : public VNVisitor {
         }
     }
 
-    AstNodeExpr* nestedvalueConcat_patternUOrStruct(AstNodeUOrStructDType* memp_vdtypep,
-                                                    AstPatMember* defaultp, AstNodeExpr* newp,
-                                                    AstPattern* nodep, const DTypeMap& dtypemap) {
-        for (AstMemberDType* memp_nested = memp_vdtypep->membersp(); memp_nested;
-             memp_nested = VN_AS(memp_nested->nextp(), MemberDType)) {
-            if (AstNodeUOrStructDType* const memp_multinested_vdtypep
-                = VN_CAST(memp_nested->virtRefDTypep(), NodeUOrStructDType)) {
-                // When unpacked struct/union is supported this if will need some additional
-                // conditions
-                newp = nestedvalueConcat_patternUOrStruct(memp_multinested_vdtypep, defaultp, newp,
-                                                          nodep, dtypemap);
-            } else {
-                AstPatMember* const patp = defaultPatp_patternUOrStruct(
-                    nodep, memp_nested, memp_vdtypep, defaultp, dtypemap);
-                newp = valueConcat_patternUOrStruct(patp, newp, memp_nested, nodep);
-                if (patp) VL_DO_DANGLING(pushDeletep(patp), patp);
-            }
-        }
-        return newp;
-    }
-
     AstPatMember* defaultPatp_patternUOrStruct(AstPattern* nodep, AstMemberDType* memp,
                                                AstNodeUOrStructDType* memp_vdtypep,
                                                AstPatMember* defaultp, const DTypeMap& dtypemap) {
-        const string memp_DType = memp->virtRefDTypep()->prettyDTypeName(true);
-        const auto it = dtypemap.find(memp_DType);
-        if (it != dtypemap.end()) {
-            // default_value for data_type
-            return it->second->cloneTree(false);
-        }
-        if (defaultp) {
-            // default_value for any unmatched member yet
-            return defaultp->cloneTree(false);
+        if (AstPatMember* const patp
+            = defaultPatp_pattern(nodep, memp->virtRefDTypep(), defaultp, dtypemap)) {
+            return patp;
         }
         if (memp->valuep()) {
             return new AstPatMember{nodep->fileline(),
@@ -5719,36 +5688,40 @@ class WidthVisitor final : public VNVisitor {
         return newp;
     }
 
-    AstPatMember* defaultPatp_patternArray(AstPatMember* defaultp, AstNodeDType* elemDTypep) {
-        AstNodeExpr* const valuep = defaultp->lhssp()->cloneTree(false);
-        AstNodeDType* const elemDTypeSkipRefp = elemDTypep->skipRefp();
+    AstPatMember* defaultPatp_pattern(AstPattern* nodep, AstNodeDType* elemDTypep,
+                                      AstPatMember* defaultp, const DTypeMap& dtypemap) {
+        AstNodeDType* const dtypep = elemDTypep->skipRefToEnump();
+        const auto it = dtypemap.find(dtypep->prettyDTypeName(true));
+        if (it != dtypemap.end()) return it->second->cloneTree(false);
 
-        if (!VN_IS(elemDTypeSkipRefp, UnpackArrayDType)) {
-            VL_DO_DANGLING(pushDeletep(valuep), valuep);
-            return defaultp->cloneTree(false);
+        // IEEE 1800-2017 10.9.1/10.9.2: Apply unmatched type/default keys recursively
+        // through arrays and structures, preserving a default of the aggregate's own type.
+        if (!VN_IS(dtypep, NodeArrayDType) && !VN_IS(dtypep, StructDType)) {
+            return defaultp ? defaultp->cloneTree(false) : nullptr;
         }
-        if (VN_IS(valuep, Pattern)) {
-            VL_DO_DANGLING(pushDeletep(valuep), valuep);
-            return defaultp->cloneTree(false);
+        if (defaultp) {
+            AstPatMember* const patp = defaultp->cloneTree(false);
+            if (VN_IS(patp->lhssp(), Pattern)) return patp;
+            userIterateAndNext(patp->lhssp(), WidthVP{SELF, BOTH}.p());
+            const AstNodeDType* const valueDTypep = patp->lhssp()->dtypep();
+            if (valueDTypep && dtypep->similarDType(valueDTypep->skipRefToEnump())) return patp;
+            VL_DO_DANGLING(pushDeletep(patp), patp);
         }
-        if (!valuep->dtypep()) userIterate(valuep, WidthVP{SELF, BOTH}.p());
-        if (valuep->dtypep()
-            && AstNode::computeCastable(valuep->dtypep()->skipRefp(), elemDTypeSkipRefp, nullptr)
-                   .isAssignable()) {
-            VL_DO_DANGLING(pushDeletep(valuep), valuep);
-            return defaultp->cloneTree(false);
-        }
+        if (!defaultp && dtypemap.empty()) return nullptr;
 
-        AstPatMember* const nestedDefaultp
-            = new AstPatMember{defaultp->fileline(), valuep, nullptr, nullptr};
-        nestedDefaultp->isDefault(true);
-        AstPattern* const recursivePatternp = new AstPattern{defaultp->fileline(), nestedDefaultp};
-        return new AstPatMember{defaultp->fileline(), recursivePatternp, nullptr, nullptr};
+        AstPatMember* membersp = nullptr;
+        for (const DTypeMap::value_type& entry : dtypemap) {
+            membersp = AstNode::addNextNull(membersp, entry.second->cloneTree(false));
+        }
+        if (defaultp) membersp = AstNode::addNextNull(membersp, defaultp->cloneTree(false));
+        AstPattern* const recursivep = new AstPattern{nodep->fileline(), membersp};
+        return new AstPatMember{nodep->fileline(), recursivep, nullptr, nullptr};
     }
 
     void patternArray(AstPattern* nodep, AstNodeArrayDType* arrayDtp, AstPatMember* defaultp) {
         const VNumRange range = arrayDtp->declRange();
-        PatVecMap patmap = patVectorMap(nodep, range);
+        DTypeMap dtypemap;
+        PatVecMap patmap = patVectorMap(nodep, range, dtypemap);
         UINFO(9, "ent " << range.left() << " to " << range.right());
         AstNode* newp = nullptr;
         bool allConstant = true;
@@ -5759,10 +5732,9 @@ class WidthVisitor final : public VNVisitor {
             AstPatMember* patp = nullptr;
             const auto it = patmap.find(ent);
             if (it == patmap.end()) {
-                if (defaultp) {
-                    newpatp = defaultPatp_patternArray(defaultp, arrayDtp->subDTypep());
-                    patp = newpatp;
-                } else if (!(VN_IS(arrayDtp, UnpackArrayDType) && !allConstant && isConcat)) {
+                newpatp = defaultPatp_pattern(nodep, arrayDtp->subDTypep(), defaultp, dtypemap);
+                patp = newpatp;
+                if (!patp && !(VN_IS(arrayDtp, UnpackArrayDType) && !allConstant && isConcat)) {
                     // If arrayDtp is an unpacked array and item is not constant,
                     // the number of elements cannot be determined here as the dtype of each
                     // element is not set yet. V3Slice checks for such cases.
@@ -5943,7 +5915,10 @@ class WidthVisitor final : public VNVisitor {
     void patternBasic(AstPattern* nodep, AstNodeDType* vdtypep, AstPatMember* defaultp) {
         const AstBasicDType* bdtypep = VN_AS(vdtypep, BasicDType);
         const VNumRange range = bdtypep->declRange();
-        PatVecMap patmap = patVectorMap(nodep, range);
+        AstNodeDType* const elemDTypep
+            = bdtypep->isFourstate() ? nodep->findLogicDType() : nodep->findBitDType();
+        DTypeMap dtypemap;
+        PatVecMap patmap = patVectorMap(nodep, range, dtypemap);
         UINFO(9, "ent " << range.hi() << " to " << range.lo());
         AstNodeExpr* newp = nullptr;
         for (int ent = range.hi(); ent >= range.lo(); --ent) {
@@ -5951,10 +5926,9 @@ class WidthVisitor final : public VNVisitor {
             AstPatMember* patp = nullptr;
             const auto it = patmap.find(ent);
             if (it == patmap.end()) {
-                if (defaultp) {
-                    newpatp = defaultp->cloneTree(false);
-                    patp = newpatp;
-                } else {
+                newpatp = defaultPatp_pattern(nodep, elemDTypep, defaultp, dtypemap);
+                patp = newpatp;
+                if (!patp) {
                     nodep->v3error("Assignment pattern missed initializing elements: " << ent);
                 }
             } else {
@@ -5963,8 +5937,7 @@ class WidthVisitor final : public VNVisitor {
             }
             if (patp) {
                 // Determine initial values
-                vdtypep = nodep->findBitDType();
-                patp->dtypep(vdtypep);
+                patp->dtypep(elemDTypep);
                 AstNodeExpr* const valuep = patternMemberValueIterate(patp);
                 {  // Packed. Convert to concat for now.
                     if (!newp) {
@@ -9965,12 +9938,17 @@ class WidthVisitor final : public VNVisitor {
         return testp;
     }
 
-    PatVecMap patVectorMap(AstPattern* nodep, const VNumRange& range) {
+    PatVecMap patVectorMap(AstPattern* nodep, const VNumRange& range, DTypeMap& dtypemap) {
         PatVecMap patmap;
         int element = range.left();
         for (AstPatMember* patp = VN_AS(nodep->itemsp(), PatMember); patp;
              patp = VN_AS(patp->nextp(), PatMember)) {
             if (patp->keyp()) {
+                if (AstNodeDType* const keyp = VN_CAST(patp->keyp(), NodeDType)) {
+                    userIterate(keyp, WidthVP{SELF, BOTH}.p());
+                    dtypemap[keyp->dtypep()->skipRefToEnump()->prettyDTypeName(true)] = patp;
+                    continue;
+                }
                 V3Const::constifyParamsNoWarnEdit(patp->keyp());
                 if (patp->varrefp()) V3Const::constifyParamsEdit(patp->varrefp());
                 if (const AstConst* const constp = VN_CAST(patp->keyp(), Const)) {

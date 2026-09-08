@@ -1898,9 +1898,9 @@ public:
         puts("}");
     }
     void visit(AstConsPackMember* nodep) override {
-        auto* const vdtypep = VN_AS(nodep->dtypep(), MemberDType);
+        const AstMemberDType* const vdtypep = VN_AS(nodep->dtypep(), MemberDType);
         putnbs(nodep, ".");
-        puts(vdtypep->name());
+        puts(vdtypep->nameProtect());
         puts(" = ");
         iterateConst(nodep->rhsp());
     }
