@@ -8,12 +8,22 @@
 # SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
 import vltest_bootstrap
+import shlex
 
 test.priority(50)
 test.scenarios('vlt', 'vltmt')
 
 if test.have_dev_gcov:
     test.skip('Test suite intended for full dev coverage without needing this test')
+
+reference_object = os.path.abspath(test.obj_dir + '/t_uvm_dpi_reference.o')
+test.run(cmd=[
+    os.environ.get('CC', 'cc'), '-std=c11', '-O0', '-Wall', '-Wextra', '-Werror',
+    '-I' + shlex.quote(os.path.abspath(test.root + '/include/vltstd')),
+    '-c t/t_uvm_dpi_reference.c', '-o',
+    shlex.quote(reference_object)
+],
+         logfile=test.obj_dir + '/reference_compile.log')
 
 test.compile(threads=2 if test.vltmt else 1,
              v_flags2=[
@@ -22,7 +32,7 @@ test.compile(threads=2 if test.vltmt else 1,
                  '--CFLAGS -O0',
                  '-Wall',
                  *test.uvm2020_flags(dpi=True),
-                 't/t_uvm_dpi_reference.c',
+                 reference_object,
              ])
 
 test.execute(all_run_flags=['+UVM_NO_RELNOTES'])

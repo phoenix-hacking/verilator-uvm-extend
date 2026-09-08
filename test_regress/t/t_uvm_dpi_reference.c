@@ -11,17 +11,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Keep the model C-compatible; the regression links it through the C DPI ABI.
+// Compile as C and link the resulting object through the C DPI ABI.
+#ifdef __cplusplus
+#error "The DPI reference model must be compiled as C."
+#endif
+
 typedef struct {
     uint32_t checksum;
     char name[64];
 } ReferenceModel;
 
 static int live_models = 0;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void* dpi_reference_new(const char* name) {
     ReferenceModel* model;
@@ -77,7 +77,3 @@ int dpi_reference_delete(void* handle) {
 }
 
 int dpi_reference_live(void) { return live_models; }
-
-#ifdef __cplusplus
-}
-#endif
