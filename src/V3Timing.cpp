@@ -193,19 +193,19 @@ class TimingSuspendableVisitor final : public VNVisitor {
     //  AstClass::user1()                        -> bool.               Set true if the class
     //                                                                  member cache has been
     //                                                                  refreshed.
-    //  Ast{NodeProcedure,CFunc,Begin}::user2()  -> int.                Set to >= T_SUSP if
+    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt}::user2() -> int.          Set to >= T_SUSP if
     //                                                                  process/task suspendable
     //                                                                  and to T_PROC if it
     //                                                                  needs process metadata.
-    //  Ast{NodeProcedure,CFunc,Begin}::user3()  -> DependencyVertex*.  Vertex in m_suspGraph
-    //  Ast{NodeProcedure,CFunc,Begin}::user3()  -> DependencyVertex*.  Vertex in m_procGraph
+    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt}::user3() -> DepVtx*.       Vertex in m_suspGraph
+    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt}::user4() -> DepVtx*.       Vertex in m_procGraph
     const VNUser3InUse m_user3InUse;
     const VNUser4InUse m_user4InUse;
 
     // STATE
     VMemberMap m_memberMap;  // Member names cached for fast lookup
     AstClass* m_classp = nullptr;  // Current class
-    AstNode* m_procp = nullptr;  // NodeProcedure/CFunc/Begin we're under
+    AstNode* m_procp = nullptr;  // Procedure, function, begin, or expression helper we're under
     uint8_t m_underFork = F_NONE;  // F_NONE or flags of a fork we are under
     V3Graph m_suspGraph;  // Dependency graph where a node is a dependency of another if it being
                           // suspendable makes the other node suspendable
@@ -390,6 +390,21 @@ class TimingSuspendableVisitor final : public VNVisitor {
 
         iterateChildren(nodep);
     }
+    void visit(AstExprStmt* nodep) override {
+        {
+            VL_RESTORER(m_procp);
+            // The statement prefix becomes a separate C++ lambda. Track whether that helper
+            // actually suspends, independently of its enclosing procedure's return type.
+            new V3GraphEdge{&m_suspGraph, getSuspendDepVtx(nodep), getSuspendDepVtx(m_procp),
+                            P_CALL};
+            new V3GraphEdge{&m_procGraph, getNeedsProcDepVtx(nodep), getNeedsProcDepVtx(m_procp),
+                            P_CALL};
+            m_procp = nodep;
+            iterateAndNextNull(nodep->stmtsp());
+        }
+        // The result is evaluated after the helper returns, in the enclosing expression.
+        if (nodep->hasResult()) iterateAndNextNull(nodep->resultp());
+    }
     void visit(AstBegin* nodep) override {
         VL_RESTORER(m_procp);
         VL_RESTORER(m_underFork);
@@ -517,7 +532,7 @@ class TimingControlVisitor final : public VNVisitor {
     //                                                                   represents the net delay
     //  AstSenTree::user1()                             -> AstVarScope*. Trigger scheduler assigned
     //                                                                   to this sentree
-    //  Ast{NodeProcedure,CFunc,Begin}::user2()         -> bool.         Set true if process/task
+    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt}::user2() -> bool.         Set true if process/task
     //                                                                   is suspendable
     //  Ast{EventControl}::user2()                      -> bool.         Set true if event control
     //                                                                   should immediately be
@@ -850,6 +865,18 @@ class TimingControlVisitor final : public VNVisitor {
         }
         if (outputCommitp) tailp->addNextHere(outputCommitp);
     }
+    void iterateLambda(AstNode* const bodyp, bool coroutine, bool returnsVoid) {
+        VL_RESTORER(m_processCoroutine);
+        VL_RESTORER(m_processReturnsVoid);
+        VL_RESTORER(m_activationJumpBlockp);
+        VL_RESTORER(m_underJumpBlock);
+        m_processCoroutine = coroutine;
+        m_processReturnsVoid = returnsVoid;
+        // The lambda captures the activation token, but cannot jump to an enclosing C++ label.
+        m_activationJumpBlockp = nullptr;
+        m_underJumpBlock = false;
+        iterateAndNextNull(bodyp);
+    }
     // Add a done() call on the fork sync
     void addForkDone(AstBegin* const beginp, AstVarScope* const forkVscp) const {
         FileLine* const flp = beginp->fileline();
@@ -1060,6 +1087,14 @@ class TimingControlVisitor final : public VNVisitor {
             && m_hasProcess) {
             addCancellationChecks(nodep, nodep, true, true);
         }
+    }
+    void visit(AstWith* nodep) override {
+        iterateLambda(nodep->exprp(), false, VN_IS(nodep->dtypep()->skipRefp(), VoidDType));
+    }
+    void visit(AstExprStmt* nodep) override {
+        iterateLambda(nodep->stmtsp(), hasFlags(nodep, T_SUSPENDEE),
+                      nodep->hasResult() || VN_IS(nodep->dtypep()->skipRefp(), VoidDType));
+        if (nodep->hasResult()) iterateAndNextNull(nodep->resultp());
     }
     void visit(AstAlways* nodep) override {
         if (nodep->user1SetOnce()) return;
@@ -1717,6 +1752,23 @@ class NamedActivationAwaitVisitor final : public VNVisitor {
     bool m_returnsVoid = true;
     AstJumpBlock* m_activationJumpBlockp = nullptr;
 
+    void iterateLambda(AstNode* const bodyp, bool coroutine, bool returnsVoid) {
+        VL_RESTORER(m_coroutine);
+        VL_RESTORER(m_returnsVoid);
+        VL_RESTORER(m_activationJumpBlockp);
+        m_coroutine = coroutine;
+        m_returnsVoid = returnsVoid;
+        m_activationJumpBlockp = nullptr;
+        iterateAndNextNull(bodyp);
+    }
+    void visit(AstWith* nodep) override {
+        iterateLambda(nodep->exprp(), false, VN_IS(nodep->dtypep()->skipRefp(), VoidDType));
+    }
+    void visit(AstExprStmt* nodep) override {
+        iterateLambda(nodep->stmtsp(), hasFlags(nodep, T_SUSPENDEE),
+                      nodep->hasResult() || VN_IS(nodep->dtypep()->skipRefp(), VoidDType));
+        if (nodep->hasResult()) iterateAndNextNull(nodep->resultp());
+    }
     void visit(AstCFunc* nodep) override {
         VL_RESTORER(m_canCheck);
         VL_RESTORER(m_coroutine);

@@ -1354,7 +1354,13 @@ public:
         }
         // GCC allows compound statements in expressions, but this is not standard.
         // So we use an immediate-evaluation lambda and comma operator
-        putnbs(nodep, "([&]() {\n");
+        putnbs(nodep, "([&]()");
+        if (!nodep->hasResult()) {
+            // A cancellation return may use {}, which cannot deduce a lambda return type.
+            puts(" -> ");
+            putnbs(nodep, nodep->dtypep()->cType("", false, false));
+        }
+        puts(" {\n");
         if (!nodep->hasResult()) {
             iterateAndNextConstNull(nodep->stmtsp());
             puts("}())");
