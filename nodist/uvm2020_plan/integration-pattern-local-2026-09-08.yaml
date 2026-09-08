@@ -1,0 +1,146 @@
+---
+# DESCRIPTION: Verilator: Integrated pattern compiler and corrected coverage golden evidence
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+evidence_id: LOCAL-INTEGRATION-PATTERN-GOLDENS-20260908
+date: '2026-09-08'
+observed_utc: '2026-09-08T06:36:11.246393+00:00'
+status: local_validation_passed_release_acceptance_open
+source_revision: ab69ef0d90bbeeaecb44abdbec2183690a7e53a3
+native_build:
+  status: passed
+  source_revision: fad9c5d312548e6155a4835fdfe2d3c5fb9e87d4
+  started_utc: '2026-09-08T06:29:05.800349+00:00'
+  command:
+  - make
+  - -C
+  - src
+  - -j2
+  - opt
+  - GIT_CHANGE_DEP=/home/holden/verilator-uvm-extend/.git/worktrees/uvm-integration-20260908/logs/HEAD
+  cwd: /home/holden/verilator-work/uvm-integration-20260908
+  input_count: 421
+  log: /home/holden/verilator-work/integration-pattern-opt-build.log
+  environment:
+    CC: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-cc
+    CXX: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-c++
+    CPPFLAGS: -I/home/holden/verilator-work/toolchain/include
+    CXXFLAGS: ''
+    VERILATOR_ROOT: /home/holden/verilator-work/uvm-integration-20260908
+  pid: 1507017
+  exit_code: 0
+  finished_utc: '2026-09-08T06:29:30.374597+00:00'
+  changed_inputs: []
+  unchanged_inputs: true
+  log_sha256: 9510403fd4cbb5ad5c340dfa2b83f1338ef416bd4afc16a2e2f1a00fd31aaa5c
+  native_sha256: 95923e6b665994bafc4b68199a45d6b9a1428b5147292f9a7474638f6d5876ce
+  retained_native: /home/holden/verilator-work/integration-pattern-evidence/verilator_bin-fad9c5d31-95923e6b6659
+  version: Verilator 5.051 devel rev vUNKNOWN-built20260908-fad9c5d31
+source_relationship: Compiler/runtime files are identical to tested component bf891338a. The new native build embeds fad9c5d31; ab69ef0d9 changes only the two coverage golden files.
+validation:
+  pass: 6
+  fail: 0
+  skip: 0
+  duration: 0:45
+  drivers: 4
+  state:
+    status: passed
+    started_utc: '2026-09-08T06:33:59.563597+00:00'
+    command:
+    - /home/holden/verilator-work/toolchain/bin/python
+    - driver.py
+    - --vlt
+    - --vltmt
+    - --jobs=1
+    - --driver-build-jobs=1
+    - --quiet
+    - --driver-clean-before
+    - --obj-suffix=-patterns-integrated
+    - t/t_array_pattern_enum.py
+    - t/t_array_pattern_enum_prot.py
+    - t/t_debug_emitv.py
+    - t/t_vlcov_covergroup.py
+    cwd: /home/holden/verilator-work/uvm-integration-20260908/test_regress
+    native_sha256: 95923e6b665994bafc4b68199a45d6b9a1428b5147292f9a7474638f6d5876ce
+    source_revision: ab69ef0d90bbeeaecb44abdbec2183690a7e53a3
+    input_count: 9774
+    log: /home/holden/verilator-work/integration-pattern-validation.log
+    environment:
+      CC: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-cc
+      CXX: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-c++
+      CPPFLAGS: null
+      USER_CPPFLAGS: -I/home/holden/verilator-work/toolchain/include
+      USER_LDFLAGS: -L/home/holden/verilator-work/toolchain/lib
+      VERILATOR_ROOT: /home/holden/verilator-work/uvm-integration-20260908
+      VERILATOR_BIN: /home/holden/verilator-work/uvm-integration-20260908/bin/verilator_bin
+      HARNESS_UPDATE_GOLDEN: null
+    pid: 1509531
+    exit_code: 0
+    finished_utc: '2026-09-08T06:34:45.451723+00:00'
+    changed_inputs: []
+    unchanged_inputs: true
+    summary:
+    - '==TESTS DONE, PASSED: Passed 6  Failed 0  Time 0:45'
+    log_sha256: 18ca6a5f68ae4c7c1c9ff0c47c2d3b4b62cf56354609275d920243f2a8d60486
+  manifest: /home/holden/verilator-work/integration-pattern-evidence/results.json
+  manifest_sha256: 063b65aae719a294c8b6477d92ef8b5501afb20e992abe8b5cb5b3c6d439c65b
+  inputs: /home/holden/verilator-work/integration-pattern-evidence/validation-inputs.json
+  inputs_sha256: fd6970cc7b4b9684ab2f6f23898128efef773e4cdc357dd831951d70246168fa
+  coverage_binary_sha256: dc42bf3ae2820b61094de388482da1df95e93449cf9e405840a129caf3248409
+golden_correction:
+  source_commit: ab69ef0d90bbeeaecb44abdbec2183690a7e53a3
+  files: &id001
+  - file: test_regress/t/t_debug_emitv.out
+    old_sha256: 53ca5686c5b9fc2566a981a0dad036799c1feee7955eea28fffdf0c53cddd553
+    new_sha256: b0723f41e00199cf5f2560359ff8064b15a0eebf62907a5aeeb6a7dcd81c0fd6
+    matches_reviewed_reproduction: true
+  - file: test_regress/t/t_vlcov_covergroup.annotate.out
+    old_sha256: 05d698ed5ca962ed7b4c34c5aa34537e1af29b375dc53f570cfe0a4293d3ccfc
+    new_sha256: d58f65cc7900403a6a6d92dea5b4fec01fff22dcde4a1e6b200b7e9ba5a359c9
+    matches_reviewed_reproduction: true
+  review:
+    files: *id001
+    covergroup_points_compared: 127
+    covergroup_bin_counts_unchanged: true
+    normalization: 'Unnamed cross internal ordinal only: __cross8 versus __cross10; all bin identities and hit counts retained.'
+    ast_review: Only weight initialization, per-item option fields and corresponding type declarations added.
+    annotation_review: Source text now reflects prior weighted averages and formatting changes; statement line annotations follow the split statements.
+  ci_parent_revision: 471351e7b0389798aba8d277a0c76229c74c7cbd
+  retained_failed_ci_jobs: /home/holden/verilator-work/regression-skip-closure-evidence/ci-failed-jobs-471351e7b.json
+  before:
+    pass: 0
+    fail: 2
+    exit_code: 10
+    native_sha256: 45fca9766fba609bb12af21107cafeea16dc9ca56b9064f58e6db971aa4eb23a
+    log: /home/holden/verilator-work/ci-golden-before.log
+    log_sha256: 0aa593ed1bd0e57bd9fa365ddfe5ca24c1a2d56e6df78a8a72b72eb125e22790
+  regeneration:
+    command: HARNESS_UPDATE_GOLDEN=1 python driver.py --vlt --jobs=1 --driver-build-jobs=1 --quiet --obj-suffix=-ci-golden-update t/t_debug_emitv.py t/t_vlcov_covergroup.py
+    cwd: /home/holden/verilator-work/uvm-integration-20260908/test_regress
+    exit_code: 10
+    log: /home/holden/verilator-work/ci-golden-update.log
+    log_sha256: 19df92b46180612e891a4418122c06f3e54dfb51e4aa0f952125add714fd96de
+    note: The harness writes corrected goldens but still reports the original two mismatches. This generation invocation is not counted as passing; the subsequent normal six-scenario run passed with golden
+      updates disabled.
+component_evidence: regression-skip-closure-local-2026-09-08.yaml
+component_scope: 98 GCC and 14 Clang/C++14 scenarios, complete cppcheck with existing findings, and four named source-protocol scenarios were validated against native 45fca9766fba; the six combined scenarios
+  above use rebuilt native 95923e6b6659.
+space_recovery:
+  manifest: /home/holden/verilator-work/regression-skip-closure-evidence/completed-protocol-build-cleanup.json
+  manifest_sha256: 510946b536832b8c0baa3388eb9297f23a907b6119eed1da19a9dba96155ccfc
+  files_removed: 108
+  allocated_bytes_released: 1255440384
+  retained_artifacts_verified_before_and_after: 88
+accepted_progress:
+  milestones: 7/20
+  gates: 31/46
+  program_criteria: 3/21
+  full_uvm_goal: 0/6
+  production_performance_goal: 0/6
+  new_acceptance_credit: 0
+claim_boundaries:
+- The earlier incomplete CI matrices retain their original failures. Local corrected reruns do not relabel those jobs.
+- Current-revision CI, fresh full regression, contributor certification, both attribute audits and remaining static-analysis findings remain open.
+- No additional RAL policy/map, coverage-type/lifetime, full assertion, normative UVM or production performance acceptance is awarded.

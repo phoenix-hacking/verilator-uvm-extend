@@ -4,6 +4,37 @@
 
 # UVM 2020 continuation ledger
 
+## Integrated compiler and CI golden correction: 2026-09-08
+
+The recursive-pattern component and complete analysis/protocol evidence are
+integrated through `fad9c5d31`. The optimized combined compiler rebuilt with
+warnings treated as errors and embeds this source revision; native SHA256 is
+`95923e6b665994bafc4b68199a45d6b9a1428b5147292f9a7474638f6d5876ce`.
+All 421 recorded compiler/runtime inputs stayed unchanged during the build.
+
+CI at parent `471351e7b` exposed stale `t_debug_emitv.out` and
+`t_vlcov_covergroup.annotate.out`. Both failures reproduced locally. Commit
+`ab69ef0d9` regenerates those files through the harness after reviewing the
+new coverage weight fields and current source annotations. All 127 individual
+coverage-bin counts are preserved after accounting for the unnamed cross's
+internal ordinal. The generation command itself reports the two mismatches
+while writing the files; it is not a passing validation run.
+
+The subsequent normal run, with updates disabled, passes **6/6 in 0:45**:
+ordinary/protected enum patterns in both modes, AST emission, and coverage
+annotation. All 9,774 source inputs and the rebuilt native hash stayed fixed.
+[Integrated evidence](integration-pattern-local-2026-09-08.yaml) retains the
+source, binary, logs, statuses, golden review and exact component boundaries.
+Source protocol validation in the component used native `45fca9766fba`; its
+four passes are separate from these six runs against native `95923e6b6659`.
+
+The completed protocol models released another 1.17 GiB from 108 disposable
+objects/archives/PCH files, with 88 retained artifact hashes verified before
+and after removal. Current free space is approximately 141 GiB. The combined
+native build, pattern validation and complete cppcheck are terminal; continue
+with current-revision CI, remaining attribute audits, broader RAL policies/maps
+and the full goals. Formal acceptance remains **7/20, 31/46, 3/21**.
+
 ## Recursive patterns and source protocol checkpoint: 2026-09-08
 
 Compiler source `bf891338a` re-enables the enum-pattern regression by fixing

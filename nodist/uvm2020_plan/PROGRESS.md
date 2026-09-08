@@ -45,6 +45,18 @@ comparison is 19 versus 19, with none added or removed. This does not close
 broader static-analysis or release requirements. See
 [skip-closure evidence](regression-skip-closure-local-2026-09-08.yaml).
 
+The component is now integrated. The combined native compiler rebuilt at
+`fad9c5d31`, and six normal integration checks pass at `ab69ef0d9` with 9,774
+source inputs unchanged. CI on the earlier `471351e7b` exposed two stale
+coverage golden files. Both failures reproduced locally; harness regeneration
+adds the implemented weight fields and current annotated source. All 127
+individual coverage-bin counts remain unchanged, accounting for an internal
+unnamed-cross ordinal. The normal rerun has golden updates disabled. See
+[integrated evidence](integration-pattern-local-2026-09-08.yaml). New-revision
+CI and full regression remain required. Another 1.17 GiB of completed protocol
+objects was removed after verifying all 88 retained artifacts; approximately
+141 GiB is available locally.
+
 ## New accepted capability
 
 **M06, M11 and M12, with C06, C07 and C08, pass their declared local acceptance.**
