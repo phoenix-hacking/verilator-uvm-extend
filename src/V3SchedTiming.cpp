@@ -28,13 +28,44 @@
 
 #include "V3EmitCBase.h"
 #include "V3Sched.h"
+#include "V3Stats.h"
 #include "V3UniqueNames.h"
 
 #include <unordered_map>
+#include <unordered_set>
 
 VL_DEFINE_DEBUG_FUNCTIONS;
 
 namespace V3Sched {
+
+//============================================================================
+// Class calls execute outside the statically ordered process bodies. Observe changes to
+// persistent variables they write, including writes in non-suspending helper methods.
+
+void TimingKit::addClassWriteDomains(const LogicByScope& comb, const LogicByScope& hybrid) {
+    if (m_classWrites.empty()) return;
+    std::unordered_set<const AstVarScope*> readByComb;
+    const auto collectReads = [&readByComb](AstNode* const nodep) {
+        nodep->foreach([&readByComb](const AstVarRef* const refp) {
+            if (refp->access().isReadOrRW()) readByComb.insert(refp->varScopep());
+        });
+    };
+    comb.foreachLogic(collectReads);
+    hybrid.foreachLogic(collectReads);
+    for (AstVarScope* const vscp : m_classWrites) {
+        if (!readByComb.count(vscp)) continue;
+        FileLine* const flp = vscp->fileline();
+        AstSenItem* const itemp
+            = new AstSenItem{flp, VEdgeType::ET_CHANGED, new AstVarRef{flp, vscp, VAccess::READ}};
+        AstSenTree* const treep = new AstSenTree{flp, itemp};
+        m_classWriteSenTrees.push_back(treep);
+        m_externalDomains[vscp].insert(treep);
+        // Method calls can resume during Active evaluation just like suspendable processes.
+        vscp->varp()->setWrittenBySuspendable();
+    }
+    V3Stats::addStat("Scheduling, class write change detect triggers",
+                     m_classWriteSenTrees.size());
+}
 
 //============================================================================
 // Remaps external domains using the specified trigger map
@@ -185,6 +216,7 @@ class AwaitVisitor final : public VNVisitor {
 
     // STATE
     bool m_inProcess = false;  // Are we in a process?
+    bool m_inClassMethod = false;  // Are references inside a class method?
     bool m_gatherVars = false;  // Should we gather vars in m_writtenBySuspendable?
     AstScope* const m_scopeTopp;  // Scope at the top
     LogicByScope& m_lbs;  // Timing resume actives
@@ -194,6 +226,8 @@ class AwaitVisitor final : public VNVisitor {
     std::set<AstSenTree*> m_processDomains;  // Sentrees from the current process
     // Variables written by suspendable processes
     std::vector<AstVarScope*> m_writtenBySuspendable;
+    std::vector<AstVarScope*>& m_classWrites;  // Persistent class-method outputs, in visit order
+    std::unordered_set<const AstVarScope*> m_seenClassWrites;
 
     // METHODS
     // Add arguments to a resume() call based on arguments in the suspending call
@@ -239,6 +273,12 @@ class AwaitVisitor final : public VNVisitor {
     }
 
     // VISITORS
+    void visit(AstCFunc* const nodep) override {
+        VL_RESTORER(m_inClassMethod);
+        const AstNodeModule* const modp = nodep->scopep()->modp();
+        m_inClassMethod = VN_IS(modp, Class) || VN_IS(modp, ClassPackage);
+        iterateChildren(nodep);
+    }
     void visit(AstNodeProcedure* const nodep) override {
         UASSERT_OBJ(!m_inProcess && !m_gatherVars && m_processDomains.empty()
                         && m_writtenBySuspendable.empty(),
@@ -270,6 +310,12 @@ class AwaitVisitor final : public VNVisitor {
         }
     }
     void visit(AstNodeVarRef* nodep) override {
+        if (m_inClassMethod && nodep->access().isWriteOrRW() && !nodep->varp()->isFuncLocal()
+            && !nodep->varp()->isClassMember() && !nodep->varp()->isTemp()
+            && !nodep->varp()->isEvent() && !nodep->varp()->ignoreSchedWrite()
+            && m_seenClassWrites.insert(nodep->varScopep()).second) {
+            m_classWrites.push_back(nodep->varScopep());
+        }
         if (m_gatherVars && nodep->access().isWriteOrRW() && !nodep->varp()->ignoreSchedWrite()
             && !nodep->varScopep()->user2SetOnce()) {
             m_writtenBySuspendable.push_back(nodep->varScopep());
@@ -283,23 +329,26 @@ class AwaitVisitor final : public VNVisitor {
 public:
     // CONSTRUCTORS
     explicit AwaitVisitor(AstNetlist* nodep, LogicByScope& lbs, AstNodeStmt*& postUpdatesr,
-                          std::map<const AstVarScope*, std::set<AstSenTree*>>& externalDomains)
+                          std::map<const AstVarScope*, std::set<AstSenTree*>>& externalDomains,
+                          std::vector<AstVarScope*>& classWrites)
         : m_scopeTopp{nodep->topScopep()->scopep()}
         , m_lbs{lbs}
         , m_postUpdatesr{postUpdatesr}
-        , m_externalDomains{externalDomains} {
+        , m_externalDomains{externalDomains}
+        , m_classWrites{classWrites} {
         iterate(nodep);
     }
     ~AwaitVisitor() override = default;
 };
 
 TimingKit prepareTiming(AstNetlist* const netlistp) {
-    if (!v3Global.usesTiming()) return {};
+    if (!v3Global.usesTiming() && !v3Global.hasClasses()) return {};
     LogicByScope lbs;
     AstNodeStmt* postUpdates = nullptr;
     std::map<const AstVarScope*, std::set<AstSenTree*>> externalDomains;
-    { AwaitVisitor{netlistp, lbs, postUpdates, externalDomains}; }
-    return {std::move(lbs), postUpdates, std::move(externalDomains)};
+    std::vector<AstVarScope*> classWrites;
+    { AwaitVisitor{netlistp, lbs, postUpdates, externalDomains, classWrites}; }
+    return {std::move(lbs), postUpdates, std::move(externalDomains), std::move(classWrites)};
 }
 
 //============================================================================

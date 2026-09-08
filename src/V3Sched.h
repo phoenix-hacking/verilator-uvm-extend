@@ -374,6 +374,11 @@ class TimingKit final {
 public:
     LogicByScope m_lbs;  // Actives that resume timing schedulers
     AstNodeStmt* m_postUpdates = nullptr;  // Post updates for the trigger eval function
+    std::vector<AstVarScope*> m_classWrites;  // Static storage written by class methods
+    std::vector<AstSenTree*> m_classWriteSenTrees;  // Value changes that drive combinational logic
+
+    // Add change-detection domains for class writes observed by scheduled combinational logic
+    void addClassWriteDomains(const LogicByScope& comb, const LogicByScope& hybrid) VL_MT_DISABLED;
 
     // Remaps external domains using the specified trigger map
     std::map<const AstVarScope*, std::vector<AstSenTree*>> remapDomains(
@@ -387,10 +392,12 @@ public:
 
     TimingKit() = default;
     TimingKit(LogicByScope&& lbs, AstNodeStmt* postUpdates,
-              std::map<const AstVarScope*, std::set<AstSenTree*>>&& externalDomains)
+              std::map<const AstVarScope*, std::set<AstSenTree*>>&& externalDomains,
+              std::vector<AstVarScope*>&& classWrites)
         : m_externalDomains{externalDomains}
         , m_lbs{lbs}
-        , m_postUpdates{postUpdates} {}
+        , m_postUpdates{postUpdates}
+        , m_classWrites{std::move(classWrites)} {}
     VL_UNCOPYABLE(TimingKit);
     TimingKit(TimingKit&&) = default;
     TimingKit& operator=(TimingKit&&) = default;
