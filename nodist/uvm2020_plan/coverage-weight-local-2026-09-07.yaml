@@ -1,0 +1,106 @@
+---
+# DESCRIPTION: Verilator: weighted covergroup validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-07'
+observed_utc: '2026-09-08T02:52:15.295072+00:00'
+status: validated_local_component
+parent_revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+source_revision: 7c6389debd067ed7e7e5f4cc222e36fd45ac3958
+source_tree: ffe5882a3300cbd22175ddee038df7d8d72cac4a
+scope:
+  - Compute instance coverage from weighted coverpoint and cross percentages, including mixed runtime and legacy storage.
+  - Preserve group, point and cross weight defaults, constructor arguments, and per-instance weight changes.
+  - Expand supported value-bin arrays into individual cross-product entries; exclude arrays rejected by the existing bounded extractor.
+  - Keep empty, default-only and excluded-only group behavior consistent with the zero-denominator rules.
+normative_oracle:
+  standard: IEEE 1800-2017
+  clause: '19.11'
+  local_reference:
+    path: /home/holden/verilator-work/uvm-class-coverage-evidence/1800-2017.pdf
+    sha256: 12e3dc7bafafca28af2b89ebc2761fb7a606d68716cf04c2d93c8617c78eebec
+  example: Two half-covered points and a quarter-covered cross with equal weights yield 125/3 percent, not a flat 3/8 bin ratio.
+native_build:
+  command: make -C src opt -j2
+  warnings_as_errors: true
+  exit_code: 0
+  binary:
+    path: /home/holden/verilator-work/uvm-class-coverage-evidence/verilator_bin-7c6389deb
+    sha256: fdfdf8a822f15ec1b411721b6c97f9f999a1250d43294c2d3642bbebc376a91d
+  log:
+    path: /home/holden/verilator-work/coverage-weight-build-array.log
+    sha256: 58d24efa8608c8d6b9890773c8f9972d2cd84791ea960840ebba6957a6c08761
+input_snapshot:
+  path: /home/holden/verilator-work/uvm-class-coverage-evidence/weight-final-inputs.json
+  sha256: 378c555446ad6068524858fcfc663ecf83aa78aac807490c21317fb1c7a7406f
+handoff_input_verification:
+  archive:
+    path: /home/holden/verilator-work/handoff-20260908T023446Z/uvm-class-coverage-changed-files.tar.gz
+    sha256: 4dfa019033ac5943388d54a0daf3b6640758f8cf251ec19fa3a2b023c85a5b3a
+  changed_since_passing_handoff: [test_regress/t/t_covergroup_cross.v]
+  changes: Four same-line comment corrections in the cross test; all compiler/runtime inputs, executable test statements and goldens match the passing handoff.
+regression:
+  command: python driver.py --jobs=1 --driver-build-jobs=1 --vlt --vltmt <the 43 selected covergroup drivers>
+  driver_count: 43
+  distinct_scenarios: 52
+  initial_passes: 49
+  initial_failures: 3
+  initial_failure_cause: array_bins golden retained an invalid ignored-array cross bin; default_bins and illegal_bins expected 100 instead of 0 for nonzero-weight groups with no contributing bins.
+  initial_log:
+    path: /home/holden/verilator-work/coverage-weight-regression.log
+    sha256: f5d831e0f08cb943175ef0370dab731c85c22f2f3bbea43feb17783e31ed1a9b
+  final_rerun_passes: 7
+  final_rerun_failures: 0
+  final_rerun_log:
+    path: /home/holden/verilator-work/coverage-weight-edge-verified.log
+    sha256: 852d838aebd1454ed64822d1b4be8a74219bddeab20e673f3d12a61af5076e11
+  final_distinct_passed: 52
+  final_results:
+    path: /home/holden/verilator-work/uvm-class-coverage-evidence/weight-final-results.json
+    sha256: 31cdde8f1c7e029d2a804c22eb359f43a3abb0f13ed569e92832dfd0196a3354
+  rerun_command: python driver.py --jobs=1 --driver-build-jobs=1 --vlt --vltmt t/t_covergroup_array_bins.py t/t_covergroup_default_bins.py t/t_covergroup_illegal_bins.py t/t_covergroup_cross.py t/t_covergroup_weighted.py
+  scope_note: Passing evidence spans the broad run and targeted final reruns; this is not a single uninterrupted all-green full regression.
+causal_parent_failure:
+  result: 37.5 percent, expected 41.666667 percent
+  log:
+    path: /home/holden/verilator-work/coverage-weight-parent-cross.log
+    sha256: 1befab19707db239f20c770ee860e408a65176dfdaa3f0ffa99eb9c68078f57e
+  option_reproducer:
+    path: /home/holden/verilator-work/coverage-weight-parent-isolated.log
+    sha256: 4f42c9ee1127fab1214d9f987d6197bec0a70add943a69390924227511a96b58
+weighted_test_checks:
+  - C++14 no-timing and two-thread scenarios; ordinary and protected identifiers.
+  - Unequal bin counts, constructor weights, dynamic group/point/cross weights, independent class owners, implicit point names, zero-weight and empty/excluded items.
+  - Individual normal and array-cross bin counts; two distinct coverage files merge to exact doubled counts.
+distribution:
+  passed: 7
+  failed: 0
+  drivers: [t_dist_copyright, t_dist_whitespace, t_dist_cppstyle, t_dist_cinclude, t_dist_portability, t_dist_error_format, t_dist_warn_coverage]
+  log:
+    path: /home/holden/verilator-work/coverage-weight-distribution.log
+    sha256: 02f4adcb516dd0c2a4ed47bb8dee5a4941a509e2895bca6717a1e2ebf1cec9f0
+lint_py:
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/coverage-weight-lint-verified.log
+    sha256: b05f7d8da50252b38dc7b04bd85c2cdc2ba17a2527db6e7b688c7ae0d3327ac5
+format:
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/coverage-weight-format.log
+    sha256: 8573b3735d8a6650cc62fce2e3461bf8a7e170bacd80152797e9a39e4f678594
+  note: Unrelated formatter edits were restored; final changed C++ passed clang-format, SV and Python were formatted.
+cppcheck:
+  scope: [src/V3Covergroup.cpp, src/V3LinkParse.cpp, src/V3Width.cpp]
+  error_severity_findings: 0
+  log:
+    path: /home/holden/verilator-work/coverage-weight-cppcheck-final.log
+    sha256: 8998d9663cbc6fc297d2e90cb8bf6e1854e32e349fced1151704a43511290dca
+  limitation: Existing style/performance findings remain. Parent path/suppression differences prevent a reliable zero-added comparison. No full-repository acceptance is claimed.
+new_gate_credit: 0
+remaining:
+  - Type-level get_coverage is still the existing zero placeholder; lifetime-safe aggregation and merge_instances remain open.
+  - Enclosing-class member capture, type weights, other item options and complete cross/transition semantics remain open.
+  - Complete UVM subscriber/report/merge, combined-source CI, normative coverage and full regression acceptance remain required.
