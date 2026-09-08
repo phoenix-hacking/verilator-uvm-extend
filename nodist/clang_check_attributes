@@ -19,6 +19,7 @@ from enum import Enum
 import multiprocessing
 import re
 import tempfile
+from ctypes import POINTER, byref, c_uint
 
 import clang.cindex
 from clang.cindex import (
@@ -231,18 +232,6 @@ class FunctionInfo:
         return dataclasses.replace(self, **changes)
 
     @staticmethod
-    def from_decl_file_line_and_refd_node(file: str, line: int, refd: clang.cindex.Cursor,
-                                          annotations: VlAnnotations):
-        file = os.path.abspath(file)
-        refd = refd.canonical
-        assert refd is not None
-        name_parts = fully_qualified_name(refd)
-        usr = refd.get_usr()
-        ftype = FunctionType.from_node(refd)
-
-        return FunctionInfo(name_parts, usr, file, line, annotations, ftype)
-
-    @staticmethod
     def from_node(node: clang.cindex.Cursor,
                   refd: Optional[clang.cindex.Cursor] = None,
                   annotations: Optional[VlAnnotations] = None):
@@ -301,18 +290,28 @@ class CallAnnotationsValidator:
         self._is_ignored_def = is_ignored_def
 
         self._index = Index.create()
+        # These CIndex entry points are not exposed by all Python bindings.
+        self._get_overridden = clang.cindex.conf.lib.clang_getOverriddenCursors
+        self._get_overridden.argtypes = [
+            clang.cindex.Cursor,
+            POINTER(POINTER(clang.cindex.Cursor)),
+            POINTER(c_uint)
+        ]
+        self._get_overridden.restype = None
+        self._dispose_overridden = clang.cindex.conf.lib.clang_disposeOverriddenCursors
+        self._dispose_overridden.argtypes = [POINTER(clang.cindex.Cursor)]
+        self._dispose_overridden.restype = None
 
         # Map key represents translation unit initial defines
         # (from command line and source's lines before any include)
         self._processed_headers: dict[str, set[str]] = {}
-        self._external_decls: dict[str, set[tuple[str, int]]] = {}
+        self._external_decls: dict[str, set[FunctionInfo]] = {}
 
         # Current context
         self._main_source_file: str = ""
         self._defines: dict[str, str] = {}
         self._call_location: Optional[FunctionInfo] = None
         self._caller: Optional[FunctionInfo] = None
-        self._base_func_declarations: dict[str, clang.cindex.Cursor] = {}
         self._constructor_context: list[clang.cindex.Cursor] = []
         self._level: int = 0
 
@@ -674,12 +673,38 @@ class CallAnnotationsValidator:
             annotations = VlAnnotations.from_nodes_list(children)
             if not annotations.mt_disabled:
                 self._external_decls.setdefault(node.get_usr(), set()).add(
-                    (str(node.location.file.name), int(node.location.line)))
+                    FunctionInfo.from_node(node, node, annotations))
             return self.iterate_children(children, self.dispatch_node)
 
         return self.iterate_children(node.get_children(), self.dispatch_node)
 
     # Definition handling
+
+    def overridden_annotations(self, node: clang.cindex.Cursor) -> VlAnnotations:
+        annotations = VlAnnotations()
+        if node.kind not in [CursorKind.CXX_METHOD, CursorKind.CONVERSION_FUNCTION]:
+            return annotations
+        pending = [node]
+        seen = set()
+        while pending:
+            method = pending.pop()
+            overridden = POINTER(clang.cindex.Cursor)()
+            count = c_uint()
+            self._get_overridden(method, byref(overridden), byref(count))
+            try:
+                for i in range(count.value):
+                    # Copy each cursor before releasing CIndex's array and keep
+                    # its translation unit alive for subsequent cursor queries.
+                    base = clang.cindex.Cursor.from_buffer_copy(overridden[i])
+                    base = clang.cindex.Cursor.from_result(base, None, [node])
+                    if base.get_usr() in seen:
+                        continue
+                    seen.add(base.get_usr())
+                    annotations = annotations | VlAnnotations.from_nodes_list(base.get_children())
+                    pending.append(base)
+            finally:
+                self._dispose_overridden(overridden)
+        return annotations
 
     def dispatch_node_inside_definition(self, node: clang.cindex.Cursor):
         if node.kind == CursorKind.CALL_EXPR:
@@ -696,14 +721,6 @@ class CallAnnotationsValidator:
 
     def process_function_definition(self, node: clang.cindex.Cursor):
         [supported, refd, annotations, _] = self.get_referenced_node_info(node)
-
-        # Fetch virtual annotations from base class.
-        # Set refd to virtual definition if present.
-        signature = node.displayname
-        if signature in self._base_func_declarations:
-            refd = self._base_func_declarations[signature]
-            virtual_annotations = VlAnnotations.from_nodes_list(refd.get_children())
-            annotations = annotations | virtual_annotations
 
         if refd and self._is_ignored_def(node, refd):
             return None
@@ -722,12 +739,17 @@ class CallAnnotationsValidator:
         # Also sets VL_EXCLUDES, as this annotation is added together with
         # explicit VL_MT_DISABLED.
         if self.is_mt_disabled_code_unit():
-            if node.location.file.name == self._main_source_file:
+            if refd.location.file.name == self._main_source_file:
                 annotations.mt_disabled = True
                 annotations.excludes = True
-            if refd.location.file.name == self._main_source_file:
+            if node.location.file.name == self._main_source_file:
                 def_annotations.mt_disabled = True
                 def_annotations.excludes = True
+
+        # Preserve the method's own declaration and definition identities. Only
+        # actual virtual overrides inherit base contracts; a same-named overload
+        # or hidden nonvirtual method has an independent contract.
+        annotations = annotations | self.overridden_annotations(node)
 
         if def_annotations != annotations:
             # Use definition's annotations for the diagnostic
@@ -751,11 +773,9 @@ class CallAnnotationsValidator:
             if node.location.file.name == self._main_source_file:
                 usr = node.get_usr()
                 declarations = self._external_decls.get(usr, set())
-                for file, line in declarations:
-                    self.emit_diagnostic(
-                        FunctionInfo.from_decl_file_line_and_refd_node(
-                            file, line, refd, def_annotations),
-                        DiagnosticKind.MISSING_MT_DISABLED_ANNOTATION)
+                for declaration in declarations:
+                    self.emit_diagnostic(declaration,
+                                         DiagnosticKind.MISSING_MT_DISABLED_ANNOTATION)
                 if declarations:
                     del self._external_decls[usr]
 
@@ -770,13 +790,7 @@ class CallAnnotationsValidator:
 
     def dispatch_node(self, node: clang.cindex.Cursor):
         kind = node.kind
-        if kind is CursorKind.CXX_BASE_SPECIFIER:
-            # Get referenced virtual declarations from base class.
-            for base in node.get_children():
-                if base.referenced:
-                    for declaration in base.referenced.get_children():
-                        self._base_func_declarations[declaration.displayname] = declaration
-        elif kind in [
+        if kind in [
                 CursorKind.CXX_METHOD, CursorKind.FUNCTION_DECL, CursorKind.CONSTRUCTOR,
                 CursorKind.CONVERSION_FUNCTION
         ]:
@@ -784,15 +798,7 @@ class CallAnnotationsValidator:
                 return self.process_function_definition(node)
             return self.process_function_declaration(node)
 
-        result = self.iterate_children(node.get_children(), self.dispatch_node)
-
-        # Clean declarations if class declaration processing is finished.
-        if kind in [
-                CursorKind.CLASS_DECL, CursorKind.STRUCT_DECL, CursorKind.UNION_DECL,
-                CursorKind.ENUM_DECL, CursorKind.UNEXPOSED_DECL
-        ]:
-            self._base_func_declarations = {}
-        return result
+        return self.iterate_children(node.get_children(), self.dispatch_node)
 
     def process_translation_unit(self, translation_unit: clang.cindex.TranslationUnit):
         self._level += 1
