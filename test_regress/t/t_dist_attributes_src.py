@@ -31,21 +31,15 @@ if not os.path.exists(test.root + "/src/obj_dbg/compile_commands.json"):
 if not have_clang_check():
     test.skip("No libclang installed")
 
-# some of the files are only used in Verilation
-# and are only in "include" folder
-srcfiles = test.glob_some(test.root +
-                          "/src/*.cpp") + test.glob_some(test.root +
-                                                         "/src/obj_dbg/V3Const__gen.cpp")
-srcfiles = [f for f in srcfiles if re.search(r'\/(V3Const|Vlc\w*|\w*_test|\w*_sc|\w*.yy).cpp$', f)]
-srcfiles_str = " ".join(srcfiles)
-
+# Analyze the recorded translation units, including generated sources. Files
+# such as VlcTop.cpp and V3Const.cpp get their context from their including unit.
 test.run(logfile=test.run_log_filename,
          tee=True,
          cmd=["python3", test.root + "/nodist/clang_check_attributes",
               "--verilator-root=" + test.root,
               "--compilation-root=" + test.root + "/src/obj_dbg",
               "--compile-commands-dir=" + test.root + "/src/obj_dbg",
-              srcfiles_str])  # yapf:disable
+              "--all-commands"])  # yapf:disable
 
 test.file_grep(test.run_log_filename, r'Number of functions reported unsafe: +(\d+)', 0)
 

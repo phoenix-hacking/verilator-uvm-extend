@@ -353,8 +353,7 @@ class CallAnnotationsValidator:
                     continue
 
                 # Skipped options with separate value argument.
-                if arg in ["-o", "-T", "-MT", "-MQ", "-MF"
-                           "-L"]:
+                if arg in ["-o", "-T", "-MT", "-MQ", "-MF", "-L"]:
                     next(args_iter)
                     continue
 
@@ -364,8 +363,7 @@ class CallAnnotationsValidator:
 
                 # Preserved options with separate value argument.
                 if arg in [
-                        "-x"
-                        "-Xclang", "-I", "-isystem", "-iquote", "-include", "-include-pch"
+                        "-x", "-Xclang", "-I", "-isystem", "-iquote", "-include", "-include-pch"
                 ]:
                     filtered_args += [arg, next(args_iter)]
                     continue
@@ -1118,6 +1116,9 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
                         type=str,
                         default=None,
                         help="Path to directory containing compile_commands.json.")
+    parser.add_argument("--all-commands",
+                        action="store_true",
+                        help="Analyze every source recorded in the compilation database.")
     parser.add_argument("--cxxflags",
                         type=str,
                         default=None,
@@ -1130,9 +1131,17 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
                         "--precompile",
                         action="append",
                         help="Header file to be precompiled and cached at the start.")
-    parser.add_argument("file", type=str, nargs="+", help="Source file to analyze.")
+    parser.add_argument("file", type=str, nargs="*", help="Source file to analyze.")
 
     cmdline = parser.parse_args()
+
+    if cmdline.all_commands:
+        if not cmdline.compile_commands_dir:
+            parser.error("--all-commands requires --compile-commands-dir")
+        if cmdline.file:
+            parser.error("--all-commands cannot be combined with source files")
+    elif not cmdline.file:
+        parser.error("provide source files or --all-commands")
 
     if cmdline.jobs == 0:
         cmdline.jobs = max(1, get_cpu_count())
@@ -1144,8 +1153,16 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
     default_compilation_root = os.path.abspath(cmdline.compilation_root)
 
     compdb: Optional[CompilationDatabase] = None
+    recorded_commands = {}
     if cmdline.compile_commands_dir:
         compdb = CompilationDatabase.fromDirectory(cmdline.compile_commands_dir)
+        # getCompileCommands() may synthesize commands for a file not present in
+        # the database. Included fragments must instead be analyzed through
+        # their actual translation units, with those units' flags and prefixes.
+        # Keep the last recorded command when a build appends a newer entry.
+        for entry in compdb.getAllCompileCommands() or []:
+            filename = os.path.abspath(os.path.join(entry.directory, entry.filename))
+            recorded_commands[filename] = entry
 
     if cmdline.cxxflags is not None:
         common_cxxflags = shlex.split(cmdline.cxxflags)
@@ -1164,32 +1181,31 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
     compile_commands_list = []
     failed_commands = 0
+    if cmdline.all_commands:
+        cmdline.file = sorted(recorded_commands)
+        if not cmdline.file:
+            print("%Error: reading compile commands failed: no recorded sources in " +
+                  cmdline.compile_commands_dir,
+                  file=sys.stderr)
+            failed_commands += 1
     for refid, file in enumerate(cmdline.file):
         filename = os.path.abspath(file)
         root = default_compilation_root
         cxxflags = common_cxxflags[:]
         if compdb:
-            entry = compdb.getCompileCommands(filename)
+            entry = recorded_commands.get(filename)
             if entry is None:
                 print(f"%Error: reading compile commands failed: {filename}", file=sys.stderr)
-                entry_list = []
-            else:
-                entry_list = list(entry)
-            # Compilation database can contain multiple entries for single file,
-            # e.g. when it has been updated by appending new entries.
-            # Use last entry for the file, if it exists, as it is the newest one.
-            if len(entry_list) > 0:
-                last_entry = entry_list[-1]
-                root = last_entry.directory
-                entry_args = list(last_entry.arguments)
-                # First argument in compile_commands.json arguments list is
-                # compiler executable name/path. CIndex (libclang) always
-                # implicitly prepends executable name, so it shouldn't be passed
-                # here.
-                cxxflags.extend(entry_args[1:])
-            else:
                 failed_commands += 1
                 continue
+            root = entry.directory
+            entry_args = list(entry.arguments)
+            # CIndex supplies its own compiler name. Preserve the original
+            # driver's default language, including C++ sources named *.c;
+            # subsequent explicit -x options still take precedence.
+            if "++" in os.path.basename(entry_args[0]):
+                cxxflags.insert(0, "-xc++")
+            cxxflags.extend(entry_args[1:])
 
         compile_command = CompileCommand(refid, filename, cxxflags, root)
         compile_commands_list.append(compile_command)
