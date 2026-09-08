@@ -89,8 +89,10 @@ class NameVisitor final : public VNVisitorConst {
     void visit(AstVar* nodep) override {
         // Don't iterate... Don't need temps for RANGES under the Var.
         // The built-in process comparisons in verilated_std.sv refer to this member in C++.
+        // Use the internal type assigned by V3Width, independent of the current module.
+        const AstBasicDType* const basicp = nodep->dtypep()->basicp();
         const bool processHandle
-            = m_modp == v3Global.rootp()->stdPackageProcessp() && nodep->name() == "m_process";
+            = basicp && basicp->isProcessRef() && nodep->name() == "m_process";
         if (processHandle) nodep->protect(false);
         rename(nodep,
                ((!m_modp || !m_modp->isTop()) && !nodep->isSigPublic()
