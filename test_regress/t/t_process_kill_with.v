@@ -155,7 +155,7 @@ module t;
     `checkd(canceled_named.after_named, 1)
     `checkd(canceled_named.named_return_time, 3)
     for (int mode = 1; mode <= 3; mode++) begin
-      time start_time = $time;
+      automatic time start_time = $time;
       normal_named = new(0);
       canceled_named = new(0, 1);
       named_sort(normal_named, mode);
