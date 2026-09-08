@@ -773,6 +773,9 @@ module Vt_debug_emitv_t;
     logic [1:0]  cg_sig2;
     covergroup Vt_debug_emitv_cg_basic;
     function new;
+        option.weight = 32'h1;
+        option.weight = 'sh2;
+        __Vcovopt_cp_sig.option.weight = 32'h1;
         cp_sig: coverpoint cg_sig {
             bins low = {['sh0:'sh3]};
             bins high = {['sh4:'sh6]};
@@ -781,6 +784,7 @@ module Vt_debug_emitv_t;
             ignore_bins ign = {'sh7};
             illegal_bins ill = {'sh5};
         };
+        __Vcovopt_cp_options.option.weight = 32'h1;
         cp_options: coverpoint cg_sig2 {
 
             ???? // COVEROPTION
@@ -828,9 +832,21 @@ module Vt_debug_emitv_t;
     function set_inst_name;
         input string name;
     endfunction
+    struct {
+        struct {
+            int signed weight;
+        } option;
+    } __Vcovopt_cp_sig;
+    struct {
+        struct {
+            int signed weight;
+        } option;
+    } __Vcovopt_cp_options;
     endcovergroup
     covergroup Vt_debug_emitv_cg_clocked;
     @(posedge clk)function new;
+        option.weight = 32'h1;
+        __Vcovopt_cp_cyc.option.weight = 32'h1;
         cp_cyc: coverpoint cg_sig;
     endfunction
     int signed __Vint;
@@ -875,9 +891,16 @@ module Vt_debug_emitv_t;
     function set_inst_name;
         input string name;
     endfunction
+    struct {
+        struct {
+            int signed weight;
+        } option;
+    } __Vcovopt_cp_cyc;
     endcovergroup
     covergroup Vt_debug_emitv_cg_trans;
     function new;
+        option.weight = 32'h1;
+        __Vcovopt_cp_t.option.weight = 32'h1;
         cp_t: coverpoint cg_sig {
             bins t01 = (3'h0 => 3'h1);
             bins t12 = (3'h1 => 3'h2);
@@ -928,17 +951,26 @@ module Vt_debug_emitv_t;
     function set_inst_name;
         input string name;
     endfunction
+    struct {
+        struct {
+            int signed weight;
+        } option;
+    } __Vcovopt_cp_t;
     endcovergroup
     covergroup Vt_debug_emitv_cg_cross;
     function new;
+        option.weight = 32'h1;
+        __Vcovopt_cp_x.option.weight = 32'h1;
         cp_x: coverpoint cg_sig {
             bins x0 = {'sh0};
             bins x1 = {'sh1};
         };
+        __Vcovopt_cp_y.option.weight = 32'h1;
         cp_y: coverpoint cg_sig2 {
             bins y0 = {'sh0};
             bins y1 = {'sh1};
         };
+        __Vcovopt_cx.option.weight = 32'h1;
       cx: cross cp_x, cp_y;
     endfunction
     int signed __Vint;
@@ -983,6 +1015,21 @@ module Vt_debug_emitv_t;
     function set_inst_name;
         input string name;
     endfunction
+    struct {
+        struct {
+            int signed weight;
+        } option;
+    } __Vcovopt_cp_x;
+    struct {
+        struct {
+            int signed weight;
+        } option;
+    } __Vcovopt_cp_y;
+    struct {
+        struct {
+            int signed weight;
+        } option;
+    } __Vcovopt_cx;
     endcovergroup
     Vt_debug_emitv_cg_basic cg_basic_instVt_debug_emitv_cg_basic;
     cg_basic_inst = new();
@@ -1193,6 +1240,14 @@ package Vt_debug_emitv_std;
     } vl_cross_options_t;
     typedef struct {
         int signed weight;
+    } vl_coverage_item_options_t;
+    typedef struct {
+        struct {
+            int signed weight;
+        } option;
+    } vl_coverage_item_t;
+    typedef struct {
+        int signed weight;
         int signed goal;
         string comment;
         bit strobe;
@@ -1220,6 +1275,8 @@ package Vt_debug_emitv___024unit;
         int signed rmember2;
         covergroup Vt_debug_emitv___vlAnonCG_cg_in_class;
         function new;
+            option.weight = 32'h1;
+            __Vcovopt_cp_m.option.weight = 32'h1;
             cp_m: coverpoint member {
                 bins one = {'sh1};
                 bins two = {'sh2};
@@ -1267,6 +1324,11 @@ package Vt_debug_emitv___024unit;
         function set_inst_name;
             input string name;
         endfunction
+        struct {
+            struct {
+                int signed weight;
+            } option;
+        } __Vcovopt_cp_m;
         endcovergroup
         Vt_debug_emitv___vlAnonCG_cg_in_class cg_in_classVt_debug_emitv___vlAnonCG_cg_in_class;
         task method;
