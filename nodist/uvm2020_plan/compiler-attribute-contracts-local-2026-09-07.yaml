@@ -1,0 +1,239 @@
+# DESCRIPTION: Verilator: compiler annotation contract validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-07'
+observed_utc: '2026-09-08T01:54:10.074195+00:00'
+status: validated_component_with_remaining_audit_findings
+source_revision: fdcb80851fcf1a218c5485acadc240d4d723cabf
+source_tree: b2badf1c4bf16447f37c572aa5b40f34a05c6ae9
+parent_revision: 29db27244fb921ed1b3e4c6361a51e3441d27b35
+branch: codex/compiler-attribute-contracts
+scope:
+- Restore inherited annotations on 15 safe type-diagnostic overrides and five AST observers.
+- Match parser and graph callback annotations to existing single-thread contracts.
+- Annotate numeric-range printing and getters used by stable-tree diagnostics.
+annotation_only_files:
+- src/V3AstAttr.h
+- src/V3AstInlines.h
+- src/V3AstNodeDType.h
+- src/V3AstNodeExpr.h
+- src/V3AstNodeOther.h
+- src/V3AstNodes.cpp
+- src/V3LinkCells.cpp
+- src/V3ParseImp.h
+- src/V3SchedAcyclic.cpp
+source_inputs:
+  path: /home/holden/verilator-work/compiler-attribute-contracts-evidence/inputs.json
+  sha256: 245db2e0f40d6c4c8783db4d40286141b903dbb7fa12fa3eba6bbef6d9fe3a19
+source_inputs_unchanged: true
+source_patch:
+  path: /home/holden/verilator-work/compiler-attribute-contracts-evidence/candidate.patch
+  sha256: f2757035043efb5495edf17126038b6a6c85dc0c3deb1db8fd00ec9f1fc11fd1
+native_build:
+  observed_utc: '2026-09-08T01:45:16.979791+00:00'
+  optimized_build_exit_code: 0
+  binary: /home/holden/verilator-work/compiler-attribute-contracts/bin/verilator_bin
+  sha256: 8e97a5e45454bfa15126a47624e55964c72c78af113d5159b657be71f2bf63a9
+  command:
+  - make
+  - -C
+  - src
+  - opt
+  - -j2
+  CPPFLAGS: -I/home/holden/verilator-work/toolchain/include
+  CXXFLAGS: ''
+  build_log: /home/holden/verilator-work/compiler-attribute-contracts-build-final.log
+  build_log_sha256: 9df2b4b7ef4d3530c595efb0a943a8f921d47513ccaddab9f23f127feebb84e6
+  source_inputs_changed: []
+  source_revision: fdcb80851fcf1a218c5485acadc240d4d723cabf
+  source_tree: b2badf1c4bf16447f37c572aa5b40f34a05c6ae9
+  retained_binary: /home/holden/verilator-work/compiler-attribute-contracts-evidence/verilator_bin-fdcb80851
+focused_source_audit:
+  command: python nodist/clang_check_attributes --jobs=2 --verilator-root=. --compile-commands-dir=src/obj_dbg
+    src/V3AstNodes.cpp src/V3LinkCells.cpp src/V3SchedAcyclic.cpp src/V3ParseImp.cpp
+  parent_diagnostics: 30
+  candidate_diagnostics: 4
+  removed_diagnostics: 26
+  added_diagnostics: 0
+  comparison:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-evidence/focused-comparison.json
+    sha256: 5912b757aa69ca62bdcd71f5492406b4d8ae1eadf63890456aa364e5975edd27
+complete_source_audit:
+  command: python nodist/clang_check_attributes --jobs=2 --verilator-root=. --compile-commands-dir=src/obj_dbg
+    --all-commands
+  translation_units: 164
+  exit_code: 1
+  parent_diagnostics: 47
+  candidate_diagnostics: 21
+  removed_diagnostics: 26
+  added_diagnostics: 0
+  parsing_failures: 0
+  checker_unsafe_function_summary: 29
+  source_inputs_unchanged: true
+  parent_log:
+    path: /home/holden/verilator-work/attribute-inheritance-full-source.log
+    sha256: 55c5c486d648a0b69f0195511fa149adedced614b85d210dfafa9d3ed1de04ad
+  candidate_log:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-full-source.log
+    sha256: 9e094674156ecdc781cc28c5a5562db582290128cac1b3ddde7e5a9dcb68ea8a
+  comparison:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-evidence/full-comparison.json
+    sha256: 4ff411a9669795e8b1404f6fe6553d2be1815d35e32dff5aa0cae0834910d767
+  compilation_database:
+    path: /home/holden/verilator-work/compiler-attribute-contracts/src/obj_dbg/compile_commands.json
+    sha256: 189247a1129327d566110a7fcad0ca932b4227c491c8dd759fa91f164a29ec72
+  database_provenance: 164 actual C++ commands parsed with shlex from make dry runs for debug compiler
+    and coverage builds; two PCH commands excluded.
+tests:
+  behavioral:
+    passed: 12
+    failed: 0
+    log:
+      path: /home/holden/verilator-work/compiler-attribute-contracts-simulation.log
+      sha256: 70fdb5b826371502a2d747bc3555259e952e42d9e87ccafc0d3aad87b951588e
+      exit_code: 0
+      summary: '==TESTS DONE, PASSED: Passed 12  Failed 0  Time 0:55'
+    drivers:
+    - t_debug_emitv
+    - t_property_case
+    - t_property_case_bad
+    - t_recursive_module_bug
+    - t_unoptflat_simple_bad
+    - t_unoptflat_simple_2_bad
+    - t_unoptflat_simple_3_bad
+    scenarios:
+    - vlt
+    - vltmt
+    binary_sha256: 8e97a5e45454bfa15126a47624e55964c72c78af113d5159b657be71f2bf63a9
+    cwd: /home/holden/verilator-work/compiler-attribute-contracts/test_regress
+    command: python driver.py --jobs=2 --quiet --vlt --vltmt --driver-build-jobs=1 t/t_debug_emitv.py
+      t/t_property_case.py t/t_property_case_bad.py t/t_recursive_module_bug.py t/t_unoptflat_simple_bad.py
+      t/t_unoptflat_simple_2_bad.py t/t_unoptflat_simple_3_bad.py
+  distribution:
+    passed: 8
+    failed: 0
+    log:
+      path: /home/holden/verilator-work/compiler-attribute-contracts-dist.log
+      sha256: bcf28bed689969f3c5128165cd2c9cadd9a2be4ebe8d8498d830b00dd27fed2b
+      exit_code: 0
+      summary: '==TESTS DONE, PASSED: Passed 8  Failed 0  Time 0:18'
+    drivers:
+    - t_dist_attributes_parse_bad
+    - t_dist_attributes_bad
+    - t_dist_copyright
+    - t_dist_cppstyle
+    - t_dist_whitespace
+    - t_dist_cinclude
+    - t_dist_portability
+    - t_dist_error_format
+    cwd: /home/holden/verilator-work/compiler-attribute-contracts/test_regress
+    command: python driver.py --jobs=2 --quiet --dist t/t_dist_attributes_parse_bad.py t/t_dist_attributes_bad.py
+      t/t_dist_copyright.py t/t_dist_cppstyle.py t/t_dist_whitespace.py t/t_dist_cinclude.py t/t_dist_portability.py
+      t/t_dist_error_format.py
+  format:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-format.log
+    sha256: d03d9d907516816cf3bb5651c0b780a6366b0c0514a84082636bab63d8e761e9
+    exit_code: 0
+  python_lint:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-lint.log
+    sha256: 8bc2c4d2027f5d0ad0f7fe445bc22319ea0ac768577d1a3e510756888baeeeaf
+    exit_code: 0
+  final_documentation_checks:
+    passed: 2
+    failed: 0
+    log:
+      path: /home/holden/verilator-work/compiler-attribute-contracts-doc-checks-final.log
+      sha256: ca3d21357331beff39600bdc5a86f5ee4a9c6e864fafabaaf841bc3f90543f9f
+    note: Run after staging the new evidence files.
+cppcheck:
+  translation_units: 4
+  parent_exit_code: 0
+  candidate_exit_code: 0
+  parent_diagnostics: 796
+  candidate_diagnostics: 796
+  severity_counts:
+    information: 5
+    style: 697
+    warning: 21
+    performance: 65
+    portability: 8
+  added_diagnostics: 0
+  removed_diagnostics: 0
+  comparison:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-evidence/cppcheck-comparison.json
+    sha256: df54e3e1be6fadbc1e5fba95179dfb1dcf454c3c1f94ea49a1662a6acb4dc5e7
+  parent_log:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-cppcheck-parent.log
+    sha256: 0c9e550a135a69ce66b12b39ce36ffda8f204c34b9da1e9f99cfee671a53f42f
+    exit_code: 0
+  candidate_log:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-cppcheck.log
+    sha256: 89ed5247afc39a64f2bd6c1315eb86e28c9ea61d0e1519d3a330d58e07175d00
+    exit_code: 0
+  scope: Focused comparison only; not a complete repository cppcheck pass.
+  command: cppcheck --enable=all --inline-suppr --suppressions-list=src/cppcheck-suppressions.txt --cppcheck-build-dir=<existing-cache-directory>
+    -DVL_DEBUG=1 -DVL_CPPCHECK=1 -DINFILTER_PIPE=1 -D__GNUC__=1 -Iinclude -Iinclude/fstcpp -Iinclude/vltstd
+    -Isrc/obj_dbg -Isrc -j1 src/V3AstNodes.cpp src/V3LinkCells.cpp src/V3ParseImp.cpp src/V3SchedAcyclic.cpp
+initial_environment_failure:
+  log:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-build.log
+    sha256: 55435dbb490173e459dfd4c5975f8ce59e766027d4a0e303b3f10fd45a61ee32
+    exit_code: 2
+  reason: FlexLexer.h was not found in the installed dependency prefix.
+  resolution: Supply CPPFLAGS=-I/home/holden/verilator-work/toolchain/include only to the native make
+    invocation. Keep regression model environments separate.
+remaining_source_diagnostics:
+- function: AstAssocArrayDType::dumpSmall(std::ostream &)
+  diagnostic: declaration does not match definition
+- function: AstNode::findBitRangeDType(const VNumRange &, int, VSigning)
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: AstNode::findLogicRangeDType(const VNumRange &, int, VSigning)
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: AstNodeDType::skipRefIterp(bool, bool, bool)
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: CellEdge::name()
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: EmitCFile::main(AstCFile *)
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: EmitCImp::main(const AstNodeModule *, bool)
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: EmitCTrace::main(bool)
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: FileLine::warnIsOff(V3ErrorCode)
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: FsmGraph::name()
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: FsmPseudoVertex::name()
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: FsmVertex::name()
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: InlineModCellVertex::name()
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: InlineModModuleVertex::name()
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: V3Number::emitC()
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+- function: V3Options::traceClassBases()
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: V3Options::traceSourceBases()
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: V3Stats::addStatSum(const char *, double)
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: V3Waiver::addEntry(V3ErrorCode, const string &, const std::string &)
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: V3Waiver::write(const std::string &)
+  diagnostic: is mtsafe but calls non-mtsafe function(s)
+- function: VariableOrder::processModule(AstNodeModule *, const MTaskAffinityMap &, std::vector<AstVar
+    *> &)
+  diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+remaining_work:
+- Correct shared-state access and remaining compiler/runtime annotation findings.
+- 'AstAssocArrayDType::dumpSmall remains unannotated: nodeAddr can mutate the unprotected debug pointer-ID
+  map.'
+- Resolve type-cache mutation in the stable-tree dtype lookup paths.
+- Finish the frozen integration regression, then integrate validated components and rerun combined-source
+  CI.
+new_gate_credit: 0
+environment_script: /home/holden/verilator-work/regression-env.sh
