@@ -16,8 +16,10 @@ import dataclasses
 from dataclasses import dataclass
 import enum
 from enum import Enum
+import functools
 import multiprocessing
 import re
+import subprocess
 import tempfile
 from ctypes import POINTER, byref, c_uint
 
@@ -345,7 +347,7 @@ class CallAnnotationsValidator:
         defines = {}
         args_iter = iter(args)
         try:
-            while arg := next(args_iter):
+            for arg in args_iter:
                 # Skip positional arguments (input file name).
                 if not arg.startswith("-") and (arg.endswith(".cpp") or arg.endswith(".c")
                                                 or arg.endswith(".h")):
@@ -360,10 +362,17 @@ class CallAnnotationsValidator:
                 if arg == "-c" or arg.startswith("-W") or arg.startswith("-L"):
                     continue
 
+                # Read forced headers as source, without the driver's implicit
+                # lookup of .gch files produced by a different compiler.
+                if arg == "-include":
+                    filtered_args += ["-Xclang", "-include", "-Xclang", next(args_iter)]
+                    continue
+                if arg.startswith("-include") and not arg.startswith("-include-pch"):
+                    filtered_args += ["-Xclang", "-include", "-Xclang", arg[len("-include"):]]
+                    continue
+
                 # Preserved options with separate value argument.
-                if arg in [
-                        "-x", "-Xclang", "-I", "-isystem", "-iquote", "-include", "-include-pch"
-                ]:
+                if arg in ["-x", "-Xclang", "-I", "-isystem", "-iquote", "-include-pch"]:
                     filtered_args += [arg, next(args_iter)]
                     continue
 
@@ -395,8 +404,8 @@ class CallAnnotationsValidator:
                 elif d_or_u == "U" and key in defines:
                     del defines[key]
 
-        except StopIteration:
-            pass
+        except StopIteration as exception:
+            raise ValueError(f"Missing value for compiler option {arg}") from exception
 
         return (filtered_args, defines)
 
@@ -405,7 +414,12 @@ class CallAnnotationsValidator:
         filename = os.path.abspath(source_file)
         initial_cwd = "."
 
-        filtered_args, defines = self.filter_out_unsupported_compiler_args(compiler_args)
+        try:
+            filtered_args, defines = self.filter_out_unsupported_compiler_args(compiler_args)
+        except ValueError as exception:
+            print(f"%Error: reading compiler arguments failed: {filename}: {exception}",
+                  file=sys.stderr)
+            return False
         defines.update(self.parse_initial_defines(source_file))
 
         if build_dir:
@@ -875,6 +889,34 @@ def get_filter_funcs(verilator_root: str):
     return (is_ignored_top_level, is_ignored_def, is_ignored_call)
 
 
+@functools.lru_cache(maxsize=None)
+def compiler_default_cpp_standard(compiler: str, directory: str) -> str:
+    # The recorded driver and libclang may have different default dialects.
+    # Query the driver once per directory; explicit database flags take priority.
+    result = subprocess.run([compiler, "-dM", "-E", "-x", "c++", "-"],
+                            input="",
+                            text=True,
+                            capture_output=True,
+                            cwd=directory,
+                            timeout=30,
+                            check=True)
+    version = re.search(r"^#define __cplusplus (\d+)L?\s*$", result.stdout, re.MULTILINE)
+    standards = {
+        199711: "98",
+        201103: "11",
+        201402: "14",
+        201703: "17",
+        202002: "20",
+        202302: "23",
+    }
+    if version is None or int(version.group(1)) not in standards:
+        raise ValueError("Cannot determine the recorded compiler's default C++ standard; "
+                         "provide an explicit -std flag")
+    strict = re.search(r"^#define __STRICT_ANSI__\b", result.stdout, re.MULTILINE)
+    dialect = "c++" if strict else "gnu++"
+    return "-std=" + dialect + standards[int(version.group(1))]
+
+
 def precompile_header(compile_command: CompileCommand, tmp_dir: str) -> str:
     initial_cwd = os.getcwd()
     errors = []
@@ -1212,6 +1254,28 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
             # subsequent explicit -x options still take precedence.
             if "++" in os.path.basename(entry_args[0]):
                 cxxflags.insert(0, "-xc++")
+            default_language = ("c++"
+                                if "++" in os.path.basename(entry_args[0]) or filename.endswith(
+                                    (".cpp", ".cc", ".cxx", ".c++", ".C")) else "c")
+            language = default_language
+            options = iter(cxxflags + entry_args[1:])
+            for option in options:
+                if option == "-x":
+                    language = next(options, language)
+                elif option.startswith("-x"):
+                    language = option[2:]
+                if language == "none":
+                    language = default_language
+            if language.startswith("c++") and not any(
+                    option in ("-ansi", "-std", "--std") or option.startswith(("-std=", "--std="))
+                    for option in cxxflags + entry_args[1:]):
+                try:
+                    cxxflags.append(compiler_default_cpp_standard(entry_args[0], root))
+                except (OSError, subprocess.SubprocessError, ValueError) as exception:
+                    print(f"%Error: reading compiler defaults failed: {filename}: {exception}",
+                          file=sys.stderr)
+                    failed_commands += 1
+                    continue
             cxxflags.extend(entry_args[1:])
 
         compile_command = CompileCommand(refid, filename, cxxflags, root)

@@ -9,6 +9,8 @@
 
 import vltest_bootstrap
 import json
+import shlex
+import sys
 
 test.scenarios('dist')
 
@@ -55,6 +57,12 @@ for jobs in (1, 2):
         ('invalid', [invalid], '-std=c++14', [], r'%Error: parsing failed:'),
         ('mixed', [valid, invalid], '-std=c++14', [], r'%Error: parsing failed:'),
         ('load', [valid], '-x invalid-language', [], r'%Error: parsing failed:'),
+        ('missing_include', [valid], '-std=c++14 -include', [],
+         r'%Error: reading compiler arguments failed:'),
+        ('missing_define', [valid], '-std=c++14 -D', [],
+         r'%Error: reading compiler arguments failed:'),
+        ('missing_output', [valid], '-std=c++14 -o', [],
+         r'%Error: reading compiler arguments failed:'),
         ('pch_valid', [valid], '-std=c++14', ['--precompile=' + header], ''),
         ('pch_invalid', [valid], '-std=c++14', ['--precompile=' + invalid],
          r'%Warning: Precompilation failed, skipping:'),
@@ -165,6 +173,9 @@ generated = units_dir + '/generated.c'
 explicit_c = units_dir + '/explicit_c.c'
 prefix = units_dir + '/prefix.h'
 test.write_wholefile(prefix, '#define PREFIX_VALUE 7\n')
+# A forced header must be read even when another compiler left an unusable
+# precompiled header beside it. Analyzer-owned PCHs are tested separately above.
+test.write_wholefile(prefix + '.gch', 'Foreign compiler cache; read prefix.h instead.\n')
 test.write_wholefile(fragment, 'int from_fragment() { return helper(); }\n')
 test.write_wholefile(
     unit, '#ifndef UNIT_ENABLED\n#error Missing compilation flags\n#endif\n'
@@ -178,6 +189,9 @@ unit_arguments = [
     'unit.cpp', '-o', 'unit.o'
 ]
 unit_command = {'directory': units_dir, 'file': 'unit.cpp', 'arguments': unit_arguments}
+joined_command = dict(
+    unit_command,
+    arguments=['c++', '-std=c++14', '-DUNIT_ENABLED', '-includeprefix.h', '-c', 'unit.cpp'])
 generated_command = {
     'directory': units_dir,
     'file': 'generated.c',
@@ -194,11 +208,57 @@ invalid_command = {
     'file': invalid,
     'arguments': ['c++', '-std=c++14', '-c', invalid]
 }
+
+# Exercise a recorded compiler whose default differs from libclang's, using a
+# real compiler behind a wrapper. The source checks both the C++ version and
+# strict/GNU mode; compiling it first establishes the expected semantics.
+dialect = units_dir + '/dialect.cpp'
+test.write_wholefile(
+    dialect, '#if __cplusplus != EXPECTED_STANDARD\n#error Wrong C++ standard\n#endif\n'
+    '#if defined(__STRICT_ANSI__) != EXPECTED_STRICT\n#error Wrong C++ dialect\n#endif\n'
+    'int dialect_value() { return 7; }\n')
+compiler = shlex.split(os.environ['CXX'])
+default_commands = {}
+for case, standard, explicit in (
+    ('default_gnu', 'gnu++14', ''),
+    ('default_strict', 'c++14', ''),
+    ('explicit_standard', 'gnu++14', '-std=gnu++17'),
+):
+    wrapper = units_dir + '/' + case + '-c++'
+    test.write_wholefile(
+        wrapper, '#!' + sys.executable + '\nimport os\nimport sys\n'
+        'compiler = ' + repr(compiler + ['-std=' + standard]) + '\n'
+        'os.execvp(compiler[0], compiler + sys.argv[1:])\n')
+    os.chmod(wrapper, 0o755)
+    arguments = [wrapper]
+    if explicit:
+        arguments.append(explicit)
+    arguments += [
+        '-DEXPECTED_STANDARD=' + ('201703L' if explicit else '201402L'),
+        '-DEXPECTED_STRICT=' + ('1' if standard == 'c++14' else '0'), '-fsyntax-only', dialect
+    ]
+    test.run(cmd=[shlex.join(arguments)], logfile=test.obj_dir + '/' + case + '_compiler.log')
+    default_commands[case] = {'directory': units_dir, 'file': dialect, 'arguments': arguments}
+
+missing_compiler = units_dir + '/missing-c++'
+missing_compiler_command = dict(
+    default_commands['default_gnu'],
+    arguments=[missing_compiler, *default_commands['default_gnu']['arguments'][1:]])
+common_standard_command = dict(
+    default_commands['explicit_standard'],
+    arguments=[missing_compiler, *default_commands['explicit_standard']['arguments'][2:]])
 for jobs in (1, 2):
     for case, entries, sources, options, diagnostic in (
         ('all_commands', [stale_command, unit_command, generated_command,
                           explicit_c_command], [], ['--all-commands'], ''),
         ('explicit_cxx', [generated_command], [generated], [], ''),
+        ('joined_include', [joined_command], [unit], [], ''),
+        ('default_gnu', [default_commands['default_gnu']], [dialect], [], ''),
+        ('default_strict', [default_commands['default_strict']], [dialect], [], ''),
+        ('explicit_standard', [default_commands['explicit_standard']], [dialect], [], ''),
+        ('common_standard', [common_standard_command], [dialect], ['--cxxflags=-std=gnu++17'], ''),
+        ('missing_compiler', [missing_compiler_command], [dialect], [],
+         r'%Error: reading compiler defaults failed:'),
         ('unrecorded_fragment', [unit_command], [fragment], [],
          r'%Error: reading compile commands failed:'),
         ('all_invalid', [unit_command,
