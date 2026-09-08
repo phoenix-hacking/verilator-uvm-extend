@@ -1,0 +1,119 @@
+---
+# DESCRIPTION: Verilator: AXI-lite RAL and class coverage acceptance
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-08'
+observed_utc: '2026-09-08T04:20:00.181551+00:00'
+status: validated_all_four_local_configurations
+source_revision: cd75adad31fd6bc06ec1796d03f3673bb215aba3
+native_compiler:
+  path: /home/holden/verilator-work/integration-next-evidence/verilator_bin-021134c56
+  sha256: e3b68fdf0319ddfd778edb7bf7a57cb70c8d84b6b0372426848da3f04ec26d48
+native_runtime_sources_match_combined_checkpoint: 77a328f91aab958cbc8705b669a1def3cf09e769
+uvm_source_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+uvm_source_clean: true
+dpi: disabled
+inputs:
+  t_uvm_axi_env.py:
+    path: /home/holden/verilator-work/uvm-axi-ral/test_regress/t/t_uvm_axi_env.py
+    sha256: c1ba9ca074bc49bf7c28830ee15b9d9649961194d6f645738d6a51b2ea871d23
+  t_uvm_axi_env.v:
+    path: /home/holden/verilator-work/uvm-axi-ral/test_regress/t/t_uvm_axi_env.v
+    sha256: cab7b9a2b2b9688bb39bf3dc2c21a658d35ef5b8d761d84b9536942f6403c3ef
+  t_uvm_axi_ral.vh:
+    path: /home/holden/verilator-work/uvm-axi-ral/test_regress/t/t_uvm_axi_ral.vh
+    sha256: e9b1e9c13b0f3f2f13544df71848f259c4b4577a2293f9c848b72187f8b49e57
+configuration_results:
+  path: /home/holden/verilator-work/uvm-axi-ral-evidence/accepted-20260908/results.json
+  sha256: 2583dc611baa3a7e9c961a3671919d469813d163c3d809edca5fddd208ee60e0
+commands:
+  source_vlt: python driver.py --vlt --jobs=1 --driver-build-jobs=1 --driver-clean-before --driver-uvm-source-root=/home/holden/verilator-work/uvm-2020.3.1 --obj-suffix=-axi-ral-source t/t_uvm_axi_env.py
+  source_vltmt: python driver.py --vltmt --jobs=1 --driver-build-jobs=1 --driver-clean-before --driver-uvm-source-root=/home/holden/verilator-work/uvm-2020.3.1 --obj-suffix=-axi-ral-source t/t_uvm_axi_env.py
+  bundled: python driver.py --vlt --vltmt --jobs=1 --driver-build-jobs=1 --driver-clean-before --obj-suffix=-axi-ral-bundled t/t_uvm_axi_env.py
+runs:
+  source_vlt:
+    passes: 1
+    failures: 0
+    elapsed: '4:45'
+    log:
+      path: /home/holden/verilator-work/uvm-axi-ral-source-reset-aligned.log
+      sha256: 6f075569e7603bfd58e19fd8e03948629a406998d81e8235e9dcd5b21515ba07
+  source_vltmt:
+    passes: 1
+    failures: 0
+    elapsed: '4:25'
+    log:
+      path: /home/holden/verilator-work/uvm-axi-ral-source-vltmt.log
+      sha256: b48f6f83992d62c3bad29f9205851397d19d17bea173a995ef48bf97c1ef8ebb
+  bundled:
+    passes: 2
+    failures: 0
+    elapsed: '8:11'
+    log:
+      path: /home/holden/verilator-work/uvm-axi-ral-bundled.log
+      sha256: 5231de833c55fa14c05f4ae1b981ed3bd6894a9e446e3fb5b0c821545242260e
+acceptance:
+  positive_runs: 12
+  negative_runs: 24
+  per_positive:
+    transfers: 2468
+    reads: 1266
+    writes: 1202
+    errors: 4
+    resets: 5
+    cancelled_aw_without_w: 1
+    cancelled_pending_read: 1
+  ral:
+    registers: 16
+    fields_per_register: 4
+    policy: RW
+    map: 32-bit byte-addressed little-endian
+    frontdoor_reads: 1120
+    frontdoor_writes: 1152
+    custom_sv_backdoor_reads: 32
+    custom_sv_backdoor_writes: 16
+    auto_predict: false
+    check_on_read: true
+    checks:
+      - write/read/mirror/set/update
+      - all byte fields preserve neighboring bytes
+      - explicit passive-monitor predictor and external bus writes
+      - built-in hardware reset, bit-bash and access sequences
+      - corrupt returned RAL read data fails independently of correct bus and predictor observations
+  coverage:
+    bins: 27
+    groups: ['direction: 2', 'response: 2', 'byte masks: 16', 'AW/W handshake order: 3', 'direction/response cross: 4']
+    oracle: Every individual bin count equals the independently observed driver handshake histogram; all three replay seeds are checked
+    merge: bin counts for seeds 1729 and 2718 sum exactly
+    report: LCOV source record checked
+  protocol: All prior ready/valid, reset/cancellation, AW/W ordering, concurrent read/write, five-channel backpressure and active/passive scoreboard requirements remain enabled
+causal_reset_failure:
+  result: fail before alignment; pass after alignment
+  log:
+    path: /home/holden/verilator-work/uvm-axi-ral-source-initial.log
+    sha256: 1b44a4e1ae5d4812bf0b8ad53bed4c7fc195c453805af57197e4df3ba771a4d2
+  retained_inputs_and_outputs: /home/holden/verilator-work/uvm-axi-ral-evidence/initial-reset-duration-failure
+  observation: All 2272 RAL operations completed, but the requirement for at least 15 monitored reset cycles failed. The original diagnostic did not print the actual cycle counts.
+  change: Align a reset request arriving between clocking events before driving reset; preserve the three-cycle pulse and all original acceptance thresholds.
+checks:
+  format: SV and Python formatting pass
+  python_lint:
+    result: pass
+    log:
+      path: /home/holden/verilator-work/uvm-axi-ral-lint-py.log
+      sha256: 8e563760fcf5f09322fabb66c76178f29ce317ded68bfcda908b33ed61c702b3
+  distribution:
+    passes: 2
+    failures: 0
+    drivers: [t_dist_copyright, t_dist_whitespace]
+    log:
+      path: /home/holden/verilator-work/uvm-axi-ral-distribution.log
+      sha256: d2c244c46f7b189a962b85b033ca1093e1efe6034f5107f9d1e6e78392b14121
+boundaries:
+  - Local component evidence; exact combined-source CI and full release acceptance remain open.
+  - The custom SystemVerilog backdoor is not HDL-DPI acceptance.
+  - The RAL model uses RW fields. Broader access policies and maps remain open for M13.
+  - Coverage type aggregation, lifetime and full option/cross semantics remain open for M10.
+  - The broader assertion/monitor agreement profile remains open for M15.
