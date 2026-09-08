@@ -1940,7 +1940,8 @@ class WidthVisitor final : public VNVisitor {
                                                   "'option.auto_bin_max'; using default value");
             }
         }
-        // Add more options here as needed (weight, goal, at_least, per_instance, comment)
+        // Add more options here as needed (goal, at_least, per_instance, comment).
+        // Weight assignments are lowered into normal constructor statements by V3LinkParse.
 
         // Delete the assignment node (we've extracted the value)
         VL_DO_DANGLING(pushDeletep(nodep->unlinkFrBack()), nodep);
@@ -3938,7 +3939,17 @@ class WidthVisitor final : public VNVisitor {
         AstClass* const first_classp = adtypep->classp();
         UASSERT_OBJ(first_classp, nodep, "Unlinked");
         for (AstClass* classp = first_classp; classp;) {
-            if (AstNode* const foundp = m_memberMap.findMember(classp, nodep->name())) {
+            AstNode* foundp = nullptr;
+            // The option view of a coverpoint/cross has separate storage so an
+            // implicit coverpoint does not shadow the variable it samples.
+            if (classp->isCovergroup()) {
+                if (const AstMemberSel* const parentp = VN_CAST(nodep->backp(), MemberSel)) {
+                    if (parentp->name() == "option")
+                        foundp = m_memberMap.findMember(classp, "__Vcovopt_" + nodep->name());
+                }
+            }
+            if (!foundp) foundp = m_memberMap.findMember(classp, nodep->name());
+            if (foundp) {
                 if (AstVar* const varp = VN_CAST(foundp, Var)) {
                     if (!varp->didWidth()) userIterate(varp, nullptr);
                     if (varp->lifetime().isStatic() || varp->isParam()) {

@@ -8,7 +8,7 @@
 
 // verilog_format: off
 `define stop $stop
-`define checkr(gotv,expv) do if ((gotv) != (expv)) begin $write("%%Error: %s:%0d:  got=%f exp=%f\n", `__FILE__,`__LINE__, (gotv), (expv)); `stop; end while(0);
+`define checkr(gotv,expv) do if (((gotv) < (expv) - 1.0e-9) || ((gotv) > (expv) + 1.0e-9)) begin $write("%%Error: %s:%0d:  got=%f exp=%f\n", `__FILE__,`__LINE__, (gotv), (expv)); `stop; end while(0);
 // verilog_format: on
 
 module t;
@@ -17,7 +17,10 @@ module t;
   logic mode;
   logic parity;
 
-  typedef struct packed {logic m_p; logic h_mode;} cfg_t;
+  typedef struct packed {
+    logic m_p;
+    logic h_mode;
+  } cfg_t;
   cfg_t s_cfg = '0;
 
   // 2-way cross
@@ -98,7 +101,7 @@ module t;
     // cross is dropped (COVERIGN, suppressed here) - it contributes no bins.
     /* verilator lint_off NONSTD */
     cross_hier: cross cp_addr, s_cfg.m_p;
-    /* verilator lint_on NONSTD */
+  /* verilator lint_on NONSTD */
   endgroup
 
   // Covergroup with an unnamed cross - the cross is reported under the default name "cross"
@@ -140,34 +143,34 @@ module t;
 
   initial begin
     // Sample 2-way: hit all 4 combinations
-    // cg2: 2 cp bins + 2 cp bins + 4 cross bins = 8 bins total (flat count)
+    // cg2: the two coverpoints and the cross each contribute one equal-weight item.
     addr = 0;
     cmd = 0;
     mode = 0;
     parity = 0;
     cg2_inst.sample();  // addr0 x read
-    `checkr(cg2_inst.get_inst_coverage(), 37.5);  // 3/8: addr0, read, addr0_x_read
+    `checkr(cg2_inst.get_inst_coverage(), 125.0 / 3.0);
     addr = 1;
     cmd = 1;
     mode = 0;
     parity = 0;
     cg2_inst.sample();  // addr1 x write
-    `checkr(cg2_inst.get_inst_coverage(), 75.0);  // 6/8: all cp bins + 2 cross bins
+    `checkr(cg2_inst.get_inst_coverage(), 250.0 / 3.0);
     addr = 0;
     cmd = 1;
     mode = 0;
     parity = 0;
     cg2_inst.sample();  // addr0 x write
-    `checkr(cg2_inst.get_inst_coverage(), 87.5);  // 7/8: 3 cross bins hit
+    `checkr(cg2_inst.get_inst_coverage(), 275.0 / 3.0);
     addr = 1;
     cmd = 0;
     mode = 0;
     parity = 0;
     cg2_inst.sample();  // addr1 x read
-    `checkr(cg2_inst.get_inst_coverage(), 100.0);  // 8/8: all 4 cross bins hit
+    `checkr(cg2_inst.get_inst_coverage(), 100.0);
 
     // Sample 3-way: hit 4 of 12 combinations
-    // cg3: 3+2+2+12=19 bins; 4 cross bins hit -> 11/19=57.9% (not clean; no intermediate checkr)
+    // cg3: three covered points and 4/12 cross bins average to 83.333...%.
     addr = 0;
     cmd = 0;
     mode = 0;
@@ -186,7 +189,7 @@ module t;
     cg3_inst.sample();  // addr0 x write x debug
 
     // Sample 4-way: hit 4 of 16 combinations
-    // cg4: 2+2+2+2+16=24 bins; 4 cross bins hit -> 12/24=50%
+    // cg4: four covered coverpoints and a quarter-covered cross average to 85%.
     addr = 0;
     cmd = 0;
     mode = 0;
@@ -197,7 +200,7 @@ module t;
     mode = 0;
     parity = 1;
     cg4_inst.sample();
-    `checkr(cg4_inst.get_inst_coverage(), 37.5);  // 9/24: all cp bins + 2 cross bins
+    `checkr(cg4_inst.get_inst_coverage(), 72.5);  // (100+100+50+100+12.5)/5
     addr = 0;
     cmd = 1;
     mode = 1;
@@ -208,10 +211,10 @@ module t;
     mode = 1;
     parity = 1;
     cg4_inst.sample();
-    `checkr(cg4_inst.get_inst_coverage(), 50.0);  // 12/24: all cp bins + 4 cross bins
+    `checkr(cg4_inst.get_inst_coverage(), 85.0);  // (100+100+100+100+25)/5
 
-    // Sample cg5 (cross with option.weight=2; weight is ignored in flat bin count)
-    // cg5: 2+2+4=8 bins; 2 cross bins hit -> 6/8=75%
+    // Sample cg5: the cross has twice the weight of each coverpoint.
+    // cg5: (100 + 100 + 2*50) / 4 = 75%.
     addr = 0;
     cmd = 0;
     cg5_inst.sample();
@@ -226,99 +229,111 @@ module t;
     addr = 0;
     cmd = 0;
     cg_ignore_inst.sample();  // a0 x read
-    `checkr(cg_ignore_inst.get_inst_coverage(), 37.5);  // 3/8
+    `checkr(cg_ignore_inst.get_inst_coverage(), 125.0 / 3.0);
     addr = 1;
     cmd = 1;
     cg_ignore_inst.sample();  // a1 x write
-    `checkr(cg_ignore_inst.get_inst_coverage(), 75.0);  // 6/8
+    `checkr(cg_ignore_inst.get_inst_coverage(), 250.0 / 3.0);
     addr = 0;
     cmd = 1;
     cg_ignore_inst.sample();  // a0 x write
-    `checkr(cg_ignore_inst.get_inst_coverage(), 87.5);  // 7/8
+    `checkr(cg_ignore_inst.get_inst_coverage(), 275.0 / 3.0);
     addr = 1;
     cmd = 0;
     cg_ignore_inst.sample();  // a1 x read
-    `checkr(cg_ignore_inst.get_inst_coverage(), 100.0);  // 8/8
+    `checkr(cg_ignore_inst.get_inst_coverage(), 100.0);
     addr = 3;
     cmd = 0;
     cg_ignore_inst.sample();  // ignored (addr=3 in ignore_bins)
-    `checkr(cg_ignore_inst.get_inst_coverage(), 100.0);  // still 100%
+    `checkr(cg_ignore_inst.get_inst_coverage(), 100.0);
 
     // Sample range-bin cross
     // cg_range: 2+2+4=8 bins
     addr = 0;
     cmd = 0;
     cg_range_inst.sample();  // lo_range x read
-    `checkr(cg_range_inst.get_inst_coverage(), 37.5);  // 3/8
+    `checkr(cg_range_inst.get_inst_coverage(), 125.0 / 3.0);
     addr = 2;
     cmd = 1;
     cg_range_inst.sample();  // hi_range x write
-    `checkr(cg_range_inst.get_inst_coverage(), 75.0);  // 6/8
+    `checkr(cg_range_inst.get_inst_coverage(), 250.0 / 3.0);
     addr = 1;
     cmd = 1;
     cg_range_inst.sample();  // lo_range x write
-    `checkr(cg_range_inst.get_inst_coverage(), 87.5);  // 7/8
+    `checkr(cg_range_inst.get_inst_coverage(), 275.0 / 3.0);
     addr = 3;
     cmd = 0;
     cg_range_inst.sample();  // hi_range x read
-    `checkr(cg_range_inst.get_inst_coverage(), 100.0);  // 8/8
+    `checkr(cg_range_inst.get_inst_coverage(), 100.0);
 
     // Sample cg_at_least (option.at_least in cross body; Verilator uses at_least=1 for bins)
-    // cg_at_least: 2+2+4=8 bins; 2 cross bins hit (count=1, at_least effectively 1) -> 6/8=75%
+    // cg_at_least: two fully covered points and a half-covered cross average to 83.333...%.
     addr = 0;
     cmd = 0;
     cg_at_least_inst.sample();  // addr0 x read
     addr = 1;
     cmd = 1;
     cg_at_least_inst.sample();  // addr1 x write
-    `checkr(cg_at_least_inst.get_inst_coverage(), 75.0);
+    `checkr(cg_at_least_inst.get_inst_coverage(), 250.0 / 3.0);
 
     // Sample cg_goal (option.goal in cross body; does not affect hit counting)
-    // cg_goal: 2+2+4=8 bins; 2 cross bins hit -> 6/8=75%
+    // cg_goal: two fully covered points and a half-covered cross average to 83.333...%.
     addr = 0;
     cmd = 0;
     cg_goal_inst.sample();  // addr0 x read
     addr = 1;
     cmd = 1;
     cg_goal_inst.sample();  // addr1 x write
-    `checkr(cg_goal_inst.get_inst_coverage(), 75.0);
+    `checkr(cg_goal_inst.get_inst_coverage(), 250.0 / 3.0);
 
     // Sample cg_unsup_cross_opt
-    // cg_unsup_cross_opt: 2+2+4=8 bins; 2 cross bins hit -> 6/8=75%
+    // cg_unsup_cross_opt: two fully covered points and a half-covered cross average to 83.333...%.
     addr = 0;
     cmd = 0;
     cg_unsup_cross_opt_inst.sample();  // addr0 x read
     addr = 1;
     cmd = 1;
     cg_unsup_cross_opt_inst.sample();  // addr1 x write
-    `checkr(cg_unsup_cross_opt_inst.get_inst_coverage(), 75.0);
+    `checkr(cg_unsup_cross_opt_inst.get_inst_coverage(), 250.0 / 3.0);
 
     // Sample cg_unnamed_cross
-    // cg_unnamed_cross: 2+2+4=8 bins; 2 cross bins hit -> 6/8=75%
+    // cg_unnamed_cross: two fully covered points and a half-covered cross average to 83.333...%.
     addr = 0;
     cmd = 0;
     cg_unnamed_cross_inst.sample();  // a0 x read
     addr = 1;
     cmd = 1;
     cg_unnamed_cross_inst.sample();  // a1 x write
-    `checkr(cg_unnamed_cross_inst.get_inst_coverage(), 75.0);
+    `checkr(cg_unnamed_cross_inst.get_inst_coverage(), 250.0 / 3.0);
 
-    // Sample cg_mixed: 10 bins total (cp_addr 2 + cp_cmd 2 + cp_solo 2 + cross ab 4)
-    addr = 0; cmd = 0; mode = 0;
+    // Sample cg_mixed: (50 + 50 + 50 + 25) / 4 = 43.75%.
+    addr = 0;
+    cmd = 0;
+    mode = 0;
     cg_mixed_inst.sample();  // addr0, read, solo normal, ab(addr0_x_read)
-    `checkr(cg_mixed_inst.get_inst_coverage(), 40.0);  // 4/10
-    addr = 0; cmd = 1; mode = 1;
+    `checkr(cg_mixed_inst.get_inst_coverage(), 43.75);
+    addr = 0;
+    cmd = 1;
+    mode = 1;
     cg_mixed_inst.sample();  // addr0, write, solo debug, ab(addr0_x_write)
-    addr = 1; cmd = 0; mode = 0;
+    addr = 1;
+    cmd = 0;
+    mode = 0;
     cg_mixed_inst.sample();  // addr1, read, ab(addr1_x_read)
-    addr = 1; cmd = 1; mode = 1;
+    addr = 1;
+    cmd = 1;
+    mode = 1;
     cg_mixed_inst.sample();  // addr1, write, ab(addr1_x_write)
-    `checkr(cg_mixed_inst.get_inst_coverage(), 100.0);  // 10/10
+    `checkr(cg_mixed_inst.get_inst_coverage(), 100.0);
 
     // Sample cg_def_cross (default bin in a crossed coverpoint, gated by iff)
     mode = 1;
-    addr = 0; cmd = 0; cg_def_cross_inst.sample();  // a0, read
-    addr = 2; cmd = 1; cg_def_cross_inst.sample();  // ad (default), write
+    addr = 0;
+    cmd = 0;
+    cg_def_cross_inst.sample();  // a0, read
+    addr = 2;
+    cmd = 1;
+    cg_def_cross_inst.sample();  // ad (default), write
 
     $write("*-* All Finished *-*\n");
     $finish;

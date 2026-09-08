@@ -134,7 +134,7 @@ module t;
     data = 2;
     cg_inst.sample();
     cg2_inst.sample();
-    `checkr(cg2_inst.get_inst_coverage(), 100.0);  // cg2 has 1 bin (default) -> 100% after first sample
+    `checkr(cg2_inst.get_inst_coverage(), 0.0);  // Default bins do not contribute (IEEE 19.11).
 
     // Hit high bin
     data = 14;
@@ -145,14 +145,14 @@ module t;
     data = 7;
     cg_inst.sample();
     cg2_inst.sample();
-    `checkr(cg_inst.get_inst_coverage(), 100.0);  // all 3 bins (low, high, other) hit
+    `checkr(cg_inst.get_inst_coverage(), 100.0);  // Both contributing bins (low, high) are hit.
 
     // Hit another default value (should not increase coverage)
     data = 20;
     cg_inst.sample();
     cg2_inst.sample();
     `checkr(cg_inst.get_inst_coverage(), 100.0);
-    `checkr(cg2_inst.get_inst_coverage(), 100.0);
+    `checkr(cg2_inst.get_inst_coverage(), 0.0);
 
     // Sample cg3: verify ignore/illegal bins do not contribute to coverage
     data = 2;

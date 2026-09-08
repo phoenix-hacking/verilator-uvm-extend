@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
 // Test: Empty covergroup (no coverpoints)
-// Expected: Should compile, coverage should be 100% (nothing to cover)
+// IEEE 1800-2023 19.11: an empty group with nonzero weight reports 0%.
 
 module t (  /*AUTOARG*/
     // Inputs

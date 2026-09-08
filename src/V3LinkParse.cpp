@@ -1166,6 +1166,16 @@ class LinkParseVisitor final : public VNVisitor {
         }
     }
 
+    // Initialize a group/item weight through normal linked and renamed AST references.
+    static AstAssign* newCoverageWeightAssign(FileLine* fl, const string& item,
+                                              AstNodeExpr* valuep) {
+        AstNodeExpr* lhsp = new AstParseRef{fl, "this"};
+        if (!item.empty()) lhsp = new AstDot{fl, false, lhsp, new AstParseRef{fl, item}};
+        lhsp = new AstDot{fl, false, lhsp, new AstParseRef{fl, "option"}};
+        lhsp = new AstDot{fl, false, lhsp, new AstParseRef{fl, "weight"}};
+        return new AstAssign{fl, lhsp, valuep};
+    }
+
     // Create boilerplate covergroup methods on the given AstClass.
     // argsp/sampleArgsp are the raw arg lists still owned by the caller; they are iterated
     // (cloned) but not deleted here.
@@ -1200,6 +1210,14 @@ class LinkParseVisitor final : public VNVisitor {
                                                                       nullptr, nullptr},
                                              nullptr}};
             nodep->addMembersp(varp);
+        }
+        // IEEE 1800-2023 Table 19-1: every covergroup instance initially has weight 1.
+        AstAssign* const weightp
+            = newCoverageWeightAssign(nodep->fileline(), "", new AstConst{nodep->fileline(), 1});
+        if (newFuncp->stmtsp()) {
+            newFuncp->stmtsp()->addHereThisAsNext(weightp);
+        } else {
+            newFuncp->addStmtsp(weightp);
         }
         {
             AstVar* const varp
@@ -1341,7 +1359,35 @@ class LinkParseVisitor final : public VNVisitor {
         iterate(cgClassp);
     }
 
+    void createCoverageItemOptions(AstNodeFuncCovItem* nodep) {
+        FileLine* const fl = nodep->fileline();
+        const string name = "__Vcovopt_" + nodep->name();
+        // Keep the option storage separate from the sampled variable's namespace:
+        // an implicit coverpoint can have the same name as its sample argument.
+        AstVar* const varp = new AstVar{
+            fl, VVarType::MEMBER, name, VFlagChildDType{},
+            new AstRefDType{fl, "vl_coverage_item_t",
+                            new AstClassOrPackageRef{fl, "std", nullptr, nullptr}, nullptr}};
+        VN_AS(m_modp, Class)->addMembersp(varp);
+        AstAssign* const initp = newCoverageWeightAssign(fl, name, new AstConst{fl, 1});
+        nodep->addHereThisAsNext(initp);
+        iterate(initp);
+    }
+
+    void visit(AstCgOptionAssign* nodep) override {
+        if (!nodep->typeOption() && nodep->optionType() == VCoverOptionType::WEIGHT) {
+            AstAssign* const assignp
+                = newCoverageWeightAssign(nodep->fileline(), "", nodep->valuep()->unlinkFrBack());
+            nodep->replaceWith(assignp);
+            VL_DO_DANGLING(pushDeletep(nodep), nodep);
+            iterate(assignp);
+        } else {
+            iterateChildren(nodep);
+        }
+    }
+
     void visit(AstCoverpoint* nodep) override {
+        if (nodep->user1SetOnce()) return;  // Inserting initializers revisits the coverage item.
         cleanFileline(nodep);
         // Give every coverpoint a guaranteed-unique, deterministic name so all downstream
         // consumers (generated bin-variable names, the cross coverpoint map, hierarchical
@@ -1364,6 +1410,7 @@ class LinkParseVisitor final : public VNVisitor {
                 nodep->name("__Vcoverpoint" + cvtToStr(m_coverpointNum++));
             }
         }
+        createCoverageItemOptions(nodep);
         // Re-sort the parse-time mixed bins list (AstCoverBin + AstCgOptionAssign)
         // into the typed binsp and optionsp slots.  The grammar attaches both node types
         // to binsp (op2) as a raw List[AstNode]; now that they are properly parented we
@@ -1372,8 +1419,14 @@ class LinkParseVisitor final : public VNVisitor {
             nextp = itemp->nextp();
             if (AstCgOptionAssign* const optp = VN_CAST(itemp, CgOptionAssign)) {
                 optp->unlinkFrBack();
-                if (optp->optionType() == VCoverOptionType::AT_LEAST
-                    || optp->optionType() == VCoverOptionType::AUTO_BIN_MAX) {
+                if (!optp->typeOption() && optp->optionType() == VCoverOptionType::WEIGHT) {
+                    AstAssign* const assignp
+                        = newCoverageWeightAssign(optp->fileline(), "__Vcovopt_" + nodep->name(),
+                                                  optp->valuep()->unlinkFrBack());
+                    nodep->addHereThisAsNext(assignp);
+                    iterate(assignp);
+                } else if (optp->optionType() == VCoverOptionType::AT_LEAST
+                           || optp->optionType() == VCoverOptionType::AUTO_BIN_MAX) {
                     nodep->addOptionsp(new AstCoverOption{optp->fileline(), optp->optionType(),
                                                           optp->valuep()->cloneTree(false)});
                 } else {
@@ -1387,7 +1440,9 @@ class LinkParseVisitor final : public VNVisitor {
     }
 
     void visit(AstCoverCross* nodep) override {
+        if (nodep->user1SetOnce()) return;  // Inserting initializers revisits the coverage item.
         cleanFileline(nodep);
+        createCoverageItemOptions(nodep);
         // Distribute the parse-time raw cross_body list (rawBodyp, op3) into the
         // typed optionsp slot.  The grammar produces AstCgOptionAssign nodes for
         // option.* items; convert them to AstCoverOption exactly as visit(AstCoverpoint*)
@@ -1397,6 +1452,15 @@ class LinkParseVisitor final : public VNVisitor {
             itemp->unlinkFrBack();
             AstCgOptionAssign* const optp = VN_AS(itemp, CgOptionAssign);
             const VCoverOptionType optType = optp->optionType();
+            if (!optp->typeOption() && optType == VCoverOptionType::WEIGHT) {
+                AstAssign* const assignp
+                    = newCoverageWeightAssign(optp->fileline(), "__Vcovopt_" + nodep->name(),
+                                              optp->valuep()->unlinkFrBack());
+                nodep->addHereThisAsNext(assignp);
+                iterate(assignp);
+                VL_DO_DANGLING(optp->deleteTree(), optp);
+                continue;
+            }
             optp->v3warn(COVERIGN,
                          "Ignoring unsupported coverage cross option: " + optp->prettyNameQ());
             // Always preserve the option node so V3Coverage can track its source line
