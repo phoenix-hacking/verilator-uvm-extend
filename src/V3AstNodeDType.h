@@ -204,7 +204,7 @@ public:
     ASTGEN_MEMBERS_AstNodeArrayDType;
     void dump(std::ostream& str) const override;
     void dumpJson(std::ostream& str) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     const char* broken() const override {
         BROKEN_RTN(!((m_refDTypep && !childDTypep()) || (!m_refDTypep && childDTypep())));
         return nullptr;
@@ -600,7 +600,7 @@ public:
     bool similarDTypeNode(const AstNodeDType* samep) const override;
     void dump(std::ostream& str = std::cout) const override;
     void dumpJson(std::ostream& str = std::cout) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     string prettyDTypeName(bool full) const override;
     string name() const override VL_MT_STABLE;
     AstBasicDType* basicp() const override VL_MT_STABLE { return nullptr; }
@@ -751,7 +751,7 @@ public:
         return asamep->subDTypep() && subDTypep()->similarDType(asamep->subDTypep());
     }
     string prettyDTypeName(bool full) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     AstNodeDType* getChildDTypep() const override { return childDTypep(); }
     AstNodeDType* subDTypep() const override VL_MT_STABLE {
         return m_refDTypep ? m_refDTypep : childDTypep();
@@ -775,7 +775,7 @@ public:
         dtypep(this);
     }
     ASTGEN_MEMBERS_AstEmptyQueueDType;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     bool hasDType() const override VL_MT_SAFE { return true; }
     bool maybePointedTo() const override VL_MT_SAFE { return true; }
     bool undead() const override { return true; }
@@ -836,7 +836,7 @@ public:
     void name(const string& flag) override { m_name = flag; }
     void dump(std::ostream& str = std::cout) const override;
     void dumpJson(std::ostream& str = std::cout) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     string prettyDTypeName(bool full) const override;
     // METHODS
     AstBasicDType* basicp() const override VL_MT_STABLE { return subDTypep()->basicp(); }
@@ -868,7 +868,7 @@ public:
         dtypep(this);
     }
     ASTGEN_MEMBERS_AstIfaceGenericDType;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     bool hasDType() const override VL_MT_SAFE { return true; }
     bool maybePointedTo() const override VL_MT_SAFE { return true; }
     bool undead() const override { return true; }
@@ -883,7 +883,7 @@ public:
     bool isModport() { return !m_modportName.empty(); }
     bool isCompound() const override { return true; }
     FileLine* modportFileline() const { return m_modportFileline; }
-    string name() const override { return m_modportName; }
+    string name() const override VL_MT_STABLE { return m_modportName; }
 };
 
 class AstIfaceRefDType final : public AstNodeDType {
@@ -926,7 +926,7 @@ public:
     // METHODS
     void dump(std::ostream& str = std::cout) const override;
     void dumpJson(std::ostream& str = std::cout) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     AstBasicDType* basicp() const override VL_MT_STABLE { return nullptr; }
     bool similarDTypeNode(const AstNodeDType* samep) const override { return this == samep; }
     int widthAlignBytes() const override { return 0; }
@@ -990,7 +990,7 @@ public:
     ASTGEN_MEMBERS_AstMemberDType;
     void dump(std::ostream& str = std::cout) const override;
     void dumpJson(std::ostream& str = std::cout) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     string name() const override VL_MT_STABLE { return m_name; }  // * = Var name
     bool hasDType() const override VL_MT_SAFE { return true; }
     bool maybePointedTo() const override VL_MT_SAFE { return true; }
@@ -1152,7 +1152,7 @@ public:
         const AstQueueDType* const asamep = VN_DBG_AS(samep, QueueDType);
         return asamep->subDTypep() && subDTypep()->similarDType(asamep->subDTypep());
     }
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     string prettyDTypeName(bool full) const override;
     AstNodeDType* getChildDTypep() const override { return childDTypep(); }
     AstNodeDType* subDTypep() const override VL_MT_STABLE {
@@ -1211,7 +1211,7 @@ public:
     }
     void dump(std::ostream& str = std::cout) const override;
     void dumpJson(std::ostream& str = std::cout) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     string name() const override VL_MT_STABLE { return m_name; }
     string prettyDTypeName(bool full) const override {
         return subDTypep() ? prettyName(subDTypep()->prettyDTypeName(full)) : prettyName();
@@ -1288,7 +1288,7 @@ public:
         const AstSampleQueueDType* const asamep = VN_DBG_AS(samep, SampleQueueDType);
         return asamep->subDTypep() && subDTypep()->similarDType(asamep->subDTypep());
     }
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     AstNodeDType* getChildDTypep() const override { return childDTypep(); }
     // op1 = Range of variable
     AstNodeDType* subDTypep() const override VL_MT_STABLE {
@@ -1312,7 +1312,7 @@ public:
         dtypep(this);
     }
     ASTGEN_MEMBERS_AstStreamDType;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     bool hasDType() const override VL_MT_SAFE { return true; }
     bool maybePointedTo() const override VL_MT_SAFE { return true; }
     bool undead() const override { return true; }
@@ -1349,7 +1349,7 @@ public:
     }
     bool sameNode(const AstNode* samep) const override;
     bool similarDTypeNode(const AstNodeDType* samep) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     AstNodeDType* getChildDTypep() const override { return childDTypep(); }
     AstNodeDType* subDTypep() const override VL_MT_STABLE {
         return m_refDTypep ? m_refDTypep : childDTypep();
@@ -1371,7 +1371,7 @@ public:
         dtypep(this);
     }
     ASTGEN_MEMBERS_AstVoidDType;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     bool hasDType() const override VL_MT_SAFE { return true; }
     bool maybePointedTo() const override VL_MT_SAFE { return true; }
     bool undead() const override { return true; }
@@ -1403,7 +1403,7 @@ public:
     }
     bool sameNode(const AstNode* samep) const override;
     bool similarDTypeNode(const AstNodeDType* samep) const override;
-    void dumpSmall(std::ostream& str) const override;
+    void dumpSmall(std::ostream& str) const override VL_MT_STABLE;
     AstNodeDType* getChildDTypep() const override { return childDTypep(); }
     AstNodeDType* subDTypep() const override VL_MT_STABLE {
         return m_refDTypep ? m_refDTypep : childDTypep();

@@ -573,7 +573,7 @@ public:
         addExprp(exprp);
     }
     ASTGEN_MEMBERS_AstWith;
-    bool hasDType() const override { return true; }
+    bool hasDType() const override VL_MT_SAFE { return true; }
     bool sameNode(const AstNode* /*samep*/) const override { return true; }
     const char* broken() const override {
         BROKEN_RTN(!indexArgRefp());  // varp needed to know lambda's arg dtype
@@ -6388,8 +6388,8 @@ public:
     // This form only allowed post-link (see above)
     inline AstVarRef(FileLine* fl, AstVarScope* varscp, const VAccess& access);
     ASTGEN_MEMBERS_AstVarRef;
-    std::string nameThis() const { return m_name; }
-    inline string name() const override;  // * = Var name
+    std::string nameThis() const VL_MT_STABLE { return m_name; }
+    inline string name() const override VL_MT_STABLE;  // * = Var name
     void name(const string& name) override { m_name = name; }
     void dump(std::ostream& str) const override;
     void dumpJson(std::ostream& str) const override;

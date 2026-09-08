@@ -188,7 +188,7 @@ AstVarRef::AstVarRef(FileLine* fl, AstVarScope* varscp, const VAccess& access)
     varScopep(varscp);
 }
 
-string AstVarRef::name() const { return varp() ? varp()->name() : nameThis(); }
+string AstVarRef::name() const VL_MT_STABLE { return varp() ? varp()->name() : nameThis(); }
 
 bool AstVarRef::sameNode(const AstVarRef* samep) const {
     if (varScopep()) return (varScopep() == samep->varScopep() && access() == samep->access());
