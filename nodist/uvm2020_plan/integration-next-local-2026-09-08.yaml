@@ -1,0 +1,118 @@
+---
+# DESCRIPTION: Verilator: Combined source UVM protocol and compiler validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-08'
+observed_utc: '2026-09-08T03:59:13.635187+00:00'
+status: validated_combined_local_protocol_and_neighbors_with_release_acceptance_open
+checkout: /home/holden/verilator-work/uvm-integration-20260908
+checkout_revision: 77a328f91aab958cbc8705b669a1def3cf09e769
+compiler_build_revision: 021134c56
+compiler_embedded_version: vUNKNOWN-built20260908-021134c56
+native_source_trees:
+  src: 2dcd86ad3e2a20914b50a0e7779fa38b1072c554
+  include: 0c921eec72fb700ad18c2487a6a195731aea8b2d
+native_sources_identical_through_checkout_revision: true
+native_build:
+  command: CPPFLAGS=-I/home/holden/verilator-work/toolchain/include make -C src opt -j2
+  exit_code: 0
+  warnings_as_errors: true
+  log:
+    path: /home/holden/verilator-work/integration-next-opt-build.log
+    sha256: 1730c1e8ef82b846923c35f263d1d8131e165eb9120916cab4160c34ab32ef7c
+  binary:
+    path: /home/holden/verilator-work/integration-next-evidence/verilator_bin-021134c56
+    sha256: e3b68fdf0319ddfd778edb7bf7a57cb70c8d84b6b0372426848da3f04ec26d48
+    bytes: 26934528
+coverage_build:
+  command: CPPFLAGS=-I/home/holden/verilator-work/toolchain/include make -C src ../bin/verilator_coverage_bin_dbg -j2
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/integration-next-coverage-build.log
+    sha256: 4d574eb48c0216e4f56f509f966cc163bf5924b39ffee93b87b48c847f4dae1f
+  binary:
+    path: /home/holden/verilator-work/integration-next-evidence/verilator_coverage_bin_dbg-021134c56
+    sha256: dc42bf3ae2820b61094de388482da1df95e93449cf9e405840a129caf3248409
+    bytes: 5189208
+protocol_source:
+  command: make -C test_regress uvm2020-protocol-source UVM_SOURCE_ROOT=/home/holden/verilator-work/uvm-2020.3.1
+  uvm_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  uvm_source_clean: true
+  dpi: disabled
+  test_workers: 1
+  model_build_jobs: 1
+  scenarios: [vlt, vltmt]
+  simulation_threads: [1, 2]
+  result: pass
+  driver_passes: 4
+  driver_failures: 0
+  elapsed: '17:25'
+  seeded_positive_runs: 12
+  injected_fault_negative_runs: 20
+  apb_transfers_per_positive: 2436
+  axi_transfers_per_positive: 196
+  stale_artifact_cleanup: pass
+  details:
+    path: /home/holden/verilator-work/integration-next-evidence/protocol-source-results.json
+    sha256: 908070cd13333829ac7c85f85f5539586426559d89e3c52ff6df41b8b9303923
+  log:
+    path: /home/holden/verilator-work/integration-next-protocol-source.log
+    sha256: 2131cd25f7a35fea92c8bd016d37819c2be20200ba70bb47e77e2baa9ae595cd
+    bytes: 817138
+neighbors:
+  command: python driver.py --vlt --vltmt --jobs=1 --driver-build-jobs=1 --driver-clean-before --driver-preserve-order --obj-suffix=-combined-neighbors <14 named drivers recorded in neighbor-results.json>
+  environment:
+    VERILATOR_BIN: /home/holden/verilator-work/uvm-integration-20260908/bin/verilator_bin
+    CMAKE_PREFIX_PATH: /home/holden/verilator-work/toolchain
+    CPPFLAGS: unset
+  result: pass
+  driver_passes: 22
+  driver_failures: 0
+  elapsed: '4:24'
+  details:
+    path: /home/holden/verilator-work/integration-next-evidence/neighbor-results.json
+    sha256: 26c893deb90ce72af75b4299a59d42cb73d30427559cabfff270f45fe0455ddf
+  log:
+    path: /home/holden/verilator-work/integration-next-neighbors.log
+    sha256: 92924661dd69fc3c78a95485b87f84e5b83d8a89fc841770d057f378c97043f4
+  scope:
+    - native self-tests including concurrent statistics insertion
+    - compiler statistics and FSM graph behavior
+    - array/default/illegal/cross/weighted covergroup semantics
+    - ordinary and protected weighted C++14 models plus coverage merge
+    - eight FST/VCD/SAIF CMake scenarios, including SystemC
+acceptance_boundaries:
+  - The APB and AXI transport fixtures are the committed versions at 77a328f91; the later isolated AXI coverage/RAL extension is not included in this result.
+  - Protocol source runs explicitly select pinned UVM with DPI disabled. The separate reference-model source runs enable DPI, use the documented simulator backend wrapper, and compile the reference object
+    as C11. Neither substitutes for complete UVM compliance.
+  - The original frozen regression remains at 382553c08. Its failure dispositions are not changed by passing candidate checks.
+  - Exact-revision supported-host CI, compiler/runtime residual safety findings, normative requirements, full regression and production performance acceptance remain open.
+ci:
+  status: not_accepted
+  build_test_run: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34183526282
+  revision: 77a328f91aab958cbc8705b669a1def3cf09e769
+dpi_source:
+  command: python driver.py --vlt --vltmt --jobs=1 --driver-build-jobs=1 --driver-clean-before --driver-preserve-order --driver-uvm-source-root=/home/holden/verilator-work/uvm-2020.3.1 --obj-suffix=-combined-dpi-source
+    t/t_uvm_dpi_reference.py t/t_uvm_dpi_reference_dynamic.py
+  result: pass
+  driver_passes: 4
+  driver_failures: 0
+  positive_runs: 4
+  negative_runs: 4
+  elapsed: '14:52'
+  reference_language: C11, compiled separately with -Wall -Wextra -Werror
+  uvm_source_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  uvm_source_clean: true
+  dpi_source_wrapper:
+    path: /home/holden/verilator-work/uvm-integration-20260908/test_regress/t/t_uvm_source_dpi.cpp
+    sha256: 50ac7bfc3656cb19b25901f0cec3b8a7694faad70c41c4b623c681a1561d2df3
+  dpi_wrapper_scope: Compile unchanged upstream common, regex, service-command and polling components with the simulator-specific Verilator HDL backend. The common DPI include path selects the pinned unmodified
+    library.
+  details:
+    path: /home/holden/verilator-work/integration-next-evidence/dpi-source-results.json
+    sha256: bc59df836ea557ea1823e35e6c5810e5bb56f3c52244922ea809ff2559d8caf3
+  log:
+    path: /home/holden/verilator-work/integration-next-dpi-source.log
+    sha256: 698a797cd47ffe9220bbf6d9cf24e59d234d34fcfc339686b1c029b8aae0f31e

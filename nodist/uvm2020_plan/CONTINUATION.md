@@ -4,6 +4,66 @@
 
 # UVM 2020 continuation ledger
 
+## AXI acceptance and completed regression: 2026-09-08
+
+AXI RAL and class coverage are committed at `cd75adad3`, with published
+evidence at `f27e5001c`, and merged into the combined checkout. All four
+bundled/source and vlt/vltmt configurations pass: 12 positives and 24 negatives,
+2,468 transfers per positive, all 27 exact coverage bins, merge/report, explicit
+monitor prediction and built-in RAL sequences. This accepts M12/C08 and raises
+formal progress to **7/20 milestones, 31/46 gates and 3/21 criteria**. See
+[AXI evidence](uvm-axi-ral-local-2026-09-08.yaml). M13 policies/maps and both full
+goals remain open.
+
+The combined strict-C11 DPI reference source checks passed 4/4 in 14:52,
+adding to the earlier four protocol and 22 neighbor passes at `77a328f91`.
+[Combined evidence](integration-next-local-2026-09-08.yaml) records the existing
+DPI wrapper: unchanged upstream common components plus the Verilator HDL backend.
+
+The original segmented regression is complete: **6,727 pass, eight skip,
+three fail**, with every result hash and native/source input reverified.
+[Final evidence](integration-resume-final-2026-09-08.yaml) retains all failure
+and skip reasons. No fresh full pass or release acceptance is claimed. After
+completion, another 78.40 GiB of disposable build intermediates was removed;
+total cleanup recovered about 93.3 GiB, with roughly 135 GiB available at the
+checkpoint. All acceptance evidence and native tools are retained.
+
+## Combined protocol validation and disk cleanup: 2026-09-08
+
+At combined checkout `77a328f91`, both native tools built successfully. The
+compiler embeds source version `021134c56`; compiler/runtime source trees are
+identical through the evidence checkout. The protocol source target passed
+**4/4 scenarios in 17:25**, including 12 seeded positives, 20 negatives and
+all stale-artifact checks. Source UVM remains clean at the pinned revision.
+Another **22/22 compiler, weighted coverage and CMake neighbor scenarios
+passed in 4:24**. [Combined evidence](integration-next-local-2026-09-08.yaml)
+retains exact binary, input and log hashes. DPI-enabled source checks and
+combined CI remain open. The combined build-test run is `34183526282`.
+Six superseded component build matrices were canceled after preserving their
+metadata and verifying their revisions are ancestors of the combined source.
+
+Issues #7 and #12 now close their accepted local clocking/APB scope. Formal
+counts remain **6/20 milestones, 30/46 gates, 2/21 criteria**. The original
+regression last recorded 4,112 resumed passes and three failures: contributor
+certification plus the known CMake FST dependency failure in vlt and vltmt.
+Its actual results remain separate from passing candidate validation.
+
+Continue AXI coverage/RAL work in `/home/holden/verilator-work/uvm-axi-ral`,
+branch `codex/uvm-axi-ral`, using the retained combined compiler. Its first
+extended run completed 2,272 RAL operations and matched all 27 coverage bins
+to independent driver handshakes, then failed the reset-duration check.
+Aligning off-edge reset requests fixed that check; source vlt now passes
+three positives and six negatives. Source vltmt and both bundled scenarios
+are running. M12 is not accepted by this partial configuration result.
+
+The user requested disk cleanup. Removing 556 disposable object/archive/PCH
+files from completed component runs recovered 8.14 GiB after verifying 152
+retained evidence files. Archiving and byte-verifying 108 old compiler AST
+dumps recovered another 6.72 GiB. Sources, logs, coverage, statuses, retained
+executables and live integration artifacts were preserved. Manifests are
+`/home/holden/verilator-work/completed-build-cleanup-20260908.json` and
+`/home/holden/verilator-work/completed-ast-archives-20260908/manifest.jsonl`.
+
 ## Protocol acceptance and combined checkout: 2026-09-07
 
 Formal progress is now **6/20 milestones, 30/46 gates and 2/21 program

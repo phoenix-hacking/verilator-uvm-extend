@@ -4,6 +4,11 @@
 
 # UVM 2020.3.1 regression plan
 
+Current accepted progress is **7/20 milestones, 31/46 gates and 3/21 program
+criteria**. Use [PROGRESS.md](PROGRESS.md) and [tracker.yaml](tracker.yaml)
+for the current state. Dated lane snapshots and their numerical status tables
+below retain historical evidence; they do not override the current tracker.
+
 ## Explicit compliance and performance goals
 
 The [goal contract](GOALS.md) defines **G-UVM: full IEEE 1800.2-2020 UVM
@@ -14,7 +19,7 @@ mandatory-feature limitations cannot satisfy full compliance, and regression
 durations cannot satisfy performance acceptance. `check_tracker.py` rejects
 a goal marked pass without its required checks, evidence, and prerequisites.
 
-## Current checkpoint: 2026-09-07
+## Historical checkpoint: 2026-09-07
 
 The declared 27-test UVM contract has accepted local, push, and pull-request
 CI evidence. Both CI matrices passed all 46 jobs at source

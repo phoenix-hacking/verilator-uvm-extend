@@ -12,9 +12,9 @@ Updated 2026-09-07, with evidence observed on 2026-09-08 UTC.
 
 | Measure | Accepted | Percentage |
 |---|---:|---:|
-| Public capability milestones | 6/20 | 30.0% |
-| Required atomic gates | 30/46 | 65.2% |
-| Program exit criteria | 2/21 | 9.5% |
+| Public capability milestones | 7/20 | 35.0% |
+| Required atomic gates | 31/46 | 67.4% |
+| Program exit criteria | 3/21 | 14.3% |
 | Full UVM compliance goal checks | 0/6 | Pending |
 | Production performance goal checks | 0/6 | Pending |
 
@@ -26,7 +26,7 @@ establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## New accepted capability
 
-**M06 and M11, with C06 and C07, now pass their declared local acceptance.**
+**M06, M11 and M12, with C06, C07 and C08, pass their declared local acceptance.**
 The APB environment uses typed virtual clocking modports through config
 objects, active/passive agents, independent monitors and scoreboards, wait
 states, errors, byte masks, reset cancellation and recovery. Delayed requests
@@ -46,13 +46,24 @@ source mode in this harness. The custom SV RAL backdoor does not claim HDL-DPI
 acceptance. [APB evidence](uvm-apb-local-2026-09-07.yaml) records source,
 binary, commands, counts, logs and limitations.
 
+The extended AXI-lite environment also passes all four bundled/source and
+vlt/vltmt configurations: 12 seeded positives and 24 negatives. Every positive
+completes 2,468 transfers, including 2,272 RAL frontdoor/predictor/built-in
+operations. Twenty-seven individual coverage-bin counts match independent
+driver handshakes, and merge/report checks pass. Reset requests arriving
+between clocking events now preserve three full sampled reset cycles. A
+corrupt RAL response is detected independently of correct bus and predictor
+observations. [AXI RAL evidence](uvm-axi-ral-local-2026-09-08.yaml) closes M12;
+broader policies/maps, full coverage semantics and the assertion profile stay
+open under M13, M10 and M15.
+
 ## Other validated components
 
 | Component | Result | Scope still open |
 |---|---|---|
 | Compiler safe access | Complete 164-unit audit reduced 47 to 21, then 11 primary findings; a statistics insertion race was reproduced and fixed; 18 behavioral scenarios pass. | Eleven source findings, runtime findings, broad sanitizer and release acceptance. |
 | Coverage weighting | Weighted item percentages, dynamic instance weights and supported array-bin cross products have passing evidence across 52 scenarios. | Type aggregation, lifetime/ownership, other options and complete cross semantics. |
-| AXI-lite transport | All four bundled/source and vlt/vltmt configurations pass; each positive completes 50 writes and 146 reads, with independent channels, all strobes, backpressure, errors and reset recovery. Five negatives independently exercise data, stalled RDATA and reset-VALID oracles. | Class coverage, RAL adapter/frontdoor and full M12 acceptance. |
+| AXI-lite environment | All four configurations pass RAL, coverage and the existing independent-channel transport checks; each positive completes 1,202 writes and 1,266 reads. | Broader RAL policies/maps, full coverage semantics and the assertion profile remain separate open scope. |
 | CMake FST dependencies | Parent failed with missing `lz4.h` despite a valid prefix; dependency discovery now passes eight FST/VCD/SAIF scenarios. | Combined-source and supported-host CI validation. |
 
 See [compiler evidence](compiler-safe-access-local-2026-09-07.yaml),
@@ -68,20 +79,32 @@ of an existing CellEdge finding; no newly affected function is claimed.
 The combined checkout is `/home/holden/verilator-work/uvm-integration-20260908`,
 branch `codex/uvm-integration-20260908`. It includes the DPI C-build correction,
 compiler fixes, coverage semantics, APB/RAL, AXI transport and CMake dependency
-fix. Its optimized native build passed with warnings treated as errors.
-Combined-source execution and exact-revision CI have not yet passed. The new
-`uvm2020-protocol-source` target adds both
-protocol fixtures in both simulation modes, with a pinned clean UVM checkout
-and checks that seeded stale artifacts are removed.
+fix. Its optimized native build and coverage utility passed. The combined
+`uvm2020-protocol-source` target at `77a328f91` passed all four APB/AXI configurations in
+17:25, with 12 seeded positives, 20 injected-fault negatives, pinned clean
+source UVM and removal of every seeded stale artifact. That AXI version is
+the 196-transfer transport fixture; the later RAL extension above has separate
+all-four-configuration evidence. Another 22 compiler,
+coverage and CMake neighbor scenarios passed in 4:24. See
+[combined evidence](integration-next-local-2026-09-08.yaml). All four DPI-enabled
+source reference checks also passed in 14:52, including strict C11 reference
+compilation and injected-fault rejection. Exact-revision CI remains open.
 
-The old integration checkout remains frozen at `382553c08`. Its detached
-regression continuation had 3,313 additional passes and two failures at this
-snapshot: contributor certification and CMake FST dependency discovery. The
-latter has isolated causal fix evidence above; the old run retains its actual
-failure. State and logs are under
-`/home/holden/verilator-work/integration-resume-20260908`. This continues an
-interrupted run with 2,532 recovered passes, eight skips and thirteen failures;
-it is not a fresh continuous full-regression pass.
+The original integration checkout remains at `382553c08`. Its segmented
+regression finished with **6,727 passes, eight skips and three failures across
+6,738 scenarios**. The continuation reran all 4,185 pending and 13 failed
+scenarios and contributed 4,195 passes. Final evidence verifies all 9,812
+source inputs, native binaries, stage logs and 6,738 status hashes.
+Failures are contributor certification and CMake FST discovery in both modes;
+the CMake cases pass against the combined candidate. Skips cover the disabled
+enum-pattern test, NUMA/LCOV dependencies and missing attribute compilation
+databases. These remain open release work. [Final regression evidence](integration-resume-final-2026-09-08.yaml)
+preserves each disposition. This is not a fresh continuous full-regression pass.
+
+After completion and evidence verification, 78.40 GiB of disposable regression
+objects, archives and precompiled headers were removed. Earlier component
+cleanup and compressed, verified AST archives recovered another 14.86 GiB.
+Sources, logs, coverage, statuses, generated code and executables are retained.
 
 Historical CI at `382553c08` finished with 35 successful and 13 failed jobs in
 each of two matrices. Attribute checks, DPI C compilation and upstream UVM
@@ -97,12 +120,11 @@ intervals, memory limits and dedicated performance CI remain required.
 
 ## Next technical work
 
-1. Build the combined coverage utility and run the new protocol source target,
-   weighted coverage, compiler/statistics and CMake neighbor checks against it.
-1. Finish the frozen regression continuation, preserve every failure and
-   disposition, then validate fixes at the combined revision.
-1. Add AXI coverage and RAL frontdoor; extend RAL policies/maps and the full
-   assertion/monitor profile without relaxing their oracles.
+1. Complete current combined-source CI and retain exact-revision evidence.
+1. Resolve the eight remaining skip dispositions, close compiler/runtime
+   safety findings and run a fresh full regression at the final combined revision.
+1. Extend RAL policies/maps and the full assertion/monitor profile without
+   relaxing their oracles.
 1. Resolve remaining compiler/runtime safety findings and coverage type/lifetime
    semantics. Complete the normative language/UVM requirement inventory.
 1. Implement the synthetic SoC workload, resolve source-library deviations,
@@ -125,7 +147,7 @@ intervals, memory limits and dedicated performance CI remain required.
 | [M09](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10) | Constrained-random sequence items | 0/1 | in progress | Finish the declared constrained-random acceptance, including remaining scope/state cases. |
 | [M10](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11) | Functional coverage from UVM classes | 0/1 | in progress | Implement type aggregation, lifetime-safe ownership, remaining options and cross semantics; complete class coverage acceptance. |
 | [M11](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/12) | APB protocol environment | 1/1 | pass | Accepted APB active/passive, RAL, coverage and assertion scope. |
-| [M12](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/13) | AXI-lite protocol environment | 0/1 | in progress | Add AXI class coverage, adapter and RAL frontdoor to the passing transport fixture. |
+| [M12](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/13) | AXI-lite protocol environment | 1/1 | pass | Accepted AXI-lite active/passive, RAL, coverage and assertion scope. |
 | [M13](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/14) | RAL frontdoor and predictor | 0/1 | in progress | Extend the passing APB RW model to all required access policies and maps. |
 | [M14](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/15) | DPI/reference model and minimal VPI strategy | 2/3 | in progress | Complete exact-revision CI and full-regression proof for DPI/HDL backdoor requirements. |
 | [M15](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16) | SVA protocol profile | 0/1 | in progress | Complete the assertion/monitor agreement profile and document unsupported constructs precisely. |
@@ -149,7 +171,7 @@ and map requirements still prevent those criteria from passing.
 | C05 | Virtual interfaces propagate through config DB and config objects | M06, M07 | in progress |
 | C06 | Clocking blocks work through virtual interfaces | M06 | pass |
 | C07 | Active and passive APB agent passes | M11 | pass |
-| C08 | Active and passive AXI-lite agent passes | M12 | in progress |
+| C08 | Active and passive AXI-lite agent passes | M12 | pass |
 | C09 | Scalable AXI-style synthetic SoC smoke passes | M16 | not started |
 | C10 | RAL frontdoor mirror and update pass | M13 | in progress |
 | C11 | RAL predictor passes | M13 | in progress |
@@ -203,7 +225,7 @@ in [tracker.yaml](tracker.yaml); accepted evidence retains its local/CI scope.
 | M09-G01-CLOSURE | Deterministic constrained-random sequence-item acceptance passes | pending | Pending |
 | M10-G01-CLOSURE | UVM class coverage, report, and merge acceptance passes | pending | Pending |
 | M11-G01-CLOSURE | Active/passive APB environment acceptance passes | pass | LOCAL-APB-RAL-20260908 |
-| M12-G01-CLOSURE | Active/passive AXI-lite environment acceptance passes | pending | Pending |
+| M12-G01-CLOSURE | Active/passive AXI-lite environment acceptance passes | pass | LOCAL-AXI-RAL-20260908 |
 | M13-G01-CLOSURE | RAL frontdoor, predictor, and built-in smoke acceptance passes | pending | Pending |
 | M14-G01-LOCAL-DPI-SMOKE | Existing DPI/no-DPI/HDL-DPI smokes pass locally | pass | LOCAL-UVM-SMOKE-0001 |
 | M14-G02-C-REFERENCE | C reference-model scoreboard path passes | pass | LOCAL-DPI-REFERENCE-20260907 |
