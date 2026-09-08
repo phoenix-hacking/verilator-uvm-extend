@@ -241,16 +241,18 @@ public:
     enum class Kind : uint8_t { STATE, RESET_ANY, DEFAULT_ANY };
 
 private:
-    Kind m_kind;  // State vs synthetic ANY/default vertex role.
-    string m_label;  // User-facing state or pseudo-state label.
-    FsmStateValue m_value;  // Encoded state value for real state vertices.
+    const Kind m_kind;  // State vs synthetic ANY/default vertex role.
+    const string m_label;  // User-facing state or pseudo-state label.
+    const FsmStateValue m_value;  // Encoded state value for real state vertices.
+    const string m_name;  // Diagnostic name rendered before graph readers run.
 
 protected:
     FsmVertex(V3Graph* graphp, Kind kind, string label, FsmStateValue value) VL_MT_DISABLED
         : V3GraphVertex{graphp},
           m_kind{kind},
           m_label{label},
-          m_value{value} {}
+          m_value{value},
+          m_name{m_label + "=" + m_value.ascii()} {}
     ~FsmVertex() override = default;
 
 public:
@@ -258,10 +260,10 @@ public:
     bool isState() const { return m_kind == Kind::STATE; }
     bool isResetAny() const { return m_kind == Kind::RESET_ANY; }
     bool isDefaultAny() const { return m_kind == Kind::DEFAULT_ANY; }
-    const string& label() const { return m_label; }
+    const string& label() const VL_MT_SAFE { return m_label; }
     FsmStateValue value() const { return m_value; }
 
-    string name() const override VL_MT_SAFE { return m_label + "=" + m_value.ascii(); }
+    string name() const override VL_MT_SAFE { return m_name; }
 };
 
 class FsmStateVertex final : public FsmVertex {
@@ -331,6 +333,7 @@ class FsmGraph final : public V3Graph {
     AstAlways* m_stateAlwaysp = nullptr;  // Register always block being instrumented.
     string m_stateVarName;  // Pretty state variable name for user-visible output.
     string m_stateVarInternalName;  // Internal state symbol name for dump tags.
+    string m_stateVarScopeName;  // Scoped fallback name rendered before graph readers run.
     AstVarScope* m_stateVarScopep = nullptr;  // Scoped state variable being tracked.
     AstVarScope* m_sampleVarScopep = nullptr;  // Scoped variable sampled by coverage logic.
     std::vector<FsmSenDesc> m_senses;  // Saved event controls for recreated active blocks.
@@ -354,11 +357,14 @@ public:
     AstAlways* stateAlwaysp() const { return m_stateAlwaysp; }
     void stateAlwaysp(AstAlways* alwaysp) { m_stateAlwaysp = alwaysp; }
     const string& stateVarName() const { return m_stateVarName; }
-    void stateVarName(const string& name) { m_stateVarName = name; }
+    void stateVarName(const string& name) VL_MT_DISABLED { m_stateVarName = name; }
     const string& stateVarInternalName() const { return m_stateVarInternalName; }
     void stateVarInternalName(const string& name) { m_stateVarInternalName = name; }
     AstVarScope* stateVarScopep() const { return m_stateVarScopep; }
-    void stateVarScopep(AstVarScope* vscp) { m_stateVarScopep = vscp; }
+    void stateVarScopep(AstVarScope* vscp) VL_MT_DISABLED {
+        m_stateVarScopep = vscp;
+        m_stateVarScopeName = vscp ? vscp->name() : "";
+    }
     AstVarScope* sampleVarScopep() const {
         return m_sampleVarScopep ? m_sampleVarScopep : m_stateVarScopep;
     }
@@ -398,9 +404,7 @@ public:
     }
 
     string name() const VL_MT_SAFE {
-        return "FSM "
-               + (m_stateVarName.empty() ? (m_stateVarScopep ? m_stateVarScopep->name() : "")
-                                         : m_stateVarName);
+        return "FSM " + (m_stateVarName.empty() ? m_stateVarScopeName : m_stateVarName);
     }
     string dumpTag(size_t index) const {
         string tag = stateVarInternalName();

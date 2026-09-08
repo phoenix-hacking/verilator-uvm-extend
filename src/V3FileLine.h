@@ -103,7 +103,9 @@ class FileLineSingleton final {
         }
 
         // Enabled iff enabled by both in-code dierctives/metacomments and control file
-        bool enabled(V3ErrorCode code) const { return m_codeEn.test(code) && m_ctrlEn.test(code); }
+        bool enabled(V3ErrorCode code) const VL_MT_SAFE {
+            return m_codeEn.test(code) && m_ctrlEn.test(code);
+        }
     };
 
     // MEMBERS

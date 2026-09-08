@@ -1141,7 +1141,7 @@ V3Hash V3Number::toHash() const {
     return hash;
 }
 
-uint32_t V3Number::edataWord(int eword) const {
+uint32_t V3Number::edataWord(int eword) const VL_MT_STABLE {
     UASSERT(!isFourState(), "edataWord with 4-state " << *this);
     return m_data.num()[eword].m_value;
 }

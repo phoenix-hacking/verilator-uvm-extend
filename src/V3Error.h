@@ -388,7 +388,7 @@ public:
     VErrorBitSet() = default;
     explicit VErrorBitSet(AllOnes) { m_bitset.set(); }
     ~VErrorBitSet() = default;
-    bool test(V3ErrorCode code) const { return m_bitset[code]; }
+    bool test(V3ErrorCode code) const VL_MT_SAFE { return m_bitset[code]; }
     void set(V3ErrorCode code, bool flag) { m_bitset[code] = flag; }
     V3Hash hash() const {
         const size_t hashCode = std::hash<std::bitset<V3ErrorCode::_ENUM_MAX>>()(m_bitset);

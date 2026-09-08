@@ -722,7 +722,7 @@ public:
     string toDecimalU() const VL_MT_STABLE;  // return ASCII unsigned decimal number
     double toDouble() const VL_MT_SAFE;
     V3Hash toHash() const;
-    uint32_t edataWord(int eword) const;
+    uint32_t edataWord(int eword) const VL_MT_STABLE;
     uint8_t dataByte(int byte) const;
     uint32_t countBits(const V3Number& ctrl) const;
     uint32_t countBits(const V3Number& ctrl1, const V3Number& ctrl2, const V3Number& ctrl3) const;
