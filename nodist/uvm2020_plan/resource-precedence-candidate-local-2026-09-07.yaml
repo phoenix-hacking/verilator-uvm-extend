@@ -1,0 +1,175 @@
+# DESCRIPTION: Verilator: resource precedence candidate validation evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Eight resource/config/component DPI and threading configurations pass with a three-line
+  patch to the pinned UVM library. The unmodified library fails the strict direct-lookup reproducer. Public-sort
+  recency for equal-precedence resources remains unresolved. This is a development candidate and does
+  not close M07 or receive unmodified-UVM acceptance credit.
+source_revision: 62ed095a7490bd8084b1111d74f06811b5825114
+parent_revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+branch: codex/resource-precedence
+uvm_library:
+  parent_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  candidate_revision: 84ce40d8a389266670e854f8526d7f0690a92d59
+  upstream_source_clean: true
+  patch:
+    path: /home/holden/verilator-work/resource-precedence-evidence/uvm-resource-precedence.patch
+    sha256: ec09225dee045a9f368cfe400faa5a2f891acb5d3ffdbff804985cfbb4453a3e
+  patch_text: "diff --git a/src/base/uvm_resource_pool.svh b/src/base/uvm_resource_pool.svh\nindex ce21a14..8f1adfc\
+    \ 100644\n--- a/src/base/uvm_resource_pool.svh\n+++ b/src/base/uvm_resource_pool.svh\n@@ -656,7 +656,7\
+    \ @@ class uvm_resource_pool extends uvm_void;\n \n   // @uvm-ieee 1800.2-2020 auto C.2.4.4.3\n  \
+    \ static function void sort_by_precedence(ref uvm_resource_types::rsrc_q_t q);\n-    uvm_resource_types::rsrc_sv_q_t\
+    \ all[int];\n+    uvm_resource_types::rsrc_sv_q_t all[int unsigned];\n     uvm_resource_base r;\n\
+    \     int unsigned prec;\n \n@@ -676,7 +676,7 @@ class uvm_resource_pool extends uvm_void;\n   //\
+    \ Sorts a list of resources of resources in a standard SV\n   // queue instead of a uvm_queue.\n \
+    \  static function void sort_by_precedence_q(ref uvm_resource_types::rsrc_sv_q_t q);\n-    uvm_resource_types::rsrc_sv_q_t\
+    \ all[int];\n+    uvm_resource_types::rsrc_sv_q_t all[int unsigned];\n     uvm_resource_base r;\n\
+    \     int unsigned prec;\n \n@@ -687,7 +687,7 @@ class uvm_resource_pool extends uvm_void;\n     end\n\
+    \     q.delete();\n     foreach(all[iter]) begin\n-      q = {q, all[iter]};\n+      q = {all[iter],\
+    \ q};\n     end\n   endfunction // sort_by_precedence_q    \n \n"
+root_cause: The private resource queue sorter concatenates ascending precedence buckets, and both bucket
+  maps use signed keys for an unsigned precedence value.
+candidate_change:
+- Use unsigned associative-array keys in both precedence sort implementations.
+- Concatenate private sorter buckets in descending precedence order.
+oracles:
+  standard: IEEE 1800.2-2020
+  clauses:
+  - C.2.4.4.2
+  - C.2.4.4.3
+  - C.2.4.4.4
+  - C.2.4.5.6
+  highest_precedence: Select the highest unsigned value; on a tie, select the first resource in the supplied
+    queue.
+  direct_lookup: Require the declared highest matching resource, including changes across the sign bit
+    and the unsigned maximum.
+  public_sort: Require the highest unique precedence. Log both tie cases separately without claiming public-sort
+    recency coverage.
+  isolation: Exclude resources outside the scope and with a different type.
+compiler:
+  path: /home/holden/verilator-work/integration-382553c08/verilator_bin
+  sha256: 7a3277e48f987fe64448e09db0685c6c63c074ece5a29b69b08fcef5d2263c32
+test_inputs:
+  test_regress/t/t_uvm_resource_numeric_precedence.py: 96c823c02ac10fa2f7bb8d7335e87ee654a21aa9d26f0d8c3ade150895302fad
+  test_regress/t/t_uvm_resource_numeric_precedence.v: d02e9624a7b9bde69e60e497c13b2dffb58d48dffb0ca2d8371aa0face9c366a
+  test_regress/t/t_uvm_config_resource_component.py: affca61dc63bef242affacf561432abb55d169e27775d4d88b16a0c5e44cb6b7
+  test_regress/t/t_uvm_config_resource_component.v: 6274cac9366c9701171d8ec8da0d2d9353ba46cedebed4d6dce710eb290aaea9
+inputs_unchanged: true
+parent_reproducer:
+  command:
+  - python
+  - driver.py
+  - --jobs=1
+  - --driver-build-jobs=1
+  - --quiet
+  - --vlt
+  - --obj-suffix
+  - precedence-parent
+  - --driver-uvm-source-root
+  - /home/holden/verilator-work/uvm-2020.3.1
+  - t/t_uvm_resource_numeric_precedence.py
+  started_utc: '2026-09-07T22:43:16.005449+00:00'
+  log: /home/holden/verilator-work/resource-precedence-parent-revised.log
+  pid: 858629
+  exit_code: 10
+  finished_utc: '2026-09-07T22:48:22.701373+00:00'
+  sha256: f51ba1ffc9bc4d083a8637097e939ff33a26ace5d83c3e1f1550cf42189b093c
+  passed: 0
+  failed: 1
+  elapsed: '5:06'
+  failure: The direct lookup returns 100 where the independent oracle requires 200.
+candidate:
+  command:
+  - python
+  - driver.py
+  - --jobs=1
+  - --driver-build-jobs=1
+  - --quiet
+  - --vlt
+  - --vltmt
+  - --obj-suffix
+  - precedence-candidate
+  - --driver-uvm-source-root
+  - /home/holden/verilator-work/uvm-resource-precedence-candidate
+  - t/t_uvm_resource_numeric_precedence.py
+  - t/t_uvm_config_resource_component.py
+  started_utc: '2026-09-07T22:48:22.702405+00:00'
+  log: /home/holden/verilator-work/resource-precedence-candidate.log
+  pid: 863022
+  exit_code: 0
+  finished_utc: '2026-09-07T23:31:43.014952+00:00'
+  sha256: 7b9dd4bd821107da770f2166dc0e95b5c5c49999c773065576aeb70b8d32bdc7
+  driver_scenarios_passed: 4
+  driver_scenarios_failed: 0
+  configurations_passed: 8
+  elapsed: '43:20'
+  replays:
+  - scenario: vlt
+    test: t_uvm_resource_numeric_precedence
+    dpi: nodpi
+    log: /home/holden/verilator-work/resource-precedence-evidence/completed-replays/vlt/t_uvm_resource_numeric_precedence/sim_nodpi.log
+    sha256: 1f0774adf309fab20ffa4afa88c14b2c42f58693f933cd816d926dd2fae44884
+  - scenario: vlt
+    test: t_uvm_resource_numeric_precedence
+    dpi: dpi
+    log: /home/holden/verilator-work/resource-precedence-evidence/completed-replays/vlt/t_uvm_resource_numeric_precedence/sim_dpi.log
+    sha256: a31d8106b80e3a67a251c587f3861b01a634a79a7dd6877851c54a8baf4ec8db
+  - scenario: vlt
+    test: t_uvm_config_resource_component
+    dpi: nodpi
+    log: /home/holden/verilator-work/resource-precedence-evidence/completed-replays/vlt/t_uvm_config_resource_component/sim_nodpi.log
+    sha256: f3b4be01d092b2a453e3dae6d49b003a1ad54313f7cbe253add065aa698b47cf
+  - scenario: vlt
+    test: t_uvm_config_resource_component
+    dpi: dpi
+    log: /home/holden/verilator-work/resource-precedence-evidence/completed-replays/vlt/t_uvm_config_resource_component/sim_dpi.log
+    sha256: 80f57deee664e94aafd107fc18898d7cf0403537bf8bc35e0ab6b8227b3aa532
+  - scenario: vltmt
+    test: t_uvm_resource_numeric_precedence
+    dpi: nodpi
+    log: /home/holden/verilator-work/resource-precedence-evidence/completed-replays/vltmt/t_uvm_resource_numeric_precedence/sim_nodpi.log
+    sha256: 9fef0d373ddb1c2fd2e9ba91cbf304592fa4df1b1d56daea866481e9148d871e
+  - scenario: vltmt
+    test: t_uvm_resource_numeric_precedence
+    dpi: dpi
+    log: /home/holden/verilator-work/resource-precedence-evidence/completed-replays/vltmt/t_uvm_resource_numeric_precedence/sim_dpi.log
+    sha256: 523ea170820fa39ea67f2abb786efd7a1511ae38fbc66254abfa8cd39a240dea
+  - scenario: vltmt
+    test: t_uvm_config_resource_component
+    dpi: nodpi
+    log: /home/holden/verilator-work/resource-precedence-evidence/completed-replays/vltmt/t_uvm_config_resource_component/sim_nodpi.log
+    sha256: d5f84e0a0372f2eb8ad76a2ae67a443651c870101b8d8fac2abbbe5661deaef2
+  - scenario: vltmt
+    test: t_uvm_config_resource_component
+    dpi: dpi
+    log: /home/holden/verilator-work/resource-precedence-evidence/completed-replays/vltmt/t_uvm_config_resource_component/sim_dpi.log
+    sha256: 206cc40390451e6770affee217a02757be9a7486f1eacd9b8941f05cb00c1e72
+checks:
+  format:
+    exit_code: 0
+    log:
+      path: /home/holden/verilator-work/resource-precedence-format.log
+      sha256: 573e464d50a8e272faf7e8d01b09aa8c420a557cebaa8e87cbe586960b76a3ce
+    note: Unrelated pre-existing runtime whitespace changes were restored; all four tested input digests
+      remain unchanged.
+  python_lint:
+    exit_code: 0
+    log:
+      path: /home/holden/verilator-work/resource-precedence-lint.log
+      sha256: f9fe2d19f8af6846dd3026a5ecb54089f9b58bee540b86ff58dc73fb54c4e967
+  distribution:
+    exit_code: 0
+    log:
+      path: /home/holden/verilator-work/resource-precedence-dist.log
+      sha256: d1332053dac14c875c739caae70cc60440d24d9a7341c6e46cab765e706b1c35
+    passed: 6
+    failed: 0
+    elapsed: 0:07
+pending:
+- Implement and verify public-sort recency with arbitrary input queue order.
+- Resolve the upstream library defects and rerun the required unmodified-source matrix.
+- Keep this strict-test branch separate from integration until its library prerequisite is available.
+- Pass combined-source CI and complete regression.
+new_gate_credit: 0
