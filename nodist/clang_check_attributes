@@ -696,7 +696,8 @@ class CallAnnotationsValidator:
                     # Copy each cursor before releasing CIndex's array and keep
                     # its translation unit alive for subsequent cursor queries.
                     base = clang.cindex.Cursor.from_buffer_copy(overridden[i])
-                    base = clang.cindex.Cursor.from_result(base, None, [node])
+                    # Match how the bindings retain ownership of child cursors.
+                    base._tu = method.translation_unit  # pylint: disable=protected-access
                     if base.get_usr() in seen:
                         continue
                     seen.add(base.get_usr())
