@@ -103,8 +103,6 @@ public:
 //============================================================================
 
 class V3Stats final {
-    static V3Mutex s_mutex;  // Protects accesses
-
 public:
     // Symbolic names for some statistics that are later read by summaryReport()
     static constexpr const char* STAT_CPP_CHARS = "Output, C++ bytes written";
@@ -118,31 +116,30 @@ public:
     static constexpr const char* STAT_WALLTIME_CVT = "Wall time, Conversion (sec)";
     static constexpr const char* STAT_WALLTIME_ELAB = "Wall time, Elaboration (sec)";
 
-    static void addStat(const V3Statistic&);
+    static void addStat(const V3Statistic&) VL_MT_SAFE;
     static void addStat(const string& stage, const string& name, double value,
-                        unsigned precision = 0) {
+                        unsigned precision = 0) VL_MT_SAFE {
         addStat(V3Statistic{stage, name, value, precision, false, false});
     }
-    static void addStat(const string& name, double value, unsigned precision = 0) {
+    static void addStat(const string& name, double value, unsigned precision = 0) VL_MT_SAFE {
         addStat(V3Statistic{"*", name, value, precision, false, false});
     }
-    // Add summary statistic - Threadsafe _unlike most other functions here_
-    static void addStatSum(const char* name, double count) VL_MT_SAFE_EXCLUDES(s_mutex) {
+    // Add summary statistic. All insertion paths share the statistics collection lock.
+    static void addStatSum(const char* name, double count) VL_MT_SAFE {
         // Avoid memory blow-up when called frequently with zero adds,
         // e.g. from V3Const invoked on individual expressions.
         if (count == 0.0) return;
-        const V3LockGuard lock{s_mutex};
         addStat(V3Statistic{"*", name, count, 0, true, false});
     }
-    static void addStatSum(const std::string& name, double count) {
+    static void addStatSum(const std::string& name, double count) VL_MT_SAFE {
         addStatSum(name.c_str(), count);
     }
-    static void addStatPerf(const string& name, double value) {
+    static void addStatPerf(const string& name, double value) VL_MT_SAFE {
         addStat(V3Statistic{"*", name, value, 6, true, true});
     }
     /// Return value of statistic, or zero if not found
-    static double getStatSum(const string& name);
-    static uint64_t getStatSumQ(const string& name) {
+    static double getStatSum(const string& name) VL_MT_SAFE;
+    static uint64_t getStatSumQ(const string& name) VL_MT_SAFE {
         return static_cast<uint64_t>(getStatSum(name));
     }
     /// Called each stage
@@ -150,6 +147,7 @@ public:
     /// Called by the top level to collect statistics
     static void statsStageAll(AstNetlist* nodep, const string& stage, bool fastOnly = false);
     static void statsFinalAll(AstNetlist* nodep);
+    static void selfTest();
     /// Called by the top level to dump the statistics
     static void statsReport();
     /// Called by debug dumps

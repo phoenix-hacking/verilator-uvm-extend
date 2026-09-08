@@ -20,6 +20,7 @@
 #include "V3Global.h"
 #include "V3Os.h"
 #include "V3Stats.h"
+#include "V3ThreadPool.h"
 
 #include <iomanip>
 #include <unordered_map>
@@ -35,9 +36,10 @@ class StatsReport final {
 
     // STATE
     std::ofstream& os;  ///< Output stream
-    static StatColl s_allStats;  ///< All statistics
+    static V3Mutex s_mutex;  ///< Protects the collection and its entries
+    static StatColl s_allStats VL_GUARDED_BY(s_mutex);  ///< All statistics
 
-    static void sumit() {
+    static void sumit() VL_REQUIRES(s_mutex) {
         // If sumit is set on a statistic, combine with others of same name
         std::multimap<std::string, V3Statistic*> byName;
         // * is always first
@@ -59,7 +61,7 @@ class StatsReport final {
         }
     }
 
-    void stars() {
+    void stars() VL_REQUIRES(s_mutex) {
         // Find all stages
         size_t maxWidth = 0;
         std::multimap<std::string, const V3Statistic*> byName;
@@ -94,7 +96,7 @@ class StatsReport final {
         os << '\n';
     }
 
-    void stages() {
+    void stages() VL_REQUIRES(s_mutex) {
         os << "Stage Statistics:\n";
 
         // Find all stages
@@ -160,9 +162,13 @@ class StatsReport final {
 
 public:
     // METHODS
-    static void addStat(const V3Statistic& stat) { s_allStats.push_back(stat); }
+    static void addStat(const V3Statistic& stat) VL_MT_SAFE_EXCLUDES(s_mutex) {
+        const V3LockGuard lock{s_mutex};
+        s_allStats.push_back(stat);
+    }
 
-    static double getStatSum(const string& name) {
+    static double getStatSum(const string& name) VL_MT_SAFE_EXCLUDES(s_mutex) {
+        const V3LockGuard lock{s_mutex};
         // O(n^2) if called a lot; present assumption is only a small call count
         for (const V3Statistic& itr : s_allStats) {
             const V3Statistic* const repp = &itr;
@@ -171,13 +177,54 @@ public:
         return 0.0;
     }
 
-    static void calculate() { sumit(); }
+    static void calculate() VL_MT_SAFE_EXCLUDES(s_mutex) {
+        const V3LockGuard lock{s_mutex};
+        sumit();
+    }
+
+    static void selfTest() {
+        size_t originalSize;
+        {
+            const V3LockGuard lock{s_mutex};
+            originalSize = s_allStats.size();
+        }
+        constexpr size_t nJobs = 2;
+        constexpr size_t nIterations = 2000;
+        const bool parallel = v3Global.opt.verilateJobs() > 1;
+        std::atomic<size_t> ready{0};
+        {
+            V3ThreadScope scope;
+            for (size_t job = 0; job < nJobs; ++job) {
+                scope.enqueue([&]() {
+                    ++ready;
+                    // Both jobs must occupy workers before testing concurrent insertion.
+                    if (parallel) {
+                        while (ready.load() != nJobs) std::this_thread::yield();
+                    }
+                    for (size_t i = 0; i < nIterations; ++i) {
+                        V3Stats::addStat("selfTest", "plain", 1.0);
+                        V3Stats::addStatSum("selfTest sum", 2.0);
+                    }
+                });
+            }
+        }
+        const V3LockGuard lock{s_mutex};
+        UASSERT(s_allStats.size() == originalSize + nJobs * nIterations * 2,
+                "Concurrent statistic insertion lost entries");
+        double total = 0.0;
+        for (size_t i = originalSize; i < s_allStats.size(); ++i) {
+            total += s_allStats[i].value();
+        }
+        UASSERT(total == nJobs * nIterations * 3, "Concurrent statistic insertion changed values");
+        while (s_allStats.size() > originalSize) s_allStats.pop_back();
+    }
 
     // CONSTRUCTORS
     explicit StatsReport(std::ofstream* aofp)
         : os(*aofp) {  // Need () or GCC 4.8 false warning
         os << "Verilator Statistics Report\n\n";
         V3Stats::infoHeader(os, "");
+        const V3LockGuard lock{s_mutex};
         sumit();
         stars();
         stages();
@@ -185,6 +232,7 @@ public:
     ~StatsReport() = default;
 };
 
+V3Mutex StatsReport::s_mutex;
 StatsReport::StatColl StatsReport::s_allStats;
 
 //######################################################################
@@ -198,9 +246,11 @@ void V3Statistic::dump(std::ofstream& os) const {
 //######################################################################
 // Top Stats class
 
-void V3Stats::addStat(const V3Statistic& stat) { StatsReport::addStat(stat); }
+void V3Stats::addStat(const V3Statistic& stat) VL_MT_SAFE { StatsReport::addStat(stat); }
 
-double V3Stats::getStatSum(const string& name) { return StatsReport::getStatSum(name); }
+double V3Stats::getStatSum(const string& name) VL_MT_SAFE { return StatsReport::getStatSum(name); }
+
+void V3Stats::selfTest() { StatsReport::selfTest(); }
 
 void V3Stats::statsStage(const string& name) {
     static double s_lastWallTime = -1;
