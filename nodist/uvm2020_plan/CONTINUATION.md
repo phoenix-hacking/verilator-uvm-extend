@@ -4,6 +4,42 @@
 
 # UVM 2020 continuation ledger
 
+## Protocol acceptance and combined checkout: 2026-09-07
+
+Formal progress is now **6/20 milestones, 30/46 gates and 2/21 program
+criteria**. The APB fixture passes bundled/source and vlt/vltmt, including
+2,436 transfers per positive, full RW RAL/predictor/built-in checks, seven
+coverage bins plus merge/report, and data/protocol negatives. This accepts
+M06-G04 and M11-G01, completing M06/M11 and C06/C07. See
+[APB evidence](uvm-apb-local-2026-09-07.yaml). These are local component
+acceptances; combined-source CI and both full goals remain open.
+
+Compiler safe-access fixes reduced the full audit from 21 to 11 findings
+(47 before the earlier correction), with 18 behavioral scenarios passing.
+Weighted coverage has 52 final distinct passing scenarios across two runs.
+AXI transport passes all four local configurations, including reset VALID
+checks and negatives; its class coverage and RAL frontdoor remain required.
+CMake FST dependency discovery fixes the reproduced missing-header failure
+and passes eight trace scenarios. All components and their evidence are
+committed and published on their component branches.
+
+Continue in `/home/holden/verilator-work/uvm-integration-20260908`, branch
+`codex/uvm-integration-20260908`. Its combined optimized native build passed
+with warnings treated as errors; log
+`/home/holden/verilator-work/integration-next-opt-build.log`.
+The coverage utility build and combined protocol validation follow.
+The new `uvm2020-protocol-source` target and CI job run APB/AXI with explicit
+source selection and both simulation modes. `UVM_HOME` alone uses bundled
+UVM, so always pass `--driver-uvm-source-root` or use that named target for
+unmodified-source acceptance. The earlier byte-enable inspection hypothesis
+was not reproduced: all four byte lanes pass against the unchanged library.
+
+The original main checkout remains frozen at `382553c08`; do not modify its
+source or native binary while the detached regression runs. Last observed
+continuation count was 3,313 passes and two failures. Preserve the original
+failure dispositions and distinguish the CMake component fix from old-run
+success. Current details and process handles are in the local handoff above.
+
 ## Second session recovery: 2026-09-07
 
 The interrupted integration run at `382553c08` is preserved and has resumed
