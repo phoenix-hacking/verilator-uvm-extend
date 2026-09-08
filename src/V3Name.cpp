@@ -88,13 +88,15 @@ class NameVisitor final : public VNVisitorConst {
     // Add __PVT__ to names of local signals
     void visit(AstVar* nodep) override {
         // Don't iterate... Don't need temps for RANGES under the Var.
+        // The built-in process comparisons in verilated_std.sv refer to this member in C++.
+        const bool processHandle
+            = m_modp == v3Global.rootp()->stdPackageProcessp() && nodep->name() == "m_process";
+        if (processHandle) nodep->protect(false);
         rename(nodep,
                ((!m_modp || !m_modp->isTop()) && !nodep->isSigPublic()
                 && !nodep->isFuncLocal()  // Isn't exposed, and would mess up dpi import wrappers
                 && !nodep->isTemp()  // Don't bother to rename internal signals
-                // Special case, hardcoded m_process references in verilated_std.h and elsewhere
-                && !(m_modp && m_modp->name() == "std__03a__03aprocess"
-                     && nodep->name() == "m_process")));
+                && !processHandle));
         iterateChildrenConst(nodep);
     }
     void visit(AstCFunc* nodep) override {
