@@ -272,7 +272,7 @@ public:
     ASTGEN_MEMBERS_AstNodeFuncCovItem;
     string name() const override VL_MT_STABLE { return m_name; }
     void name(const string& name) override { m_name = name; }
-    bool maybePointedTo() const override { return true; }
+    bool maybePointedTo() const override VL_MT_SAFE { return true; }
 };
 class AstNodeGen VL_NOT_FINAL : public AstNode {
     // Generate construct
@@ -1181,7 +1181,7 @@ public:
     ASTGEN_MEMBERS_AstCovergroup;
     string name() const override VL_MT_STABLE { return m_name; }
     void name(const string& name) override { m_name = name; }
-    bool maybePointedTo() const override { return true; }
+    bool maybePointedTo() const override VL_MT_SAFE { return true; }
 };
 class AstCoverpointRef final : public AstNode {
     // Reference to a coverpoint used in a cross

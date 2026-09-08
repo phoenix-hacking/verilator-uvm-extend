@@ -1,0 +1,118 @@
+# DESCRIPTION: Verilator: callback attribute-checker regression evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: A callback-call classification defect in the attribute checker is corrected. The required
+  full compiler/runtime attribute checks and current-source CI remain open. No milestone gate is accepted
+  by this checkpoint.
+source_revision: 68063568dcf0f228d0dad1ba8242b9e4293d964f
+parent_revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+branch: codex/attribute-ci-check
+implementation: Analyze a std::function-taking call as a call expression. Traverse its arguments, including
+  inline lambda bodies, in the caller context instead of comparing call-site children with function-declaration
+  annotations.
+unchanged_cpp_trees:
+  src: 6d43e292ef474b1d7aca352689cf2e39acb4090a
+  include: 1b08d0d7ec4336848de232555d7e16de80fe411a
+analysis_environment:
+  libclang_package: 18.1.1
+  library: /home/holden/verilator-work/toolchain/lib/python3.12/site-packages/clang/native/libclang.so
+  sha256: a8612b1c9a7125701277f63e5616f1d1eb9c91410c4bf195878067868c927f94
+scope:
+  checker: nodist/clang_check_attributes
+  regression: test_regress/t/t_dist_attributes_parse_bad.py
+  new_cases:
+  - callback_safe
+  - callback_unsafe
+  analysis_jobs:
+  - 1
+  - 2
+  full_failure_oracles_retained:
+  - parse errors
+  - missing compilation commands
+  - annotation mismatches
+  - unsafe calls
+  - failed precompiled headers
+parent:
+  harness:
+    exit_code: 10
+    passed: 0
+    failed: 1
+    elapsed: 0:02
+    failure: Safe callback rejected as a function-declaration/definition mismatch.
+    log:
+      path: /home/holden/verilator-work/attribute-callback-parent.log
+      sha256: 7f2597fa5d3fd4de1d3fb3ad84a0a272247918e22ac4a753b7ac9b8f22cf7b6e
+  jobs2:
+    exit_code: 1
+    failure: The same safe callback is rejected in parallel analysis.
+    log:
+      path: /home/holden/verilator-work/attribute-callback-parent-jobs2.log
+      sha256: e33afc04220eb1195f32588612a16d023575655db965d2b2c3f4d1ce9f3a05e5
+  real_source:
+    translation_unit: src/VlcMain.cpp
+    exit_code: 1
+    false_mismatches: 6
+    log:
+      path: /home/holden/verilator-work/attribute-callback-source-parent-final.log
+      sha256: ae88276fbb1ad465c7e5f8e6ed8d1a0aa70fab9be0fe7f112997d684440bc844
+candidate:
+  focused_and_distribution:
+    exit_code: 0
+    passed: 8
+    failed: 0
+    elapsed: 0:25
+    log:
+      path: /home/holden/verilator-work/attribute-callback-final.log
+      sha256: 698787b47303dcf22b8d109011cb88c54f768a021bbfc7f34da2478a6aded33f
+    tests:
+    - t_dist_attributes_parse_bad
+    - t_dist_attributes_bad
+    - t_dist_copyright
+    - t_dist_cppstyle
+    - t_dist_whitespace
+    - t_dist_cinclude
+    - t_dist_portability
+    - t_dist_error_format
+  real_source:
+    translation_unit: src/VlcMain.cpp
+    exit_code: 0
+    unsafe_functions: 0
+    log:
+      path: /home/holden/verilator-work/attribute-callback-source-candidate-final.log
+      sha256: eecb2f9a1fc77ad76ce1312ece49ecc4bf792cf7cac0301c08ff5b8b184fe9bb
+  format_and_lint:
+    exit_code: 0
+    command: make format && make lint-py
+    log:
+      path: /home/holden/verilator-work/attribute-callback-format-lint.log
+      sha256: 07ed7748f55e38b4d7d571f08e9b6b48cdbd79d57e9e40c6e841993309960071
+    note: Two unrelated existing C++ formatter changes were restored. No compiler or runtime C++ source
+      changed; a new C++ static-analysis sweep was not run for this Python-only correction.
+real_source_flags:
+- -std=c++14
+- -DVL_DEBUG
+- -D_GLIBCXX_DEBUG
+- -DVERILATOR_INTERNAL_
+- -Isrc/obj_dbg
+- -Isrc
+- -Iinclude
+generated_input_provenance:
+  path: /home/holden/verilator-work/attribute-callback-evidence/generated-inputs.json
+  sha256: e94adf2b700270fb294f25e2d4a0748d3ba003161d313776664d10393233616b
+initial_setup_failure: Both initial real-source attempts stopped because config_rev.h had not been copied.
+  Those attempts are retained separately and receive no pass credit. Final attempts used the generated
+  revision header from the frozen matching integration source.
+pending:
+- Analyze the actual compilation units in the source distribution check.
+- Resolve remaining compiler and runtime attribute diagnostics.
+- Integrate the correction after the frozen complete regression finishes.
+- Run current-source CI and complete release validation.
+new_gate_credit: 0
+revision_header:
+  source: /home/holden/verilator-uvm-extend/src/config_rev.h
+  sha256: 2228817e3908047f8dff2bb8243fa2c6378492ac227727f0bdeb31ca537e3c57
+tested_files:
+  nodist/clang_check_attributes: c3c7d0a29123c84f34efa99a7399e07ef21c5d6accb13c223ec5d7126d1a5445
+  test_regress/t/t_dist_attributes_parse_bad.py: 319a91f7ff99d1e9f1520cb911c70208ba6649f0507c4aa29dadf8597ccff598

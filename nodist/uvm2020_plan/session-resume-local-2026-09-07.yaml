@@ -1,0 +1,90 @@
+# DESCRIPTION: Verilator: second interrupted-session recovery
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-07'
+observed_utc: '2026-09-08T01:54:10.104459+00:00'
+status: segmented_regression_running
+integration_revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+worktrees_recovered: 22
+unfinished_coverage_files_backed_up: 4
+inventory_scenarios: 6738
+recovered_counts:
+  pass: 2532
+  skip: 8
+  fail: 13
+  pending: 4185
+old_last_printed_pass_count: 2524
+resume_started_utc: '2026-09-08T01:21:01.993159+00:00'
+supervisor_pid: 1108668
+supervisor_script:
+  path: /home/holden/verilator-work/resume-integration-20260908.py
+  sha256: 2d09c530cf490344d34a7207fc65cfed5937c5dd4c75e592910202546b32d380
+resume_environment:
+  CC: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-cc
+  CXX: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-c++
+  CXXFLAGS: ''
+  CPPFLAGS: null
+  CPATH: null
+  CPLUS_INCLUDE_PATH: null
+  USER_CPPFLAGS: -I/home/holden/verilator-work/toolchain/include
+  USER_LDFLAGS: -L/home/holden/verilator-work/toolchain/lib
+  PYTHONPATH: /home/holden/verilator-work/clang-analysis-env
+  VERILATOR_ROOT: /home/holden/verilator-uvm-extend
+  UVM_HOME: /home/holden/verilator-work/uvm-2020.3.1
+completed_resumed_counts_at_snapshot:
+  fail: 1
+  pass: 1058
+current_stage:
+  name: vlt-013
+  pid: 1174268
+resume_state_path: /home/holden/verilator-work/integration-resume-20260908/state.json
+supervisor_log_path: /home/holden/verilator-work/integration-resume-20260908/supervisor.log
+retained_artifacts:
+- path: /home/holden/verilator-work/integration-resume-20260908/interrupted-state.json
+  sha256: d43cd921b310d4c28ffdf87af1c7cf8249f2d2742363bd24a81f837ef53372a5
+- path: /home/holden/verilator-work/integration-resume-20260908/interrupted-inputs.json
+  sha256: 52334802b21486580d29e9365960b24ca0ce0bbdceae8d827afa6dd1a3777392
+- path: /home/holden/verilator-work/integration-resume-20260908/interrupted-full-regression.log
+  sha256: 8a9d78427c0783591dea49d4e678f9067247d74699df8edc7a1da8618298b0b0
+- path: /home/holden/verilator-work/integration-resume-20260908/interrupted-results.tar.gz
+  sha256: 2e972647b04c6fd93d682dea4be1e5db8c5209a109e3e266958f8bae68a68ec5
+- path: /home/holden/verilator-work/integration-resume-20260908/inventory.json
+  sha256: fef97a944a57efbd63d8a0632ebe95055bb652492fbe960c7f0180575707ba26
+- path: /home/holden/verilator-work/integration-resume-20260908/worktrees-recovered.json
+  sha256: 2d32d94e44769b9c36f2af8ed7876407309302f084871d256b11dfaf8ad5aa92
+- path: /home/holden/verilator-work/integration-resume-20260908/unfinished-class-coverage-tests.tar.gz
+  sha256: bb69d55d691fdb88d35486134d5a44abab2ed44c5e82a0886f7d785e3aaa525e
+- path: /home/holden/verilator-work/integration-resume-20260908/ci-failure-summary.json
+  sha256: 106a79bc454cee3280694418af5bd8bb77e1a96e0a67a56d3b68454c23eeb8b6
+scope: Carry forward only completed status files newer than the frozen run start, after verifying all
+  9812 recorded source inputs and native binary hashes. Retry failures and execute missing scenarios.
+  This is not a fresh continuous full-regression pass.
+early_fst_replay: The six vlt FST/LZ4 failures pass in the first 80-case simulation batch with the installed
+  dependency paths supplied. The vltmt counterparts remain in the continuation queue.
+remaining_certification_check: t_dist_contributors still fails; no contributor attestation was added.
+completed_ci:
+  runs:
+  - id: 34166065083
+    jobs: 48
+    passed: 35
+    failed: 13
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34166065083
+  - id: 34166066897
+    jobs: 48
+    passed: 35
+    failed: 13
+    url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34166066897
+  failure_categories:
+    source_and_runtime_attribute_checks: 10
+    dpi_reference_models_compiled_as_cpp: 12
+    upstream_uvm_format_security: 4
+  initial_assign_dff_failure:
+    job_id: 101879444259
+    rerun_passed: true
+    sentinel: 'vltmt/t_assign_dff: Self PASSED'
+  new_gate_credit: 0
+component_revision: fdcb80851fcf1a218c5485acadc240d4d723cabf
+component_evidence: compiler-attribute-contracts-local-2026-09-07.yaml
+new_gate_credit: 0

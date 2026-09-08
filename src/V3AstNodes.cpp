@@ -2206,7 +2206,7 @@ void AstClassRefDType::dump(std::ostream& str) const {
     }
 }
 void AstClassRefDType::dumpJson(std::ostream& str) const { dumpJsonGen(str); }
-void AstClassRefDType::dumpSmall(std::ostream& str) const {
+void AstClassRefDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "class:" << name();
 }
@@ -2318,7 +2318,7 @@ void AstEnumDType::dumpJson(std::ostream& str) const {
     dumpJsonBoolIf(str, "enum", true);
     dumpJsonGen(str);
 }
-void AstEnumDType::dumpSmall(std::ostream& str) const {
+void AstEnumDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "enum";
 }
@@ -2396,7 +2396,7 @@ void AstIfaceRefDType::dumpJson(std::ostream& str) const {
     dumpJsonStrFunc(str, modportName);
     dumpJsonGen(str);
 }
-void AstIfaceRefDType::dumpSmall(std::ostream& str) const {
+void AstIfaceRefDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "iface";
 }
@@ -2520,7 +2520,7 @@ void AstMemberDType::dumpJson(std::ostream& str) const {
     dumpJsonGen(str);
 }
 
-void AstMemberDType::dumpSmall(std::ostream& str) const {
+void AstMemberDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "member";
 }
@@ -2763,7 +2763,7 @@ void AstRefDType::dump(std::ostream& str) const {
 }
 void AstRefDType::dumpJson(std::ostream& str) const { dumpJsonGen(str); }
 
-void AstRefDType::dumpSmall(std::ostream& str) const {
+void AstRefDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "ref";
 }
@@ -2840,7 +2840,7 @@ void AstNodeDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     if (!widthSized()) str << "/" << widthMin();
     str << ")";
 }
-void AstNodeArrayDType::dumpSmall(std::ostream& str) const {
+void AstNodeArrayDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     if (auto* const adtypep = VN_CAST(this, UnpackArrayDType)) {
         // uc = packed compound object, u = unpacked POD
@@ -3116,14 +3116,14 @@ void AstAssocArrayDType::dumpSmall(std::ostream& str) const {
 string AstAssocArrayDType::prettyDTypeName(bool full) const {
     return subDTypep()->prettyDTypeName(full) + "$[" + keyDTypep()->prettyDTypeName(full) + "]";
 }
-void AstDynArrayDType::dumpSmall(std::ostream& str) const {
+void AstDynArrayDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "$[]";
 }
 string AstDynArrayDType::prettyDTypeName(bool full) const {
     return subDTypep()->prettyDTypeName(full) + "$[]";
 }
-void AstQueueDType::dumpSmall(std::ostream& str) const {
+void AstQueueDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "[queue]";
 }
@@ -3132,7 +3132,7 @@ string AstQueueDType::prettyDTypeName(bool full) const {
     if (boundConst()) str += ":" + cvtToStr(boundConst());
     return str + "]";
 }
-void AstWildcardArrayDType::dumpSmall(std::ostream& str) const {
+void AstWildcardArrayDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "[*]";
 }
@@ -3150,11 +3150,11 @@ bool AstUnpackArrayDType::similarDTypeNode(const AstNodeDType* samep) const {
     return hi() == asamep->hi() && rangep()->sameTree(asamep->rangep())
            && subDTypep()->similarDType(asamep->subDTypep());
 }
-void AstSampleQueueDType::dumpSmall(std::ostream& str) const {
+void AstSampleQueueDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "[*]";
 }
-void AstUnsizedArrayDType::dumpSmall(std::ostream& str) const {
+void AstUnsizedArrayDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "[]";
 }
@@ -3167,19 +3167,19 @@ bool AstUnsizedArrayDType::similarDTypeNode(const AstNodeDType* samep) const {
     const AstUnsizedArrayDType* const asamep = VN_DBG_AS(samep, UnsizedArrayDType);
     return asamep->subDTypep() && subDTypep()->similarDType(asamep->subDTypep());
 }
-void AstEmptyQueueDType::dumpSmall(std::ostream& str) const {
+void AstEmptyQueueDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "emptyq";
 }
-void AstVoidDType::dumpSmall(std::ostream& str) const {
+void AstVoidDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "void";
 }
-void AstIfaceGenericDType::dumpSmall(std::ostream& str) const {
+void AstIfaceGenericDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "generic_interface";
 }
-void AstStreamDType::dumpSmall(std::ostream& str) const {
+void AstStreamDType::dumpSmall(std::ostream& str) const VL_MT_STABLE {
     this->AstNodeDType::dumpSmall(str);
     str << "stream";
 }

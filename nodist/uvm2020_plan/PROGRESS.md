@@ -4,6 +4,39 @@
 
 # UVM 2020 program progress
 
+## Second session recovery: 2026-09-07
+
+The interrupted integration run at `382553c08` is preserved and has resumed
+in recorded batches. Exact source and native-binary hashes match. Its status
+files recover 2,532 passes, eight skips, and 13 failures; 4,185 scenarios had
+no completed status. The last printed summary had only 2,524 passes. The
+continuation uses two test workers and the verified dependency environment;
+[recovery evidence](session-resume-local-2026-09-07.yaml) records the process,
+commands, archived results, and observed progress. This is segmented evidence,
+and complete regression acceptance remains open.
+
+The compiler annotation correction is committed at `fdcb80851` on
+`codex/compiler-attribute-contracts`. Its optimized build passes, along with
+12 targeted behavioral checks and eight distribution checks. Formatting and
+Python lint pass. The complete 164-unit attribute audit falls from 47 to 21
+primary diagnostics, with 26 removed, none added, and no parse failures.
+Focused cppcheck has the identical 796-report multiset as its parent across
+four translation units. [Component evidence](compiler-attribute-contracts-local-2026-09-07.yaml)
+records exact inputs, hashes, commands, and remaining findings. The mutable
+debug pointer-ID map and type-cache paths still need correction.
+
+Both integration CI matrices completed with 35 successful and 13 failed jobs
+each. All 26 failed jobs are preserved and classified: ten attribute-check
+jobs, twelve DPI C-build jobs, and four upstream-UVM format-security jobs.
+The isolated `t_assign_dff` failure passed on rerun. Existing DPI C-build and
+checker component fixes still require integration and combined CI.
+
+Formal acceptance remains **4/20 milestones, 28/46 gates, and 0/21 program
+criteria**. The main checkout remains frozen for its continuation. Active
+source work and the next validation checkpoint are in
+`/home/holden/verilator-work/compiler-attribute-contracts`; live regression
+state is `/home/holden/verilator-work/integration-resume-20260908/state.json`.
+
 ## Post-crash recovery: 2026-09-07
 
 The integration branch now contains the 24 recovered source commits at

@@ -749,6 +749,7 @@ static bool verilate(const string& argString) {
         V3PreShell::selfTest();
         V3Broken::selfTest();
         V3Control::selfTest();
+        V3Stats::selfTest();
         V3ThreadPool::selfTest();
         UINFO(2, "selfTest done");
     }

@@ -148,7 +148,7 @@ public:
     }
 
     // debug
-    FileLine* fileline() const override { return m_modp->fileline(); }
+    FileLine* fileline() const override VL_MT_STABLE { return m_modp->fileline(); }
     std::string dotShape() const override { return "box"; }
     std::string dotColor() const override {
         return m_noInlineHardWyp    ? "red"
@@ -203,7 +203,7 @@ public:
     }
 
     // debug
-    FileLine* fileline() const override { return m_cellp->fileline(); }
+    FileLine* fileline() const override VL_MT_STABLE { return m_cellp->fileline(); }
     std::string dotColor() const override { return m_doInlineWyp ? "green" : "black"; }
     std::string dotShape() const override { return "ellipse"; }
     std::string name() const override VL_MT_STABLE {

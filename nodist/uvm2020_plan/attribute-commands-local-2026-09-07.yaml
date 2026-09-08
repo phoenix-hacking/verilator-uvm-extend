@@ -1,0 +1,144 @@
+# DESCRIPTION: Verilator: compilation database attribute-check evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: The source attribute check now selects recorded translation units and retains their compilation
+  context. Eight reduced and distribution checks pass. The complete source/runtime audit finished with
+  28 and 50 reported unsafe-function or annotation diagnostics respectively. No full-analysis pass or
+  milestone acceptance is claimed.
+source_revision: 7392b90a06a86fe0d3cec32db581cb8c6b79e2ee
+parent_revision: 7b13d0613c7010cb7c60cae357c6b67cd37ee57e
+branch: codex/attribute-ci-check
+implementation:
+- Analyze all recorded compilation units, including generated C++ sources, instead of standalone included
+  fragments.
+- Reject explicit source requests absent from the actual database; avoid libclang command inference.
+- Keep the last recorded command per source and preserve working directory, flags, forced includes, and
+  C++ driver language.
+- Preserve explicit -x language overrides and correct argument filtering for -MF and -x.
+parent_reproducer:
+  passed: 0
+  failed: 1
+  exit_code: 10
+  log:
+    path: /home/holden/verilator-work/attribute-commands-parent.log
+    sha256: ff439bbea0cf2beee485a73e41687eaad0230b592fb08f51a0bad013ae2ce395
+  failure: The prior checker requires positional source files and cannot analyze all recorded commands.
+candidate:
+  passed: 8
+  failed: 0
+  elapsed: 0:15
+  command:
+  - python
+  - driver.py
+  - --jobs=2
+  - --quiet
+  - --dist
+  - t/t_dist_attributes_parse_bad.py
+  - t/t_dist_attributes_bad.py
+  - t/t_dist_copyright.py
+  - t/t_dist_cppstyle.py
+  - t/t_dist_whitespace.py
+  - t/t_dist_cinclude.py
+  - t/t_dist_portability.py
+  - t/t_dist_error_format.py
+  cwd: /home/holden/verilator-work/attribute-ci-check/test_regress
+  started_utc: '2026-09-07T23:59:01.225112+00:00'
+  log: /home/holden/verilator-work/attribute-commands-postformat.log
+  pid: 945435
+  exit_code: 0
+  finished_utc: '2026-09-07T23:59:16.516426+00:00'
+  sha256: dee538530f0a586811804849df08285d8efb9ecf4820aecd4086e076bad6e317
+  inputs_unchanged: true
+  coverage:
+  - Safe and unsafe callbacks
+  - Recorded and missing compile commands
+  - Duplicate commands and relative paths
+  - Included source fragments
+  - C++ files with a .c suffix
+  - Explicit C language overrides
+  - Invalid and empty compilation databases
+  - Worker counts 1 and 2
+python_lint:
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/attribute-commands-final-lint.log
+    sha256: c7efa3875c33369a54dda5f009cdac90e2363e4c3869c5a6e9984b5e87537655
+formatting: Full make format ran successfully before the final explicit-C oracle was added. YAPF finalized
+  all three Python files afterward. Two unrelated existing runtime whitespace changes were restored; no
+  C++ source changed.
+complete_audit:
+  status: completed_with_diagnostics
+  recorded_cpp_units: 164
+  state_path: /home/holden/verilator-work/attribute-commands-evidence/full-state.json
+  inputs:
+    path: /home/holden/verilator-work/attribute-commands-evidence/full-inputs.json
+    sha256: 98a261f14904889da308e22b9376fc518d49055b59b5f592b8bec9629b8cae92
+  database:
+    path: /home/holden/verilator-work/attribute-commands-evidence/compile_commands.json
+    sha256: 773c1ed11cd6a32e00ee6303d9449b718e7bca3978e8c288eb802330ffdb7c48
+  database_provenance:
+    path: /home/holden/verilator-work/attribute-commands-evidence/database-provenance.json
+    sha256: 997a4e12a4656957c3fe3f2324bd01155951114065a79ab6a2b8430ef5fdf43b
+  note: The raw compiledb capture includes a bison generator invocation mislabeled as compilation. It
+    is preserved in compile_commands-raw.json and excluded from the 164 actual C++ commands. V3ParseBison.c
+    is analyzed through V3ParseGrammar.cpp.
+  finished_utc: '2026-09-08T00:14:32.009730+00:00'
+  stages:
+    full-source:
+      command:
+      - python
+      - nodist/clang_check_attributes
+      - --jobs=2
+      - --verilator-root=.
+      - --all-commands
+      - --compile-commands-dir=src/obj_dbg
+      cwd: /home/holden/verilator-work/attribute-ci-check
+      started_utc: '2026-09-07T23:59:16.678489+00:00'
+      log: /home/holden/verilator-work/attribute-commands-full-source.log
+      pid: 946101
+      exit_code: 1
+      finished_utc: '2026-09-08T00:14:08.588460+00:00'
+      sha256: 7673dd1d4c09dc3191727e19ce4816c819d1244d4ee54199173d1f0b384c3237
+      inputs_unchanged: true
+      reported_unsafe_functions: 28
+      parsing_failures: 1
+    full-include:
+      command:
+      - python
+      - nodist/clang_check_attributes
+      - --jobs=2
+      - --verilator-root=.
+      - --cxxflags=-Iinclude -Iinclude/vltstd -std=c++20
+      - include/verilated.cpp
+      - include/verilated_cov.cpp
+      - include/verilated_covergroup.cpp
+      - include/verilated_dpi.cpp
+      - include/verilated_fst_c.cpp
+      - include/verilated_fst_sc.cpp
+      - include/verilated_probdist.cpp
+      - include/verilated_profiler.cpp
+      - include/verilated_random.cpp
+      - include/verilated_saif_c.cpp
+      - include/verilated_save.cpp
+      - include/verilated_threads.cpp
+      - include/verilated_timing.cpp
+      - include/verilated_vcd_c.cpp
+      - include/verilated_vcd_sc.cpp
+      - include/verilated_vpi.cpp
+      cwd: /home/holden/verilator-work/attribute-ci-check
+      started_utc: '2026-09-08T00:14:08.620891+00:00'
+      log: /home/holden/verilator-work/attribute-commands-full-include.log
+      pid: 977192
+      exit_code: 1
+      finished_utc: '2026-09-08T00:14:31.968409+00:00'
+      sha256: 4263de496cc3702b0b8fd45ea3156565d710e111024f2dcb48631f594bf9676f
+      inputs_unchanged: true
+      reported_unsafe_functions: 50
+      parsing_failures: 0
+pending:
+- Resolve the remaining compiler and runtime annotation diagnostics, then repeat complete attribute validation.
+- Integrate after the frozen integration regression completes.
+- Run combined-source CI and release validation.
+new_gate_credit: 0

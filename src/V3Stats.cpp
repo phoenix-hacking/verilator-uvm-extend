@@ -24,11 +24,6 @@
 VL_DEFINE_DEBUG_FUNCTIONS;
 
 //######################################################################
-// Statics
-
-V3Mutex V3Stats::s_mutex;
-
-//######################################################################
 // Stats class functions
 
 class StatsVisitor final : public VNVisitorConst {

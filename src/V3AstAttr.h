@@ -1698,8 +1698,8 @@ public:
         m_right = ascending ? hi : lo;
         m_ranged = true;
     }
-    int left() const { return m_left; }
-    int right() const { return m_right; }
+    int left() const VL_MT_SAFE { return m_left; }
+    int right() const VL_MT_SAFE { return m_right; }
     int hi() const VL_MT_SAFE {
         return m_left > m_right ? m_left : m_right;
     }  // How to show a declaration
@@ -1708,12 +1708,12 @@ public:
     }  // How to show a declaration
     int leftToRightInc() const { return ascending() ? 1 : -1; }
     int elements() const VL_MT_SAFE { return hi() - lo() + 1; }
-    bool ranged() const { return m_ranged; }
+    bool ranged() const VL_MT_SAFE { return m_ranged; }
     bool ascending() const { return m_left < m_right; }
     int hiMaxSelect() const {
         return (lo() < 0 ? hi() - lo() : hi());
     }  // Maximum value a [] select may index
-    void dump(std::ostream& str) const {
+    void dump(std::ostream& str) const VL_MT_STABLE {
         if (ranged()) {
             str << "[" << left() << ":" << right() << "]";
         } else {
@@ -1721,7 +1721,7 @@ public:
         }
     }
 };
-inline std::ostream& operator<<(std::ostream& os, const VNumRange& rhs) {
+inline std::ostream& operator<<(std::ostream& os, const VNumRange& rhs) VL_MT_STABLE {
     rhs.dump(os);
     return os;
 }

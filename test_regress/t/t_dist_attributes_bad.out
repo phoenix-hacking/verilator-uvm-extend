@@ -845,21 +845,21 @@ t/t_dist_attributes/mt_enabled.h:392:    [mt_safe]                              
 t/t_dist_attributes/mt_enabled.h:285:    [mt_unsafe]                              ConstructorCallsUnsafeLocalFunction::unsafe_function()
 
 %Error: "UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad()" defined in a file marked as VL_MT_DISABLED_CODE_UNIT has declaration(s) without VL_MT_DISABLED annotation
-t/t_dist_attributes/mt_disabled.h:27:    [mt_disabled, excludes]                UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad() [declaration]
-t/t_dist_attributes/mt_disabled.cpp:23:  []                                     UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad()
+t/t_dist_attributes/mt_disabled.h:27:    []                                     UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad() [declaration]
+t/t_dist_attributes/mt_disabled.cpp:23:  [mt_disabled, excludes]                UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad()
 t/t_dist_attributes/mt_disabled.h:27:    []                                       UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad()
 
 %Error: "UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad()" defined in a file marked as VL_MT_DISABLED_CODE_UNIT has declaration(s) without VL_MT_DISABLED annotation
-t/t_dist_attributes/mt_disabled.h:28:    [mt_disabled, excludes]                UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad() [declaration]
-t/t_dist_attributes/mt_disabled.cpp:26:  []                                     UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad()
+t/t_dist_attributes/mt_disabled.h:28:    []                                     UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad() [declaration]
+t/t_dist_attributes/mt_disabled.cpp:26:  [mt_disabled, excludes]                UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad()
 t/t_dist_attributes/mt_disabled.h:28:    []                                       UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad()
 
-%Error: "VirtualInheritance::Base1::func(int, int)" is pure but calls non-pure function(s)
-t/t_dist_attributes/mt_enabled.h:382:    [pure]                                 VirtualInheritance::Base1::func(int, int)
+%Error: "VirtualInheritance::Derived::func()" is pure but calls non-pure function(s)
+t/t_dist_attributes/mt_enabled.h:383:    [pure]                                 VirtualInheritance::Derived::func()
 t/t_dist_attributes/mt_enabled.h:384:    []                                       VirtualInheritance::Derived::notPure()
 
-%Error: "VirtualInheritance::Base2::func()" is pure but calls non-pure function(s)
-t/t_dist_attributes/mt_enabled.h:383:    [pure]                                 VirtualInheritance::Base2::func()
+%Error: "VirtualInheritance::Derived::func(int, int)" is pure but calls non-pure function(s)
+t/t_dist_attributes/mt_enabled.h:382:    [pure]                                 VirtualInheritance::Derived::func(int, int)
 t/t_dist_attributes/mt_enabled.h:384:    []                                       VirtualInheritance::Derived::notPure()
 
 %Error: "ifh_test_caller_func_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
@@ -1353,8 +1353,8 @@ t/t_dist_attributes/mt_enabled.cpp:60:   [release]                              
 t/t_dist_attributes/mt_enabled.cpp:60:   [requires]                               sfc_VL_REQUIRES(VerilatedMutex &)
 
 %Error: "unannotatedMtDisabledFunctionBad()" defined in a file marked as VL_MT_DISABLED_CODE_UNIT has declaration(s) without VL_MT_DISABLED annotation
-t/t_dist_attributes/mt_disabled.h:20:    [mt_disabled, excludes]                unannotatedMtDisabledFunctionBad() [declaration]
-t/t_dist_attributes/mt_disabled.cpp:20:  []                                     unannotatedMtDisabledFunctionBad()
+t/t_dist_attributes/mt_disabled.h:20:    []                                     unannotatedMtDisabledFunctionBad() [declaration]
+t/t_dist_attributes/mt_disabled.cpp:20:  [mt_disabled, excludes]                unannotatedMtDisabledFunctionBad()
 t/t_dist_attributes/mt_disabled.h:20:    []                                       unannotatedMtDisabledFunctionBad()
 t/t_dist_attributes/mt_disabled.h:23:    []                                       unannotatedMtDisabledFunctionBad()
 Number of functions reported unsafe: 230
