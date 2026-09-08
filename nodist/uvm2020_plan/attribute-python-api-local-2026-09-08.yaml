@@ -1,0 +1,94 @@
+---
+# DESCRIPTION: Verilator: Clang Python cursor ownership compatibility evidence
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+evidence_id: LOCAL-ATTRIBUTE-PYTHON-API-20260908
+date: '2026-09-08'
+observed_utc: '2026-09-08T07:16:46.853520+00:00'
+status: validated_checker_compatibility_full_audits_open
+source_revision: 292419b26a56c9fb5badeaa5c39580af062b8faa
+parent_revision: 78f7e8afbfff76207da17a9d9e4a03cdd2e5fe36
+change: Copy overridden cursors before freeing the CIndex array, and retain their owning translation unit directly using the same ownership field as the Python bindings. No signature detection, TypeError
+  suppression, or annotation relaxation is used.
+changed_file: nodist/clang_check_attributes
+checker_sha256: 8f5e8d0697689759cf0ef998dcae13bd6fa03cded4a4884e047988d9a906aa0d
+parent_checker_sha256: 8ca20cf996b1c5bbf7b7ac10c181b17c753104d768c79055b0a1157afc6a96c8
+upstream_reference:
+  clang18: https://github.com/llvm/llvm-project/blob/llvmorg-18.1.8/clang/bindings/python/clang/cindex.py
+  clang21: https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/clang/bindings/python/clang/cindex.py
+  basis: Cursor.from_result changes from three arguments to two; both versions retain cursor ownership through _tu, including in Cursor.get_children.
+  retained_clang21_bindings: /home/holden/verilator-work/attribute-python-api-evidence/bindings-21.1.8-manifest.json
+toolchains:
+  clang18:
+    python_distribution: libclang 18.1.1
+    library: /home/holden/verilator-work/toolchain/lib/python3.12/site-packages/clang/native/libclang.so
+    library_sha256: a8612b1c9a7125701277f63e5616f1d1eb9c91410c4bf195878067868c927f94
+    headers: /home/holden/verilator-work/clang18/lib/clang/18/include
+    python_binding: /home/holden/verilator-work/toolchain/lib/python3.12/site-packages/clang/cindex.py
+  clang21:
+    library_version: 21.1.8
+    library: /home/holden/verilator-work/clang21/lib/libclang.so.13
+    library_sha256: 08fc2386d1a7fcaf60b7be43819da8cd6a24eacc46c630eb30b4c5abdafce39c
+    bindings: Unmodified llvmorg-21.1.8 Python package
+    prefix: /home/holden/verilator-work/clang21
+    headers: /home/holden/verilator-work/clang21/lib/clang/21/include
+    package_lock: /home/holden/verilator-work/attribute-python-api-evidence/clang21-linux-64.lock
+    lock_sha256: 59de6976b5ba4dd9252900ae4e380c2bc5912e19cce45f2ff8aaed0c57ec25c0
+  common: Conda Python 3.12 and GCC 13 C++ headers. Clang-specific builtin headers match each configured analysis environment; these paths are isolated from model builds.
+validation:
+  candidate_clang18:
+    pass: 2
+    fail: 0
+    skip: 0
+    duration: 0:08
+    log: /home/holden/verilator-work/attribute-python-api-evidence/validation-clang18.log
+  candidate_clang21:
+    pass: 2
+    fail: 0
+    skip: 0
+    duration: 0:11
+    log: /home/holden/verilator-work/attribute-python-api-evidence/candidate-validation-clang21.log
+  parent_clang21:
+    pass: 0
+    fail: 2
+    exit_code: 10
+    duration: 0:05
+    log: /home/holden/verilator-work/attribute-python-api-evidence/parent-validation-clang21.log
+  reduced_parent:
+    exit_code: 1
+    log: /home/holden/verilator-work/attribute-python-api-evidence/parent-clang21-repro.log
+  reduced_candidate:
+    exit_code: 0
+    unsafe_functions: 0
+    log: /home/holden/verilator-work/attribute-python-api-evidence/candidate-clang21-repro.log
+  checks: Existing negative, malformed-input, callback, override/template/conversion/multiple-inheritance, disabled-file, compilation-database and PCH cases run with one and two checker workers. Their diagnostic
+    expectations and golden files are unchanged.
+  full_python_lint:
+    command: make lint-py
+    exit_code: 0
+    log: /home/holden/verilator-work/attribute-python-api-evidence/lint-py.log
+  formatting:
+    command: yapf --diff nodist/clang_check_attributes
+    exit_code: 0
+    diff_empty: true
+  distribution:
+    pass: 3
+    fail: 0
+    duration: 0:02
+    log: /home/holden/verilator-work/attribute-python-api-evidence/distribution.log
+  manifest: /home/holden/verilator-work/attribute-python-api-evidence/results.json
+  manifest_sha256: b1737b05cc59cacffb0ef150428a7c4169f19aa6dd309a53e4b57e370cd1579f
+  provenance_scope: Source and artifact hashes were recorded after the runs. The checker was not edited between its implementation and these tests; this is not a supervised before/after snapshot of every
+    repository input.
+cppcheck_scope: Compiler/runtime/example sources are unchanged from the full cppcheck evidence at bf891338a; this Python-only change is validated with full Python lint and the checker regressions.
+remaining_requirements:
+  - Full src/include attribute audits still have real findings. Their two historical skips are not closed by these checker tests.
+  - Ubuntu 22 source analysis has a separate parsing failure under investigation using the exact CI compilation database and archived build metadata.
+  - Current-revision CI, all program criteria, full regression, normative UVM and controlled performance acceptance remain open.
+accepted_progress:
+  milestones: 7/20
+  gates: 31/46
+  program_criteria: 3/21
+  new_acceptance_credit: 0

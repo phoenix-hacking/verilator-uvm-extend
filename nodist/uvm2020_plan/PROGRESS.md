@@ -4,7 +4,7 @@
 
 # UVM 2020 program progress
 
-Updated 2026-09-07, with evidence observed on 2026-09-08 UTC.
+Updated 2026-09-08, with evidence observed on 2026-09-08 UTC.
 [tracker.yaml](tracker.yaml) is authoritative. Recompute every roll-up with
 `python nodist/uvm2020_plan/check_tracker.py`.
 
@@ -54,8 +54,20 @@ individual coverage-bin counts remain unchanged, accounting for an internal
 unnamed-cross ordinal. The normal rerun has golden updates disabled. See
 [integrated evidence](integration-pattern-local-2026-09-08.yaml). New-revision
 CI and full regression remain required. Another 1.17 GiB of completed protocol
-objects was removed after verifying all 88 retained artifacts; approximately
-141 GiB is available locally.
+objects was removed after verifying all 88 retained artifacts.
+
+Checker commits `292419b26` and `06d8db671` fix the Clang 21 cursor-ownership
+API failure and preserve recorded C++ dialects while reading forced headers
+as source. Both checker regressions pass under Clang 14, 18 and 21. Paired
+reduced checks reproduce the old foreign-PCH and default-dialect failures;
+all 36 candidate checks pass. A three-unit compiler-source replay under
+Clang 14 previously failed to parse two units. The candidate parses all three
+and still reports two real annotation violations. Full source/runtime audits
+and current-revision CI remain open; these tool fixes add no acceptance credit.
+See [cursor evidence](attribute-python-api-local-2026-09-08.yaml) and
+[compilation-database evidence](attribute-compdb-local-2026-09-08.yaml).
+Removing superseded CI/download archives recovered another 0.60 GiB, excluding
+the package index cache; approximately 144 GiB is available locally.
 
 ## New accepted capability
 
