@@ -1,0 +1,93 @@
+---
+# DESCRIPTION: Verilator: APB UVM environment validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-07'
+observed_utc: '2026-09-08T03:11:10.049160+00:00'
+status: validated_local_component
+source_revision: a9136e3ca8a2c5de8b7f7e9601eb21b2c4ff41d9
+source_tree: 00d42621498f60681fa1edf2873735bca6c50dc2
+base_revision: 9b10389bd33d7f19ef8c24f1b77af729f93b3e85
+native_binary:
+  path: /home/holden/verilator-uvm-extend/bin/verilator_bin
+  sha256: 7a3277e48f987fe64448e09db0685c6c63c074ece5a29b69b08fcef5d2263c32
+native_source_revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+native_source_note: Component source/include trees match the frozen native build; these commits add verification fixtures only.
+uvm:
+  source_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  source_tree_clean_after_runs: true
+  source_package:
+    path: /home/holden/verilator-work/uvm-2020.3.1/src/uvm_pkg.sv
+    sha256: 4c1516f91172fc24e9d8f023911ffcb5718da281f285f3062547553c09be60e6
+  bundled_package:
+    path: /home/holden/verilator-work/uvm-apb-env/test_regress/t/uvm/uvm_pkg_all_v2020_3_1_nodpi.svh
+    sha256: 71fcf040208576bf50bd92337cce8d514acf58cc5483448fd096ed009b293011
+inputs:
+  test_regress/t/t_uvm_apb_env.py:
+    path: /home/holden/verilator-work/uvm-apb-env/test_regress/t/t_uvm_apb_env.py
+    sha256: 71ae305cb414e74f82b4dde9009a8e4b1bed2b835e6825f799ddf298e6efe7b4
+  test_regress/t/t_uvm_apb_env.v:
+    path: /home/holden/verilator-work/uvm-apb-env/test_regress/t/t_uvm_apb_env.v
+    sha256: 49c3355a1068c89dfcf8907325db50cc95ca6f22268b5a4e395d78d53650eecc
+  test_regress/t/t_uvm_apb_ral.vh:
+    path: /home/holden/verilator-work/uvm-apb-env/test_regress/t/t_uvm_apb_ral.vh
+    sha256: 726ae6c6c692d13aa4c06d96d3d7c0d5f9f3bead9f273a0806fd33bb018416df
+configurations: 4
+positive_runs: 12
+negative_runs: 20
+scenarios: [bundled-vlt, bundled-vltmt, source-vlt, source-vltmt]
+seeds_per_configuration: [1729, 1729, 2718]
+source_command: python driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before --driver-uvm-source-root=/home/holden/verilator-work/uvm-2020.3.1 --obj-suffix=-source --quiet --vlt --vltmt t/t_uvm_apb_env.py
+bundled_command: python driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before --quiet --vlt --vltmt t/t_uvm_apb_env.py
+bundled_command_note: APB vlt and vltmt ran as separate invocations; AXI ran both scenarios in one invocation.
+source_selection_note: The explicit --driver-uvm-source-root option selects unmodified source; UVM_HOME alone leaves the bundled default. The first resumed runs were correctly retained as bundled evidence.
+driver_logs:
+  - path: /home/holden/verilator-work/uvm-apb-ral-aligned.log
+    sha256: b88c9dd187ef29e97de231b048924aa57845169c51103a7ddedb0004c8c3111c
+  - path: /home/holden/verilator-work/uvm-apb-ral-aligned-vltmt.log
+    sha256: e0ab1efc7fbaf31f49e40839a25839dbfa5f14292a6889fa1fa0b052335c15e7
+  - path: /home/holden/verilator-work/uvm-apb-ral-aligned-source.log
+    sha256: 29c3a975d4da6336f25f8d3cc74486cc220d7b7cfbbe882ab871c3b115c87237
+results:
+  path: /home/holden/verilator-work/uvm-apb-evidence/accepted-20260908/results.json
+  sha256: 5a55df41e958443d85745c0d96f60d678294797d43e58b0ac03bdb7e87217739
+distribution:
+  passed: 2
+  failed: 0
+  drivers: [t_dist_copyright, t_dist_whitespace]
+  log:
+    path: /home/holden/verilator-work/uvm-apb-distribution-final.log
+    sha256: 5e68b70ef0209804a6fbb3f7bf97035b4c9841c01ef84511ebb5eb9a68aeff9c
+lint_py:
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/uvm-apb-lint-final.log
+    sha256: d03e58b8bb52faae755a3f933ff2f2e3b4a905455e71c35747abfbc718705042
+normative_oracles: [Arm IHI 0024D sections 3.1-3.4 and 4.1 for APB transfer rules., 'Pinned Accellera register adapter, predictor, backdoor and built-in reset/bit-bash/access sequence sources.']
+completed_transfers_per_positive_run: 2436
+successful_reads: 1216
+successful_writes: 1216
+error_responses: 4
+reset_intervals: 5
+cancelled_transfers: 1
+verification:
+  - Typed virtual clocking modports, configuration objects, active driver/sequencer, active/passive monitors and independent scoreboards.
+  - Full setup cycles for off-edge requests and observed back-to-back transfers; exact address, payload, error and wait-count checks.
+  - Wait delays 0/1/2, every byte mask, rejected writes followed by readback, reset during a stalled access and recovery.
+  - RAL frontdoor read/write, desired/set/update/mirror, four individually accessible byte fields, explicit monitor predictor with auto-prediction disabled, external bus prediction.
+  - Sixteen RW registers; built-in reset/bit-bash/access sequences complete 1120 reads and 1152 writes. User-defined SV backdoors complete 32 reads and 16 writes.
+  - Seven individual subscriber bins match trace-derived histograms; distinct seed files merge to exact summed bins and produce an LCOV report.
+  - One data fault reaches the independent scoreboard; setup, stalled access, select and read-strobe faults each fire the required protocol assertion. Same seeds replay identically and the different seed
+    changes traffic.
+fixture_timing_fix:
+  prior_failure: Off-edge RAL requests collapsed setup/access drives onto one clock; the monitor reported access without setup.
+  prior_log:
+    path: /home/holden/verilator-work/uvm-apb-ral-second.log
+    sha256: 03e7ac225b5bb520428edbe6596504cb01d376b7a49ae5bf35a3626a2b7bc3a4
+  fix: Align delayed requests before driving setup; preserve same-edge back-to-back requests and check that both paths execute.
+accepted_gate_candidates: [M06-G04-APB-CYCLES, M11-G01-CLOSURE]
+limitations:
+  - This no-DPI APB/RAL component does not prove uvm_hdl backdoor support, all RAL access policies/maps, full class coverage semantics or full UVM compliance.
+  - Combined-source validation, exact-revision CI, full regression and release acceptance remain required.
