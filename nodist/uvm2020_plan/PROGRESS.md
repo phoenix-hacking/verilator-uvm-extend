@@ -26,6 +26,22 @@ establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## Latest validation checkpoint
 
+At `93762ff8b`, class-method writes now trigger combinational readers of
+persistent storage, including writes from non-suspending helpers. All six
+timing, no-timing and protected-identifier scenarios pass in the combined
+checkout, as do both distribution checks. The source-DPI wrapper now follows
+the SystemVerilog package's experimental polling opt-in. Both source-DPI
+hello and HDL-access tests pass with the clean pinned UVM library. The reused
+native compiler has identical compiler/runtime/build sources to this
+revision; its original build and preserved parent are recorded in
+[combined scheduler/DPI evidence](class-write-source-dpi-local-2026-09-08.yaml).
+
+The separate DPI component at `a9bcaf8a4` also passes all four UVM CI lanes,
+including 27 source, four protocol-source and two randomization-source
+scenarios. Its overall CI remains unaccepted because other checks failed or
+are unfinished. Combined-revision CI and full release regression remain
+required. These results add no milestone or final-goal acceptance credit.
+
 Compiler source `bf891338a` fixes recursive assignment-pattern type/default
 keys and protected structure initializer names. The strengthened enum fixture
 and neighboring array/structure tests pass **98/98 GCC scenarios** and

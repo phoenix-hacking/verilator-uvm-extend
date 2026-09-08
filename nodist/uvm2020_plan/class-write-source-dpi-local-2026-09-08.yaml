@@ -1,0 +1,131 @@
+---
+# DESCRIPTION: Verilator: Combined class-write scheduling and source DPI validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-08'
+observed_utc: '2026-09-08T20:38:59.556267+00:00'
+status: validated_local_scheduler_and_source_dpi_combination_with_release_acceptance_open
+checkout: /home/holden/verilator-work/uvm-integration-20260908
+tested_source_revision: 93762ff8b27c74e19d9d875666e666e63752f21e
+components:
+  scheduler:
+    original_commit: 375baa4857da56c0fd4194d044ae15bd3c7058a1
+    integrated_commit: 4832cefef45792b4bcbe1672b7cbc08f639110b7
+  source_dpi:
+    original_commit: a9bcaf8a4acd7872135a7a44124f4f5c7ea37e7c
+    integrated_commit: 93762ff8b27c74e19d9d875666e666e63752f21e
+compiler:
+  binary:
+    path: /home/holden/verilator-work/class-interface-write/bin/verilator_bin
+    sha256: 86d3b4ee184058ce577c385f007e26a2dfc3939f14204a4a2affce4adbeecdca
+    bytes: 26944784
+  build_revision: 375baa4857da56c0fd4194d044ae15bd3c7058a1
+  reused_build: true
+  identical_paths: [src, include, bin, configure.ac, Makefile.in]
+  source_trees:
+    src: d82a634e58f6bd9dda70ce1f334123afe2b63294
+    include: 0c921eec72fb700ad18c2487a6a195731aea8b2d
+    bin: 0d858b3f33f6d6cc63ac4f692a73e1cdcba96dc7
+  provenance:
+    path: /home/holden/verilator-work/uvm-ral-policies-evidence/integration-93762-native-provenance.json
+    sha256: 5efcf647ab4ecff06c67a9d495cb19dcbb8109debdeec24c03cfaad15f8a7178
+    bytes: 892
+  preserved_parent_binary:
+    path: /home/holden/verilator-work/native-compilers/95923e6b665994bafc4b68199a45d6b9a1428b5147292f9a7474638f6d5876ce/verilator_bin
+    sha256: 95923e6b665994bafc4b68199a45d6b9a1428b5147292f9a7474638f6d5876ce
+    bytes: 26934592
+environment:
+  host: Linux-5.15.0-139-generic-x86_64-with-glibc2.31
+  model_compiler: x86_64-conda-linux-gnu-c++ (conda-forge gcc 13.4.0-20) 13.4.0
+  runner:
+    path: /home/holden/verilator-work/run-regression.sh
+    sha256: 05cafad5eab16128571290eda818ce6ec10e6226b05557ae6236732324956d60
+    bytes: 611
+  test_workers: 1
+  model_build_jobs: 1
+  simulation_threads: [1, 2]
+scheduler_and_distribution:
+  status: pass
+  driver_passes: 8
+  driver_failures: 0
+  elapsed: '1:10'
+  tests: [t/t_class_interface_write.py, t/t_class_interface_write_notiming.py, t/t_class_interface_write_protect.py, t/t_dist_copyright.py, t/t_dist_whitespace.py]
+  scenarios: [vlt, vltmt, dist]
+  log:
+    path: /home/holden/verilator-work/uvm-ral-policies-evidence/integration-93762-scheduler-regression.log
+    sha256: f28e42182f881c6f1e1317d2ad8e7813045b97473e2f34c568ccb8c104aee627
+    bytes: 56482
+  command: /bin/bash /home/holden/verilator-work/run-regression.sh /home/holden/verilator-work/uvm-integration-20260908 /home/holden/verilator-work/uvm-ral-policies-evidence/integration-93762-scheduler-regression.log
+    --compiler /home/holden/verilator-work/class-interface-write/bin/verilator_bin --jobs=1 --driver-build-jobs=1 --obj-suffix=-integration-93762 --dist --vlt --vltmt t/t_class_interface_write.py t/t_class_interface_write_notiming.py
+    t/t_class_interface_write_protect.py t/t_dist_copyright.py t/t_dist_whitespace.py
+source_dpi:
+  status: pass
+  driver_passes: 2
+  driver_failures: 0
+  elapsed: '5:04'
+  tests: [t/t_uvm_hello_all_v2020_3_1_dpi.py, t/t_uvm_dpi_v2020_3_1.py]
+  scenarios: [vlt]
+  log:
+    path: /home/holden/verilator-work/uvm-ral-policies-evidence/integration-93762-source-dpi.log
+    sha256: 5a88e9a934eb73b06d7fa3a62581e9e583cd58bdf95832cbdd307a74783ca2f1
+    bytes: 53464
+  command: /bin/bash /home/holden/verilator-work/run-regression.sh /home/holden/verilator-work/uvm-integration-20260908 /home/holden/verilator-work/uvm-ral-policies-evidence/integration-93762-source-dpi.log
+    --compiler /home/holden/verilator-work/class-interface-write/bin/verilator_bin --jobs=1 --driver-build-jobs=1 --obj-suffix=-integration-93762 --vlt --driver-uvm-source-root=/home/holden/verilator-work/uvm-2020.3.1
+    t/t_uvm_hello_all_v2020_3_1_dpi.py t/t_uvm_dpi_v2020_3_1.py
+source_library:
+  path: /home/holden/verilator-work/uvm-2020.3.1
+  revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  clean: true
+  dpi: enabled
+  polling: Disabled unless UVM_EXPERIMENTAL_POLLING_API is explicitly enabled in both SV and C++; experimental polling is not accepted.
+component_ci:
+  source_dpi_revision: a9bcaf8a4acd7872135a7a44124f4f5c7ea37e7c
+  build_test_run: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34269265561
+  overall_status: not_accepted
+  source:
+    passes: 27
+    failures: 0
+    log:
+      path: /home/holden/verilator-work/uvm-ral-policies-evidence/ci-a9-uvm-source.log
+      sha256: 85b8335ba2541afafa9171d8805e3f2792d41484288f0e83eab01670263a29c9
+      bytes: 540757
+  protocol_source:
+    passes: 4
+    failures: 0
+    log:
+      path: /home/holden/verilator-work/uvm-ral-policies-evidence/ci-a9-uvm-protocol-source.log
+      sha256: ccd1f381ea661e6638a5a9a338e44f457d83f5b2ae51e4b4df7f456ad3f22b7b
+      bytes: 2574524
+  randomize_source:
+    passes: 2
+    failures: 0
+    log:
+      path: /home/holden/verilator-work/uvm-ral-policies-evidence/ci-a9-uvm-randomize-source.log
+      sha256: 7d75fb13ff281009151203b33d80fada1f131d18e038f17afe78c2d9cf5a69aa
+      bytes: 320141
+  observed_status:
+    path: /home/holden/verilator-work/uvm-ral-policies-evidence/ci-a9-status-2034.json
+    sha256: cf934bf7801dae94adee9997f1238f030525c6d9383d5192395577b137827dd1
+    bytes: 110643
+  known_failed_checks: [t_dist_attributes_include, t_dist_attributes_src]
+  failure_log:
+    path: /home/holden/verilator-work/uvm-ral-policies-evidence/ci-a9-dist-ubuntu24-gcc.log
+    sha256: 7d2005d1f4591785b8065448836e99d5e3671e134445ce503c913684c3cd502a
+    bytes: 165444
+tracker_validation:
+  path: /home/holden/verilator-work/uvm-ral-policies-evidence/tracker-93762.json
+  sha256: b27a4f6a6a592d87136937e81f54387da390f2e1d58b545db176a42951089e66
+  bytes: 36280
+acceptance:
+  milestones: 7/20
+  atomic_gates: 31/46
+  program_criteria: 3/21
+  new_credit: false
+limits:
+  - The reused native build has identical compiler/runtime/build sources to tested93762; it was not rebuilt at that Git revision.
+  - Current combined-source CI and complete supported-host/release regression remain required.
+  - Passing component UVM CI lanes do not override their overall failed or unfinished CI checks.
+  - Private UVM register-field and map correction candidates remain separate from this integration and from unmodified-reference acceptance.
+  - Required resource/config, RAL, coverage, assertion, SoC, teardown, normative inventory and performance acceptance remain open.
