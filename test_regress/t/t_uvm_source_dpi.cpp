@@ -20,6 +20,10 @@ extern "C" {
 #include <uvm_regex.cc>
 #include "uvm/v2020_3_1/dpi/uvm_hdl_verilator.c"
 #include <uvm_svcmd_dpi.c>
+// The SV package imports polling only with this experimental opt-in. A test
+// enabling it in SystemVerilog must pass the same define to the C++ compiler.
+#ifdef UVM_EXPERIMENTAL_POLLING_API
 #include <uvm_hdl_polling.c>
+#endif
 // clang-format on
 }
