@@ -740,7 +740,20 @@ function(verilate TARGET)
     target_link_libraries(${TARGET} PUBLIC ${VERILATOR_MT_CFLAGS})
 
     if(${VERILATE_PREFIX}_TRACE_FST)
-        target_link_libraries(${TARGET} PUBLIC -llz4 -lz)
+        # FST dependencies may live outside the compiler's default search paths.
+        # Honor CMAKE_PREFIX_PATH and fail during configuration if they are absent.
+        find_path(VERILATOR_LZ4_INCLUDE_DIR NAMES lz4.h REQUIRED)
+        find_library(VERILATOR_LZ4_LIBRARY NAMES lz4 REQUIRED)
+        mark_as_advanced(VERILATOR_LZ4_INCLUDE_DIR VERILATOR_LZ4_LIBRARY)
+        find_package(ZLIB REQUIRED)
+        target_include_directories(
+            ${TARGET}
+            PRIVATE ${VERILATOR_LZ4_INCLUDE_DIR}
+        )
+        target_link_libraries(
+            ${TARGET}
+            PUBLIC ${VERILATOR_LZ4_LIBRARY} ZLIB::ZLIB
+        )
     endif()
 
     target_compile_features(${TARGET} PRIVATE cxx_std_11)

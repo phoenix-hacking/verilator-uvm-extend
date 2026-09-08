@@ -1,0 +1,69 @@
+---
+# DESCRIPTION: Verilator: CMake FST dependency validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-07'
+observed_utc: '2026-09-08T03:07:15.857854+00:00'
+status: validated_local_component
+source_revision: 9ad50c1b68d906c1e80c311eb4f44dca07e0f0b0
+parent_revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+problem: FST CMake builds linked -llz4 and -lz without discovering dependency headers, so a valid non-system CMAKE_PREFIX_PATH still failed with missing lz4.h.
+change: Locate the LZ4 include directory and library with required CMake searches and link ZLIB::ZLIB, propagating its include and library requirements. Discovery runs only for FST targets.
+source:
+  path: /home/holden/verilator-work/cmake-fst-dependencies/verilator-config.cmake.in
+  sha256: cc76f16f83bb32c1e31f8246af8ae3a9a36b4b9780009892614c50d98468eca5
+generated_configuration:
+  path: /home/holden/verilator-work/cmake-fst-dependencies/verilator-config.cmake
+  sha256: 7e2894f12abdaeac8653fc87d5bef1b949a596718a5133bd163d64fb38178020
+native_binary:
+  path: /home/holden/verilator-uvm-extend/bin/verilator_bin
+  sha256: 7a3277e48f987fe64448e09db0685c6c63c074ece5a29b69b08fcef5d2263c32
+environment:
+  script: /home/holden/verilator-work/regression-env.sh
+  CMAKE_PREFIX_PATH: /home/holden/verilator-work/toolchain
+  CPPFLAGS:
+  CPATH:
+  CPLUS_INCLUDE_PATH:
+  cmake: cmake version 3.25.1
+parent:
+  command: python driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before --quiet --vlt t/t_trace_basic_cc_fst_cmake.py
+  passed: 0
+  failed: 1
+  exit_code: 10
+  failure: 'include/fstcpp/fstcpp_writer.cpp:18:10: fatal error: lz4.h: No such file or directory'
+  log:
+    path: /home/holden/verilator-work/cmake-fst-parent.log
+    sha256: b77bc64a1bc7406123682f8df9ec800bd7826cdaa71d3f0dc88689e0d141a2dd
+candidate:
+  command: python driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before --quiet --vlt --vltmt t/t_trace_basic_cc_fst_cmake.py t/t_trace_basic_sc_fst_cmake.py t/t_trace_basic_cc_vcd_cmake.py t/t_trace_basic_cc_saif_cmake.py
+  passed: 8
+  failed: 0
+  exit_code: 0
+  oracle: Each existing trace test compares the produced trace against its committed golden.
+  log:
+    path: /home/holden/verilator-work/cmake-fst-candidate.log
+    sha256: fc33bb24cc188c68cc7ae6373639fe6982039149d3dcd0d1eb1b0973864259d9
+  resolved_lz4_include: /home/holden/verilator-work/toolchain/include
+  resolved_lz4_library: /home/holden/verilator-work/toolchain/lib/liblz4.so
+  resolved_zlib_include: /home/holden/verilator-work/toolchain/include
+  resolved_zlib_library: /home/holden/verilator-work/toolchain/lib/libz.so
+format:
+  command: make format-cmake CMAKE_FILES=verilator-config.cmake.in
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/cmake-fst-format.log
+    sha256: d5fec1a6338fe194ec8625303fc6eba6e1475b831e4c1d3d1f683d5c08dfd654
+distribution:
+  passed: 2
+  failed: 0
+  exit_code: 0
+  drivers: [t_dist_copyright, t_dist_whitespace]
+  log:
+    path: /home/holden/verilator-work/cmake-fst-distribution.log
+    sha256: 52ebcfc81559332080009afeb47a34268bba58e110cdc8dcbff8fcd48c296977
+references: [https://cmake.org/cmake/help/v3.19/command/find_path.html, https://cmake.org/cmake/help/v3.19/command/find_library.html, https://cmake.org/cmake/help/v3.19/module/FindZLIB.html]
+limitations:
+  - The frozen resumed main regression keeps its original failure; this isolated fix still requires integration and combined-source CI.
+  - No milestone or full-regression closure is claimed from these eight cases.
