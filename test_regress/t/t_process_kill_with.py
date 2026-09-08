@@ -10,8 +10,12 @@
 import vltest_bootstrap
 
 test.scenarios('simulator')
-for protect in ((False, True) if test.vlt or test.vltmt else (False, )):
-    test.compile(verilator_flags2=['--binary'] + (['--protect-ids'] if protect else []),
-                 threads=2 if test.vltmt else 1)
-    test.execute(logfile=test.obj_dir + ('/sim_protected.log' if protect else '/sim_plain.log'))
+for lift in ((True, False) if test.vlt or test.vltmt else (True, )):
+    for protect in ((False, True) if test.vlt or test.vltmt else (False, )):
+        flags = ['--binary'] + (['--protect-ids'] if protect else [])
+        if not lift:
+            flags += ['--no-flift-expr']
+        test.compile(verilator_flags2=flags, threads=2 if test.vltmt else 1)
+        name = ('protected' if protect else 'plain') + ('' if lift else '_no_lift')
+        test.execute(logfile=f'{test.obj_dir}/sim_{name}.log')
 test.passes()

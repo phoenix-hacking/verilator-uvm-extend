@@ -39,6 +39,7 @@ module t;
         state.caller = process::self();
         state.caller.kill();
       end
+      if (state.request_disable) disable t.named_sort;
       return number;
     endfunction
   endclass
@@ -49,8 +50,9 @@ module t;
     bit after_sort;
     bit after_delay;
     bit after_named;
+    bit skip_query;
     time named_return_time;
-    bit [62:0] sum;
+    bit [62:0] sum = 63'h1357_9bdf_2468_ace0;
     function new(bit request_kill, bit request_disable = 0);
       state = new;
       state.request_kill = request_kill;
@@ -81,9 +83,19 @@ module t;
     endtask
   endclass
 
-  task automatic named_sort(sorter object);
+  task automatic named_sort(sorter object, int mode = 0);
     #1;
-    object.entries.sort with (item.get_name());
+    case (mode)
+      0: object.entries.sort with (item.get_name());
+      1: object.sum = object.entries.sum with (item.get_number());
+      2:
+      if (!object.skip_query && (object.entries.sum with (item.get_number())) != 0)
+        object.after_sort = 1;
+      3:
+      while (!object.after_sort && (object.entries.sum with (item.get_number())) != 0)
+        object.after_sort = 1;
+      default: `stop;
+    endcase
     #1;
     object.after_delay = 1;
   endtask
@@ -95,6 +107,7 @@ module t;
     sorter canceled_numeric;
     sorter normal_named;
     sorter canceled_named;
+    sorter skipped_named;
     normal_sort = new(0);
     canceled_sort = new(1);
     normal_numeric = new(0);
@@ -141,9 +154,30 @@ module t;
     `checkd(canceled_named.after_delay, 0)
     `checkd(canceled_named.after_named, 1)
     `checkd(canceled_named.named_return_time, 3)
+    for (int mode = 1; mode <= 3; mode++) begin
+      time start_time = $time;
+      normal_named = new(0);
+      canceled_named = new(0, 1);
+      named_sort(normal_named, mode);
+      `checkd($time, start_time + 2)
+      `checkd(normal_named.after_delay, 1)
+      if (mode == 1) `checkd(normal_named.sum, 63'(7 * 64'h5a6d_93c7_a5b8_e240 + 21))
+      else `checkd(normal_named.after_sort, 1)
+      named_sort(canceled_named, mode);
+      `checkd($time, start_time + 3)
+      `checkd(canceled_named.after_delay, 0)
+      `checkd(canceled_named.after_sort, 0)
+      `checkd(canceled_named.sum, 63'h1357_9bdf_2468_ace0)
+    end
+    // A skipped condition must not invoke the disabling callback.
+    skipped_named = new(0, 1);
+    skipped_named.skip_query = 1;
+    named_sort(skipped_named, 2);
+    `checkd(skipped_named.after_delay, 1)
+    `checkd(skipped_named.after_sort, 0)
     $write("*-* All Finished *-*\n");
     $finish;
   end
 
-  initial #20 `stop;
+  initial #40 `stop;
 endmodule

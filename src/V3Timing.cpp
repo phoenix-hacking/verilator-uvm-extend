@@ -193,12 +193,13 @@ class TimingSuspendableVisitor final : public VNVisitor {
     //  AstClass::user1()                        -> bool.               Set true if the class
     //                                                                  member cache has been
     //                                                                  refreshed.
-    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt}::user2() -> int.          Set to >= T_SUSP if
+    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt,With}::user2() -> int.          Set to >= T_SUSP if
     //                                                                  process/task suspendable
     //                                                                  and to T_PROC if it
     //                                                                  needs process metadata.
-    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt}::user3() -> DepVtx*.       Vertex in m_suspGraph
-    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt}::user4() -> DepVtx*.       Vertex in m_procGraph
+    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt,With}::user3() -> DepVtx*.       Vertex in
+    //  m_suspGraph Ast{NodeProcedure,CFunc,Begin,ExprStmt,With}::user4() -> DepVtx*.       Vertex
+    //  in m_procGraph
     const VNUser3InUse m_user3InUse;
     const VNUser4InUse m_user4InUse;
 
@@ -405,6 +406,16 @@ class TimingSuspendableVisitor final : public VNVisitor {
         // The result is evaluated after the helper returns, in the enclosing expression.
         if (nodep->hasResult()) iterateAndNextNull(nodep->resultp());
     }
+    void visit(AstWith* nodep) override {
+        VL_RESTORER(m_procp);
+        // The callback is a separate helper, and its cancellation effects reach the caller
+        // through the array method that invokes it.
+        new V3GraphEdge{&m_suspGraph, getSuspendDepVtx(nodep), getSuspendDepVtx(m_procp), P_CALL};
+        new V3GraphEdge{&m_procGraph, getNeedsProcDepVtx(nodep), getNeedsProcDepVtx(m_procp),
+                        P_CALL};
+        m_procp = nodep;
+        iterateAndNextNull(nodep->exprp());
+    }
     void visit(AstBegin* nodep) override {
         VL_RESTORER(m_procp);
         VL_RESTORER(m_underFork);
@@ -532,7 +543,8 @@ class TimingControlVisitor final : public VNVisitor {
     //                                                                   represents the net delay
     //  AstSenTree::user1()                             -> AstVarScope*. Trigger scheduler assigned
     //                                                                   to this sentree
-    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt}::user2() -> bool.         Set true if process/task
+    //  Ast{NodeProcedure,CFunc,Begin,ExprStmt,With}::user2() -> bool.         Set true if
+    //  process/task
     //                                                                   is suspendable
     //  Ast{EventControl}::user2()                      -> bool.         Set true if event control
     //                                                                   should immediately be
@@ -877,6 +889,41 @@ class TimingControlVisitor final : public VNVisitor {
         m_underJumpBlock = false;
         iterateAndNextNull(bodyp);
     }
+    void addExpressionCancellationChecks(AstNodeExpr* const nodep, AstNode* const effectp) {
+        const bool checkProcess
+            = hasFlags(effectp, T_MAY_KILL_PROC) && !m_deferProcessCancellation;
+        const bool checkActivation = hasFlags(effectp, T_MAY_CANCEL_NAMED);
+        if (!checkProcess && !checkActivation) return;
+        AstNodeStmt* const stmtp = enclosingStmtp(nodep);
+        UASSERT_OBJ(stmtp, nodep, "Cancellation helper must be inside a statement");
+        AstNodeExpr* valuep = nullptr;
+        if (AstNodeAssign* const assignp = VN_CAST(stmtp, NodeAssign)) {
+            valuep = assignp->rhsp();
+        } else if (AstCReturn* const returnp = VN_CAST(stmtp, CReturn)) {
+            valuep = returnp->lhsp();
+        } else if (AstNodeIf* const ifp = VN_CAST(stmtp, NodeIf)) {
+            valuep = ifp->condp();
+        } else if (AstLoopTest* const testp = VN_CAST(stmtp, LoopTest)) {
+            valuep = testp->condp();
+        }
+        AstNodeStmt* checkAfterp = stmtp;
+        if (valuep) {
+            // Evaluate the entire expression once, preserving short-circuiting. Observe
+            // cancellation before committing an assignment, returning, or entering a branch.
+            // Keep the temporary inside a scope that cannot be jumped into by named disable.
+            if (m_underJumpBlock) addCLocalScope(nodep->fileline(), stmtp);
+            FileLine* const flp = valuep->fileline();
+            AstVarScope* const resultVscp
+                = createTemp(flp, m_processKillValueNames.get(nodep), valuep->dtypep(), stmtp);
+            valuep->replaceWith(new AstVarRef{flp, resultVscp, VAccess::READ});
+            AstAssign* const evalp
+                = new AstAssign{flp, new AstVarRef{flp, resultVscp, VAccess::WRITE}, valuep};
+            evalp->user1(true);  // Its children have already been lowered.
+            stmtp->addHereThisAsNext(evalp);
+            checkAfterp = evalp;
+        }
+        addCancellationChecks(nodep, checkAfterp, checkProcess, checkActivation);
+    }
     // Add a done() call on the fork sync
     void addForkDone(AstBegin* const beginp, AstVarScope* const forkVscp) const {
         FileLine* const flp = beginp->fileline();
@@ -1095,6 +1142,13 @@ class TimingControlVisitor final : public VNVisitor {
         iterateLambda(nodep->stmtsp(), hasFlags(nodep, T_SUSPENDEE),
                       nodep->hasResult() || VN_IS(nodep->dtypep()->skipRefp(), VoidDType));
         if (nodep->hasResult()) iterateAndNextNull(nodep->resultp());
+        addExpressionCancellationChecks(nodep, nodep);
+    }
+    void visit(AstCMethodHard* nodep) override {
+        iterateChildren(nodep);
+        if (nodep->withp() && !nodep->user1SetOnce()) {
+            addExpressionCancellationChecks(nodep, nodep->withp());
+        }
     }
     void visit(AstAlways* nodep) override {
         if (nodep->user1SetOnce()) return;
