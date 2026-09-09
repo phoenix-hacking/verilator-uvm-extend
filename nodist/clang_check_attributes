@@ -304,9 +304,6 @@ class CallAnnotationsValidator:
         self._dispose_overridden.argtypes = [POINTER(clang.cindex.Cursor)]
         self._dispose_overridden.restype = None
 
-        # Map key represents translation unit initial defines
-        # (from command line and source's lines before any include)
-        self._processed_headers: dict[str, set[str]] = {}
         self._external_decls: dict[str, set[FunctionInfo]] = {}
 
         # Current context
@@ -819,22 +816,15 @@ class CallAnnotationsValidator:
 
     def process_translation_unit(self, translation_unit: clang.cindex.TranslationUnit):
         self._level += 1
-        kv_defines = sorted([f"{k}={v}" for k, v in self._defines.items()])
-        concat_defines = '\n'.join(kv_defines)
-        # List of headers already processed in a TU with specified set of defines.
-        tu_processed_headers = self._processed_headers.setdefault(concat_defines, set())
+        # A header's declarations and bodies depend on its complete inclusion
+        # context, including macros defined after the source's first include.
+        # Analyze every translation unit's AST; the summary deduplicates actual
+        # diagnostics instead of skipping headers based on incomplete inputs.
         for child in translation_unit.cursor.get_children():
             if self._is_ignored_top_level(child):
                 continue
-            if tu_processed_headers:
-                filename = os.path.abspath(child.location.file.name)
-                if filename in tu_processed_headers:
-                    continue
             self.dispatch_node(child)
         self._level -= 1
-
-        tu_processed_headers.update(
-            [os.path.abspath(str(hdr.source)) for hdr in translation_unit.get_includes()])
 
 
 @dataclass

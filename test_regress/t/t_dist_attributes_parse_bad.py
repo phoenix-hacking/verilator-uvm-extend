@@ -285,4 +285,34 @@ for jobs in (1, 2):
         else:
             test.file_grep(log, r'Number of functions reported unsafe: (\d+)', 0)
 
+# The same implementation header can contain different functions in different
+# translation units. Macros set after the first include must not let a prior
+# safe instantiation hide the later unsafe one (as with trace format backends).
+context_dir = os.path.abspath(test.obj_dir + '/header_context')
+os.makedirs(context_dir, exist_ok=True)
+test.write_wholefile(context_dir + '/common.h',
+                     'void safe() __attribute__((annotate("MT_SAFE")));\nvoid unsafe();\n')
+test.write_wholefile(context_dir + '/leaf.h', '// Included by the implementation fragment.\n')
+test.write_wholefile(
+    context_dir + '/implementation.h', '#include "leaf.h"\n'
+    'void NAME() __attribute__((annotate("MT_SAFE"))) { CALLEE(); }\n')
+context_sources = []
+for name, callee in (('first', 'safe'), ('second', 'unsafe')):
+    source = context_dir + '/' + name + '.cpp'
+    test.write_wholefile(
+        source, '#include "common.h"\n#define NAME ' + name + '\n#define CALLEE ' + callee +
+        '\n#include "implementation.h"\n')
+    context_sources.append(source)
+for jobs in (1, 2):
+    for order, sources in (('forward', context_sources), ('reverse', context_sources[::-1])):
+        log = context_dir + '/' + order + '_' + str(jobs) + '.log'
+        test.run(cmd=[
+            'python3', checker, '--jobs=' + str(jobs), '--verilator-root=' + context_dir,
+            '--cxxflags=-std=c++14', *sources
+        ],
+                 logfile=log,
+                 fails=True)
+        test.file_grep(log, r'"second\(\)" is mtsafe but calls non-mtsafe')
+        test.file_grep(log, r'Number of functions reported unsafe: (\d+)', 1)
+
 test.passes()
