@@ -27,6 +27,7 @@
 #include "V3Covergroup.h"
 
 #include "V3Const.h"
+#include "V3File.h"
 #include "V3MemberMap.h"
 
 #include <set>
@@ -35,6 +36,71 @@ VL_DEFINE_DEBUG_FUNCTIONS;
 
 //######################################################################
 // Functional coverage visitor
+
+// Replace generated bin and option members with references to
+// model-owned coverage data. Keep all model identifiers as AST references.
+class CoverageStorageVisitor final : public VNVisitor {
+public:
+    struct Option final {
+        AstVar* statep;
+        int item;
+        AstClass* classp;
+    };
+    using Storage = std::map<AstVar*, AstNodeExpr*>;
+    using Options = std::map<AstVar*, Option>;
+
+private:
+    // NODE STATE: AstVarRef::user2 marks an option-type prototype reference.
+    const VNUser2InUse m_inuser2;
+    const Storage& m_storage;
+    const Options& m_options;
+
+    AstNodeExpr* newOptions(FileLine* fl, AstVar* optionp, AstNodeExpr* objectp) {
+        const Option& option = m_options.at(optionp);
+        AstNodeExpr* const statep = objectp ? static_cast<AstNodeExpr*>(new AstMemberSel{
+                                                  fl, objectp->cloneTree(false), option.statep})
+                                            : new AstVarRef{fl, option.statep, VAccess::READWRITE};
+        // The static prototype supplies the generated struct type without
+        // embedding its C++ name or evaluating the receiver a second time.
+        AstVarRef* const prototypep = new AstVarRef{fl, optionp, VAccess::READ};
+        prototypep->user2(true);
+        prototypep->classOrPackagep(option.classp);
+        AstCMethodHard* const exprp
+            = new AstCMethodHard{fl, statep, VCMethod::COVERGROUP_OPTIONS, prototypep};
+        exprp->usePtr(true);
+        AstConst* const itemp = new AstConst{fl, AstConst::DTyped{}, optionp->findIntDType()};
+        itemp->num().setLongS(option.item);
+        exprp->addPinsp(itemp);
+        exprp->dtypeFrom(optionp);
+        return exprp;
+    }
+    void visit(AstVarRef* nodep) override {
+        if (nodep->user2()) return;
+        const auto it = m_storage.find(nodep->varp());
+        AstNodeExpr* replacementp = nullptr;
+        if (it != m_storage.end())
+            replacementp = it->second->cloneTree(false);
+        else if (m_options.count(nodep->varp()))
+            replacementp = newOptions(nodep->fileline(), nodep->varp(), nullptr);
+        if (!replacementp) return;
+        nodep->replaceWith(replacementp);
+        VL_DO_DANGLING(pushDeletep(nodep), nodep);
+    }
+    void visit(AstMemberSel* nodep) override {
+        iterateChildren(nodep);
+        if (!m_options.count(nodep->varp())) return;
+        nodep->replaceWith(newOptions(nodep->fileline(), nodep->varp(), nodep->fromp()));
+        VL_DO_DANGLING(pushDeletep(nodep), nodep);
+    }
+    void visit(AstNode* nodep) override { iterateChildren(nodep); }
+
+public:
+    CoverageStorageVisitor(AstNetlist* nodep, const Storage& storage, const Options& options)
+        : m_storage{storage}
+        , m_options{options} {
+        iterate(nodep);
+    }
+};
 
 class FunctionalCoverageVisitor final : public VNVisitor {
     // NODE STATE
@@ -73,6 +139,8 @@ class FunctionalCoverageVisitor final : public VNVisitor {
     AstCDType* m_vlCoverpointDTypep = nullptr;  // Shared "VlCoverpoint" C++ member type
 
     VMemberMap m_memberMap;  // Member names cached for fast lookup
+    CoverageStorageVisitor::Storage m_storage;
+    CoverageStorageVisitor::Options m_options;
 
     // METHODS
     void clearBinInfos() {
@@ -108,21 +176,146 @@ class FunctionalCoverageVisitor final : public VNVisitor {
         // For each cross, generate sampling code
         for (AstCoverCross* crossp : m_coverCrosses) generateCrossCode(crossp);
 
-        // Generate coverage computation code (even for empty covergroups)
-        generateCoverageComputationCode();
-
-        // TODO: Generate instance registry infrastructure for static get_coverage()
-        // This requires:
-        // - Static registry members (t_instances, s_mutex)
-        // - registerInstance() / unregisterInstance() methods
-        // - Proper C++ emission in EmitC backend
-        // For now, get_coverage() returns 0.0 (placeholder)
+        // Generate retained coverage storage and both query methods.
+        generateCoverageStorage();
 
         // Generate coverage database registration if coverage is enabled
         if (v3Global.opt.coverage()) generateCoverageRegistration();
 
         // Clean up orphaned cross pseudo-bins now that we're done with them
         clearBinInfos();
+    }
+
+    void registerOptions(AstVar* optionp, AstVar* statep, int item) {
+        FileLine* const fl = optionp->fileline();
+        // The original variable becomes a type prototype. All actual accesses,
+        // including whole-struct assignment and ref arguments, use retained data.
+        optionp->isStatic(true);
+        optionp->lifetime(VLifetime::STATIC_EXPLICIT);
+        m_options.emplace(optionp, CoverageStorageVisitor::Option{statep, item, m_covergroupp});
+        AstNodeExpr* weightp = new AstVarRef{fl, optionp, VAccess::READWRITE};
+        for (const string& field :
+             item < 0 ? std::vector<string>{"weight"} : std::vector<string>{"option", "weight"}) {
+            const AstNodeUOrStructDType* const dtypep
+                = VN_AS(weightp->dtypep()->skipRefp(), NodeUOrStructDType);
+            const AstMemberDType* const memberp
+                = VN_AS(m_memberMap.findMember(dtypep, field), MemberDType);
+            weightp = new AstStructSel{fl, weightp, field};
+            weightp->dtypep(memberp->subDTypep());
+        }
+        AstCStmt* const bindp = new AstCStmt{fl};
+        bindp->add(new AstVarRef{fl, statep, VAccess::READWRITE});
+        bindp->add("->bindWeight(" + std::to_string(item) + ", ");
+        bindp->add(weightp);
+        bindp->add(");");
+        m_constructorp->addStmtsp(bindp);
+    }
+
+    void generateCoverageStorage() {
+        FileLine* const fl = m_covergroupp->fileline();
+        if (!m_vlCoverpointDTypep) {
+            m_vlCoverpointDTypep = new AstCDType{fl, "VlCoverpoint"};
+            v3Global.rootp()->typeTablep()->addTypesp(m_vlCoverpointDTypep);
+        }
+        AstCDType* const typeDTypep = new AstCDType{fl, "VlCovergroupType"};
+        AstCDType* const stateDTypep = new AstCDType{fl, "std::shared_ptr<VlCovergroupData>"};
+        v3Global.rootp()->typeTablep()->addTypesp(typeDTypep);
+        v3Global.rootp()->typeTablep()->addTypesp(stateDTypep);
+        AstVar* const typep = new AstVar{fl, VVarType::MEMBER, "__VcoverageType", typeDTypep};
+        typep->isStatic(true);
+        typep->lifetime(VLifetime::STATIC_EXPLICIT);
+        AstVar* const statep = new AstVar{fl, VVarType::MEMBER, "__VcoverageData", stateDTypep};
+        m_covergroupp->addMembersp(typep);
+        m_covergroupp->addMembersp(statep);
+        m_memberMap.clear();
+
+        const int items = static_cast<int>(m_coverpoints.size() + m_coverCrosses.size());
+        AstCExpr* const createp = new AstCExpr{fl};
+        createp->add(new AstVarRef{fl, typep, VAccess::READWRITE});
+        createp->add(".create(" + std::to_string(items) + ")");
+        createp->dtypep(stateDTypep);
+        AstAssign* const initp
+            = new AstAssign{fl, new AstVarRef{fl, statep, VAccess::WRITE}, createp};
+        if (m_constructorp->stmtsp())
+            m_constructorp->stmtsp()->addHereThisAsNext(initp);
+        else
+            m_constructorp->addStmtsp(initp);
+
+        registerOptions(VN_AS(m_memberMap.findMember(m_covergroupp, "option"), Var), statep, -1);
+        std::vector<AstNodeFuncCovItem*> itemps;
+        for (AstCoverpoint* const cpp : m_coverpoints) itemps.emplace_back(cpp);
+        for (AstCoverCross* const crossp : m_coverCrosses) itemps.emplace_back(crossp);
+        std::map<AstNodeFuncCovItem*, std::vector<const BinInfo*>> itemBins;
+        for (const BinInfo& bi : m_binInfos) {
+            AstNodeFuncCovItem* const itemp
+                = bi.coverpointp ? static_cast<AstNodeFuncCovItem*>(bi.coverpointp) : bi.crossp;
+            itemBins[itemp].emplace_back(&bi);
+        }
+        for (int i = 0; i < items; ++i) {
+            AstNodeFuncCovItem* const itemp = itemps[i];
+            registerOptions(
+                VN_AS(m_memberMap.findMember(m_covergroupp, "__Vcovopt_" + itemp->name()), Var),
+                statep, i);
+            const auto newItem = [&]() {
+                AstCExpr* const exprp = new AstCExpr{fl};
+                exprp->add(new AstVarRef{fl, statep, VAccess::READWRITE});
+                exprp->add("->item(" + std::to_string(i) + ")");
+                exprp->dtypep(m_vlCoverpointDTypep);
+                return exprp;
+            };
+            const auto cp = m_convCpVars.find(VN_CAST(itemp, Coverpoint));
+            if (cp != m_convCpVars.end()) {
+                m_storage.emplace(cp->second, newItem());
+            } else {
+                int bins = 0;
+                int atLeast = 1;
+                for (const BinInfo* const bip : itemBins[itemp]) {
+                    const BinInfo& bi = *bip;
+                    AstCExpr* const countp = newItem();
+                    countp->add(".binHitsRef(" + std::to_string(bins++) + ")");
+                    countp->dtypeFrom(bi.varp);
+                    m_storage.emplace(bi.varp, countp);
+                    atLeast = bi.atLeast;
+                }
+                AstCStmt* configurep = new AstCStmt{fl};
+                configurep->add(newItem());
+                configurep->add(".init(\"\", " + std::to_string(atLeast) + ", "
+                                + std::to_string(bins) + ");");
+                initp->addNextHere(configurep);
+                for (const BinInfo* const bip : itemBins[itemp]) {
+                    const BinInfo& bi = *bip;
+                    AstCStmt* const namerp = new AstCStmt{fl};
+                    namerp->add(newItem());
+                    namerp->add(".addSingleNamer(" + std::string{bi.binp->binsType().binSetEnum()}
+                                + ", ");
+                    namerp->add("\"" + V3OutFormatter::quoteNameControls(bi.binp->nameProtect())
+                                + "\"");
+                    namerp->add(", \"\", 0, 0);");
+                    configurep->addNextHere(namerp);
+                    configurep = namerp;
+                }
+            }
+        }
+        for (const string& name : {"get_coverage"s, "get_inst_coverage"s}) {
+            AstFunc* const funcp = VN_AS(m_memberMap.findMember(m_covergroupp, name), Func);
+            AstCExpr* const coveragep = new AstCExpr{fl};
+            coveragep->add(
+                new AstVarRef{fl, name == "get_coverage" ? typep : statep, VAccess::READ});
+            coveragep->add(name == "get_coverage" ? ".coverage(" : "->coverage(");
+            int arguments = 0;
+            for (AstNode* stmtp = funcp->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
+                if (AstVar* const varp = VN_CAST(stmtp, Var)) {
+                    if (!varp->isRef()) continue;
+                    if (arguments++) coveragep->add(", ");
+                    coveragep->add(new AstVarRef{fl, varp, VAccess::WRITE});
+                }
+            }
+            UASSERT_OBJ(arguments == 2, funcp, "Coverage query requires two reference outputs");
+            coveragep->add(")");
+            coveragep->dtypeSetDouble();
+            funcp->addStmtsp(new AstAssign{
+                fl, new AstVarRef{fl, VN_AS(funcp->fvarp(), Var), VAccess::WRITE}, coveragep});
+        }
     }
 
     static constexpr int COVER_BINS_LIMIT
@@ -1477,154 +1670,6 @@ class FunctionalCoverageVisitor final : public VNVisitor {
         return new AstEq{fl, exprMasked, valueMasked};
     }
 
-    void generateCoverageComputationCode() {
-        UINFO(4, "  Generating coverage computation code");
-
-        // Invalidate cache: addMembersp() calls in generateCoverpointCode/generateCrossCode
-        // have added new members since the last scan, so clear before re-querying.
-        m_memberMap.clear();
-
-        // Find get_coverage() and get_inst_coverage() methods
-        AstFunc* const getCoveragep
-            = VN_CAST(m_memberMap.findMember(m_covergroupp, "get_coverage"), Func);
-        AstFunc* const getInstCoveragep
-            = VN_CAST(m_memberMap.findMember(m_covergroupp, "get_inst_coverage"), Func);
-
-        // Even if there are no bins, we still need to generate the coverage methods
-        // Empty covergroups with nonzero weight return 0% coverage.
-        if (m_binInfos.empty()) {
-            UINFO(4, "    No legacy bins found; runtime coverpoints may still have bins");
-        } else {
-            UINFO(6, "    Found " << m_binInfos.size() << " bins for coverage");
-        }
-
-        // Generate code for get_inst_coverage()
-        generateCoverageMethodBody(getInstCoveragep);
-
-        // Generate code for get_coverage() (type-level)
-        // NOTE: Full type-level coverage requires instance tracking infrastructure
-        // For now, return 0.0 as a placeholder
-        AstVar* const coverageReturnVarp = VN_AS(getCoveragep->fvarp(), Var);
-        // TODO: Implement proper type-level coverage aggregation
-        // This requires tracking all instances and averaging their coverage
-        // For now, return 0.0
-        getCoveragep->addStmtsp(new AstAssign{
-            getCoveragep->fileline(),
-            new AstVarRef{getCoveragep->fileline(), coverageReturnVarp, VAccess::WRITE},
-            new AstConst{getCoveragep->fileline(), AstConst::RealDouble{}, 0.0}});
-        UINFO(4, "    Added placeholder get_coverage() (returns 0.0)");
-    }
-
-    AstNodeExpr* newCoverageWeight(FileLine* fl, const string& item) {
-        AstVar* const varp = VN_AS(
-            m_memberMap.findMember(m_covergroupp, item.empty() ? "option" : "__Vcovopt_" + item),
-            Var);
-        AstNodeExpr* exprp = new AstVarRef{fl, varp, VAccess::READ};
-        for (const string& name : item.empty() ? std::vector<string>{"weight"}
-                                               : std::vector<string>{"option", "weight"}) {
-            const AstNodeUOrStructDType* const dtypep
-                = VN_AS(exprp->dtypep()->skipRefp(), NodeUOrStructDType);
-            const AstMemberDType* const memberp
-                = VN_AS(m_memberMap.findMember(dtypep, name), MemberDType);
-            exprp = new AstStructSel{fl, exprp, name};
-            exprp->dtypep(memberp->subDTypep());
-        }
-        return exprp;
-    }
-
-    static AstVar* newCoverageLocal(AstFunc* funcp, const string& name) {
-        FileLine* const fl = funcp->fileline();
-        AstVar* const varp = new AstVar{fl, VVarType::BLOCKTEMP, name, funcp->findDoubleDType()};
-        varp->funcLocal(true);
-        funcp->addStmtsp(varp);
-        funcp->addStmtsp(new AstAssign{fl, new AstVarRef{fl, varp, VAccess::WRITE},
-                                       new AstConst{fl, AstConst::RealDouble{}, 0.0}});
-        return varp;
-    }
-
-    void generateCoverageItem(AstFunc* funcp, AstNodeFuncCovItem* itemp, AstVar* coveredp,
-                              AstVar* totalp, AstVar* weightedp, AstVar* weightsp) {
-        FileLine* const fl = itemp->fileline();
-        AstVar* runtimep = nullptr;
-        if (AstCoverpoint* const cpp = VN_CAST(itemp, Coverpoint)) {
-            const auto it = m_convCpVars.find(cpp);
-            if (it != m_convCpVars.end()) runtimep = it->second;
-        }
-        if (runtimep) {
-            AstCStmt* const callp = new AstCStmt{fl};
-            callp->add(memberRef(fl, runtimep));
-            callp->add(".coverageParts(");
-            callp->add(new AstVarRef{fl, coveredp, VAccess::WRITE});
-            callp->add(", ");
-            callp->add(new AstVarRef{fl, totalp, VAccess::WRITE});
-            callp->add(");");
-            funcp->addStmtsp(callp);
-        } else {
-            funcp->addStmtsp(new AstAssign{fl, new AstVarRef{fl, coveredp, VAccess::WRITE},
-                                           new AstConst{fl, AstConst::RealDouble{}, 0.0}});
-            int total = 0;
-            for (const BinInfo& bi : m_binInfos) {
-                if (bi.coverpointp != itemp && bi.crossp != itemp) continue;
-                if (!bi.binp->binsType().binIsNormal()) continue;
-                ++total;
-                funcp->addStmtsp(new AstIf{
-                    fl,
-                    new AstGte{fl, new AstVarRef{fl, bi.varp, VAccess::READ},
-                               new AstConst{fl, AstConst::WidthedValue{}, 32,
-                                            static_cast<uint32_t>(bi.atLeast)}},
-                    new AstAssign{fl, new AstVarRef{fl, coveredp, VAccess::WRITE},
-                                  new AstAddD{fl, new AstVarRef{fl, coveredp, VAccess::READ},
-                                              new AstConst{fl, AstConst::RealDouble{}, 1.0}}},
-                    nullptr});
-            }
-            funcp->addStmtsp(new AstAssign{
-                fl, new AstVarRef{fl, totalp, VAccess::WRITE},
-                new AstConst{fl, AstConst::RealDouble{}, static_cast<double>(total)}});
-        }
-        // IEEE 1800-2023 19.11: each coverpoint/cross contributes its own bin ratio.
-        // Empty items and zero-weight items do not contribute to the weighted average.
-        AstNodeExpr* const weightp = new AstIToRD{fl, newCoverageWeight(fl, itemp->name())};
-        AstNode* const addp = new AstAssign{
-            fl, new AstVarRef{fl, weightedp, VAccess::WRITE},
-            new AstAddD{fl, new AstVarRef{fl, weightedp, VAccess::READ},
-                        new AstMulD{fl, weightp,
-                                    new AstDivD{fl, new AstVarRef{fl, coveredp, VAccess::READ},
-                                                new AstVarRef{fl, totalp, VAccess::READ}}}}};
-        addp->addNext(new AstAssign{fl, new AstVarRef{fl, weightsp, VAccess::WRITE},
-                                    new AstAddD{fl, new AstVarRef{fl, weightsp, VAccess::READ},
-                                                weightp->cloneTree(false)}});
-        funcp->addStmtsp(new AstIf{fl,
-                                   new AstNeqD{fl, new AstVarRef{fl, totalp, VAccess::READ},
-                                               new AstConst{fl, AstConst::RealDouble{}, 0.0}},
-                                   addp, nullptr});
-    }
-
-    void generateCoverageMethodBody(AstFunc* funcp) {
-        FileLine* const fl = funcp->fileline();
-        AstVar* const coveredp = newCoverageLocal(funcp, "__Vcovered");
-        AstVar* const totalp = newCoverageLocal(funcp, "__Vtotal");
-        AstVar* const weightedp = newCoverageLocal(funcp, "__Vweighted");
-        AstVar* const weightsp = newCoverageLocal(funcp, "__Vweights");
-        for (AstCoverpoint* const cpp : m_coverpoints) {
-            generateCoverageItem(funcp, cpp, coveredp, totalp, weightedp, weightsp);
-        }
-        for (AstCoverCross* const crossp : m_coverCrosses) {
-            generateCoverageItem(funcp, crossp, coveredp, totalp, weightedp, weightsp);
-        }
-        AstNodeExpr* const averagep = new AstCond{
-            fl,
-            new AstNeqD{fl, new AstVarRef{fl, weightsp, VAccess::READ},
-                        new AstConst{fl, AstConst::RealDouble{}, 0.0}},
-            new AstMulD{fl, new AstConst{fl, AstConst::RealDouble{}, 100.0},
-                        new AstDivD{fl, new AstVarRef{fl, weightedp, VAccess::READ},
-                                    new AstVarRef{fl, weightsp, VAccess::READ}}},
-            new AstCond{fl, new AstEq{fl, newCoverageWeight(fl, ""), new AstConst{fl, 0}},
-                        new AstConst{fl, AstConst::RealDouble{}, 100.0},
-                        new AstConst{fl, AstConst::RealDouble{}, 0.0}}};
-        funcp->addStmtsp(new AstAssign{
-            fl, new AstVarRef{fl, VN_AS(funcp->fvarp(), Var), VAccess::WRITE}, averagep});
-    }
-
     void generateCoverageRegistration() {
         // Generate VL_COVER_INSERT calls for each bin in the covergroup
         // This registers the bins with the coverage database so they can be reported
@@ -1872,7 +1917,14 @@ class FunctionalCoverageVisitor final : public VNVisitor {
 
 public:
     // CONSTRUCTORS
-    explicit FunctionalCoverageVisitor(AstNetlist* nodep) { iterate(nodep); }
+    explicit FunctionalCoverageVisitor(AstNetlist* nodep) {
+        iterate(nodep);
+        { CoverageStorageVisitor{nodep, m_storage, m_options}; }
+        for (const auto& entry : m_storage) {
+            VL_DO_DANGLING(pushDeletep(entry.first->unlinkFrBack()), entry.first);
+            pushDeletep(entry.second);
+        }
+    }
     ~FunctionalCoverageVisitor() override = default;
 };
 

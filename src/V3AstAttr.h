@@ -828,6 +828,7 @@ public:
         ASSOC_NEXT,
         ASSOC_SIZE,
         CLASS_SET_RANDMODE,
+        COVERGROUP_OPTIONS,
         DYN_AT_WRITE_APPEND,
         DYN_AT_WRITE_APPEND_BACK,
         DYN_CLEAR,
@@ -988,6 +989,7 @@ inline std::ostream& operator<<(std::ostream& os, const VCMethod& rhs) {
            {ASSOC_NEXT, "next", false}, \
            {ASSOC_SIZE, "size", true}, \
            {CLASS_SET_RANDMODE, "set_randmode", false}, \
+           {COVERGROUP_OPTIONS, "options", false}, \
            {DYN_AT_WRITE_APPEND, "atWriteAppend", false}, \
            {DYN_AT_WRITE_APPEND_BACK, "atWriteAppendBack", false}, \
            {DYN_CLEAR, "clear", false}, \

@@ -62,6 +62,13 @@ endclass
 module t;
   weighted_fixture left_cov;
   weighted_fixture right_cov;
+  int covered, total;
+  real measured;
+
+  function automatic void copy_options(ref type(left_cov.plain_cov.option) destination,
+                                        input type(left_cov.plain_cov.option) source);
+    destination = source;
+  endfunction
 
   initial begin
     left_cov = new();
@@ -73,14 +80,47 @@ module t;
     `checkd(left_cov.implicit_cov.opcode.option.weight, 3)
     `checkr(left_cov.plain_cov.get_inst_coverage(), 0.0)
     `checkr(right_cov.plain_cov.get_inst_coverage(), 0.0)
+    covered = -1;
+    total = -1;
+    measured = left_cov.plain_cov.get_inst_coverage(covered, total);
+    `checkr(measured, 0.0)
+    `checkd(covered, 0)
+    `checkd(total, 6)
 
     left_cov.sample(0, 1, 0);
     `checkr(left_cov.plain_cov.get_inst_coverage(), 43.75)
+    `checkr(left_cov.plain_cov.get_coverage(), 21.875)
+    `checkr(right_cov.plain_cov.get_coverage(), 21.875)
+    measured = left_cov.plain_cov.get_inst_coverage(covered, total);
+    `checkr(measured, 43.75)
+    `checkd(covered, 2)
+    `checkd(total, 6)
+    measured = right_cov.plain_cov.get_coverage(covered, total);
+    `checkr(measured, 21.875)
+    `checkd(covered, 2)
+    `checkd(total, 12)
     left_cov.plain_cov.option.weight = 0;
     `checkr(left_cov.plain_cov.get_inst_coverage(), 43.75)
+    `checkr(left_cov.plain_cov.get_coverage(), 0.0)
+    measured = left_cov.plain_cov.get_coverage(covered, total);
+    `checkr(measured, 0.0)
+    `checkd(covered, 2)
+    `checkd(total, 12)
     left_cov.plain_cov.option.weight = 1;
     `checkr(left_cov.mixed_cov.get_inst_coverage(), 34.375)
     `checkr(left_cov.legacy_cov.get_inst_coverage(), 25.0)
+    `checkr(left_cov.legacy_cov.get_coverage(), 12.5)
+    measured = left_cov.legacy_cov.get_inst_coverage(covered, total);
+    `checkr(measured, 25.0)
+    `checkd(covered, 3)
+    `checkd(total, 14)
+    total = -1;
+    measured = left_cov.legacy_cov.get_inst_coverage(, total);
+    `checkr(measured, 25.0)
+    `checkd(total, 14)
+    measured = left_cov.legacy_cov.get_inst_coverage(covered, covered);
+    `checkr(measured, 25.0)
+    `checkd(covered, 14)
     `checkr(left_cov.implicit_cov.get_inst_coverage(), 50.0)
     `checkr(right_cov.plain_cov.get_inst_coverage(), 0.0)
     `checkr(right_cov.mixed_cov.get_inst_coverage(), 0.0)
@@ -118,10 +158,44 @@ module t;
     left_cov.plain_cov.cp_op.option.weight = 3;
     left_cov.plain_cov.cp_addr.option.weight = 1;
     `checkr(left_cov.plain_cov.get_inst_coverage(), 87.5)
+    `checkr(left_cov.plain_cov.get_coverage(), 65.625)
+    left_cov.plain_cov.option.weight = 3;
+    `checkr(left_cov.plain_cov.get_coverage(), 76.5625)
 
     `checkr(left_cov.empty_cov.get_inst_coverage(), 0.0)
     left_cov.empty_cov.option.weight = 0;
     `checkr(left_cov.empty_cov.get_inst_coverage(), 100.0)
+    measured = left_cov.empty_cov.get_inst_coverage(covered, total);
+    `checkr(measured, 100.0)
+    `checkd(covered, 0)
+    `checkd(total, 0)
+
+    // Option members are implicit structures. Whole-structure assignment must
+    // affect the same retained values as individual member assignment.
+    right_cov.plain_cov.option.weight = 5;
+    left_cov.plain_cov.option = right_cov.plain_cov.option;
+    `checkd(left_cov.plain_cov.option.weight, 5)
+    `checkr(left_cov.plain_cov.get_coverage(), 65.625)
+    right_cov.plain_cov.option.weight = 4;
+    copy_options(left_cov.plain_cov.option, right_cov.plain_cov.option);
+    `checkd(left_cov.plain_cov.option.weight, 4)
+    `checkr(left_cov.plain_cov.get_coverage(), 65.625)
+    right_cov.plain_cov.cp_op.option.weight = 1;
+    left_cov.plain_cov.cp_op.option = right_cov.plain_cov.cp_op.option;
+    `checkd(left_cov.plain_cov.cp_op.option.weight, 1)
+    `checkr(left_cov.plain_cov.get_coverage(), 56.25)
+    left_cov.plain_cov.option.weight = 3;
+    right_cov.plain_cov.option.weight = 1;
+    left_cov.plain_cov.cp_op.option.weight = 3;
+    right_cov.plain_cov.cp_op.option.weight = 3;
+
+    // Releasing the enclosing object must retain only its coverage data. The
+    // surviving instance can query the same type before and after recreation.
+    left_cov = null;
+    `checkr(right_cov.plain_cov.get_coverage(), 76.5625)
+    left_cov = new();
+    `checkr(left_cov.plain_cov.get_inst_coverage(), 0.0)
+    `checkr(right_cov.plain_cov.get_coverage(), 61.25)
 
     $write("*-* All Finished *-*\n");
     $finish;
