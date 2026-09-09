@@ -14,8 +14,12 @@ test.scenarios('simulator')
 if not test.have_solver:
     test.skip("No constraint solver installed")
 
-test.compile()
-
-test.execute()
+test.timeout(60)
+for defines in ['', '+define+ASSOC_SIZE_EXPANDED']:
+    test.compile(threads=2 if test.vltmt else 1,
+                 verilator_flags2=[
+                     '-Wall', '-Wno-DECLFILENAME', '--no-timing', '-CFLAGS', '-std=c++14', defines
+                 ])
+    test.execute()
 
 test.passes()

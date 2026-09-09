@@ -383,8 +383,8 @@ void VL_FFLUSH_MT() VL_MT_SAFE {
 }
 
 template <typename... snprintf_args_ts>
-static size_t _vl_snprintf_string(std::string& str, const char* format,
-                                  snprintf_args_ts... args) VL_MT_SAFE {
+static size_t VL_ATTR_NONNULL(2) _vl_snprintf_string(std::string& str, const char* format,
+                                                     snprintf_args_ts... args) VL_MT_SAFE {
     constexpr size_t FIRST_TRY_SIZE = 128;
     str.resize(FIRST_TRY_SIZE);
     const size_t req_size = VL_SNPRINTF(&str[0], FIRST_TRY_SIZE + 1, format, args...);
@@ -4026,6 +4026,8 @@ uint32_t VerilatedVarProps::entSize() const VL_MT_SAFE {
     case VLVT_UINT16: size = sizeof(SData); break;
     case VLVT_UINT32: size = sizeof(IData); break;
     case VLVT_UINT64: size = sizeof(QData); break;
+    case VLVT_REAL: size = sizeof(double); break;
+    case VLVT_STRING: size = sizeof(std::string); break;
     case VLVT_WDATA: size = VL_WORDS_I(entBits()) * sizeof(IData); break;
     default: size = 0; break;  // LCOV_EXCL_LINE
     }

@@ -16,9 +16,12 @@ import dataclasses
 from dataclasses import dataclass
 import enum
 from enum import Enum
+import functools
 import multiprocessing
 import re
+import subprocess
 import tempfile
+from ctypes import POINTER, byref, c_uint
 
 import clang.cindex
 from clang.cindex import (
@@ -148,6 +151,9 @@ class VlAnnotations:
                     result.mt_start = True
                 elif displayname == "MT_SAFE":
                     result.mt_safe = True
+                elif displayname == "MT_SAFE_EXCLUDES":
+                    result.mt_safe = True
+                    result.excludes = True
                 elif displayname == "MT_STABLE":
                     result.stable_tree = True
                 elif displayname == "MT_SAFE_POSTINIT":
@@ -166,7 +172,7 @@ class VlAnnotations:
                     result.release = True
                 elif displayname == "REQUIRES":
                     result.requires = True
-                elif displayname in ["EXCLUDES", "MT_SAFE_EXCLUDES"]:
+                elif displayname == "EXCLUDES":
                     result.excludes = True
                 elif displayname == "GUARDED_BY":
                     result.guarded = True
@@ -228,18 +234,6 @@ class FunctionInfo:
         return dataclasses.replace(self, **changes)
 
     @staticmethod
-    def from_decl_file_line_and_refd_node(file: str, line: int, refd: clang.cindex.Cursor,
-                                          annotations: VlAnnotations):
-        file = os.path.abspath(file)
-        refd = refd.canonical
-        assert refd is not None
-        name_parts = fully_qualified_name(refd)
-        usr = refd.get_usr()
-        ftype = FunctionType.from_node(refd)
-
-        return FunctionInfo(name_parts, usr, file, line, annotations, ftype)
-
-    @staticmethod
     def from_node(node: clang.cindex.Cursor,
                   refd: Optional[clang.cindex.Cursor] = None,
                   annotations: Optional[VlAnnotations] = None):
@@ -298,18 +292,28 @@ class CallAnnotationsValidator:
         self._is_ignored_def = is_ignored_def
 
         self._index = Index.create()
+        # These CIndex entry points are not exposed by all Python bindings.
+        self._get_overridden = clang.cindex.conf.lib.clang_getOverriddenCursors
+        self._get_overridden.argtypes = [
+            clang.cindex.Cursor,
+            POINTER(POINTER(clang.cindex.Cursor)),
+            POINTER(c_uint)
+        ]
+        self._get_overridden.restype = None
+        self._dispose_overridden = clang.cindex.conf.lib.clang_disposeOverriddenCursors
+        self._dispose_overridden.argtypes = [POINTER(clang.cindex.Cursor)]
+        self._dispose_overridden.restype = None
 
         # Map key represents translation unit initial defines
         # (from command line and source's lines before any include)
         self._processed_headers: dict[str, set[str]] = {}
-        self._external_decls: dict[str, set[tuple[str, int]]] = {}
+        self._external_decls: dict[str, set[FunctionInfo]] = {}
 
         # Current context
         self._main_source_file: str = ""
         self._defines: dict[str, str] = {}
         self._call_location: Optional[FunctionInfo] = None
         self._caller: Optional[FunctionInfo] = None
-        self._base_func_declarations: dict[str, clang.cindex.Cursor] = {}
         self._constructor_context: list[clang.cindex.Cursor] = []
         self._level: int = 0
 
@@ -343,15 +347,14 @@ class CallAnnotationsValidator:
         defines = {}
         args_iter = iter(args)
         try:
-            while arg := next(args_iter):
+            for arg in args_iter:
                 # Skip positional arguments (input file name).
                 if not arg.startswith("-") and (arg.endswith(".cpp") or arg.endswith(".c")
                                                 or arg.endswith(".h")):
                     continue
 
                 # Skipped options with separate value argument.
-                if arg in ["-o", "-T", "-MT", "-MQ", "-MF"
-                           "-L"]:
+                if arg in ["-o", "-T", "-MT", "-MQ", "-MF", "-L"]:
                     next(args_iter)
                     continue
 
@@ -359,11 +362,17 @@ class CallAnnotationsValidator:
                 if arg == "-c" or arg.startswith("-W") or arg.startswith("-L"):
                     continue
 
+                # Read forced headers as source, without the driver's implicit
+                # lookup of .gch files produced by a different compiler.
+                if arg == "-include":
+                    filtered_args += ["-Xclang", "-include", "-Xclang", next(args_iter)]
+                    continue
+                if arg.startswith("-include") and not arg.startswith("-include-pch"):
+                    filtered_args += ["-Xclang", "-include", "-Xclang", arg[len("-include"):]]
+                    continue
+
                 # Preserved options with separate value argument.
-                if arg in [
-                        "-x"
-                        "-Xclang", "-I", "-isystem", "-iquote", "-include", "-include-pch"
-                ]:
+                if arg in ["-x", "-Xclang", "-I", "-isystem", "-iquote", "-include-pch"]:
                     filtered_args += [arg, next(args_iter)]
                     continue
 
@@ -395,43 +404,51 @@ class CallAnnotationsValidator:
                 elif d_or_u == "U" and key in defines:
                     del defines[key]
 
-        except StopIteration:
-            pass
+        except StopIteration as exception:
+            raise ValueError(f"Missing value for compiler option {arg}") from exception
 
         return (filtered_args, defines)
 
     def compile_and_analyze_file(self, source_file: str, compiler_args: list[str],
-                                 build_dir: Optional[str]):
+                                 build_dir: Optional[str]) -> bool:
         filename = os.path.abspath(source_file)
         initial_cwd = "."
 
-        filtered_args, defines = self.filter_out_unsupported_compiler_args(compiler_args)
+        try:
+            filtered_args, defines = self.filter_out_unsupported_compiler_args(compiler_args)
+        except ValueError as exception:
+            print(f"%Error: reading compiler arguments failed: {filename}: {exception}",
+                  file=sys.stderr)
+            return False
         defines.update(self.parse_initial_defines(source_file))
 
         if build_dir:
             initial_cwd = os.getcwd()
             os.chdir(build_dir)
+        errors = []
         try:
             translation_unit = self._index.parse(filename, filtered_args)
-        except TranslationUnitLoadError:
+        except TranslationUnitLoadError as exception:
             translation_unit = None
-        errors = []
+            errors.append(str(exception))
         if translation_unit:
             for diag in translation_unit.diagnostics:
                 if diag.severity >= clang.cindex.Diagnostic.Error:
                     errors.append(str(diag))
-        if translation_unit and len(errors) == 0:
+        success = translation_unit is not None and len(errors) == 0
+        if success:
             self._defines = defines
             self._main_source_file = filename
             self.process_translation_unit(translation_unit)
             self._main_source_file = ""
             self._defines = {}
-        elif len(errors) != 0:
+        else:
             print(f"%Error: parsing failed: {filename}", file=sys.stderr)
             for error in errors:
                 print(f"        {error}", file=sys.stderr)
         if build_dir:
             os.chdir(initial_cwd)
+        return success
 
     def emit_diagnostic(self, target: Union[FunctionInfo, clang.cindex.Cursor],
                         kind: DiagnosticKind):
@@ -635,14 +652,6 @@ class CallAnnotationsValidator:
         if self._is_ignored_call(refd):
             return True
 
-        if "std::function" in refd.displayname:
-            # Workaroud for missing support for lambda annotations
-            # in c++11.
-            # If function takes std::function as argument,
-            # assume, that this std::function will be called inside it.
-            self.process_function_definition(node)
-            return False
-
         assert self._call_location is not None
         node_file = os.path.abspath(node.location.file.name)
         self._call_location = self._call_location.copy(file=node_file, line=node.location.line)
@@ -678,12 +687,39 @@ class CallAnnotationsValidator:
             annotations = VlAnnotations.from_nodes_list(children)
             if not annotations.mt_disabled:
                 self._external_decls.setdefault(node.get_usr(), set()).add(
-                    (str(node.location.file.name), int(node.location.line)))
+                    FunctionInfo.from_node(node, node, annotations))
             return self.iterate_children(children, self.dispatch_node)
 
         return self.iterate_children(node.get_children(), self.dispatch_node)
 
     # Definition handling
+
+    def overridden_annotations(self, node: clang.cindex.Cursor) -> VlAnnotations:
+        annotations = VlAnnotations()
+        if node.kind not in [CursorKind.CXX_METHOD, CursorKind.CONVERSION_FUNCTION]:
+            return annotations
+        pending = [node]
+        seen = set()
+        while pending:
+            method = pending.pop()
+            overridden = POINTER(clang.cindex.Cursor)()
+            count = c_uint()
+            self._get_overridden(method, byref(overridden), byref(count))
+            try:
+                for i in range(count.value):
+                    # Copy each cursor before releasing CIndex's array and keep
+                    # its translation unit alive for subsequent cursor queries.
+                    base = clang.cindex.Cursor.from_buffer_copy(overridden[i])
+                    # Match how the bindings retain ownership of child cursors.
+                    base._tu = method.translation_unit  # pylint: disable=protected-access
+                    if base.get_usr() in seen:
+                        continue
+                    seen.add(base.get_usr())
+                    annotations = annotations | VlAnnotations.from_nodes_list(base.get_children())
+                    pending.append(base)
+            finally:
+                self._dispose_overridden(overridden)
+        return annotations
 
     def dispatch_node_inside_definition(self, node: clang.cindex.Cursor):
         if node.kind == CursorKind.CALL_EXPR:
@@ -700,14 +736,6 @@ class CallAnnotationsValidator:
 
     def process_function_definition(self, node: clang.cindex.Cursor):
         [supported, refd, annotations, _] = self.get_referenced_node_info(node)
-
-        # Fetch virtual annotations from base class.
-        # Set refd to virtual definition if present.
-        signature = node.displayname
-        if signature in self._base_func_declarations:
-            refd = self._base_func_declarations[signature]
-            virtual_annotations = VlAnnotations.from_nodes_list(refd.get_children())
-            annotations = annotations | virtual_annotations
 
         if refd and self._is_ignored_def(node, refd):
             return None
@@ -726,12 +754,17 @@ class CallAnnotationsValidator:
         # Also sets VL_EXCLUDES, as this annotation is added together with
         # explicit VL_MT_DISABLED.
         if self.is_mt_disabled_code_unit():
-            if node.location.file.name == self._main_source_file:
+            if refd.location.file.name == self._main_source_file:
                 annotations.mt_disabled = True
                 annotations.excludes = True
-            if refd.location.file.name == self._main_source_file:
+            if node.location.file.name == self._main_source_file:
                 def_annotations.mt_disabled = True
                 def_annotations.excludes = True
+
+        # Preserve the method's own declaration and definition identities. Only
+        # actual virtual overrides inherit base contracts; a same-named overload
+        # or hidden nonvirtual method has an independent contract.
+        annotations = annotations | self.overridden_annotations(node)
 
         if def_annotations != annotations:
             # Use definition's annotations for the diagnostic
@@ -755,11 +788,9 @@ class CallAnnotationsValidator:
             if node.location.file.name == self._main_source_file:
                 usr = node.get_usr()
                 declarations = self._external_decls.get(usr, set())
-                for file, line in declarations:
-                    self.emit_diagnostic(
-                        FunctionInfo.from_decl_file_line_and_refd_node(
-                            file, line, refd, def_annotations),
-                        DiagnosticKind.MISSING_MT_DISABLED_ANNOTATION)
+                for declaration in declarations:
+                    self.emit_diagnostic(declaration,
+                                         DiagnosticKind.MISSING_MT_DISABLED_ANNOTATION)
                 if declarations:
                     del self._external_decls[usr]
 
@@ -774,13 +805,7 @@ class CallAnnotationsValidator:
 
     def dispatch_node(self, node: clang.cindex.Cursor):
         kind = node.kind
-        if kind is CursorKind.CXX_BASE_SPECIFIER:
-            # Get referenced virtual declarations from base class.
-            for base in node.get_children():
-                if base.referenced:
-                    for declaration in base.referenced.get_children():
-                        self._base_func_declarations[declaration.displayname] = declaration
-        elif kind in [
+        if kind in [
                 CursorKind.CXX_METHOD, CursorKind.FUNCTION_DECL, CursorKind.CONSTRUCTOR,
                 CursorKind.CONVERSION_FUNCTION
         ]:
@@ -788,15 +813,7 @@ class CallAnnotationsValidator:
                 return self.process_function_definition(node)
             return self.process_function_declaration(node)
 
-        result = self.iterate_children(node.get_children(), self.dispatch_node)
-
-        # Clean declarations if class declaration processing is finished.
-        if kind in [
-                CursorKind.CLASS_DECL, CursorKind.STRUCT_DECL, CursorKind.UNION_DECL,
-                CursorKind.ENUM_DECL, CursorKind.UNEXPOSED_DECL
-        ]:
-            self._base_func_declarations = {}
-        return result
+        return self.iterate_children(node.get_children(), self.dispatch_node)
 
     def process_translation_unit(self, translation_unit: clang.cindex.TranslationUnit):
         self._level += 1
@@ -872,6 +889,34 @@ def get_filter_funcs(verilator_root: str):
     return (is_ignored_top_level, is_ignored_def, is_ignored_call)
 
 
+@functools.lru_cache(maxsize=None)
+def compiler_default_cpp_standard(compiler: str, directory: str) -> str:
+    # The recorded driver and libclang may have different default dialects.
+    # Query the driver once per directory; explicit database flags take priority.
+    result = subprocess.run([compiler, "-dM", "-E", "-x", "c++", "-"],
+                            input="",
+                            text=True,
+                            capture_output=True,
+                            cwd=directory,
+                            timeout=30,
+                            check=True)
+    version = re.search(r"^#define __cplusplus (\d+)L?\s*$", result.stdout, re.MULTILINE)
+    standards = {
+        199711: "98",
+        201103: "11",
+        201402: "14",
+        201703: "17",
+        202002: "20",
+        202302: "23",
+    }
+    if version is None or int(version.group(1)) not in standards:
+        raise ValueError("Cannot determine the recorded compiler's default C++ standard; "
+                         "provide an explicit -std flag")
+    strict = re.search(r"^#define __STRICT_ANSI__\b", result.stdout, re.MULTILINE)
+    dialect = "c++" if strict else "gnu++"
+    return "-std=" + dialect + standards[int(version.group(1))]
+
+
 def precompile_header(compile_command: CompileCommand, tmp_dir: str) -> str:
     initial_cwd = os.getcwd()
     errors = []
@@ -908,23 +953,27 @@ def precompile_header(compile_command: CompileCommand, tmp_dir: str) -> str:
 
 # Compile and analyze inputs in a single process.
 def run_analysis(ccl: Iterable[CompileCommand], pccl: Iterable[CompileCommand],
-                 diagnostic_cb: Callable[[Diagnostic], None], verilator_root: str):
+                 diagnostic_cb: Callable[[Diagnostic], None], verilator_root: str) -> int:
     (is_ignored_top_level, is_ignored_def, is_ignored_call) = get_filter_funcs(verilator_root)
 
     prefix = "verilator_clang_check_attributes_"
+    failed_files = 0
     with tempfile.TemporaryDirectory(prefix=prefix) as tmp_dir:
         extra_args = []
         for pcc in pccl:
             pch_file = precompile_header(pcc, tmp_dir)
             if pch_file:
                 extra_args += ["-include-pch", pch_file]
+            else:
+                failed_files += 1
 
         cav = CallAnnotationsValidator(diagnostic_cb, is_ignored_top_level, is_ignored_def,
                                        is_ignored_call)
         for compile_command in ccl:
-            cav.compile_and_analyze_file(compile_command.filename,
-                                         extra_args + compile_command.args,
-                                         compile_command.directory)
+            if not cav.compile_and_analyze_file(compile_command.filename, extra_args +
+                                                compile_command.args, compile_command.directory):
+                failed_files += 1
+    return failed_files
 
 
 @dataclass
@@ -947,13 +996,12 @@ class ParallelAnalysisProcess:
         ParallelAnalysisProcess.diags.add(diag)
 
     @staticmethod
-    def analyze_cpp_file(compile_command: CompileCommand) -> set[Diagnostic]:
+    def analyze_cpp_file(compile_command: CompileCommand) -> tuple[set[Diagnostic], bool]:
         ParallelAnalysisProcess.diags = set()
         assert ParallelAnalysisProcess.cav is not None
-        ParallelAnalysisProcess.cav.compile_and_analyze_file(compile_command.filename,
-                                                             compile_command.args,
-                                                             compile_command.directory)
-        return ParallelAnalysisProcess.diags
+        success = ParallelAnalysisProcess.cav.compile_and_analyze_file(
+            compile_command.filename, compile_command.args, compile_command.directory)
+        return (ParallelAnalysisProcess.diags, success)
 
     @staticmethod
     def precompile_header(compile_command: CompileCommand) -> str:
@@ -962,9 +1010,10 @@ class ParallelAnalysisProcess:
 
 # Compile and analyze inputs in multiple processes.
 def run_parallel_analysis(ccl: Iterable[CompileCommand], pccl: Iterable[CompileCommand],
-                          diagnostic_cb: Callable[[Diagnostic],
-                                                  None], jobs_count: int, verilator_root: str):
+                          diagnostic_cb: Callable[[Diagnostic], None], jobs_count: int,
+                          verilator_root: str) -> int:
     prefix = "verilator_clang_check_attributes_"
+    failed_files = 0
     with tempfile.TemporaryDirectory(prefix=prefix) as tmp_dir:
         with multiprocessing.Pool(processes=jobs_count,
                                   initializer=ParallelAnalysisProcess.init_data,
@@ -973,14 +1022,20 @@ def run_parallel_analysis(ccl: Iterable[CompileCommand], pccl: Iterable[CompileC
             for pch_file in pool.imap_unordered(ParallelAnalysisProcess.precompile_header, pccl):
                 if pch_file:
                     extra_args += ["-include-pch", pch_file]
+                else:
+                    failed_files += 1
 
             if extra_args:
                 for compile_command in ccl:
                     compile_command.args = compile_command.args + extra_args
 
-            for diags in pool.imap_unordered(ParallelAnalysisProcess.analyze_cpp_file, ccl, 1):
+            for diags, success in pool.imap_unordered(ParallelAnalysisProcess.analyze_cpp_file,
+                                                      ccl, 1):
+                if not success:
+                    failed_files += 1
                 for diag in diags:
                     diagnostic_cb(diag)
+    return failed_files
 
 
 class TopDownSummaryPrinter():
@@ -1019,7 +1074,7 @@ class TopDownSummaryPrinter():
             func.calees.add(diag.target)
             self._unsafe_in_safe.add(diag.target.usr)
 
-    def print_summary(self, root_dir: str):
+    def print_summary(self, root_dir: str) -> bool:
         row_groups: dict[str, list[list[str]]] = {}
         column_widths = [0, 0]
         for func in sorted(self._funcs.values(),
@@ -1072,6 +1127,7 @@ class TopDownSummaryPrinter():
                       f"{row[1]:<{column_widths[1]}}    "
                       f"{row[2]}")
         print(f"Number of functions reported unsafe: {len(self._unsafe_in_safe)}")
+        return bool(self._funcs)
 
 
 def get_cpu_count():
@@ -1109,6 +1165,9 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
                         type=str,
                         default=None,
                         help="Path to directory containing compile_commands.json.")
+    parser.add_argument("--all-commands",
+                        action="store_true",
+                        help="Analyze every source recorded in the compilation database.")
     parser.add_argument("--cxxflags",
                         type=str,
                         default=None,
@@ -1121,9 +1180,17 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
                         "--precompile",
                         action="append",
                         help="Header file to be precompiled and cached at the start.")
-    parser.add_argument("file", type=str, nargs="+", help="Source file to analyze.")
+    parser.add_argument("file", type=str, nargs="*", help="Source file to analyze.")
 
     cmdline = parser.parse_args()
+
+    if cmdline.all_commands:
+        if not cmdline.compile_commands_dir:
+            parser.error("--all-commands requires --compile-commands-dir")
+        if cmdline.file:
+            parser.error("--all-commands cannot be combined with source files")
+    elif not cmdline.file:
+        parser.error("provide source files or --all-commands")
 
     if cmdline.jobs == 0:
         cmdline.jobs = max(1, get_cpu_count())
@@ -1135,8 +1202,16 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
     default_compilation_root = os.path.abspath(cmdline.compilation_root)
 
     compdb: Optional[CompilationDatabase] = None
+    recorded_commands = {}
     if cmdline.compile_commands_dir:
         compdb = CompilationDatabase.fromDirectory(cmdline.compile_commands_dir)
+        # getCompileCommands() may synthesize commands for a file not present in
+        # the database. Included fragments must instead be analyzed through
+        # their actual translation units, with those units' flags and prefixes.
+        # Keep the last recorded command when a build appends a newer entry.
+        for entry in compdb.getAllCompileCommands() or []:
+            filename = os.path.abspath(os.path.join(entry.directory, entry.filename))
+            recorded_commands[filename] = entry
 
     if cmdline.cxxflags is not None:
         common_cxxflags = shlex.split(cmdline.cxxflags)
@@ -1154,29 +1229,54 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
             precompile_commands_list.append(compile_command)
 
     compile_commands_list = []
+    failed_commands = 0
+    if cmdline.all_commands:
+        cmdline.file = sorted(recorded_commands)
+        if not cmdline.file:
+            print("%Error: reading compile commands failed: no recorded sources in " +
+                  cmdline.compile_commands_dir,
+                  file=sys.stderr)
+            failed_commands += 1
     for refid, file in enumerate(cmdline.file):
         filename = os.path.abspath(file)
         root = default_compilation_root
         cxxflags = common_cxxflags[:]
         if compdb:
-            entry = compdb.getCompileCommands(filename)
+            entry = recorded_commands.get(filename)
             if entry is None:
                 print(f"%Error: reading compile commands failed: {filename}", file=sys.stderr)
-                entry_list = []
-            else:
-                entry_list = list(entry)
-            # Compilation database can contain multiple entries for single file,
-            # e.g. when it has been updated by appending new entries.
-            # Use last entry for the file, if it exists, as it is the newest one.
-            if len(entry_list) > 0:
-                last_entry = entry_list[-1]
-                root = last_entry.directory
-                entry_args = list(last_entry.arguments)
-                # First argument in compile_commands.json arguments list is
-                # compiler executable name/path. CIndex (libclang) always
-                # implicitly prepends executable name, so it shouldn't be passed
-                # here.
-                cxxflags.extend(entry_args[1:])
+                failed_commands += 1
+                continue
+            root = entry.directory
+            entry_args = list(entry.arguments)
+            # CIndex supplies its own compiler name. Preserve the original
+            # driver's default language, including C++ sources named *.c;
+            # subsequent explicit -x options still take precedence.
+            if "++" in os.path.basename(entry_args[0]):
+                cxxflags.insert(0, "-xc++")
+            default_language = ("c++"
+                                if "++" in os.path.basename(entry_args[0]) or filename.endswith(
+                                    (".cpp", ".cc", ".cxx", ".c++", ".C")) else "c")
+            language = default_language
+            options = iter(cxxflags + entry_args[1:])
+            for option in options:
+                if option == "-x":
+                    language = next(options, language)
+                elif option.startswith("-x"):
+                    language = option[2:]
+                if language == "none":
+                    language = default_language
+            if language.startswith("c++") and not any(
+                    option in ("-ansi", "-std", "--std") or option.startswith(("-std=", "--std="))
+                    for option in cxxflags + entry_args[1:]):
+                try:
+                    cxxflags.append(compiler_default_cpp_standard(entry_args[0], root))
+                except (OSError, subprocess.SubprocessError, ValueError) as exception:
+                    print(f"%Error: reading compiler defaults failed: {filename}: {exception}",
+                          file=sys.stderr)
+                    failed_commands += 1
+                    continue
+            cxxflags.extend(entry_args[1:])
 
         compile_command = CompileCommand(refid, filename, cxxflags, root)
         compile_commands_list.append(compile_command)
@@ -1184,14 +1284,20 @@ SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
     summary_printer = TopDownSummaryPrinter()
 
     if cmdline.jobs == 1:
-        run_analysis(compile_commands_list, precompile_commands_list,
-                     summary_printer.handle_diagnostic, verilator_root)
+        failed_files = run_analysis(compile_commands_list, precompile_commands_list,
+                                    summary_printer.handle_diagnostic, verilator_root)
     else:
-        run_parallel_analysis(compile_commands_list, precompile_commands_list,
-                              summary_printer.handle_diagnostic, cmdline.jobs, verilator_root)
+        failed_files = run_parallel_analysis(compile_commands_list, precompile_commands_list,
+                                             summary_printer.handle_diagnostic, cmdline.jobs,
+                                             verilator_root)
 
-    summary_printer.print_summary(verilator_root)
+    has_diagnostics = summary_printer.print_summary(verilator_root)
+    failed_files += failed_commands
+    if failed_files:
+        print(f"Number of files that could not be analyzed: {failed_files}", file=sys.stderr)
+        return 1
+    return int(has_diagnostics)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

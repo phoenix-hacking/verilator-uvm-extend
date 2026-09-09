@@ -1028,6 +1028,7 @@ void schedule(AstNetlist* netlistp) {
 
     // Step 1. Gather and classify all logic in the design
     LogicClasses logicClasses = gatherLogicClasses(netlistp);
+    timingKit.addClassWriteDomains(logicClasses.m_comb, logicClasses.m_hybrid);
 
     // Allocate source-process storage before settle/region replication clones the logic.
     preparePersistentProcesses(netlistp, logicClasses);
@@ -1117,11 +1118,11 @@ void schedule(AstNetlist* netlistp) {
     }
 
     const auto& preTreeps = getSenTreesUsedBy({&logicRegions.m_pre});
-    const auto& senTreeps = getSenTreesUsedBy({&logicRegions.m_act,  //
-                                               &logicRegions.m_nba,  //
-                                               &logicRegions.m_obs,  //
-                                               &logicRegions.m_react,  //
-                                               &timingKit.m_lbs});
+    std::vector<const AstSenTree*> senTreeps
+        = getSenTreesUsedBy({&logicRegions.m_act, &logicRegions.m_nba, &logicRegions.m_obs,
+                             &logicRegions.m_react, &timingKit.m_lbs});
+    senTreeps.insert(senTreeps.end(), timingKit.m_classWriteSenTrees.begin(),
+                     timingKit.m_classWriteSenTrees.end());
     const TriggerKit trigKit
         = TriggerKit::create(netlistp, staticp, senExprBuilder, preTreeps, senTreeps, "act",
                              extraTriggers, false, v3Global.usesTiming());
@@ -1289,6 +1290,8 @@ void schedule(AstNetlist* netlistp) {
 
     // Step 16: Clean up
     netlistp->clearStlFirstIterationp();
+    for (AstSenTree* const treep : timingKit.m_classWriteSenTrees) treep->deleteTree();
+    timingKit.m_classWriteSenTrees.clear();
 
     // Haven't split static initializer yet
     util::splitCheck(staticp);

@@ -68,7 +68,7 @@ public:
         : V3GraphVertex{graphp}
         , m_logicp{logicp}
         , m_scopep{scopep} {}
-    V3GraphVertex* clone(V3Graph* graphp) const override {
+    V3GraphVertex* clone(V3Graph* graphp) const override VL_MT_DISABLED {
         return new SchedAcyclicLogicVertex{graphp, logicp(), scopep()};
     }
 
@@ -91,7 +91,7 @@ public:
         , m_vscp{vscp} {}
     AstVarScope* vscp() const { return m_vscp; }
     AstVar* varp() const { return m_vscp->varp(); }
-    V3GraphVertex* clone(V3Graph* graphp) const override {
+    V3GraphVertex* clone(V3Graph* graphp) const override VL_MT_DISABLED {
         return new SchedAcyclicVarVertex{graphp, vscp()};
     }
 
@@ -103,7 +103,7 @@ public:
 };
 
 class Graph final : public V3Graph {
-    string loopsVertexCb(V3GraphVertex* vtxp) override {
+    string loopsVertexCb(V3GraphVertex* vtxp) override VL_MT_DISABLED {
         if (SchedAcyclicLogicVertex* const lvtxp = vtxp->cast<SchedAcyclicLogicVertex>()) {
             AstNode* const logicp = lvtxp->logicp();
             std::string logicName = logicp->prettyTypeName();

@@ -1,0 +1,198 @@
+---
+# DESCRIPTION: Verilator: Local APB and AXI-lite assertion profile acceptance
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-09'
+observed_utc: '2026-09-09T09:22:54.875989+00:00'
+status: accepted_local_m15_profile
+source_revision: 350da6ef419a122c6093b0b4777a4064c52bfe53
+compiler_revision: 71b9a0a173bf3f62cd5ec2683986cc91929ebde8
+native_compiler:
+  path: /home/holden/verilator-work/native-compilers/8bd81210b34888698e0e08948b50012477b97e64fe66642a5cf769a2945614ae/verilator_bin
+  bytes: 26949576
+  sha256: 8bd81210b34888698e0e08948b50012477b97e64fe66642a5cf769a2945614ae
+uvm_source_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+uvm_source_clean: true
+profile: nodist/uvm2020_plan/SVA_PROTOCOL_PROFILE.md
+source_commit_validation:
+  path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-source-commit-validation.json
+  bytes: 8532
+  sha256: 540a902cd407b10d28a8ae5f03264355ccb11d052167ba91a1f7c8c1614d1380
+configuration_results:
+  path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-final-source-results.json
+  bytes: 131927
+  sha256: 9b19c2ad992a9b1f12b58d03f1a43efbd49b2a8dcbde90627b000f57e8a5f987
+runs:
+  - protocol: APB
+    scenario: vlt
+    dpi: [false, true]
+    driver_session: 1351
+    driver_reaped: true
+    driver_exit_code: 0
+    elapsed: '9:39'
+    log:
+      path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v2-apb-vlt.log
+      bytes: 3315231
+      sha256: 26b6b04d6f9fc6a80ab6c6bc6f2b236b2d174c200ec7ca6048e4dafbdca5863b
+    status:
+      path: /home/holden/verilator-work/uvm-protocol-profile/test_regress/obj_vlt/t_uvm_apb_env-m15-candidate-v2/Vt_uvm_apb_env.status
+      bytes: 96
+      sha256: 0ce7f4433623b35591ec91b3f4bc98e619ba2b69272f5a8b94d9134794e6952c
+  - protocol: APB
+    scenario: vltmt
+    dpi: [false, true]
+    driver_session: 63911
+    driver_reaped: true
+    driver_exit_code: 0
+    elapsed: '8:53'
+    log:
+      path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v2-apb-vltmt.log
+      bytes: 3315297
+      sha256: 8e99509137b71638caa27bad242a7ddd9159e3a979243c5f890fc55010652548
+    status:
+      path: /home/holden/verilator-work/uvm-protocol-profile/test_regress/obj_vltmt/t_uvm_apb_env-m15-candidate-v2/Vt_uvm_apb_env.status
+      bytes: 96
+      sha256: 2b22301f0e36159ae00f0e5688acdc66ee7ad8579538ddcaa4f376530e0bd64f
+  - protocol: AXI
+    scenario: vlt
+    dpi: [false, true]
+    driver_session: 61747
+    driver_reaped: true
+    driver_exit_code: 0
+    elapsed: '9:01'
+    log:
+      path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v3-axi-vlt.log
+      bytes: 9144519
+      sha256: cfb13289b7beff8e6f427b7ff0970aa917c7bfd40b244db65dc67174cfb3f64e
+    status:
+      path: /home/holden/verilator-work/uvm-protocol-profile/test_regress/obj_vlt/t_uvm_axi_env-m15-candidate-v3/Vt_uvm_axi_env.status
+      bytes: 96
+      sha256: 44b2047af98d2fefd0ccb95f8d0ca006534aa6bdaf4e82c5b1113454531463c8
+  - protocol: AXI
+    scenario: vltmt
+    dpi: [false, true]
+    driver_session: 23100
+    driver_reaped: true
+    driver_exit_code: 0
+    elapsed: '11:12'
+    log:
+      path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v3-axi-vltmt.log
+      bytes: 9145513
+      sha256: fa4a9c75b4e39bfbd3ad197b8c6649337ed7e95d7627329e27130fa2dbde503f
+    status:
+      path: /home/holden/verilator-work/uvm-protocol-profile/test_regress/obj_vltmt/t_uvm_axi_env-m15-candidate-v3/Vt_uvm_axi_env.status
+      bytes: 96
+      sha256: 9ba11873b2a780633a824d1ab320b88b7ad9ef41e4ddc9dbe7a7d90d32b4358b
+acceptance:
+  milestone: M15
+  gate: M15-G01-CLOSURE
+  criterion: C16
+  source_configurations: 8
+  positive_replays: 24
+  positive_transfers: 58848
+  legal_apb_control_runs: 4
+  legal_apb_control_transfers: 9744
+  paired_protocol_faults: 76
+  protocol_negative_executions: 152
+  additional_scoreboard_or_ral_negatives: 12
+  rules:
+    APB: [setup, wait, select, read_strobe]
+    AXI: [reset_all_valid, AW_hold, W_hold, B_hold, AR_hold, R_hold]
+  fault_oracle: Both implementations receive identical physical bus prefixes and fail at the first independently invalid sampled cycle. Each AXI channel has isolated reset, payload-mutation and VALID-withdrawal
+    pairs.
+  positive_oracles:
+    - Equal-seed trace equality and different-seed variation
+    - Active/passive monitors, scoreboard and original RAL sentinels
+    - Seven APB and 27 AXI individual coverage bins, exact merge and LCOV source record
+    - Read and inactive-write APB data can vary without affecting completed transfers
+causal_parent:
+  results:
+    path: /home/holden/verilator-work/uvm-protocol-profile-evidence/apb-monitor-parent-v2-results.json
+    bytes: 3825
+    sha256: e50921cd1e45cc8ebc1f7a6e299cda98b7245610bad374e36d8ff8f222e28af9
+  outcome: The unmodified monitor incorrectly passes 2436 transfers despite 3570 sampled read-strobe violations. The harness rejects the missing diagnostic; the candidate detects the first invalid cycle.
+  driver_exit_code: 10
+unsupported_sva:
+  drivers_passed: 24
+  results:
+    path: /home/holden/verilator-work/uvm-protocol-profile-evidence/sva-unsupported-v1-results.json
+    bytes: 61206
+    sha256: b84f839351500cfc06372e4dd7a7e673a507ef5097ee0021fc4d919934bdd322
+  documentation: SVA_PROTOCOL_PROFILE.md lists exact current diagnostics and fixed driver/golden paths, including parser-only qualifications. The orphan assertion-control golden is excluded after a successful
+    direct lint probe.
+checks:
+  python_lint:
+    driver_session: 35374
+    driver_reaped: true
+    driver_exit_code: 0
+    log:
+      path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v3-final-python-lint.log
+      bytes: 3762
+      sha256: 7a34e649d62937924cef7f16c3b88839b0d4dd3a81be22f99ff73ea281d45e35
+  distribution:
+    driver_session: 61892
+    driver_reaped: true
+    driver_exit_code: 0
+    passes: 2
+    failures: 0
+    log:
+      path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v3-source-dist.log
+      bytes: 636
+      sha256: 64ba246c9f02cb1c0da0fe82715c65a8606b030318ebd83ab243546d4f5e182a
+  format:
+    path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v3-format-results.json
+    bytes: 639
+    sha256: 182c8d2fc233aa97b8b03e19e24f2fdcb3ee1b6e57bce94ac0d35678ac53e69e
+qualified_attempts:
+  - Parent v1 also changed write strobes and is not the isolated read-strobe proof.
+  - Candidate v1 APB had a syntax error. AXI v1 passed the driver but failed stronger reset isolation because a plusarg prefix also enabled AW; the final v3 rerun fixes and verifies channel identity.
+boundaries:
+  - Local component acceptance; current-revision CI and complete release validation remain open.
+  - The profile covers ten declared sampled protocol rules, not full SVA or complete IEEE/UVM conformance.
+  - PENABLE implies PSEL only in the single-peripheral APB fixture.
+  - Private RAL changes are not used; M13 remains open. DPI coverage here does not close M14.
+  - Full compliance and production performance each retain all six final goal checks open.
+additional_bundled_compatibility:
+  configurations: 4
+  scenario: vlt
+  dpi: [false, true]
+  positive_replays: 12
+  positive_transfers: 29424
+  paired_protocol_faults: 38
+  legal_apb_control_runs: 2
+  results:
+    path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-final-bundled-results.json
+    bytes: 94670
+    sha256: db2f180abc29f9b5a5c46b0a0b4087e078d95812ba8c74a4daf968d9fd4e93db
+  runs:
+    - protocol: APB
+      scenario: vlt
+      dpi: [false, true]
+      driver_session: 6603
+      driver_reaped: true
+      driver_exit_code: 0
+      status:
+        path: /home/holden/verilator-work/uvm-protocol-profile/test_regress/obj_vlt/t_uvm_apb_env-m15-bundled-v3/Vt_uvm_apb_env.status
+        bytes: 96
+        sha256: 554225b79a79f53b5c9de9597f57da1033faf222ccd19d17f1c99b2fee2a92b8
+      log:
+        path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v3-bundled-apb-vlt.log
+        bytes: 3279193
+        sha256: 304b9e31f603ee509cec5c0f73ea97d8c2b70a3934c1b3161beef76ced601c44
+    - protocol: AXI
+      scenario: vlt
+      dpi: [false, true]
+      driver_session: 76975
+      driver_reaped: true
+      driver_exit_code: 0
+      status:
+        path: /home/holden/verilator-work/uvm-protocol-profile/test_regress/obj_vlt/t_uvm_axi_env-m15-bundled-v3/Vt_uvm_axi_env.status
+        bytes: 96
+        sha256: 2bd430a61b399863770376ce2df14e519eaf2751dab936fd7552a2fc7496c5fd
+      log:
+        path: /home/holden/verilator-work/uvm-protocol-profile-evidence/candidate-v3-bundled-axi-vlt.log
+        bytes: 9108443
+        sha256: fd48818c4723ab070826eb2bea0bbb1c10f0097fc136c08f3d0890e1e4b19ef6
+  scope: Supplemental bundled-package coverage with one thread; separate from the eight-configuration unmodified-source acceptance matrix.

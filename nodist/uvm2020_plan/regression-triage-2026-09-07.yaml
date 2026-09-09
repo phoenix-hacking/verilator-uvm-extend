@@ -1,0 +1,140 @@
+---
+# DESCRIPTION: Verilator: Post-crash broad regression failure triage
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Completed local failure triage and source inspection. No additional conformance, performance, full-regression, or static-analysis acceptance credit.
+neighbor_revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+neighbors:
+  passed: 300
+  failed: 4
+  elapsed: '31:56'
+  log: /home/holden/verilator-work/randomize-null-neighbors.log
+associative_size:
+  parent_revision: c325d9c0dda118983fd0adfe5866df8b559970d4
+  parent_compiler: /home/holden/verilator-work/verilator_bin_before_null_child
+  parent_compiler_sha256: 774791274070efe3e3fe6638431b8cdb32858545c8c76eafdb857d0675c3a1ea
+  parent_result: Both t_randomize_assoc_size scenarios fail; 0 passed, 2 failed in 0:50.
+  parent_environment: VERILATOR_BIN selects the preserved compiler; runtime inputs are the unchanged 04fc80d15 headers and library sources in the recursion worktree.
+  investigation: Generated StringKeyTest::init registers a pointer to its local __Vdata_size. The later solver writes through that expired pointer. A debugger run confirms SIGSEGV during the initial block.
+  status: Correction published at b392c1065 with 12 focused passes and four parent failures. Existing key counts are evaluated as state; see randomize-assoc-size-local-2026-09-07.yaml.
+recursion:
+  parent_revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+  parent_compiler: /home/holden/verilator-work/verilator_bin_null_child_04fc80d
+  parent_compiler_sha256: 5e313ae8197a0bd9dac88f9b076d2a9c02b09c588ebe82479c6a1761115487d4
+  bounded_reproduction: The original t_randomize_method_types_unsup and new t_randomize_recursive_unsup both exit 134 instead of the expected diagnostic exit 1; 0 passed, 2 failed in 0:38.
+  limits: Each process inherits a 3 GiB address-space limit and CPU limits of 30 seconds soft and 35 seconds hard; the complete command has a 100-second wall limit.
+  cause: Constraint cloning follows scalar rand class members before the old self-member check. A self edge appends constraints while traversing the same class; indirect edges and generated enum/callback
+    traversal also require cycle detection.
+  status: Published at ab1d4498f with 28 focused passes and four bounded parent aborts; see randomize-recursion-local-2026-09-07.yaml. Broader acceptance remains pending.
+  existing_behavior_check: Expanded t_randomize_subobj_enum passes both parent scenarios in 0:12, covering shared leaf types, non-rand parent references, and an instantiated recursive class that is never
+    randomized.
+full_regression:
+  revision: c325d9c0dda118983fd0adfe5866df8b559970d4
+  status: running
+  log: /home/holden/verilator-work/foreach-complete-regression.log
+  known_test_resource_guard:
+    script: /home/holden/verilator-work/guard-recursive-regression.py
+    log: /home/holden/verilator-work/foreach-recursion-resource-limits.log
+    scope: Only the exact foreach compiler executable running t_randomize_method_types_unsup.v; other tests and compilers are unaffected.
+    limits: 3 GiB address space and 60 additional CPU seconds, with a 65-second hard CPU limit.
+    accounting: Any guarded termination remains a failing test. The source is unchanged and no test is silently skipped.
+  merge_condition_resource_guard:
+    script: /home/holden/verilator-work/guard-merge-cond-regression.py
+    log: /home/holden/verilator-work/foreach-merge-cond-resource-limits.log
+    scope: Only cc1plus compiling Vt_opt_merge_cond_blowup__ALL.cpp in the frozen original vlt object directory.
+    initial_cpu_seconds: 3935
+    initial_virtual_bytes: 13518794752
+    initial_limits: 30 additional CPU seconds (hard +5); current address space +256 MiB. Future matching compilers receive at least 4 GiB and 90 additional CPU seconds.
+    accounting: Termination remains a failure. Original source/test inputs are unchanged.
+  clean_cxxflags_replay:
+    revision: c325d9c0dda118983fd0adfe5866df8b559970d4
+    CXXFLAGS: ''
+    passed: 7
+    failed: 2
+    elapsed: '4:37'
+    log: /home/holden/verilator-work/foreach-clean-cxxflags-replay.log
+    sha256: 5e558b61691a3a9a63ede30e7ef329c885cac51ba2eb0af1523f9e731cffccdd
+    passed_cases: [t_flag_csplit (vlt/vltmt), t_flag_csplit_groups (vlt/vltmt), t_prof (vlt/vltmt), t_opt_merge_cond_blowup (vlt)]
+    remaining_failures: t_prof_timing in both modes has no expected VBlock t_prof entry. This is not resolved by clearing inherited optimization flags.
+    limits: 180 CPU seconds per process and 4 GiB address space; no core dumps.
+cppcheck:
+  status: completed_with_reports
+  error_reports: 11
+  baseline_error_reports: 11
+  comparison: Error-severity filename/message/count multiset matches candidate-cppcheck.log; other diagnostic severities are recorded in the newer local evidence.
+  provenance: The recovery sweep began before the foreach width follow-up. Retain it as a baseline comparison, not an independent claim of clean static acceptance at a frozen final revision. The frozen
+    null-child sweep also completed with the identical multiset of 11 reports at 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c.
+  command: make cppcheck CPPCHECK_JOBS=2 CPPCHECK_INC='-I./include -I./include/fstcpp -I./include/vltstd -I./src/obj_opt -I./src' CPPCHECK_CACHE=/home/holden/verilator-work/foreach-nonzero-cppcheck-cache
+  execution_directory: /home/holden/verilator-work/foreach-nonzero-indices
+  null_child_sweep:
+    revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+    status: completed_with_reports
+    exit_code: 0
+    error_reports: 11
+    comparison: No added or removed reports compared with candidate-cppcheck.log, by filename, message, and multiplicity.
+    command: make cppcheck CPPCHECK_JOBS=2 CPPCHECK_INC='-I./include -I./include/fstcpp -I./include/vltstd -I./src/obj_opt -I./src' CPPCHECK_CACHE=/home/holden/verilator-work/randomize-null-cppcheck-cache
+    execution_directory: /home/holden/verilator-work/randomize-null-child
+  source_review:
+    - file: include/verilated_types.h
+      reports: 2
+      diagnostic: ctuOneDefinitionRuleViolation
+      finding: The Entry structures are nested in distinct VlNBACommitQueue partial specializations, selected by Partial=false and Partial=true.
+    - file: include/verilated_imp.h
+      reports: 1
+      diagnostic: resourceLeak
+      finding: fdNew transfers the opened FILE pointer into m_fdps and returns the descriptor. fdClose closes that table entry and clears it; the pointer does not remain an unowned local resource.
+    - file: include/verilated.cpp
+      reports: 2
+      diagnostic: containerOutOfBounds
+      finding: get_randstate statically requires a 16-byte state and allocates a 33-character string. The loop writes indexes 1 through 32, including both nibbles of byte 15.
+    - file: src/V3DfgBreakCycles.cpp
+      reports: 1
+      diagnostic: missingReturn
+      finding: debugStr ends in v3fatalSrc for unsupported internal nodes. DfgVertex::v3errorEndFatal is explicitly noreturn.
+    - file: src/V3DfgBreakCycles.cpp
+      reports: 1
+      diagnostic: containerOutOfBounds
+      finding: DfgDataType::packed requires positive width. The terminal range always appends a constant or invokes gatherTerms with hi>=lo; gatherTerms appends on its terminal iteration. Therefore termps
+        has an element before front().
+    - file: src/V3Reorder.cpp
+      reports: 1
+      diagnostic: danglingLifetime
+      finding: VL_RESTORER captures m_graphp before the local graph is assigned. VRestorer::~VRestorer restores the previous pointer at scope exit.
+    - file: src/V3AssertNfa.cpp
+      reports: 1
+      diagnostic: danglingLifetime
+      finding: VL_RESTORER captures m_loweringp before the local lowering object is assigned and restores it at scope exit.
+    - file: src/V3Ast.cpp
+      reports: 1
+      diagnostic: containerOutOfBounds
+      finding: Reading std::string::operator[] at size() returns the terminating null character in the supported C++ standard; the empty-string case reads index zero without modifying it.
+    - file: src/V3LinkInc.cpp
+      reports: 1
+      diagnostic: missingReturn
+      finding: getOperationp ends in v3fatalSrc on an unhandled internal operation; AstNode::v3errorEndFatal is explicitly noreturn.
+failed_state_recovery:
+  worktree: /home/holden/verilator-work/randomize-failure-state
+  base: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+  preserved_stash: 4e98905a483ea24e9db961aa91f8fbdc2dd4c2f0
+  patch: /home/holden/verilator-work/randomize-failure-state-before-rebase-20260907.patch
+  result: The recovered changes applied cleanly after fast-forwarding the branch. Both expanded post-unsat scenarios still fail because an unconstrained 31-bit member changes after a failed solve.
+  status: Runtime snapshot helpers and compiler bookkeeping remain unfinished; restore and array-binding refresh are not implemented.
+  subsequent_base: b392c1065e48113f2bb7f9a766d0dbd66a3e117b
+  subsequent_stash: 07b6e82f6d2daa93366fbeffba1dceedb18b17da
+  subsequent_patch: /home/holden/verilator-work/randomize-failure-state-before-assoc.patch
+  subsequent_result: All five recovered changes reapplied cleanly after advancing to the associative-size correction. Snapshot wiring remains unfinished.
+new_gate_credit: 0
+logs_and_recovery_files:
+  /home/holden/verilator-work/randomize-null-neighbors.log: ac2d629bfa08954149022c061138e0c4171148fc82c460731cc215786c6d50ce
+  /home/holden/verilator-work/randomize-assoc-size-parent.log: 81ac639d47e2ecd07b3f17ea80768115627daff8536c59bf1e1bfe0d30e2e6cf
+  /home/holden/verilator-work/randomize-assoc-size-parent-backtrace-clean.log: 05c13de081ab7000906d5c23a92bbf9598116089eb5bd82a85eb7947513f76b2
+  /home/holden/verilator-work/randomize-recursion-before.log: db5d8baa25a00337ba7423f38948bab3355f18bac16a31faf4d2417c45f4f197
+  /home/holden/verilator-work/randomize-recursion-acyclic-before.log: e99be1e76da118b6fd1a0d378e3b3d47c261957fad0ec25ef1738261768e8f7d
+  /home/holden/verilator-work/foreach-nonzero-recovery-cppcheck.log: e59619e0f2be93786aaa9d121c5b930cf01f34c34fc7a72cbfdf1e0183827d54
+  /home/holden/verilator-work/candidate-cppcheck.log: 1f71dd4831330423b026877bc631abc47987e793527e7d60610d48e63b84d7ba
+  /home/holden/verilator-work/randomize-null-cppcheck.log: 99f43fbffba4f2c4db1376edbffcbfea67e7d1ccb5bdfc72371fc825f4ba23dd
+  /home/holden/verilator-work/randomize-failure-state-recovered-before.log: a0fd7a99a851387aa8752553440d1c4ae1733f831743809bbed82dc8d7f763f6
+  /home/holden/verilator-work/randomize-failure-state-before-rebase-20260907.patch: 4aa1f31d8cab9461a60006f0fe2ff76e680f28dd24aaf6218a7788a9920ed981
+  /home/holden/verilator-work/guard-recursive-regression.py: c8ec9d47673677526122536f92da992c8919d2c8cdba1955b280fd2b6aa04b15

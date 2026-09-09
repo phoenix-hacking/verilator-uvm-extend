@@ -758,7 +758,7 @@ public:
             of.puts(basename + ".o: " + cppfile + " " + compilerIncludePch + "\n");
 
             // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-            of.puts("\t$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) "
+            of.puts("\t$(OBJCACHE) $(CXX) $(OPT_FAST) $(CXXFLAGS) $(CPPFLAGS) "
                     + compilerIncludeFlag + " -c -o $@ $<\n");
         }
 

@@ -12,7 +12,6 @@ import vltest_bootstrap
 test.priority(50)
 test.scenarios('vlt')
 test.top_filename = 't/t_uvm_hello.v'
-test.pli_filename = "t/uvm/v2020_3_1/dpi/uvm_dpi.cc"
 
 if test.have_dev_gcov:
     test.skip("Test suite intended for full dev coverage without needing this test")
@@ -20,12 +19,9 @@ if test.have_dev_gcov:
 test.compile(v_flags2=[
     "--binary",
     test.build_jobs_groups,
-    "--vpi",
-    "--CFLAGS -O0",
+    "--CFLAGS '-O0 -Wformat -Werror=format-security'",
     "-Wall",
-    "+incdir+t/uvm",  #
-    "t/uvm/uvm_pkg_all_v2020_3_1_dpi.svh",
-    test.pli_filename
+    *test.uvm2020_flags(dpi=True),
 ])
 
 test.execute(all_run_flags=['' if test.verbose else '+UVM_NO_RELNOTES'])

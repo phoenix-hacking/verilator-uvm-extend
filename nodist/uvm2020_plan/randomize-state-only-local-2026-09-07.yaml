@@ -1,0 +1,81 @@
+---
+# DESCRIPTION: Verilator: State-only randomization constraint local evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Local correctness evidence for evaluating constraints without solver variables. Full regression, CI, broad static acceptance, conformance, and performance remain open.
+branch: codex/randomize-state-constraints
+revision: 04808c88324fe3c1089d00c9fc35f3e8dc963657
+tree: aacafda8192e59f211a9aa0c42a2325ac2739ecb
+source_tree: cdd8f4dca1ef4bf59662a820f67dae3bb64ef725
+parent: ab1d4498f067323019f3276472c056005f54c1a0
+execution_worktree: /home/holden/verilator-work/randomize-recursion-check
+implementation:
+  - Evaluate hard and soft constraints when no random variables are registered.
+  - Avoid querying an empty model-value list and skip scalar bit selection without variables.
+  - Preserve pre/post callback ordering, constraint modes, and check-only behavior.
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_recursive_ab1d4498f
+  sha256: 3836c3c262af2a6e4298b639c0d3b6beab3d5fa0df93a64c5a9a11362e534bc2
+  provenance: The runtime-only correction does not change the compiler source subtree from its parent.
+focused:
+  passed: 44
+  failed: 0
+  elapsed: '3:58'
+  behavioral_scenarios: 38
+  distribution_checks: 6
+  selected_drivers: 25
+  manifest: /home/holden/verilator-work/randomize-state-only-tests.txt
+  command: python driver.py --vlt --vltmt --dist --jobs=2 --driver-build-jobs=1 --quiet <tests from manifest>
+  coverage: Hard true/false state-only constraints; 65-bit state; ordinary and inline calls; randomize(null); soft relaxation and hard conflicts; constraint modes; empty classes; std::randomize() without
+    arguments; neighboring null-child, rand_mode, randc and soft constraints.
+causal_parent:
+  revision: ab1d4498f067323019f3276472c056005f54c1a0
+  passed: 0
+  failed: 2
+  elapsed: 0:36
+  failure: The false hard constraint returns success at t_randomize_state_only.v:63 in both vlt and vltmt.
+  environment: Preserved parent compiler and exact parent runtime. Final C++14 test sources; --obj-suffix=before-final. The candidate runtime was restored after the bounded run.
+portability:
+  test: t_randomize_state_only
+  flags: [--no-timing, -CFLAGS, -std=c++14]
+  verification: Both retained compile logs end their compile flags with -std=c++14 and define VM_TIMING=0; both simulation logs contain the completion sentinel.
+formatting: Full make format and Verilog formatting pass; unrelated formatter-only runtime edits were restored.
+python_lint: make lint-py passes
+static_analysis:
+  scope: Focused C++14 check of include/verilated_random.cpp and included headers.
+  exit_code: 0
+  error_reports: 1
+  finding: Existing VlNBACommitQueue::Entry partial-specialization ODR report, also present in the baseline. This is not a full make cppcheck result.
+ci:
+  format:
+    run: 34145642141
+    status: success
+  build_test:
+    run: 34145642366
+    status: pending
+  contributor_agreement:
+    run: 34145642151
+    status: pending
+acceptance:
+  full_regression: pending
+  broad_static_analysis: pending
+  new_gate_credit: 0
+sources:
+  include/verilated_random.cpp: c44ce831335db36bb2ee68e832f639067491ec8a6b5cc0030ad3b8321313096c
+  test_regress/t/t_randomize_state_only.py: 46ff2555fb3b345ee62776e45ef2fe9aa12e7f3b1ee9f3e7920dd4816190fea8
+  test_regress/t/t_randomize_state_only.v: a482e521bbe1c2d82fa7c726e343b5ba1714ee2e99df50858bbdcad92a5ce118
+logs:
+  /home/holden/verilator-work/randomize-state-only-final.log: ffbe20f1c50fa87eb6598ad2b02441dff879247781b77ff7a3a30852495b93a5
+  /home/holden/verilator-work/randomize-state-only-before-final.log: a4daddac5d4e7dea32f8293446f3bce7b9349c3e76d1833c64b7e74a43e6894e
+  /home/holden/verilator-work/randomize-state-only-tests.txt: 6b35251c910a2de9b90d2dc068d16f83d1c43a6149f2fbd1c3981834dffcacf5
+  /home/holden/verilator-work/randomize-state-only-format.log: 5d49ef5538a6bf1601c94ab1148bcb026849951c8742bfe470164117a0ccd525
+  /home/holden/verilator-work/randomize-state-only-verilog-format.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/randomize-state-only-lint-py.log: 866816dcc57a4333866321e1b8a0f2ba3ba903ef8ceb6f99d57f059ed6b03c37
+  /home/holden/verilator-work/randomize-state-only-cppcheck.log: 7f522eca6a076d23a05ec0fa9008339f33d1a8f752fe167169375f0b8882ecdb
+  /home/holden/verilator-work/randomize-state-only-provenance.json: 00758b8d98d94079fe7dc48d3efa2a4e5137a6d2dd2e9c9383ce1b31d444a464
+  /home/holden/verilator-work/randomize-state-only-evidence/vlt-gcc.log: 9f1310b0c9a1d42493dddf28ee725910b83267b0d661fa7919dda84db2ed7789
+  /home/holden/verilator-work/randomize-state-only-evidence/vlt-sim.log: 191795e2bb0b6c51e961199fe620a5dc67c1b6a84c4b5b8b5a969db72468e63e
+  /home/holden/verilator-work/randomize-state-only-evidence/vltmt-gcc.log: bc9a1ea5b71d2d2ba6a730a2e7e43ca236a38ab6fb6b3a95647bc46f50a8e843
+  /home/holden/verilator-work/randomize-state-only-evidence/vltmt-sim.log: 191795e2bb0b6c51e961199fe620a5dc67c1b6a84c4b5b8b5a969db72468e63e

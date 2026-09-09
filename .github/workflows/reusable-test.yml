@@ -81,14 +81,35 @@ jobs:
           ./ci/ci-install.bash
           make venv
 
+      - name: Checkout unmodified UVM 2020.3.1
+        if: >-
+          ${{ inputs.suite == 'uvm2020-source' || inputs.suite == 'uvm2020-randomize-source'
+          || inputs.suite == 'uvm2020-protocol-source' }}
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+        with:
+          repository: accellera-official/uvm-core
+          ref: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+          path: uvm2020-source
+          persist-credentials: false
+
       - name: Test
         id: run-test
         continue-on-error: true
         env:
           TESTS: ${{ inputs.suite }}
+          UVM_SOURCE_ROOT: ${{ github.workspace }}/uvm2020-source
         run: |
           source .venv/bin/activate
           ./ci/ci-script.bash
+
+      - name: Verify UVM source provenance
+        if: >-
+          ${{ (inputs.suite == 'uvm2020-source' || inputs.suite == 'uvm2020-randomize-source'
+          || inputs.suite == 'uvm2020-protocol-source') && always() }}
+        working-directory: uvm2020-source
+        run: |
+          test "$(git rev-parse HEAD)" = 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+          test -z "$(git status --porcelain)"
 
       - name: Combine code coverage data
         if: ${{ inputs.dev-gcov }}

@@ -284,6 +284,15 @@ inline bool VlClassRef<`systemc_class_name>::operator<(const VlClassRef<`systemc
     bit cross_retain_auto_bins;
   } vl_cross_options_t;
 
+  // Expose only implemented item options; other accesses remain diagnosed.
+  typedef struct {
+    int weight;
+  } vl_coverage_item_options_t;
+
+  typedef struct {
+    vl_coverage_item_options_t option;
+  } vl_coverage_item_t;
+
   typedef struct {
     int weight;
     int goal;

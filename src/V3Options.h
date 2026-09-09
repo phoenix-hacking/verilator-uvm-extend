@@ -575,9 +575,9 @@ public:
     VOptionBool timing() const { return m_timing; }
     bool trace() const { return m_trace; }
     bool traceCoverage() const { return m_traceCoverage; }
-    bool traceEnabledFst() const { return m_traceEnabledFst; }
-    bool traceEnabledSaif() const { return m_traceEnabledSaif; }
-    bool traceEnabledVcd() const { return m_traceEnabledVcd; }
+    bool traceEnabledFst() const VL_MT_SAFE { return m_traceEnabledFst; }
+    bool traceEnabledSaif() const VL_MT_SAFE { return m_traceEnabledSaif; }
+    bool traceEnabledVcd() const VL_MT_SAFE { return m_traceEnabledVcd; }
     bool traceParams() const { return m_traceParams; }
     bool traceStructs() const { return m_traceStructs; }
     bool traceUnderscore() const { return m_traceUnderscore; }

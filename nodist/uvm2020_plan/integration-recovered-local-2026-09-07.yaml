@@ -1,0 +1,121 @@
+---
+# DESCRIPTION: Verilator: Recovered source integration checkpoint
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Combined compiler checks and real unmodified-source UVM sequence-item execution passed locally after the scoped Clang replay. Full repository, current CI, conformance and performance acceptance
+  remain pending. The UVM run predates the runtime formatting annotation.
+revision: a48169e1b517a24723bb4e09e4dac4811f3ceff2
+source_tree: 5840b4f2303665893bc260a4079ee0ea066bd94a
+include_tree: df0df3deb2d1005e97aef6efe9a7cbe0d8952e8d
+parent: 23a6adf1057e5a07425c30ff6e361e1c90216200
+recovery_backup: /home/holden/verilator-work/integration-recovery-20260907T200409Z
+source_commits:
+  - cd2a852774b3c5f29e917ec0cce29d8638d251ce Treat foreach indices as implicitly driven
+  - e67b8124cb2a53f7481d21ccf387de146ada7e3f Retain inherited array constraints for element solving
+  - 55b0f4e8121a54ab3719737e38bb0bb930780d08 Prepare inherited constraints before inline randomization
+  - 914412a14a25c0afc2106ebcb98c374fffc351a3 Resize and resolve arrays during inline randomization
+  - dce46f86434e4f29c132feee8feaca4ab609160a Skip post-randomize callbacks after failed solving
+  - 50d4ecf117e0469cbd5cb1e702fa0d9cf00a1f79 Preserve nested constraints after independent randomization
+  - d85f3c74d1ffba63f1ad84bc8aca6454bd5b2446 Preserve child constraint modes during nested solving
+  - 8b7564bea2f1257af1079b5a3918bbe54bb4696f Fix nested foreach container selection
+  - e7a71558c54c60d648d93498942fbda20d42ffa6 Keep generated foreach bounds fully sized
+  - 4919ed676d5a8a792b71a90bf1c26ab373013ec7 Handle absent and replaced rand child objects
+  - f05f6be8bc4ae1f542993b2772970c1abbc3b820 Reject recursive rand class paths before expanding constraints
+  - 179b351395d8c5d34086e0611d5291023ae779d8 Evaluate constraints with no registered random variables
+  - aaae6458daa03f19a6b61925a9791f85a7999ac9 Fix associative array size constraints and storage refresh
+  - b0a73fce6c5a227571fb2229d8dc9055849e1b58 Preserve state and callbacks after failed class randomization
+  - 5fb8e0900419e08f891ea14716f838cba1e0191a Restore scope randomization arguments after failed solving
+  - bf029efa1a21d20695c898035d1dc221bfe05d7d Match user C++ optimization flags to precompiled headers
+  - 7f48a04a0767968335988b30264f43fb304323f4 Use required process references for generated execution contexts
+  - 7f777ee53d021ac6a0c73b4487e2f456b220d35a Fail attribute validation when source analysis is incomplete
+  - 18236476626b8fca4d971a26a92f14b235a20db6 Reject attribute diagnostics even when unsafe-call count is zero
+  - 1973ccada04805b5f3f4a66e4335e75e9fb34a65 Check unsafe calls inside mutex-excluding thread-safe functions
+  - c367ddbea2b3ee968352eef9b51964a061dc59ae Test UVM scoreboarding with a stateful C DPI reference model
+  - a1570aeee4651a03f9491ac84a64e56db01cd2ad Keep the DPI reference model as a C translation unit
+  - 4575fe59bae999ffc8a994fe1484b3e53e8061a2 Test UVM HDL backdoor operations against clocked RTL
+  - a48169e1b517a24723bb4e09e4dac4811f3ceff2 Support dynamic arrays and queues in DPI open-array arguments
+implementation: Integrate the randomization/foreach chain, compiler/PCH and process-context corrections, attribute-checker fixes, C DPI reference test, HDL backdoor test, and dynamic DPI arrays. Equivalent
+  DPI reference commits were selected once.
+build:
+  status: completed
+  command: make -C src opt -j1
+  configure_flags: [--enable-ccwarn, --enable-longtests]
+  log: /home/holden/verilator-work/integration-recovered-build.log
+  compiler: /home/holden/verilator-work/verilator_bin_integration_a48169e1b
+  sha256: 59a230405c33038cd6be1309c58d3a0e78eb1cc7f5c511da74efe36e48a1c76f
+  log_sha256: 8091e7787dc8b66e1356c67b3d3584d67280d5e8a95c5a0338720a341ad04d75
+uvm_sequence_test:
+  status: completed
+  files: [test_regress/t/t_uvm_sequence_randomize.py, test_regress/t/t_uvm_sequence_randomize.v]
+  uvm_source_root: /home/holden/verilator-work/uvm-2020.3.1
+  uvm_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  CXXFLAGS: ''
+  compiler: /home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6
+  log: /home/holden/verilator-work/uvm-sequence-randomize-source.log
+  scenarios: [vlt, vltmt]
+  dpi_modes: [false, true]
+  seeds: [1729, 1729, 2718]
+  revision: d01193d80f4ba87d33413eea7cd1e5d8f56218ff
+  scenario_passes: 2
+  scenario_failures: 0
+  configurations: 4
+  seeded_runs: 12
+  transactions: 768
+  elapsed: '36:13'
+  evidence: uvm-sequence-source-local-2026-09-07.yaml
+new_gate_credit: 0
+cleanup_build:
+  revision: 75580fc3971cf0036910f874ad03c5bf0f5c56c7
+  source_tree: 6d43e292ef474b1d7aca352689cf2e39acb4090a
+  include_tree: df0df3deb2d1005e97aef6efe9a7cbe0d8952e8d
+  command: make -C src opt -j2
+  status: completed
+  log: /home/holden/verilator-work/integration-recovered-build-cleanup.log
+  log_sha256: 6f58af0fbffbb6914e1c1257ad3eabbb0101f30a7755cee1abf00b2eff40b19a
+  compiler: /home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6
+  sha256: 38deed9104b160aeb6989f2e33114667610df912b7810db4833b9da50fa4506d
+  changes: Make afterp const and newStateThisRef static; rename the nested constraint-mode local to avoid shadowing.
+focused:
+  passed: 43
+  failed: 1
+  elapsed: '7:47'
+  log: /home/holden/verilator-work/integration-recovered-focused.log
+  sha256: 480b15f2e363bf3e738176e5690932401b9a9bfa71cbac5f30e821e72736b8b6
+  failure: 't_dist_attributes_bad: pip libclang could not locate builtin stddef.h; no compiler/model test failed.'
+attribute_replay:
+  passed: 2
+  failed: 0
+  elapsed: 0:12
+  environment: /home/holden/verilator-work/attribute-env.sh
+  environment_sha256: a037eb076e3266180f9da151d6b74f16458c893dbcda10892027e6c2addb02e4
+  scope: CPLUS_INCLUDE_PATH is set only for this analysis process, not GCC model builds.
+  log: /home/holden/verilator-work/integration-attribute-clang-replay.log
+  sha256: 044423ca972b4d4de292f962d53b13bcebf24d40790b94b9fffdd6f3f7a83f1c
+current_source:
+  revision: 5a3bdae035d815c669b6f3bf30b1ea08f23b86cf
+  source_tree: 6d43e292ef474b1d7aca352689cf2e39acb4090a
+  include_tree: 1b08d0d7ec4336848de232555d7e16de80fe411a
+  runtime_correction_evidence: runtime-format-contract-local-2026-09-07.yaml
+full_regression_environment:
+  script: /home/holden/verilator-work/regression-env.sh
+  sha256: 6a664a53de0ea1cc1ceffea8ba0c3d018779d784a316d60164b91e1026aee01e
+  clang_entrypoint_setup: /home/holden/verilator-work/clang-analysis-env/sitecustomize.py
+  setup_sha256: e48841c76a9a163379b8388a7cf2ec052a50931e8bcb528479c47d7dbee06fdf
+  purpose: Clear inherited optimization overrides and supply the saved Clang headers only when launching clang_check_attributes. GCC parent CPATH/CPLUS_INCLUDE_PATH remain unset.
+  validation:
+    passed: 2
+    failed: 0
+    elapsed: 0:10
+    log: /home/holden/verilator-work/attribute-scoped-environment-replay.log
+    sha256: 9b7c1515fa876b9aedd105d9767e2c3f518befd04ab3d80f4181b3d4b174002d
+    isolation_log: /home/holden/verilator-work/attribute-scoped-environment-isolation.log
+    isolation_sha256: 1d341c38b71768f5ac3e0c2a78c073979cb8f1f7365e306b098619d8f9f575b7
+superseded_ci: ci-superseded-components-2026-09-07.yaml
+build_cache_cleanup:
+  receipt: /home/holden/verilator-work/completed-build-cache-cleanup-receipt.json
+  sha256: 704e948e290b62ebb120c6ab0f7f79dbf2e2295b12e99365a7272ba2ba864896
+  audit: /home/holden/verilator-work/completed-build-cache-cleanup-audit.json
+  audit_sha256: 6a7a7261b237757ac4f7a8173b341f12fe0be79dc67ffe052db22cd0394d8e8e
+  scope: Only generated .o/.gch/.a files from inactive completed test object directories. Sources, logs, saved compiler binaries and model executables remain available.

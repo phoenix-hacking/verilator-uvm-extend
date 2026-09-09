@@ -46,7 +46,7 @@ module t (
     type_option.merge_instances = 1;  // cg
     type_option.distribute_first = 1;  // cg
     option.name = "the_name";  // cg
-    option.weight = 1;  // cg, cp, cross
+    // option.weight is covered by t_covergroup_weighted.
     option.goal = 98;  // cg, cp, cross
     option.comment = "option_comment";  // cg, cp, cross
     option.at_least = 20;  // cg, cp, cross
@@ -101,7 +101,7 @@ module t (
     cross a, b iff (!rst) {}
   endgroup
   covergroup cg_cross3;
-    cross a, b { option.comment = "cross"; option.weight = 12; option.per_instance = 1; }
+    cross a, b { option.comment = "cross"; option.per_instance = 1; }
   endgroup
   covergroup cg_cross4;
     cross a, b {

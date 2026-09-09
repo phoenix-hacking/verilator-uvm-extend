@@ -1,0 +1,82 @@
+---
+# DESCRIPTION: Verilator: AXI UVM environment validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-07'
+observed_utc: '2026-09-08T03:11:10.049160+00:00'
+status: validated_local_component
+source_revision: 676cdd3bbb38b53d8a445ef48300ae262293271c
+source_tree: 58bd6e44c82e7bb72238cb84c2d921b623fc911f
+base_revision: 9b10389bd33d7f19ef8c24f1b77af729f93b3e85
+native_binary:
+  path: /home/holden/verilator-uvm-extend/bin/verilator_bin
+  sha256: 7a3277e48f987fe64448e09db0685c6c63c074ece5a29b69b08fcef5d2263c32
+native_source_revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+native_source_note: Component source/include trees match the frozen native build; these commits add verification fixtures only.
+uvm:
+  source_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  source_tree_clean_after_runs: true
+  source_package:
+    path: /home/holden/verilator-work/uvm-2020.3.1/src/uvm_pkg.sv
+    sha256: 4c1516f91172fc24e9d8f023911ffcb5718da281f285f3062547553c09be60e6
+  bundled_package:
+    path: /home/holden/verilator-work/uvm-axi-env/test_regress/t/uvm/uvm_pkg_all_v2020_3_1_nodpi.svh
+    sha256: 71fcf040208576bf50bd92337cce8d514acf58cc5483448fd096ed009b293011
+inputs:
+  test_regress/t/t_uvm_axi_env.py:
+    path: /home/holden/verilator-work/uvm-axi-env/test_regress/t/t_uvm_axi_env.py
+    sha256: d465a35969eb24b05f8be47f467a36d989caf2b40713a3193558636750b66ea4
+  test_regress/t/t_uvm_axi_env.v:
+    path: /home/holden/verilator-work/uvm-axi-env/test_regress/t/t_uvm_axi_env.v
+    sha256: 2e0185b1edbbaf8990b009116355b17ddd638a0bcd77059da1b9b714ad5a621c
+configurations: 4
+positive_runs: 12
+negative_runs: 20
+scenarios: [bundled-vlt, bundled-vltmt, source-vlt, source-vltmt]
+seeds_per_configuration: [1729, 1729, 2718]
+source_command: python driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before --driver-uvm-source-root=/home/holden/verilator-work/uvm-2020.3.1 --obj-suffix=-source --quiet --vlt --vltmt t/t_uvm_axi_env.py
+bundled_command: python driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before --quiet --vlt --vltmt t/t_uvm_axi_env.py
+bundled_command_note: APB vlt and vltmt ran as separate invocations; AXI ran both scenarios in one invocation.
+source_selection_note: The explicit --driver-uvm-source-root option selects unmodified source; UVM_HOME alone leaves the bundled default. The first resumed runs were correctly retained as bundled evidence.
+driver_logs:
+  - path: /home/holden/verilator-work/uvm-axi-reset-verified.log
+    sha256: e63918293ce79171c1a4f412a1fd9c73277edad5dc60cda109d1bc6d91015d42
+  - path: /home/holden/verilator-work/uvm-axi-reset-source.log
+    sha256: 9302870223706e78f0f01f60d1593ea9ac892214cb81ae73f1fda018dcaa7c78
+results:
+  path: /home/holden/verilator-work/uvm-axi-evidence/accepted-20260908/results.json
+  sha256: 2023cb5317bc72c58205cf5c63b1b5542f094f402646adda9b704709d54fe8a8
+distribution:
+  passed: 2
+  failed: 0
+  drivers: [t_dist_copyright, t_dist_whitespace]
+  log:
+    path: /home/holden/verilator-work/uvm-axi-distribution-final.log
+    sha256: 94436c6350d196f17c50b0980e9057cbbb5d013e0953409bd3a1262150d219cc
+lint_py:
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/uvm-axi-lint-final.log
+    sha256: 81166bd0774e000a8bd6a22fa987f3584440f6983b9522aecbf139758a64666d
+normative_oracles: ['Arm IHI 0022H A3.1-A3.3 and B1.1, including A3.1.2 VALID reset requirements.']
+completed_transfers_per_positive_run: 196
+reads: 146
+writes: 50
+error_responses: 4
+reset_intervals: 2
+verification:
+  - Typed virtual clocking modports, active/passive agents, independent monitor and scoreboard observations.
+  - AW and W accepted independently in both orders and on the same edge; backpressure on all five channels.
+  - Concurrent read/write requests use different words; all byte masks and full register readback are checked.
+  - SLVERR and no-modification oracles for invalid addresses; reset cancels accepted AW without W and an outstanding read, followed by recovery.
+  - Every sampled reset cycle requires all VALID signals low in both monitors, with a matching SVA property.
+  - Data corruption reaches the scoreboard; held RDATA instability and reset VALID faults independently reach SVA and monitor diagnostics. Same seeds reproduce per-direction traces and different seeds vary
+    them.
+source_reference: https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/IHI0022H_amba_axi_protocol_spec.pdf
+new_gate_credit: 0
+limitations:
+  - AXI class coverage, RAL adapter and frontdoor are not implemented here; M12/C08 remain open.
+  - The fixture permits one outstanding transaction per direction and does not define same-word read/write ordering.
+  - Complete assertion-profile, combined-source CI, full regression and release acceptance remain open.

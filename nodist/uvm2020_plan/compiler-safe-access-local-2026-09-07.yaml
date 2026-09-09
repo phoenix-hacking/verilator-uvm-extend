@@ -1,0 +1,205 @@
+---
+# DESCRIPTION: Verilator: compiler safe-access contract validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-07'
+observed_utc: '2026-09-08T02:46:14.500943+00:00'
+status: validated_component_full_source_audit_complete_with_remaining_findings
+parent_revision: f8c11d012a0e17d4ae6842a890b940191fdf1cb1
+source_revision: bcaf0bb4abc0b00d7cf8361e1c84cd5d156aaf44
+source_tree: cda080bf025172822a5469f25952adefeb958d28
+source_commits: [9a23a824cd7fcc67d5a9048566d392fa6c434303, bcaf0bb4abc0b00d7cf8361e1c84cd5d156aaf44]
+scope:
+  - Annotate read-only warning bits, trace options, numeric words, inline-cell locations and affinity predicates.
+  - Render immutable FSM vertex names during construction and cache the graph fallback name in its single-thread setter.
+  - Move compiler statistics synchronization to the shared collection so all insertion, lookup, aggregation and report paths use one lock.
+  - Exercise ordinary and summary insertion through two compiler jobs with an explicit rendezvous when compiler parallelism is enabled.
+safety_boundaries:
+  - FSM vertex kind, label, encoded value and rendered name are const. Graph name and scope setters are explicitly VL_MT_DISABLED; concurrent setters are not supported.
+  - Statistics insertion preserves the zero-add fast path and existing ordering. getStatSum still returns the first stored entry; aggregation behavior is unchanged.
+  - Inline module size and instance caches, AST type caches and debug pointer IDs remain open. No unsafe cache function was labelled stable.
+source_inputs:
+  path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/complete-inputs.json
+  sha256: 4eec730d51779e8d2c524ebf3724044a54c0b838e89bfe51dd70a46de442753a
+source_input_count: 451
+source_and_generated_inputs_unchanged_during_final_checks: true
+native_build:
+  command: make -C src opt -j2
+  exit_code: 0
+  binary: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/verilator_bin-bcaf0bb4a
+  sha256: 2a8502d276cbaff7ad0102f165071934a47186f7828609f30d486f5e526d4200
+  log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/build.log
+    sha256: 9b8cee9ebcb10e2f03e85d7cf1dd9b98d679481d387da21c5b401f397b33640c
+  CPPFLAGS: -I/home/holden/verilator-work/toolchain/include
+coverage_companion_build:
+  command: make -C src ../bin/verilator_coverage_bin_dbg -j2
+  exit_code: 0
+  sha256: cf993873368ede2be616930a640c8d622095d841a09de69f0fbaf4914d9dc82e
+  log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/coverage-build.log
+    sha256: 72b65103787f01846358a39f71c9593c88bc9ae48b3359e20a4d2e0daffd8cae
+focused_source_audit:
+  command: python nodist/clang_check_attributes --jobs=1 --verilator-root=. --compile-commands-dir=src/obj_dbg src/V3LinkCells.cpp src/V3Inline.cpp src/V3FileLine.cpp src/V3Number.cpp src/V3Options.cpp
+    src/V3VariableOrder.cpp src/V3FsmDetect.cpp src/V3StatsReport.cpp
+  parent_diagnostics: 12
+  candidate_diagnostics: 2
+  removed_diagnostics: 10
+  added_diagnostics: 0
+  parsing_failures: 0
+  exit_code: 1
+  parent_log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/parent.log
+    sha256: 387dc55d4c5b46cc5dbe074711ca13bcbfda24d9a9f9886e6c6e495c73fc3db4
+  candidate_log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/focused-final.log
+    sha256: a7a6072efbd3392c92decb723c52bdc505c3bae9439ad88c14a8692c9387822e
+  comparison:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/focused-comparison.json
+    sha256: ea4d8edf2b523357eb61c4ef9c052d3baa100da1626c68f7adb7df2999d6a805
+  remaining:
+    -   - CellEdge::name()
+        - is stable_tree but calls non-stable_tree or non-mtsafe
+    -   - InlineModModuleVertex::name()
+        - is stable_tree but calls non-stable_tree or non-mtsafe
+full_source_audit:
+  status: complete_with_remaining_findings
+  command: python nodist/clang_check_attributes --jobs=2 --verilator-root=. --compile-commands-dir=src/obj_dbg --all-commands
+  translation_units: 164
+  parent_diagnostics: 21
+  candidate_diagnostics: 11
+  removed_diagnostic_pairs: 11
+  added_diagnostic_pairs: 1
+  removed_functions: 10
+  added_functions: 0
+  unsafe_functions_summary: 17
+  parsing_failures: 0
+  exit_code:
+  exit_code_note: Original tool session 8273 no longer exists; retained log contains the final report and all three recorded process IDs are absent. Exact process exit code was not recovered.
+  parent_log:
+    path: /home/holden/verilator-work/compiler-attribute-contracts-full-source.log
+    sha256: 9e094674156ecdc781cc28c5a5562db582290128cac1b3ddde7e5a9dcb68ea8a
+  candidate_log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/full-final.log
+    sha256: 981609fa195bef3f0b05f38a38f1edad975297baa3782835745458cff2cc6fea
+  comparison:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/full-comparison.json
+    sha256: b9ec03d64394ed73b14e2c39330046134527b68c49db6f89bf51c0cd69f7a6c7
+  compile_commands:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/compile-commands-final.json
+    sha256: 189247a1129327d566110a7fcad0ca932b4227c491c8dd759fa91f164a29ec72
+  diagnostic_change_note: CellEdge::name() remains unsafe, with unchanged source; whole-program inherited-contract classification changed from an unsafe-call diagnostic to a declaration/definition mismatch.
+  remaining:
+    - function: AstAssocArrayDType::dumpSmall(std::ostream &)
+      diagnostic: declaration does not match definition
+    - function: AstNode::findBitRangeDType(const VNumRange &, int, VSigning)
+      diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+    - function: AstNode::findLogicRangeDType(const VNumRange &, int, VSigning)
+      diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+    - function: AstNodeDType::skipRefIterp(bool, bool, bool)
+      diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+    - function: CellEdge::name()
+      diagnostic: declaration does not match definition
+    - function: EmitCFile::main(AstCFile *)
+      diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+    - function: EmitCImp::main(const AstNodeModule *, bool)
+      diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+    - function: EmitCTrace::main(bool)
+      diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+    - function: InlineModModuleVertex::name()
+      diagnostic: is stable_tree but calls non-stable_tree or non-mtsafe
+    - function: V3Waiver::addEntry(V3ErrorCode, const string &, const std::string &)
+      diagnostic: is mtsafe but calls non-mtsafe function(s)
+    - function: V3Waiver::write(const std::string &)
+      diagnostic: is mtsafe but calls non-mtsafe function(s)
+  source_input_count_rehashed_after_completion: 451
+  source_and_generated_inputs_unchanged: true
+statistics_concurrency_reproducer:
+  source: Actual parent/candidate V3Stats.h and V3StatsReport.cpp, linked with identical standalone harness; parent receives only the original V3Stats::s_mutex definition from V3Stats.cpp.
+  threads: 2
+  values_checked_per_run: 8000
+  parent_runs: 3
+  parent_passes: 2
+  parent_aborts: 1
+  parent_failure: double free or corruption (!prev)
+  candidate_runs: 5
+  candidate_passes: 5
+  build_commands:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/stats-harness-builds-final.json
+    sha256: fd0b6a1a376af3cfcf20979e1f872c6ed06ecb5c422207856c221f80efbd2e56
+  results:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/stats-harness-results.json
+    sha256: 9fed4f5bbd999854814d1aca99629ffa9b838d83516ee009da9195403e739999
+  limitation: Race reproduction is nondeterministic; two parent runs passed. This is not a full ThreadSanitizer audit.
+clang_thread_safety:
+  command: clang++ -std=c++17 -DVERILATOR_INTERNAL_ -DVL_DEBUG -fsyntax-only -Wthread-safety -Werror=thread-safety -Isrc/obj_dbg -Isrc -Iinclude src/V3StatsReport.cpp
+  version: Clang 18
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/clang-thread-safety.log
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+behavioral_checks:
+  final_distinct_scenarios_passed: 18
+  final_failures: 0
+  initial_log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/behavioral.log
+    sha256: 68be86ca88f816ddefca035625f735e6b9df5bc7f77cf9fe3cfd7fd7949ba432
+  initial_passes: 16
+  initial_failures: 2
+  initial_failure_cause: Coverage postprocessor not built in this component checkout; both models executed successfully.
+  rerun_log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/behavioral-coverage-final.log
+    sha256: f13fd797cef6c77a36f3ff161130342ba4bd1b555d0b93fd18f147fe7910fc48
+  rerun_passes: 2
+  rerun_failures: 0
+  command: python driver.py --jobs=1 --quiet --vlt --vltmt --driver-build-jobs=1 t/t_a3_selftest.py t/t_a3_selftest_thread.py t/t_cover_fsm_graphdump.py t/t_cover_fsm_wide_sparse.py t/t_flag_stats.py t/t_opt_inline_cfuncs_trace.py
+    t/t_trace_enum_fst.py t/t_trace_enum_saif.py t/t_trace_enum_vcd.py t/t_debug_emitv.py t/t_inline_varxref_inlineddots.py
+  rerun_command: python driver.py --jobs=1 --quiet --vlt --vltmt --driver-build-jobs=1 t/t_cover_fsm_wide_sparse.py
+  cwd: /home/holden/verilator-work/compiler-attribute-contracts/test_regress
+  threaded_selftest: t_a3_selftest_thread requests --verilate-jobs 2; the compiler pool is constructed before the self-test, and the two jobs rendezvous before insertion. The nonthreaded scenario exercises
+    the sequential path.
+fsm_graph_equivalence:
+  identical_graphs: 4
+  input: test_regress/t/t_cover_fsm_wide_sparse.v
+  normalization: Only the output directory in the graph label is replaced. All vertex labels and edges are compared exactly.
+  comparison:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/fsm-graphs-comparison.json
+    sha256: 0eb41a3e22db686ef856331e29ea03d87277981efd3edaa598c972083986e566
+distribution_checks:
+  passed: 8
+  failed: 0
+  log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/distribution.log
+    sha256: 4cd7f8ac34cd41c1f8b2a6f5844ea92cafcb686920e0bd0a35925bde67bc6092
+  drivers: [t_dist_attributes_parse_bad, t_dist_attributes_bad, t_dist_copyright, t_dist_cppstyle, t_dist_whitespace, t_dist_cinclude, t_dist_portability, t_dist_error_format]
+cppcheck:
+  scope: [src/V3FsmDetect.cpp, src/V3StatsReport.cpp]
+  parent_diagnostics: 266
+  candidate_diagnostics: 265
+  added_diagnostics: 0
+  removed_diagnostics: 1
+  comparison:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/cppcheck-comparison.json
+    sha256: f1cbae99ffaafed29bf6f2e8b099ad7b45cb7068c95eeb75e2a8c88fc08c4e32
+  commands:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/cppcheck-commands.json
+    sha256: 6ee9a998c255435fb6dd987ee4c55fc521aee29a40afd5317a80f62bd3477fbc
+  limitation: Focused scope retains preexisting diagnostics; this is not complete repository cppcheck acceptance.
+format:
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/format.log
+    sha256: ed810242e699a28067cbea9171bf66608b3ba11cdd3c2174e9c367cda122b842
+  note: Restored only formatter-created changes in two unrelated runtime files; final two source edits also passed clang-format.
+lint_py:
+  exit_code: 0
+  log:
+    path: /home/holden/verilator-work/compiler-contracts-safe-access-evidence/lint.log
+    sha256: 8bc2c4d2027f5d0ad0f7fe445bc22319ea0ac768577d1a3e510756888baeeeaf
+new_gate_credit: 0
+remaining_work:
+  - Resolve the eleven remaining compiler source findings, including real mutable caches and inherited-contract diagnostic inconsistencies.
+  - Integrate the validated components after the frozen regression, then run combined-source CI.
+  - Close remaining compiler/runtime safety defects, UVM compliance and performance acceptance criteria.

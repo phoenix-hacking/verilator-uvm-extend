@@ -28,6 +28,7 @@
 
 #include "verilated.h"
 
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <ostream>
@@ -36,6 +37,53 @@
 #include <unordered_set>
 
 //=============================================================================
+
+/// Values saved after pre_randomize, before any solver or basic randomization writes.
+class VlRandomizeState final {
+    std::unordered_set<const void*> m_objects;  // Objects already traversed
+    std::unordered_set<const void*> m_values;  // Fields already saved through aliases
+    std::vector<std::function<void()>> m_restore;  // Restore in reverse traversal order
+
+public:
+    /// Visit each object once, including aliased or cyclic object graphs.
+    template <typename T_Class>
+    bool enter(const VlClassRef<T_Class>& object) VL_MT_UNSAFE {
+        return m_objects.emplace(object.operator->()).second;
+    }
+    /// Save the complete value, including the contents and size of a container.
+    template <typename T_Value>
+    void save(T_Value& value) VL_MT_UNSAFE {
+        if (!m_values.emplace(&value).second) return;
+        m_restore.emplace_back([&value, saved = value]() mutable { value = std::move(saved); });
+    }
+    /// Scope randomization updates existing elements; preserve their storage and any ref aliases.
+    template <typename T_Value>
+    void saveArgument(T_Value& value) VL_MT_UNSAFE {
+        save(value);
+    }
+    /// Save fixed-array elements, including nested containers.
+    template <typename T_Value, size_t N_Depth>
+    void saveArgument(VlUnpacked<T_Value, N_Depth>& value) VL_MT_UNSAFE {
+        for (size_t index = 0; index < N_Depth; ++index) saveArgument(value[index]);
+    }
+    /// Save existing dynamic-array or queue elements without replacing their storage.
+    template <typename T_Value, size_t N_MaxSize>
+    void saveArgument(VlQueue<T_Value, N_MaxSize>& value) VL_MT_UNSAFE {
+        for (int32_t index = 0; index < value.size(); ++index) saveArgument(value.atWrite(index));
+    }
+    /// Save values at the existing associative-array keys.
+    template <typename T_Key, typename T_Value>
+    void saveArgument(VlAssocArray<T_Key, T_Value>& value) VL_MT_UNSAFE {
+        for (const auto& entry : value) saveArgument(value.at(entry.first));
+    }
+    /// Undo failed randomization. Saved handles keep nested objects alive until restoration ends.
+    void restore() VL_MT_UNSAFE {
+        for (auto it = m_restore.rbegin(); it != m_restore.rend(); ++it) (*it)();
+        m_restore.clear();
+        m_objects.clear();
+        m_values.clear();
+    }
+};
 
 // VlRandomExpr and subclasses represent expressions for the constraint solver.
 class ArrayInfo final {
@@ -254,6 +302,12 @@ public:
     // registered rand variable without picking new ones.
     bool next_check_only(VlRNG& rngr);
 
+    /// Preserve cyclic history when a later solve phase can still fail.
+    void saveRandcState(VlRandomizeState& state) VL_MT_UNSAFE {
+        state.save(m_randcUsedValues);
+        state.save(m_randcConstraintHash);
+    }
+
     // ---  Process the key for associative array  ---
 
     // process_key: Handle integral keys (<= 32-bit)
@@ -354,6 +408,10 @@ public:
     void set_var_disabled(const char* name) { m_disabledVars.insert(name); }
     // Clear disabled state for a variable
     void clear_var_disabled(const char* name) { m_disabledVars.erase(name); }
+
+    /// Remove a variable binding and its registered struct or array elements.
+    /// Keep cyclic history when refreshing bindings to the same object.
+    void clear_var(const std::string& name);
 
     // ---  write_var to register variables  ---
     // Register scalar variable (non-struct, basic type)

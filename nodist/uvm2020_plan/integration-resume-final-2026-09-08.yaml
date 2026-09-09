@@ -1,0 +1,110 @@
+---
+# DESCRIPTION: Verilator: Final reconciled interrupted-regression results
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-08'
+status: completed_segmented_regression_with_failures_and_skips
+revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+scope: Segmented continuation; not a fresh continuous full regression
+counts:
+  pass: 6727
+  skip: 8
+  fail: 3
+total_inventory: 6738
+resumed_counts:
+  pass: 4195
+  fail: 3
+resumed_includes: All 4185 previously pending and 13 previously failed scenarios
+finished_utc: '2026-09-08T03:58:38.099824+00:00'
+source_input_files_verified: 9812
+native_binary_hashes_verified: true
+all_stage_log_hashes_verified: true
+all_6738_current_status_hashes_verified: true
+final_inventory:
+  path: /home/holden/verilator-work/integration-resume-20260908/final-inventory.json
+  sha256: 95ffb839dc50814aa492610a93087e5ecfb4903ba76fdfb27468a1951a46e005
+state:
+  path: /home/holden/verilator-work/integration-resume-20260908/state.json
+  sha256: a383795b6a4016f33a00002b03e53ce529a7d4f5c2781e3debd5c2f68f049f35
+nonpassing:
+  - test: t/t_array_pattern_enum.py
+    scenario: vlt
+    outcome: skip
+    reason: 'Needs clang fix
+
+      '
+  - test: t/t_array_pattern_enum.py
+    scenario: vltmt
+    outcome: skip
+    reason: 'Needs clang fix
+
+      '
+  - test: t/t_benchmark_mux4k_onecpu.py
+    scenario: vlt
+    outcome: skip
+    reason: 'No numactl available
+
+      '
+  - test: t/t_benchmark_mux4k_onecpu.py
+    scenario: vltmt
+    outcome: skip
+    reason: 'No numactl available
+
+      '
+  - test: t/t_cover_line_cc.py
+    scenario: vlt
+    outcome: skip
+    reason: 'lcov or genhtml not installed
+
+      '
+  - test: t/t_cover_line_cc.py
+    scenario: vltmt
+    outcome: skip
+    reason: 'lcov or genhtml not installed
+
+      '
+  - test: t/t_dist_attributes_include.py
+    scenario: dist
+    outcome: skip
+    reason: 'compile_commands.json not found. Please install ''bear > 3.0'' and rebuild Verilator
+
+      '
+  - test: t/t_dist_attributes_src.py
+    scenario: dist
+    outcome: skip
+    reason: 'compile_commands.json not found. Please install ''bear > 3.0'' and rebuild Verilator
+
+      '
+  - test: t/t_dist_contributors.py
+    scenario: dist
+    outcome: fail
+    reason: 'Certify your contribution by sorted-inserting ''phoenix-hacking'' into docs/CONTRIBUTORS.
+
+      '
+  - test: t/t_trace_basic_cc_fst_cmake.py
+    scenario: vlt
+    outcome: fail
+    reason: 'Exec of cmake failed: /home/holden/verilator-uvm-extend/include/fstcpp/fstcpp_writer.cpp:18:10: fatal error: lz4.h: No such file or directory
+
+      '
+  - test: t/t_trace_basic_cc_fst_cmake.py
+    scenario: vltmt
+    outcome: fail
+    reason: 'Exec of cmake failed: /home/holden/verilator-uvm-extend/include/fstcpp/fstcpp_writer.cpp:18:10: fatal error: lz4.h: No such file or directory
+
+      '
+dispositions:
+  cmake_fst: Both failing scenarios pass against the combined candidate; the frozen-run failure records remain unchanged.
+  contributor: Human certification remains required; no agent edits or signatures.
+  skips: All eight skips remain open release work. Separate component attribute audits do not convert missing-database skips into full-regression passes.
+cleanup:
+  scope: Only disposable .o/.a/.gch files after completion and full evidence-hash verification
+  files_removed: 63748
+  gib_recovered: 78.4
+  manifest:
+    path: /home/holden/verilator-work/integration-resume-20260908/completed-build-cleanup.json
+    sha256: 48e88e2efa6039b53bb9cef755faeac4e9c9bc2c599a556a1d68b4dee781304b
+  retained: Native tools, source/generated code, executables, logs, statuses and coverage
+acceptance: This is not a fresh continuous full pass and does not close release acceptance.

@@ -1,0 +1,90 @@
+---
+# DESCRIPTION: Verilator: Failed scope-randomization local evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+created_utc: '2026-09-07T19:53:12.875324+00:00'
+branch: codex/randomize-std-failure
+revision: d513bed19b06233f220d67142d7f0adedd4e02eb
+parent: 001c6ca86d4cad2d8b770c0b1bf1f72658e82e99
+tree: 655e7f0e6aeb5e49a9d1582492129c5d8368dc5b
+source_tree: c1fdecbeea7d669d7b950f65302022ece3300b30
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_std_failure_d513bed19
+  sha256: 8e2e7eb5d0661afe5fc9612f1006a2d9e2af7e6eda2d20866c5fff9a289fcba9
+sources:
+  include/verilated_random.h: 362cc5fd025bc0bb11551e276252ddf6507c5509fc1dc8cff38090051e82c8ed
+  src/V3AstAttr.h: bd034766672c74821372e3a5c8dbef60f4b0bc6222831b8619bdc19d017a7cd8
+  src/V3Randomize.cpp: 8f2c7f13bd30d4c4229e72d258a4ffdff4e54de333a57b6ff2cb299318db211a
+  test_regress/t/t_randomize_std_unsat.py: 0f67f76eaa2e2b57d79b15094ab6ee6d93fd69c69764d30a94e951e6347989d5
+  test_regress/t/t_randomize_std_unsat.v: ae2f41c8228b3fd8bba6b979d92ac8fdf51f51c2798b121ddccc803086bc6dd3
+  test_regress/t/t_randomize_std_unsat_protect.py: d3ceef3c9bcc5452fbeb42e7dea418ec69dc375584bbeed54912d8a523182ed9
+logs:
+  /home/holden/verilator-work/randomize-std-failure-evidence/vlt-t_randomize_std_unsat-gcc.log: 4ad4051f095e31e52a1e4eb32997649e9276efcce98d14faa71eed94639a4077
+  /home/holden/verilator-work/randomize-std-failure-evidence/vlt-t_randomize_std_unsat-sim.log: d9f4d005a96cd2fbf111843d3bea31206aa0e4921b8aafdda4729a1012df5512
+  /home/holden/verilator-work/randomize-std-failure-evidence/vlt-t_randomize_std_unsat_protect-gcc.log: f29e81f4fe6e43ee31c56d880ad7ba1ca71a73fe8968a71d16e95f4469cfee49
+  /home/holden/verilator-work/randomize-std-failure-evidence/vlt-t_randomize_std_unsat_protect-sim.log: d90b966eafa1aea8c2c4ed87b358c20eda69591c1e55245ea3e85b5a1f994b43
+  /home/holden/verilator-work/randomize-std-failure-evidence/vltmt-t_randomize_std_unsat-gcc.log: 8aff667ac5a6bf899fa656f275e05df114bb054ac64847a08979fb39fd6b8d13
+  /home/holden/verilator-work/randomize-std-failure-evidence/vltmt-t_randomize_std_unsat-sim.log: d9f4d005a96cd2fbf111843d3bea31206aa0e4921b8aafdda4729a1012df5512
+  /home/holden/verilator-work/randomize-std-failure-evidence/vltmt-t_randomize_std_unsat_protect-gcc.log: 81481e98978548c1f8e1015a44b1ab8782ff191887987a51144003120feb9133
+  /home/holden/verilator-work/randomize-std-failure-evidence/vltmt-t_randomize_std_unsat_protect-sim.log: a90183293aab4d3c457bbf04c371068b4c2b0f4eacada02a3865f8a95f53f0cd
+  /home/holden/verilator-work/randomize-std-failure-build.log: d4a42d5fb9c58afef4f9afbb37eb6a87fdc73b4f5200a3685a1496aaef1a062e
+  /home/holden/verilator-work/randomize-std-failure-focused-2.log: 65b7f5ed492d6a792e36e52cd36e44d148a2f13ed060d1d2582d57d6b41fd53d
+  /home/holden/verilator-work/randomize-std-failure-distribution.log: 12f8e476c3a1a4929696fc88eed133fcc8f0ec85d37328ff09905b3ad42788e3
+  /home/holden/verilator-work/randomize-std-failure-before-complete.log: f3b95eea7f6c2dd2785800b3268dc5071b37606bf38b95c40898cbf151bd6f34
+  /home/holden/verilator-work/randomize-std-failure-format-final.log: 2b87fa292155a2aec642d13bec6bc604db22cb211f3fd6d74b07e1b455aa59b0
+  /home/holden/verilator-work/randomize-std-failure-lint-py-final.log: 213fb5ca1d1bdd56d370a8a3974bb911d1f88c11d981a9369ae68f5aee5f287e
+  /home/holden/verilator-work/randomize-std-failure-neighbor-tests.txt: 13a2103913e1c8bf93769dcd6a53933c7f2b20e0e78ce88eaf1c1317f2cd1059
+  /home/holden/verilator-work/randomize-std-failure-cppcheck-inputs.sha256: b3b7e828313bd476e3181b40fffce6acb46e1f391b5658dd905c09dea101d2b3
+  /home/holden/verilator-work/randomize-std-failure-neighbors.log: b8c8f764941d34d3c93fa3abd3e04438f957f82985d973734f1776e68914ee02
+focused:
+  passed: 4
+  failed: 0
+  elapsed: 0:35
+distribution:
+  passed: 6
+  failed: 0
+  elapsed: 0:11
+causal_parent:
+  revision: 001c6ca86d4cad2d8b770c0b1bf1f72658e82e99
+  worktree: /home/holden/verilator-work/randomize-std-parent-check
+  compiler: /home/holden/verilator-work/verilator_bin_failure_001c6ca86
+  passed: 0
+  failed: 4
+  elapsed: 0:28
+  failure: Failed solve changes value to 24; expected prior value 23, at test line 57.
+separate_limitation: Array ref arguments in module functions expose the existing IMPURE diagnostic for generated stdrand. The final alias tests use static class methods; the diagnostic is not fixed here.
+acceptance: Local rollback fix; full static analysis, CI, conformance and performance acceptance remain pending.
+neighbors:
+  status: completed
+  drivers: 196
+  scenarios: 341
+  passed: 341
+  failed: 0
+  elapsed: '64:23'
+  manifest: /home/holden/verilator-work/randomize-std-failure-neighbor-tests.txt
+  log: /home/holden/verilator-work/randomize-std-failure-neighbors.log
+  sha256: b8c8f764941d34d3c93fa3abd3e04438f957f82985d973734f1776e68914ee02
+static_analysis:
+  status: running
+  log: /home/holden/verilator-work/randomize-std-failure-cppcheck.log
+  inputs: /home/holden/verilator-work/randomize-std-failure-cppcheck-inputs.sha256
+execution_worktree: /home/holden/verilator-work/randomize-std-failure
+date: '2026-09-07'
+new_gate_credit: 0
+implementation:
+  - Save every argument before any basic randomization write, including aliased references.
+  - Restore scalar and wide values after failure. Restore existing fixed/dynamic/queue/associative array elements recursively without replacing storage used by active references.
+  - Leave the unconstrained scope-randomization path free of snapshot state.
+test_coverage: Repeated scalar/65-bit failures and recovery; static class methods; scalar aliases; references to elements of fixed and dynamic array arguments; both fixed-array directions and nonzero bounds;
+  queues, associative keys, typedef nested queues, and zero-argument constraints; C++14 and protected identifiers.
+ci:
+  format:
+    run: 34157282264
+    status: queued
+  build_test:
+    run: 34157282425
+    status: queued
+  contributor_agreement:
+    run: 34157282244
+    status: queued

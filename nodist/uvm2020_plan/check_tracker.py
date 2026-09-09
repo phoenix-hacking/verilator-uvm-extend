@@ -49,9 +49,17 @@ VALID_STATUSES = frozenset(
 )
 EXPECTED_CRITERIA = frozenset(f"C{number:02d}" for number in range(1, 22))
 EXPECTED_MILESTONES = frozenset(f"M{number:02d}" for number in range(20))
+GOAL_CHECKS = {
+    "G-UVM":
+    frozenset(
+        {"inventory", "source", "semantics", "integration", "independent_oracles", "release"}),
+    "G-PERF":
+    frozenset({"baselines", "workloads", "measurements", "improvement", "regression_limits",
+               "ci"}),
+}
 UVM2020_LANE_VARIABLES = ("UVM2020_REDUCED_TESTS", "UVM2020_PACKAGE_TESTS")
 UVM2020_LANE_COMPOSITION = [f"$({name})" for name in UVM2020_LANE_VARIABLES]
-UVM2020_LANE_TEST_COUNT = 20
+UVM2020_LANE_TEST_COUNT = 27
 FOCUSED_LANE_VARIABLES = (
     "NAMED_DISABLE_EXISTING_TESTS",
     "NAMED_DISABLE_COMPILER_TESTS",
@@ -629,6 +637,19 @@ class TrackerChecker:
             }
 
         make_tests: list[str] = []
+        recipe_match = re.search(
+            r"^uvm2020:\n((?:\t[^\n]*\n)+)", "\n".join(makefile_lines) + "\n", re.M
+        )
+        recipe = recipe_match.group(1).replace("\\\n", " ") if recipe_match else ""
+        driver_command = next(
+            (line for line in recipe.splitlines() if "driver.py " in line), ""
+        )
+        for option in ("--jobs=1", "--driver-preserve-order"):
+            if option not in driver_command.split():
+                self.error(
+                    "$makefile.uvm2020",
+                    f"ordered execution requires {option} on the driver command",
+                )
         for variable in UVM2020_LANE_VARIABLES:
             make_tests.extend(self.make_assignment(makefile_lines, variable))
         composition = self.make_assignment(makefile_lines, "UVM2020_TESTS")
@@ -683,11 +704,11 @@ class TrackerChecker:
                     "must be a full lowercase Git object ID",
                 )
 
-            environment = self.mapping(
+            local_environment = self.mapping(
                 local.get("environment"), f"{local_path}.environment"
             )
             for field in ("VERILATOR_ROOT", "VERILATOR_BIN", "PYTHONPATH", "PATH"):
-                value = environment.get(field)
+                value = local_environment.get(field)
                 if not isinstance(value, str) or not value.startswith("/"):
                     self.error(
                         f"{local_path}.environment.{field}",
@@ -695,7 +716,7 @@ class TrackerChecker:
                     )
 
             compiler = self.mapping(local.get("compiler"), f"{local_path}.compiler")
-            if compiler.get("path") != environment.get("VERILATOR_BIN"):
+            if compiler.get("path") != local_environment.get("VERILATOR_BIN"):
                 self.error(
                     f"{local_path}.compiler.path",
                     "must match environment.VERILATOR_BIN",
@@ -1011,6 +1032,47 @@ class TrackerChecker:
             "proofs": proof_statuses,
         }
 
+    def check_goals(self, root: dict[Any, Any], program: dict[str, Any],
+                    milestones: dict[str, Any]) -> dict[str, Any]:
+        goals = self.mapping(root.get("goals"), "$.goals")
+        if set(goals) != set(GOAL_CHECKS):
+            self.error("$.goals", "requires exactly G-UVM and G-PERF")
+        result: dict[str, Any] = {}
+        for goal_id, required_checks in GOAL_CHECKS.items():
+            path = f"$.goals.{goal_id}"
+            goal = self.mapping(goals.get(goal_id), path)
+            status = self.status(goal.get("status"), f"{path}.status")
+            checks = self.mapping(goal.get("checks"), f"{path}.checks")
+            if set(checks) != required_checks:
+                self.error(f"{path}.checks", "must preserve all acceptance checks in GOALS.md")
+            complete = 0
+            for check_id in sorted(required_checks):
+                check_path = f"{path}.checks.{check_id}"
+                check = self.mapping(checks.get(check_id), check_path)
+                check_status = self.status(check.get("status"), f"{check_path}.status")
+                self.checked_evidence_refs(check.get("evidence", []), f"{check_path}.evidence",
+                                           check_status)
+                if check_status == "pass":
+                    complete += 1
+            if goal_id == "G-UVM":
+                prerequisites_pass = program["complete"] == len(EXPECTED_CRITERIA)
+            else:
+                prerequisites_pass = all(milestones["by_id"].get(milestone, {}).get(
+                    "gates", {}).get(gate, {}).get("status") == "pass" for milestone, gate in (
+                        ("M04", "M04-G06-RTL-PERFORMANCE"),
+                        ("M17", "M17-G03-PERFORMANCE"),
+                    ))
+            if status == "pass" and (complete != len(required_checks) or not prerequisites_pass):
+                self.error(f"{path}.status",
+                           "pass requires every acceptance check and prerequisite")
+            result[goal_id] = {
+                "status": status,
+                "accepted_checks": complete,
+                "required_checks": len(required_checks),
+                "prerequisites_pass": prerequisites_pass,
+            }
+        return result
+
     def check_declared_progress(self, root: dict[Any, Any]) -> None:
         progress = self.mapping(root.get("progress"), "$.progress")
         expected_sections = {"program", "milestones", "gates", "corpus", "lane"}
@@ -1051,7 +1113,9 @@ class TrackerChecker:
         lane = self.check_lane(root, evidence)
         focused_lane = self.check_focused_lane(root)
         expanded_lane = self.check_expanded_lane(root)
+        goals = self.check_goals(root, program, milestones)
         self.computed = {
+            "goals": goals,
             "program": program,
             "milestones": milestones,
             "issues": issues,
@@ -1114,6 +1178,10 @@ def _format_text(path: Path, errors: list[str], computed: dict[str, Any]) -> str
                 f"- issue #{issue_id} mapped gates: {issue['complete']}/{issue['total']} "
                 f"({issue['percent']}%)"
             )
+        for goal_id, goal in computed["goals"].items():
+            lines.append(f"- goal {goal_id}: {goal['status']}; accepted checks "
+                         f"{goal['accepted_checks']}/{goal['required_checks']}; "
+                         f"prerequisites_pass={goal['prerequisites_pass']}")
     return "\n".join(lines)
 
 

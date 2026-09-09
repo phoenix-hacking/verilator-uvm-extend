@@ -1,0 +1,77 @@
+---
+# DESCRIPTION: Verilator: Local ordered UVM source-library evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+collected_at_utc: '2026-09-07T08:56:17.577305+00:00'
+claim: Ordered local UVM source-library regression; formal acceptance remains pending CI and integration.
+implementation_revision: 0be94bf570fb1538b54a683a8985d91cce4072e4
+compiler_src_tree: effb873ca9b0ec74e749f8188ffd7d8bb5259ac2
+compiler_binary_sha256: 9c79b7e4c2395a3baf9d26afdca34e1dd5c0daba71c0d060ba10c66f22731fe9
+library:
+  repository: https://github.com/accellera-official/uvm-core
+  revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  checkout_unmodified: true
+  dpi_adapter: test_regress/t/t_uvm_source_dpi.cpp
+command: make -C test_regress uvm2020-source UVM_SOURCE_ROOT=/path/to/uvm-core
+result:
+  passed: 27
+  failed: 0
+  elapsed: '78:18'
+  order_verified: true
+  sentinels: ['uvm2020: clean-before symlink safety PASSED', 'uvm2020-source: stale-artifact cleanup PASSED', PHASE_TEARDOWN_SENTINEL phases=1000 winners=1000 cleanups=1000]
+raw_log: /home/holden/verilator-work/uvm-source-lane-adapter-final.log
+raw_log_sha256: 845d360cd37bc91b65199e1a99e4fdb586df0c9cba1916edcd67bcf25ec76bd8
+passed_in_order:
+  - t_uvm_lrm_sched_wait_zero
+  - t_uvm_lrm_process_kill_tree
+  - t_uvm_lrm_process_kill_self_tree
+  - t_uvm_lrm_process_kill_self_zero
+  - t_uvm_lrm_process_kill_function
+  - t_uvm_lrm_process_kill_wait_zero
+  - t_process_context_fork
+  - t_process_fork_finished
+  - t_process_phase_teardown
+  - t_process_self_kill_ctor
+  - t_process_self_kill_initial
+  - t_timing_finish
+  - t_finish_stops_nonfinal
+  - t_clocking_virtual
+  - t_class_param_static_identity
+  - t_class_member_sel_used
+  - t_uvm_core_factory_basic
+  - t_uvm_core_factory_param
+  - t_uvm_config_vif_clocking
+  - t_uvm_config_resource_component
+  - t_uvm_resource_numeric_precedence
+  - t_uvm_core_phasing
+  - t_uvm_tlm_analysis_fifo
+  - t_uvm_sequence_driver_flow
+  - t_uvm_hello_all_v2020_3_1_nodpi
+  - t_uvm_hello_all_v2020_3_1_dpi
+  - t_uvm_dpi_v2020_3_1
+implementation_file_sha256:
+  .github/workflows/build-test.yml: 3231a4f9e2c815268b173fc8fbb0abf7220eaeb4be806089c7368ad5ffa11584
+  .github/workflows/reusable-test.yml: 1bc81059bfc24d6f931d5b5bc4203211ca14d38121e610aee47b453f3ad32f4a
+  ci/ci-script.bash: 37edda5917530aebd227610c56acd7634e81107bbe459c428c84123ef0ad6ba9
+  docs/internals.rst: 0c72c4736e5b1c21790a7ffaa24bbaf9784b82fe354b48ba375801cb20bbd1cf
+  test_regress/Makefile: e93fd886605a471aaaae7f203c024efd3622d261fdaced9b81df47c05142ae8e
+  test_regress/driver.py: 6cfcef07884936005d4d8b7bacb0f3fae9a1dabc4fcf4bd44192452fa9f862b8
+  test_regress/t/t_uvm_config_resource_component.py: 165b026ab4627516cc655169ab211c2ddd1bbcfcd763ed829931a0b0dc15f84b
+  test_regress/t/t_uvm_config_vif_clocking.py: fccd56c5dbb0d07851c484d0861906122d5379193c9a954d419a92607170bdb6
+  test_regress/t/t_uvm_core_factory_basic.py: b437f771510b4d44050abd269a082a90dc554ffc3eb612b4392f66101f582072
+  test_regress/t/t_uvm_core_factory_param.py: ea3525b72460059262b0894c8f80846235fbb78a4bb35f50745e0585eda02073
+  test_regress/t/t_uvm_core_phasing.py: d3b03922942c044c6fa969cc581e0eca3613ffca0643358f0b0bff267a8082a3
+  test_regress/t/t_uvm_dpi_v2020_3_1.py: 9985d6fe08f2566320504272ac82d4d9f110873d5111e3894275a9e1ece724c4
+  test_regress/t/t_uvm_hello_all_v2020_3_1_dpi.py: 77bc471dc3feff87e4f242ff4c3ad1c21772c513a675015ff1f33ae1152dd76d
+  test_regress/t/t_uvm_hello_all_v2020_3_1_nodpi.py: 954d5075e45a0c7e8493529c0c5621c094720d3266c7c29cff0f571be92984f3
+  test_regress/t/t_uvm_resource_numeric_precedence.py: 64fce722b3fbe435d002d8059cbc3470a9d5fcc4f62370c9dc3cd2c0699350ba
+  test_regress/t/t_uvm_sequence_driver_flow.py: 4ac821a1a18646e70faad3b9f3f11b1858653b2a92a7a83c0e28f2956e22be0a
+  test_regress/t/t_uvm_tlm_analysis_fifo.py: b300b0e1e6267e7b7e0ab960863eb402c65efceb534336cbf93d9b2378cdfda2
+  test_regress/t/t_driver_uvm_source.py: 2610fea6d29fa8ae6a0b92157c23603798fa3b16996cc6f86c97f3989f1a8788
+  test_regress/t/t_uvm_source_dpi.cpp: 50ac7bfc3656cb19b25901f0cec3b8a7694faad70c41c4b623c681a1561d2df3
+limits:
+  - The resource direct-lookup XFAIL remains outside conformance credit.
+  - The new UVM randomized sequence test is a separate development test and is not in this 27-test selection.
+  - Regression duration is not performance evidence.
+  - Full regression and exact-revision CI are incomplete.

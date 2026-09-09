@@ -94,7 +94,7 @@ NAMED_DISABLE_SENTINELS := $(addsuffix /interrupted.gch,$(NAMED_DISABLE_OBJ_DIRS
 .PHONY: named-disable
 named-disable:
 	@echo "named-disable: running $(words $(NAMED_DISABLE_RUN_TESTS))/$(words $(NAMED_DISABLE_TESTS)) available focused tests"
-	$(PYTHON3) driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+	$(PYTHON3) driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
 		--driver-clean-before-seed=interrupted.gch \
 		--obj-suffix=-named-disable --vlt --vltmt $(NAMED_DISABLE_RUN_TESTS)
 	@for sentinel in $(NAMED_DISABLE_SENTINELS); do \
@@ -118,11 +118,18 @@ UVM2020_REDUCED_TESTS := \
 	t/t_process_self_kill_initial.py \
 	t/t_timing_finish.py \
 	t/t_finish_stops_nonfinal.py \
-	t/t_clocking_virtual.py
+	t/t_clocking_virtual.py \
+	t/t_class_param_static_identity.py \
+	t/t_class_member_sel_used.py
 UVM2020_PACKAGE_TESTS := \
 	t/t_uvm_core_factory_basic.py \
+	t/t_uvm_core_factory_param.py \
 	t/t_uvm_config_vif_clocking.py \
+	t/t_uvm_config_resource_component.py \
+	t/t_uvm_resource_numeric_precedence.py \
 	t/t_uvm_core_phasing.py \
+	t/t_uvm_tlm_analysis_fifo.py \
+	t/t_uvm_sequence_driver_flow.py \
 	t/t_uvm_hello_all_v2020_3_1_nodpi.py \
 	t/t_uvm_hello_all_v2020_3_1_dpi.py \
 	t/t_uvm_dpi_v2020_3_1.py
@@ -133,7 +140,7 @@ UVM2020_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_OBJ_DIRS))
 .PHONY: uvm2020
 uvm2020:
 	$(PYTHON3) ../nodist/uvm2020_plan/check_cleanup_safety.py
-	$(PYTHON3) driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+	$(PYTHON3) driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
 		--driver-clean-before-seed=interrupted.gch \
 		--obj-suffix=-uvm2020 --vlt $(UVM2020_TESTS)
 	@for sentinel in $(UVM2020_SENTINELS); do \
@@ -142,6 +149,66 @@ uvm2020:
 			exit 1; \
 		fi; \
 	done; echo "uvm2020: stale-artifact cleanup PASSED"
+
+UVM_SOURCE_ROOT ?=
+UVM2020_SOURCE_OBJ_DIRS := $(patsubst t/%.py,obj_vlt/%-uvm2020-source,$(UVM2020_TESTS))
+UVM2020_SOURCE_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_SOURCE_OBJ_DIRS))
+
+.PHONY: uvm2020-source
+uvm2020-source:
+	@test -n "$(UVM_SOURCE_ROOT)" || { echo "%Error: set UVM_SOURCE_ROOT to the upstream UVM checkout" >&2; exit 1; }
+	$(PYTHON3) ../nodist/uvm2020_plan/check_cleanup_safety.py
+	$(PYTHON3) driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
+		--driver-clean-before-seed=interrupted.gch --driver-uvm-source-root="$(UVM_SOURCE_ROOT)" \
+		--obj-suffix=-uvm2020-source --vlt $(UVM2020_TESTS)
+	@for sentinel in $(UVM2020_SOURCE_SENTINELS); do \
+		if test -e "$$sentinel" || test -L "$$sentinel"; then \
+			echo "%Error: stale-artifact sentinel survived: $$sentinel" >&2; \
+			exit 1; \
+		fi; \
+	done; echo "uvm2020-source: stale-artifact cleanup PASSED"
+
+UVM2020_RANDOMIZE_SOURCE_OBJ_DIRS := \
+	obj_vlt/t_uvm_sequence_randomize-uvm2020-randomize-source \
+	obj_vltmt/t_uvm_sequence_randomize-uvm2020-randomize-source
+UVM2020_RANDOMIZE_SOURCE_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_RANDOMIZE_SOURCE_OBJ_DIRS))
+
+.PHONY: uvm2020-randomize-source
+uvm2020-randomize-source:
+	@test -n "$(UVM_SOURCE_ROOT)" || { echo "%Error: set UVM_SOURCE_ROOT to the upstream UVM checkout" >&2; exit 1; }
+	$(PYTHON3) -c 'from driver import Capabilities; import sys; sys.exit(0 if Capabilities.have_solver else "%Error: no constraint solver installed")'
+	$(PYTHON3) ../nodist/uvm2020_plan/check_cleanup_safety.py
+	$(PYTHON3) driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
+		--driver-clean-before-seed=interrupted.gch --driver-uvm-source-root="$(UVM_SOURCE_ROOT)" \
+		--obj-suffix=-uvm2020-randomize-source --vlt --vltmt t/t_uvm_sequence_randomize.py
+	@for sentinel in $(UVM2020_RANDOMIZE_SOURCE_SENTINELS); do \
+		if test -e "$$sentinel" || test -L "$$sentinel"; then \
+			echo "%Error: stale-artifact sentinel survived: $$sentinel" >&2; \
+			exit 1; \
+		fi; \
+	done; echo "uvm2020-randomize-source: stale-artifact cleanup PASSED"
+
+UVM2020_PROTOCOL_TESTS := \
+	t/t_uvm_apb_env.py \
+	t/t_uvm_axi_env.py
+UVM2020_PROTOCOL_SOURCE_OBJ_DIRS := \
+	$(patsubst t/%.py,obj_vlt/%-uvm2020-protocol-source,$(UVM2020_PROTOCOL_TESTS)) \
+	$(patsubst t/%.py,obj_vltmt/%-uvm2020-protocol-source,$(UVM2020_PROTOCOL_TESTS))
+UVM2020_PROTOCOL_SOURCE_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_PROTOCOL_SOURCE_OBJ_DIRS))
+
+.PHONY: uvm2020-protocol-source
+uvm2020-protocol-source:
+	@test -n "$(UVM_SOURCE_ROOT)" || { echo "%Error: set UVM_SOURCE_ROOT to the upstream UVM checkout" >&2; exit 1; }
+	$(PYTHON3) ../nodist/uvm2020_plan/check_cleanup_safety.py
+	$(PYTHON3) driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
+		--driver-clean-before-seed=interrupted.gch --driver-uvm-source-root="$(UVM_SOURCE_ROOT)" \
+		--obj-suffix=-uvm2020-protocol-source --vlt --vltmt $(UVM2020_PROTOCOL_TESTS)
+	@for sentinel in $(UVM2020_PROTOCOL_SOURCE_SENTINELS); do \
+		if test -e "$$sentinel" || test -L "$$sentinel"; then \
+			echo "%Error: stale-artifact sentinel survived: $$sentinel" >&2; \
+			exit 1; \
+		fi; \
+	done; echo "uvm2020-protocol-source: stale-artifact cleanup PASSED"
 
 ######################################################################
 

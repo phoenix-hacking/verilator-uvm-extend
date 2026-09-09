@@ -46,6 +46,7 @@
 #ifdef __GNUC__
 # define VL_ATTR_ALWINLINE __attribute__((always_inline)) inline
 # define VL_ATTR_NOINLINE __attribute__((noinline))
+# define VL_ATTR_NONNULL(argNum) __attribute__((nonnull(argNum)))
 # define VL_ATTR_COLD __attribute__((cold))
 # define VL_ATTR_HOT __attribute__((hot))
 # define VL_ATTR_NORETURN __attribute__((noreturn))
@@ -158,6 +159,9 @@
 #endif
 #ifndef VL_ATTR_NOINLINE
 # define VL_ATTR_NOINLINE  ///< Attribute to never inline, even when optimizing
+#endif
+#ifndef VL_ATTR_NONNULL
+# define VL_ATTR_NONNULL(argNum)  ///< Attribute that a numbered pointer argument must be nonnull
 #endif
 #ifndef VL_ATTR_COLD
 # define VL_ATTR_COLD  ///< Attribute that function is rarely executed

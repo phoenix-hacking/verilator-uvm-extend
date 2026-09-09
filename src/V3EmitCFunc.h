@@ -455,12 +455,14 @@ public:
             AstCStmt* const vlprocp = new AstCStmt{nodep->fileline()};
             vlprocp->add("VlProcessRef vlProcess = std::make_shared<VlProcess>();\n");
             vlprocp->add("VlNamedActivationToken vlActivation;\n");
-            vlprocp->add("VlProcessContext __VprocessContext{vlProcess.get()};");
+            vlprocp->add("VlProcessContext __VprocessContext{*vlProcess};");
             nodep->stmtsp()->addHereThisAsNext(vlprocp);
         } else if (nodep->needProcess() && nodep->stmtsp()) {
+            // Every caller supplies a process. Use the non-null context overload so GCC
+            // does not infer a null path before an atomic process-state read.
             // Set current process so VlRNG() constructors in this function seed from it
             AstCStmt* const setProcessp = new AstCStmt{nodep->fileline()};
-            setProcessp->add("VlProcessContext __VprocessContext{vlProcess.get()};");
+            setProcessp->add("VlProcessContext __VprocessContext{*vlProcess};");
             nodep->stmtsp()->addHereThisAsNext(setProcessp);
         }
 
@@ -1352,7 +1354,13 @@ public:
         }
         // GCC allows compound statements in expressions, but this is not standard.
         // So we use an immediate-evaluation lambda and comma operator
-        putnbs(nodep, "([&]() {\n");
+        putnbs(nodep, "([&]()");
+        if (!nodep->hasResult()) {
+            // A cancellation return may use {}, which cannot deduce a lambda return type.
+            puts(" -> ");
+            putnbs(nodep, nodep->dtypep()->cType("", false, false));
+        }
+        puts(" {\n");
         if (!nodep->hasResult()) {
             iterateAndNextConstNull(nodep->stmtsp());
             puts("}())");
@@ -1896,9 +1904,9 @@ public:
         puts("}");
     }
     void visit(AstConsPackMember* nodep) override {
-        auto* const vdtypep = VN_AS(nodep->dtypep(), MemberDType);
+        const AstMemberDType* const vdtypep = VN_AS(nodep->dtypep(), MemberDType);
         putnbs(nodep, ".");
-        puts(vdtypep->name());
+        puts(vdtypep->nameProtect());
         puts(" = ");
         iterateConst(nodep->rhsp());
     }

@@ -424,6 +424,18 @@ class UndrivenVisitor final : public VNVisitorConst {
     }
 
     // VISITORS
+    void visit(AstNodeForeach* nodep) override {
+        // Iteration implicitly assigns each index, including constraint foreach
+        // indices that have not yet been lowered to procedural loops.
+        for (AstNode* indexp = nodep->headerp()->elementsp(); indexp; indexp = indexp->nextp()) {
+            if (AstVar* const varp = VN_CAST(indexp, Var)) {
+                for (int usr = 1; usr < (m_alwaysCombp ? 3 : 2); ++usr) {
+                    getEntryp(varp, usr)->drivenWhole(nodep);
+                }
+            }
+        }
+        iterateChildrenConst(nodep);
+    }
     void visit(AstVar* nodep) override {
         const bool funcInout = nodep->isFuncLocal() && nodep->isInout();
         for (int usr = 1; usr < (m_alwaysCombp ? 3 : 2); ++usr) {
@@ -481,6 +493,17 @@ class UndrivenVisitor final : public VNVisitorConst {
             m_inSelLhs = !V3Width::selectNonConstantRecurse(nodep->lsbp(), /*inSel=*/true);
             iterateConst(nodep->fromp());
         }
+    }
+    void visit(AstMemberSel* nodep) override {
+        AstVar* const varp = nodep->varp();
+        if (!VN_IS(varp->backp(), ClockingItem)) {
+            for (int usr = 1; usr < (m_alwaysCombp ? 3 : 2); ++usr) {
+                UndrivenVarEntry* const entryp = getEntryp(varp, usr);
+                if (m_inBBox || nodep->access().isWriteOrRW()) entryp->drivenWhole(nodep);
+                if (m_inBBox || nodep->access().isReadOrRW()) entryp->usedWhole(nodep);
+            }
+        }
+        iterateChildrenConst(nodep);
     }
     void visit(AstNodeVarRef* nodep) override {
         // Any variable

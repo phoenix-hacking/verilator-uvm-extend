@@ -238,14 +238,11 @@
   198 |       illegal_bins lib_cross = binsof(a);
       |       ^~~~~~~~~~~~
 %Warning-COVERIGN: t/t_covergroup_unsup.v:104:18: Ignoring unsupported coverage cross option: 'comment'
-  104 |     cross a, b { option.comment = "cross"; option.weight = 12; option.per_instance = 1; }
+  104 |     cross a, b { option.comment = "cross"; option.per_instance = 1; }
       |                  ^~~~~~
-%Warning-COVERIGN: t/t_covergroup_unsup.v:104:44: Ignoring unsupported coverage cross option: 'weight'
-  104 |     cross a, b { option.comment = "cross"; option.weight = 12; option.per_instance = 1; }
+%Warning-COVERIGN: t/t_covergroup_unsup.v:104:44: Ignoring unsupported coverage cross option: 'per_instance'
+  104 |     cross a, b { option.comment = "cross"; option.per_instance = 1; }
       |                                            ^~~~~~
-%Warning-COVERIGN: t/t_covergroup_unsup.v:104:64: Ignoring unsupported coverage cross option: 'per_instance'
-  104 |     cross a, b { option.comment = "cross"; option.weight = 12; option.per_instance = 1; }
-      |                                                                ^~~~~~
 %Warning-WIDTHTRUNC: t/t_covergroup_unsup.v:76:5: Logical operator COVERPOINT 'a' expects 1 bit on the iff condition, but iff condition's VARREF 'b' generates 32 bits.
                                                 : ... note: In instance 't'
    76 |     coverpoint a iff (b);
@@ -286,7 +283,7 @@
       |           ^
 %Warning-COVERIGN: t/t_covergroup_unsup.v:104:11: Unsupported: cross of 'a' which is not a coverpoint (implicit coverpoint)
                                                 : ... note: In instance 't'
-  104 |     cross a, b { option.comment = "cross"; option.weight = 12; option.per_instance = 1; }
+  104 |     cross a, b { option.comment = "cross"; option.per_instance = 1; }
       |           ^
 %Warning-COVERIGN: t/t_covergroup_unsup.v:107:11: Unsupported: cross of 'a' which is not a coverpoint (implicit coverpoint)
                                                 : ... note: In instance 't'

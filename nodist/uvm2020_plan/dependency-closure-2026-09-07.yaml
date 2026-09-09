@@ -1,0 +1,58 @@
+# DESCRIPTION: Verilator: Local execution of previously blocked UVM compatibility tests
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim: Eight previously blocked declared compatibility oracles now pass locally; no UVM milestone or conformance
+  claim.
+source:
+  checkout_revision: e9e39968b3ed79c1dd6910f7e3d1d1380210c935
+  compiler_src_tree: effb873ca9b0ec74e749f8188ffd7d8bb5259ac2
+  runtime_include_tree: fe06258a29731f55f10fa64b0430177848969ce2
+  working_tree: Uncommitted upstream-UVM source selection changes do not change these eight test drivers
+    or HDL inputs.
+  optimized_binary_sha256: 9c79b7e4c2395a3baf9d26afdca34e1dd5c0daba71c0d060ba10c66f22731fe9
+  debug_binary_sha256: b015fc762c7980cf67405a2ac69844f397c40a46fc82c2a4464abbc83ffac27f
+environment:
+  os: Ubuntu 20.04; Linux 5.15.0-139-generic x86_64
+  cxx: conda-forge GCC 13.4.0
+  python: 3.12.14
+  solver: Z3 5.1.0
+  activation: source /home/holden/verilator-work/env.sh
+  caveat: Conda activation exports incompatible fortify flags. Final test environment unsets CPPFLAGS;
+    generated-model include paths are configured. Compiler binaries were initially built before CPPFLAGS
+    cleanup, so this is not evidence of a fresh rebuild with revised flags.
+  toolchain-linux-64.lock:
+    path: /home/holden/verilator-work/toolchain-linux-64.lock
+    sha256: c4cdc7b32efc3ef7668cbba32fec04e5452be7de82475cabf21095949d67f360
+  python-requirements.lock:
+    path: /home/holden/verilator-work/python-requirements.lock
+    sha256: 80d1ee9693cf445461d9084bd0599fb8d82f5ac0688d861175c0f9cfe72608a5
+execution:
+  status: pass
+  cwd: test_regress
+  command: python3 driver.py --vlt --jobs 2 --driver-build-jobs 2 --driver-clean-before --obj-suffix=-uvm-completion
+    t/t_class_dead_varscope_uaf.py t/t_constraint_global_nested_member.py t/t_constraint_global_randMode.py
+    t/t_constraint_global_randmode_subobj.py t/t_randomize.py t/t_randomize_class_inherit_size_foreach.py
+    t/t_randomize_shift_distribution.py t/t_randomize_std_param_extends.py
+  passed: 8
+  failed: 0
+  elapsed: 0:39
+  tests:
+  - t_class_dead_varscope_uaf
+  - t_constraint_global_nested_member
+  - t_constraint_global_randMode
+  - t_constraint_global_randmode_subobj
+  - t_randomize
+  - t_randomize_class_inherit_size_foreach
+  - t_randomize_shift_distribution
+  - t_randomize_std_param_extends
+  log_path: /home/holden/verilator-work/blocked-eight-final.log
+  log_sha256: 4c67ea9290475b012eacd1f02819706e6b2830b632fb493707ebd881f569242d
+claim_boundary:
+- This extends accumulated compatibility evidence to 115/115 passing declared oracles; it is not one fresh
+  115-test run.
+- The two UVM resource tests still retain a bounded direct-lookup XFAIL; passing their declared oracles
+  does not establish resource conformance.
+- Solver regressions do not establish constrained-random UVM sequence-item acceptance.
+- Historical frozen-baseline environment and dependency dispositions remain unchanged.

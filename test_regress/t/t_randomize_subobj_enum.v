@@ -36,9 +36,11 @@ module t;
     STOP = 3'd5
   } state_e;
 
+  typedef class TopObj;
   class InnerObj;
     rand color_e color;
     rand state_e state;
+    TopObj parent;
   endclass
 
   class OuterObj;
@@ -60,17 +62,30 @@ module t;
 
   class TopObj;
     rand MiddleObj mid;
+    rand InnerObj sibling;
 
     function new();
       mid = new();
+      sibling = new();
+      mid.inner.parent = this;
+      sibling.parent = this;
     endfunction
+  endclass
+
+  // Recursive declarations are allowed when the class is not randomized.
+  class Unrandomized;
+    rand Unrandomized child;
+    bit [6:0] value;
   endclass
 
   initial begin
     OuterObj obj;
     TopObj top;
+    Unrandomized unused_obj;
     obj = new();
     top = new();
+    unused_obj = new();
+    unused_obj.value = 17;
 
     // Test direct sub-object enum (one level deep)
     repeat (20) begin
@@ -84,7 +99,13 @@ module t;
       `checkd(top.randomize(), 1)
       `check_enum_color(top.mid.inner.color)
       `check_enum_state(top.mid.inner.state)
+      `check_enum_color(top.sibling.color)
+      `check_enum_state(top.sibling.state)
+      `checkd(top.mid.inner.parent == top, 1)
+      `checkd(top.sibling.parent == top, 1)
     end
+    `checkd(unused_obj.value, 17)
+    `checkd(unused_obj.child == null, 1)
 
     $write("*-* All Finished *-*\n");
     $finish;

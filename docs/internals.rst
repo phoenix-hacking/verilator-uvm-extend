@@ -2369,6 +2369,32 @@ driver.py Non-Scenario Arguments
    Before each selected test starts, remove its complete generated-object
    directory. This prevents reuse of objects left by an interrupted run.
 
+.. option:: --driver-preserve-order
+
+   Schedule tests in their command-line order instead of sorting them by test
+   priority. Use with ``--jobs=1`` when a lane must finish its reduced semantic
+   tests before starting larger integration tests. Scenario filtering still
+   applies. Without this option, higher-priority tests are scheduled first.
+
+.. option:: --driver-uvm-source-root <directory>
+
+   For internal use only. Run the UVM 2020 regression tests against the
+   ``src`` directory in an upstream UVM source checkout. The selected tests
+   compile that checkout's package and, when needed, its DPI implementation.
+   For DPI builds, ``t/t_uvm_source_dpi.cpp`` links the unchanged upstream
+   common, regex, command-line, and polling components with Verilator's HDL
+   backend. Accellera 2020.3.1 does not select a Verilator backend in its
+   top-level ``uvm_dpi.cc``. The adapter keeps this simulator-specific code
+   separate from the upstream checkout.
+   A missing source file is an error. Without this option, tests use the
+   bundled UVM artifacts.
+
+   Run the ordered UVM lane against a source checkout with
+   ``make -C test_regress uvm2020-source UVM_SOURCE_ROOT=/path/to/uvm-core``.
+   This target covers both DPI and no-DPI tests and uses separate generated
+   object directories from the bundled ``uvm2020`` target. CI pins the source
+   checkout to Accellera UVM 2020.3.1 and checks that it remains unmodified.
+
 .. option:: --dump-tree
 
    Same as ``verilator --dump-tree``: Enable Verilator writing .tree debug

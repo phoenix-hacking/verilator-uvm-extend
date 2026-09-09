@@ -1,0 +1,90 @@
+---
+# DESCRIPTION: Verilator: Recursive rand class diagnostic local evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: Local correctness evidence for early diagnostics on unsupported recursive rand class paths. This does not add recursive-class randomization support or close full-regression, CI, static,
+  conformance, or performance acceptance.
+branch: codex/randomize-recursion-check
+revision: ab1d4498f067323019f3276472c056005f54c1a0
+tree: 882fc1b20f938ceab37168c08912d3b9bd6ca2e0
+source_tree: cdd8f4dca1ef4bf59662a820f67dae3bb64ef725
+parent: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+execution_worktree: /home/holden/verilator-work/randomize-recursion-check
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_recursive_ab1d4498f
+  sha256: 3836c3c262af2a6e4298b639c0d3b6beab3d5fa0df93a64c5a9a11362e534bc2
+  version: Verilator 5.051 devel rev vUNKNOWN-built20260907-04fc80d15 (mod)
+  configure: --enable-ccwarn --enable-longtests
+  build: make -C src opt -j2
+  provenance: A fresh native source build, completed for the optimized target. The configured revision string predates the commit; the preserved binary hash identifies the tested compiler.
+implementation:
+  - Check scalar rand class paths before constraint cloning, including typedefs and inherited members.
+  - Diagnose self and indirect recursion, then clear the unsupported rand edge so subsequent traversals terminate.
+  - Keep unrandomized recursive classes and non-rand back-references valid.
+  - Move the existing self-member diagnostic earlier and regenerate its golden ordering.
+focused:
+  passed: 28
+  failed: 0
+  elapsed: 0:50
+  behavioral_scenarios: 22
+  distribution_checks: 6
+  selected_drivers: 17
+  scenarios: [vlt, vltmt, dist]
+  manifest: /home/holden/verilator-work/randomize-recursion-focused-tests.txt
+  command: python driver.py --vlt --vltmt --dist --jobs=2 --driver-build-jobs=1 --quiet <tests from manifest>
+  execution_directory: test_regress
+  coverage: Direct, mutual, inherited, and typedef recursion; shared leaf types; non-rand back-references; unrandomized recursive definitions; ordinary/protected null children; inherited array solving;
+    all six selected distribution checks including warning coverage.
+  goldens: Generated from harness output with HARNESS_UPDATE_GOLDEN=1 and validated with updates disabled.
+causal_parent:
+  revision: 04fc80d15bdfa8f6e9ccdcb578cb3154dd27565c
+  compiler: /home/holden/verilator-work/verilator_bin_null_child_04fc80d
+  compiler_sha256: 5e313ae8197a0bd9dac88f9b076d2a9c02b09c588ebe82479c6a1761115487d4
+  passed: 0
+  failed: 4
+  elapsed: '1:06'
+  failure: All four original/expanded vlt/vltmt negative scenarios abort with exit 134 instead of the expected diagnostic exit 1.
+  limits: 3 GiB address space; CPU 30 seconds soft and 35 seconds hard per process; 180-second wall limit for the command.
+  environment: VERILATOR_BIN selects the preserved parent; --obj-suffix=before-final isolates outputs; source/runtime inputs otherwise match final validation.
+acyclic_parent:
+  passed: 2
+  failed: 0
+  elapsed: 0:12
+  test: t_randomize_subobj_enum
+  note: The expanded positive test already passed with the parent.
+formatting: Full make format and Verilog formatting pass; final diagnostic punctuation was followed by clang-format. The two unrelated formatter-only runtime changes were restored.
+python_lint: make lint-py passes
+static_analysis:
+  scope: V3Randomize.cpp and included headers; this is a focused check, not a complete make cppcheck run.
+  exit_code: 0
+  errors: 0
+  warnings: 2
+  warning_detail: Existing uninitialized-union/member reports in V3NumberData::m_inlineNumber and VNUser::m_u; additional style/performance/portability notes remain.
+  command: cppcheck --enable=all --inline-suppr --suppressions-list=src/cppcheck-suppressions.txt --cppcheck-build-dir=/home/holden/verilator-work/randomize-recursion-cppcheck-cache -DVL_DEBUG=1 -DVL_CPPCHECK=1
+    -DINFILTER_PIPE=1 -D__GNUC__=1 -I./include -I./include/fstcpp -I./include/vltstd -I./src/obj_opt -I./src src/V3Randomize.cpp
+acceptance:
+  full_regression: pending; the running foreach suite tests c325d9c0d and does not include this correction
+  ci: pending
+  broad_static_analysis: pending
+sources:
+  src/V3Randomize.cpp: a818bbc6cd0c6d23ebead8d6230109cdd7c271910e39f97273293a4d74212c27
+  test_regress/t/t_randomize_method_types_unsup.out: a8d2bf90435241217f5837c7e893b1288a86de7403a39fed950cf99cd5083cfd
+  test_regress/t/t_randomize_recursive_unsup.out: 7bfc6d580cb9cc6c41c5ace1548111f99744993576885a1128ef26db43352000
+  test_regress/t/t_randomize_recursive_unsup.py: 83a425eaf6491d84fcdfd41ce192e6bfe981ffca5c32afd5bf9fc3bc324fb565
+  test_regress/t/t_randomize_recursive_unsup.v: 8195b9df8802d9958b99a71d21c0e71eca8c7d268ba1ad3e302c0b643e3a58a8
+  test_regress/t/t_randomize_subobj_enum.v: 08d49d759cdbfb1a3ef88604b53e6dea6c5c5a5f861261c717c0c7701c699013
+logs:
+  /home/holden/verilator-work/randomize-recursion-configure.log: d21d89bd48d206ac28006d1f63b6666ae624e1ed004f6064e9ed29b3da5d5db2
+  /home/holden/verilator-work/randomize-recursion-build-opt.log: 893fca8f50fb7304c2551848b7bc88801be7b0c03f6a312e4b75aea1a266319a
+  /home/holden/verilator-work/randomize-recursion-build-punctuation.log: 69f94412aaef367370dfc9137f43fb9ede2e9067fa967d018b85025ca3728527
+  /home/holden/verilator-work/randomize-recursion-focused-final.log: 86bfd5f3ff0579a7ba5ab4a894aea0c48c0e638bea4030defd221435813beee6
+  /home/holden/verilator-work/randomize-recursion-focused-tests.txt: d76bbd2b7922a41efd9994ef225c6fee793688277b7a4a2cbc635c92a9fb7b01
+  /home/holden/verilator-work/randomize-recursion-before-final.log: 6c18398fb464c3fb1c6c489499155f2cccf4fc527d2002a89165bc280dd35774
+  /home/holden/verilator-work/randomize-recursion-acyclic-before.log: e99be1e76da118b6fd1a0d378e3b3d47c261957fad0ec25ef1738261768e8f7d
+  /home/holden/verilator-work/randomize-recursion-format.log: 1822842a501deb9f4aaab37ddf04f3d690b1f56327777325b2c4f86cba6bee1e
+  /home/holden/verilator-work/randomize-recursion-verilog-format.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/randomize-recursion-lint-py.log: 866816dcc57a4333866321e1b8a0f2ba3ba903ef8ceb6f99d57f059ed6b03c37
+  /home/holden/verilator-work/randomize-recursion-cppcheck-final.log: cfa65737a511f64280042e1a253f6cfb3ab2bd5ec66034ae7d92b38b9c356d36
+new_gate_credit: 0

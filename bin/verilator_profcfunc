@@ -52,11 +52,14 @@ def profcfunc(filename: str) -> None:
     verilated_mods = {}
     for func in funcs:
         match = re.search(r'(.*)::eval(_step)?\(', func)
+        if not match:
+            # Optimization can remove eval entries while root symbols still identify the model.
+            match = re.search(r'^([a-zA-Z_][a-zA-Z_0-9:]*)___024root(?=__|::)', func)
         if match:
             prefix = match.group(1)
             if Args.debug:
-                print("-got _eval %s   prefix=%s" % (func, prefix))
-            verilated_mods[prefix] = re.compile(r'^' + prefix)
+                print("-got model %s   prefix=%s" % (func, prefix))
+            verilated_mods[prefix] = re.compile(r'^' + re.escape(prefix))
     # pprint(verilated_mods)
 
     # Sort by Verilog name

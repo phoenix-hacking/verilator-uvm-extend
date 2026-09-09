@@ -11,13 +11,13 @@ import vltest_bootstrap
 
 test.scenarios('vlt')
 
-test.compile(make_top_shell=False,
-             make_main=False,
-             verilator_flags2=[
-                 "--exe", test.pli_filename, "--compiler-include",
-                 test.t_dir + "/t_compiler_include.h", "--output-split 0"
-             ])
-
-test.execute()
+for extra_flags in [[], ['-CFLAGS', '-O1']]:
+    test.compile(make_top_shell=False,
+                 make_main=False,
+                 verilator_flags2=[
+                     "--exe", test.pli_filename, "--compiler-include",
+                     test.t_dir + "/t_compiler_include.h", "--output-split 0"
+                 ] + extra_flags)
+    test.execute()
 
 test.passes()

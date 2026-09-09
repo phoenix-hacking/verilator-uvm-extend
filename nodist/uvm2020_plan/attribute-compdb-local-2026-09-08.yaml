@@ -1,0 +1,152 @@
+---
+# DESCRIPTION: Verilator: Compiler database replay compatibility evidence
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+evidence_id: LOCAL-ATTRIBUTE-COMPDB-20260908
+date: '2026-09-08'
+observed_utc: '2026-09-08T07:45:52.690033+00:00'
+status: validated_checker_replay_full_audits_open
+source_revision: 06d8db6716a576c0372eca5e4f707ff7456f968d
+parent_revision: 292419b26a56c9fb5badeaa5c39580af062b8faa
+changes:
+  - Replay separated and joined forced includes as textual headers, avoiding implicit foreign compiler PCH files. Explicit analyzer-owned PCHs remain supported.
+  - Query and cache the recorded C++ compiler default when neither the database nor common flags selects a standard. Preserve explicit standard and language options. Count unavailable or unknown compiler
+    defaults as incomplete analysis.
+  - Count missing option values as incomplete analysis instead of silently dropping them.
+regression_inputs:
+  nodist/clang_check_attributes: 938daf309c8ca801227b63868cee85b31ffab61bda5554645a70688bd00e4453
+  test_regress/t/t_dist_attributes_bad.py: ca708e56d169b5297bcc553adcad4b3e08fe04bc37f303973b8a0346de7525be
+  test_regress/t/t_dist_attributes_parse_bad.py: 0fd35d7d2f037b61287fc910a4a5b2c2c34b301fc78aaa5c28e7c35e47be8c16
+  test_regress/t/t_dist_attributes_bad.out: 7f31eddeb2b596f84777fe74e03a73ba1a4ead121976e44942b446015d271924
+toolchains:
+  clang14:
+    python_distribution: libclang 14.0.6
+    native_sha256: b65575a22e9a01ae558030fbfe563fd0a90eaf9050b8dcceb6fc9b09e91c3c0e
+    prefix: /home/holden/verilator-work/attribute-python-api-evidence/bindings-libclang-14.0.6
+    builtin_headers: /usr/lib/llvm-15/lib/clang/15.0.7/include
+    scope: Clang 14 API/parser with local Clang 15 builtin headers and GCC 13 C++ headers; not the byte-identical Ubuntu 22 CI environment.
+  clang18:
+    python_distribution: libclang 18.1.1
+    builtin_headers: /home/holden/verilator-work/clang18/lib/clang/18/include
+  clang21:
+    library_version: 21.1.8
+    python_bindings: Unmodified llvmorg-21.1.8 package
+    builtin_headers: /home/holden/verilator-work/clang21/lib/clang/21/include
+  common: Conda Python 3.12, GCC 13.4 C++ headers; Clang analysis header paths remain isolated from model builds.
+validation:
+  regressions:
+    tests: [t_dist_attributes_bad, t_dist_attributes_parse_bad]
+    clang14:
+      pass: 2
+      fail: 0
+      skip: 0
+      duration: 0:12
+    clang18:
+      pass: 2
+      fail: 0
+      skip: 0
+      duration: 0:11
+    clang21:
+      pass: 2
+      fail: 0
+      skip: 0
+      duration: 0:13
+    scope: Expanded parser fixture covers real compiler wrappers with GNU/strict C++14 defaults, explicit C++17 overrides, common standards, foreign PCH caches, missing compilers and missing option values;
+      one and two checker workers.
+  paired_reductions:
+    manifest: /home/holden/verilator-work/attribute-python-api-evidence/compdb-comparison.json
+    cases_per_version_and_revision: 12
+    candidate:
+      clang14: 12
+      clang18: 12
+      clang21: 12
+    parent:
+      clang14:
+        pass: 4
+        fail: 8
+      clang18:
+        pass: 8
+        fail: 4
+      clang21:
+        pass: 8
+        fail: 4
+    interpretation: The parent fails the foreign-PCH cases under Clang 14, including an actual GCC-generated PCH, and mismatched default-dialect cases under Clang 18/21. Candidate passes all 36. Explicit
+      standard controls retain their expected behavior.
+  real_source_replay:
+    manifest: /home/holden/verilator-work/attribute-python-api-evidence/real-source-replay/results.json
+    source_revision: 78f7e8afbfff76207da17a9d9e4a03cdd2e5fe36
+    units: [V3Ast.cpp, V3Global.cpp, V3Error.cpp]
+    parent:
+      exit_code: 1
+      unanalysed_files: 2
+      unsafe_functions: 0
+    candidate:
+      exit_code: 1
+      unanalysed_files: 0
+      unsafe_functions: 2
+    unchanged_inputs: 424
+    scope: Three archived Ubuntu 22 commands rebased to the current integration tree and obj_opt generated headers; compiler executable changed from recorded GCC 11.4 to local GCC 13.4, both GNU C++17 by
+      default. Remaining flags unchanged. The two real type-factory annotation findings are not waived. This is not a complete source audit or an exact CI build replay.
+  full_python_lint:
+    command: make lint-py
+    exit_code: 0
+    log: /home/holden/verilator-work/attribute-python-api-evidence/compdb-lint-py.log
+  formatting:
+    command: make format
+    exit_code: 0
+    log: /home/holden/verilator-work/attribute-python-api-evidence/compdb-format.log
+    scope: Tested Python input hashes remain unchanged. Two unrelated baseline C++ spacing changes were recorded and restored; this commit changes no C++ source.
+  manifest: /home/holden/verilator-work/attribute-python-api-evidence/compdb-results.json
+  manifest_sha256: 2553f3d3bcfd7e3133e41d83b8379e6d9f992577e8ad2c1717633ae06579da65
+  retained_artifacts: 361
+  provenance: Four regression input hashes were frozen before the three-version runs and verified unchanged afterward. Real-source replay independently freezes and verifies 424 inputs.
+  distribution:
+    pass: 3
+    fail: 0
+    skip: 0
+    duration: 0:02
+    source_docs_staged_before_run: true
+    log: /home/holden/verilator-work/attribute-python-api-evidence/compdb-distribution-staged.log
+  tracker:
+    exit_code: 0
+    log: /home/holden/verilator-work/attribute-python-api-evidence/compdb-tracker.log
+ci_failure_provenance:
+  run: 34187892412
+  head_revision: 471351e7b0389798aba8d277a0c76229c74c7cbd
+  artifact_id: 10041252305
+  recorded_build_manifest: /home/holden/verilator-work/attribute-python-api-evidence/ubuntu22-recorded-build-manifest.json
+  verified_archive_sha256: e2bb07ea031bd9750c8e431902223eba78315add933a4e4fc39463f346aa7728
+  compiler: GCC 11.4.0, no explicit standard in recorded source commands
+  pch_members: Archive index retains GCC .gch entries beside forced headers for both debug and optimized builds.
+cleanup:
+  superseded_ci_archive_bytes: 437567551
+  clang21_download_archive_bytes: 208857437
+  additional_package_index_cache_removed: true
+  receipts:
+    - /home/holden/verilator-work/attribute-python-api-evidence/ubuntu22-archive-cleanup.json
+    - /home/holden/verilator-work/attribute-python-api-evidence/clang21-download-cache-cleanup.json
+  free_disk_gib_rounded: 144
+  retained: Installed toolchains, source, regression outputs, selected CI configuration/compilation database, failure logs and hashes remain available.
+remaining_requirements:
+  - Complete source/runtime attribute audits and correct real findings; two historical audit skips remain open.
+  - Full combined-revision CI/regression, supported hosts, sanitizers, normative UVM and controlled performance acceptance remain open.
+accepted_progress:
+  milestones: 7/20
+  gates: 31/46
+  program_criteria: 3/21
+  new_acceptance_credit: 0
+latest_prior_head_ci:
+  run: 34195630855
+  revision: 78f7e8afbfff76207da17a9d9e4a03cdd2e5fe36
+  job: 101964495955
+  url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34195630855/job/101964495955
+  log: /home/holden/verilator-work/attribute-python-api-evidence/ci-78f7e8afb-job-101964495955.log
+  platform: Ubuntu 22.04 GCC; python3-clang-14 1:14.0.0-1ubuntu1.1
+  shard:
+    pass: 1034
+    fail: 2
+    duration: '24:24'
+  failures: ['t_dist_attributes_include: real runtime annotation findings', 't_dist_attributes_src: 143 unanalysed translation units, four unsafe functions among parsed input']
+  scope: Before both checker fixes. The full matrix is still active; this completed shard is retained independently.

@@ -1,0 +1,332 @@
+# DESCRIPTION: Verilator: C compiler validation for the DPI reference model
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+date: '2026-09-07'
+claim_boundary: The fixed and dynamic DPI reference models now compile as C11 and link as objects. Eight
+  local simulator configurations and their injected-fault checks pass. Combined-source CI, complete regression,
+  and M14 closure remain open; no new gate is accepted.
+source_revision: 6dd9c82d6745a1fd5dba941176f4e5f604c1e176
+parent_revision: 382553c084ff9aba8d8d3f34fee4260bb828b45f
+branch: codex/uvm-dpi-c-build
+implementation:
+- Compile the reference model using CC with C11, warnings, and -Werror.
+- Link the C object into both generated C++ models.
+- Reject accidental C++ compilation with a preprocessor guard.
+parent_reproducer:
+  command:
+  - /usr/bin/clang++
+  - -std=gnu++20
+  - -Wall
+  - -Wextra
+  - -Werror
+  - -I/home/holden/verilator-work/uvm-dpi-c-build/include/vltstd
+  - -c
+  - /home/holden/verilator-work/uvm-dpi-c-build/test_regress/t/t_uvm_dpi_reference.c
+  - -o
+  - /home/holden/verilator-work/uvm-dpi-c-build-evidence/parent.o
+  returncode: 1
+  source_sha256: 1e598d8fff183288b4c1fa83b389aea0414c2070ab122caedc52fe8d8cac1075
+  log:
+    path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/parent-translation-unit.log
+    sha256: 39147cb9fd0ea51cdea99fe501d49fe5fa4a2c2776de57355dc51b8d7d8a711c
+  failure: Clang rejects implicit compilation of a .c input as C++ under -Werror.
+c11_probes:
+- compiler: clang
+  argv:
+  - /usr/bin/clang
+  - -std=c11
+  - -Wall
+  - -Wextra
+  - -Werror
+  - -I/home/holden/verilator-work/uvm-dpi-c-build/include/vltstd
+  - -c
+  - /home/holden/verilator-work/uvm-dpi-c-build/test_regress/t/t_uvm_dpi_reference.c
+  - -o
+  - /home/holden/verilator-work/uvm-dpi-c-build-evidence/clang-reference.o
+  exit_code: 0
+- compiler: gcc
+  argv:
+  - /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-cc
+  - -std=c11
+  - -Wall
+  - -Wextra
+  - -Werror
+  - -I/home/holden/verilator-work/uvm-dpi-c-build/include/vltstd
+  - -c
+  - /home/holden/verilator-work/uvm-dpi-c-build/test_regress/t/t_uvm_dpi_reference.c
+  - -o
+  - /home/holden/verilator-work/uvm-dpi-c-build-evidence/gcc-reference.o
+  exit_code: 0
+compiler:
+  path: /home/holden/verilator-work/integration-382553c08/verilator_bin
+  sha256: 7a3277e48f987fe64448e09db0685c6c63c074ece5a29b69b08fcef5d2263c32
+validation:
+  unchanged_inputs: true
+  stages:
+    clang18-bundled-configure:
+      command:
+      - ./configure
+      - --enable-ccwarn
+      - --enable-longtests
+      cwd: /home/holden/verilator-work/uvm-dpi-c-build
+      started_utc: '2026-09-07T23:16:28.562560+00:00'
+      log: /home/holden/verilator-work/uvm-dpi-c-build-clang18-bundled-configure.log
+      CC: /home/holden/verilator-work/clang18/bin/clang --gcc-install-dir=/home/holden/verilator-work/toolchain/lib/gcc/x86_64-conda-linux-gnu/13.4.0
+      CXX: /home/holden/verilator-work/clang18/bin/clang++ --gcc-install-dir=/home/holden/verilator-work/toolchain/lib/gcc/x86_64-conda-linux-gnu/13.4.0
+      CXXFLAGS: ''
+      pid: 889568
+      exit_code: 0
+      finished_utc: '2026-09-07T23:16:45.901106+00:00'
+      sha256: 6a6126899a1409530d98a78e5b2c55319d97370b0d63673abb55b8655040aa62
+    clang18-bundled:
+      command:
+      - python
+      - driver.py
+      - --jobs=1
+      - --driver-build-jobs=1
+      - --quiet
+      - --vlt
+      - --vltmt
+      - --obj-suffix=-cbuild-clang18-bundled
+      - t/t_uvm_dpi_reference.py
+      - t/t_uvm_dpi_reference_dynamic.py
+      cwd: /home/holden/verilator-work/uvm-dpi-c-build/test_regress
+      started_utc: '2026-09-07T23:16:46.202534+00:00'
+      log: /home/holden/verilator-work/uvm-dpi-c-build-clang18-bundled.log
+      CC: /home/holden/verilator-work/clang18/bin/clang --gcc-install-dir=/home/holden/verilator-work/toolchain/lib/gcc/x86_64-conda-linux-gnu/13.4.0
+      CXX: /home/holden/verilator-work/clang18/bin/clang++ --gcc-install-dir=/home/holden/verilator-work/toolchain/lib/gcc/x86_64-conda-linux-gnu/13.4.0
+      CXXFLAGS: ''
+      pid: 891541
+      exit_code: 0
+      finished_utc: '2026-09-07T23:33:43.891495+00:00'
+      sha256: 674d985f66a063478c26d606c5467b07da1b182fd33a1f73ee29f39ccf0d7b69
+    gcc13-source-configure:
+      command:
+      - ./configure
+      - --enable-ccwarn
+      - --enable-longtests
+      cwd: /home/holden/verilator-work/uvm-dpi-c-build
+      started_utc: '2026-09-07T23:33:44.196166+00:00'
+      log: /home/holden/verilator-work/uvm-dpi-c-build-gcc13-source-configure.log
+      CC: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-cc
+      CXX: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-c++
+      CXXFLAGS: ''
+      pid: 902378
+      exit_code: 0
+      finished_utc: '2026-09-07T23:33:52.939469+00:00'
+      sha256: 831bf1d3cd0ac8efce8d203bf2a59becb3c7243a5282857947670bded0b4bf5a
+    gcc13-source:
+      command:
+      - python
+      - driver.py
+      - --jobs=1
+      - --driver-build-jobs=1
+      - --quiet
+      - --vlt
+      - --vltmt
+      - --obj-suffix=-cbuild-gcc13-source
+      - --driver-uvm-source-root
+      - /home/holden/verilator-work/uvm-2020.3.1
+      - t/t_uvm_dpi_reference.py
+      - t/t_uvm_dpi_reference_dynamic.py
+      cwd: /home/holden/verilator-work/uvm-dpi-c-build/test_regress
+      started_utc: '2026-09-07T23:33:53.310847+00:00'
+      log: /home/holden/verilator-work/uvm-dpi-c-build-gcc13-source.log
+      CC: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-cc
+      CXX: /home/holden/verilator-work/toolchain/bin/x86_64-conda-linux-gnu-c++
+      CXXFLAGS: ''
+      pid: 904698
+      exit_code: 0
+      finished_utc: '2026-09-07T23:51:19.225813+00:00'
+      sha256: 9295bb3c44a5e35a17360ebd6595f372cf244bae595b538aa4e45e01cf6adb5a
+  configurations:
+  - scenario: vlt
+    toolchain_library: clang18-bundled
+    test: t_uvm_dpi_reference
+    positive: true
+    injected_fault_detected: true
+    logs:
+      vlt_sim.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/clang18-bundled/t_uvm_dpi_reference/vlt_sim.log
+        sha256: 708777f65801b3298252f0dd264f6dc8b8742b8baa7bfb4cf463f0873f144671
+      corrupt.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/clang18-bundled/t_uvm_dpi_reference/corrupt.log
+        sha256: 5a6777cb59fe20bb61f17f6bb25d00e73d40225fe271740568b8cd4c83cc7bf0
+      reference_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/clang18-bundled/t_uvm_dpi_reference/reference_compile.log
+        sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      vlt_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/clang18-bundled/t_uvm_dpi_reference/vlt_compile.log
+        sha256: 2d0e12e02b8382dd547518dd3150aa326c087643327cab2bf2abe73851a83fb7
+  - scenario: vlt
+    toolchain_library: clang18-bundled
+    test: t_uvm_dpi_reference_dynamic
+    positive: true
+    injected_fault_detected: true
+    logs:
+      vlt_sim.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/clang18-bundled/t_uvm_dpi_reference_dynamic/vlt_sim.log
+        sha256: 825d573fde4b8a2c95aec12a83fe7b9c819d91ed61777ffe82a407d893b4304d
+      corrupt.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/clang18-bundled/t_uvm_dpi_reference_dynamic/corrupt.log
+        sha256: 4bb0e9a006087af07e62bbfab0d2cec5f0a9549cda84045922016d7ec043b4e2
+      reference_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/clang18-bundled/t_uvm_dpi_reference_dynamic/reference_compile.log
+        sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      vlt_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/clang18-bundled/t_uvm_dpi_reference_dynamic/vlt_compile.log
+        sha256: e89860c6e8686637ee70854ba0c49e07bb56da8beacf4f6465a44553d57c9b81
+  - scenario: vlt
+    toolchain_library: gcc13-source
+    test: t_uvm_dpi_reference
+    positive: true
+    injected_fault_detected: true
+    logs:
+      vlt_sim.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/gcc13-source/t_uvm_dpi_reference/vlt_sim.log
+        sha256: 9c08299371acee5f69c67f83f8c2d2394152ce9251873fc83c4899151ee01aec
+      corrupt.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/gcc13-source/t_uvm_dpi_reference/corrupt.log
+        sha256: 3f0a8c1168fef0024bd861d2ba6dda849ddd0af4924de7210ffb8510d1140187
+      reference_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/gcc13-source/t_uvm_dpi_reference/reference_compile.log
+        sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      vlt_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/gcc13-source/t_uvm_dpi_reference/vlt_compile.log
+        sha256: 2e40059a1552cff9af92018e1e5aaa424e372710dc144635b8fc6f9105763d01
+  - scenario: vlt
+    toolchain_library: gcc13-source
+    test: t_uvm_dpi_reference_dynamic
+    positive: true
+    injected_fault_detected: true
+    logs:
+      vlt_sim.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/gcc13-source/t_uvm_dpi_reference_dynamic/vlt_sim.log
+        sha256: 0684e42cb7569c7281d81226dfb3f4c7467ba07c75f6d3a90cd6fbb4407697f0
+      corrupt.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/gcc13-source/t_uvm_dpi_reference_dynamic/corrupt.log
+        sha256: 912dd4cce8aebd11fb025e6dc19bac04597d8870136920d31db41d44f3f625ec
+      reference_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/gcc13-source/t_uvm_dpi_reference_dynamic/reference_compile.log
+        sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      vlt_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vlt/gcc13-source/t_uvm_dpi_reference_dynamic/vlt_compile.log
+        sha256: 739289b83d0e33784cfe2012b6ecfa16c3486b5ac312983d51324e6b5248bbde
+  - scenario: vltmt
+    toolchain_library: clang18-bundled
+    test: t_uvm_dpi_reference
+    positive: true
+    injected_fault_detected: true
+    logs:
+      vlt_sim.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/clang18-bundled/t_uvm_dpi_reference/vlt_sim.log
+        sha256: 584eb8101cada6bd40fac176a1a774b3e3236ac4c7c8ac756bc520b0a291c7f3
+      corrupt.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/clang18-bundled/t_uvm_dpi_reference/corrupt.log
+        sha256: 99b61e6e41f02297dc6dad30bdce83535949e5ed2cdfc04e80f5a613ff1d3147
+      reference_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/clang18-bundled/t_uvm_dpi_reference/reference_compile.log
+        sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      vlt_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/clang18-bundled/t_uvm_dpi_reference/vlt_compile.log
+        sha256: 658db074e41a788da5f28b088719320bc7a5d810250cbae68cfb2a09c7e92b22
+  - scenario: vltmt
+    toolchain_library: clang18-bundled
+    test: t_uvm_dpi_reference_dynamic
+    positive: true
+    injected_fault_detected: true
+    logs:
+      vlt_sim.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/clang18-bundled/t_uvm_dpi_reference_dynamic/vlt_sim.log
+        sha256: 2ee8518e2a23320c3fb7e9a4473068a97df0583decf727489c2003c891025a52
+      corrupt.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/clang18-bundled/t_uvm_dpi_reference_dynamic/corrupt.log
+        sha256: b306d1401202b4e179052b3177d1420f29cfb7fc4e2e3c9ffa7538ecf2010bb9
+      reference_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/clang18-bundled/t_uvm_dpi_reference_dynamic/reference_compile.log
+        sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      vlt_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/clang18-bundled/t_uvm_dpi_reference_dynamic/vlt_compile.log
+        sha256: bd69777008b8ee702dafffc922a6c5414cf171a0e0eb7dc8cb5595e9e3f3b914
+  - scenario: vltmt
+    toolchain_library: gcc13-source
+    test: t_uvm_dpi_reference
+    positive: true
+    injected_fault_detected: true
+    logs:
+      vlt_sim.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/gcc13-source/t_uvm_dpi_reference/vlt_sim.log
+        sha256: a200b221848ca2ff206558729aa8923df12cd28733cb9e891b422db9a099ec75
+      corrupt.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/gcc13-source/t_uvm_dpi_reference/corrupt.log
+        sha256: 4998f5c54c4117395aeca5ffe4a0b35c8d6c0e20530d823d3ec3d6324f29e761
+      reference_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/gcc13-source/t_uvm_dpi_reference/reference_compile.log
+        sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      vlt_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/gcc13-source/t_uvm_dpi_reference/vlt_compile.log
+        sha256: 3a84f50a67a30639fe46e2014f7a52e0ad03943c41154118f3e4889adcc5f168
+  - scenario: vltmt
+    toolchain_library: gcc13-source
+    test: t_uvm_dpi_reference_dynamic
+    positive: true
+    injected_fault_detected: true
+    logs:
+      vlt_sim.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/gcc13-source/t_uvm_dpi_reference_dynamic/vlt_sim.log
+        sha256: d27be71922e7a75004922d445860eba456449b77952e1c6777940faf6922c8ca
+      corrupt.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/gcc13-source/t_uvm_dpi_reference_dynamic/corrupt.log
+        sha256: 0357f75aa3822217222a477ad2c8b51a7a04bc5c48ec102d4badd5fe5f9b9e76
+      reference_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/gcc13-source/t_uvm_dpi_reference_dynamic/reference_compile.log
+        sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      vlt_compile.log:
+        path: /home/holden/verilator-work/uvm-dpi-c-build-evidence/completed-replays/vltmt/gcc13-source/t_uvm_dpi_reference_dynamic/vlt_compile.log
+        sha256: 978f47082d485a456bd4e94e20d1ad8d238111c9216636538ea3cf9f0c755837
+checks:
+  format:
+    exit_code: 0
+    log:
+      path: /home/holden/verilator-work/uvm-dpi-c-build-format.log
+      sha256: b692998e56dd33ec7efc72352f13e6a6ceceb6bf10ceec1966be7d5c96831a20
+    note: Two unrelated existing runtime whitespace changes were restored; the validated compiler/runtime
+      sources and test inputs remain unchanged.
+  python_lint:
+    exit_code: 0
+    log:
+      path: /home/holden/verilator-work/uvm-dpi-c-build-lint.log
+      sha256: 4abc9464c635becdac850c68825eb26394bcba40d083a376036b13d16bbd8894
+  distribution:
+    exit_code: 0
+    log:
+      path: /home/holden/verilator-work/uvm-dpi-c-build-dist.log
+      sha256: 02fa78d2ce76fb0ed36b9620e7b9e3b34df8b52ada59b61ab6272b36f204fba0
+    passed: 6
+    failed: 0
+    elapsed: 0:04
+setup_failures:
+- log:
+    path: /home/holden/verilator-work/uvm-dpi-c-build-clang.log
+    sha256: ba16e973a0a0458cc3ce0ab591249b9ac03a8a6a5521063e4e2e6c37fb8aab4c
+  passed: 0
+  failed: 4
+  failure: The unmodified UVM library uses sprintf(buffer1,name) at src/dpi/uvm_hdl_polling.c:534, rejected
+    by Clang -Werror=format-security.
+- log:
+    path: /home/holden/verilator-work/uvm-dpi-c-build-bundled-clang.log
+    sha256: 144ff6ef54efcc7fe89192aa077d9cd27ac1bd19b390cff7e2756533925e5f76
+  passed: 0
+  failed: 4
+  failure: System Clang 15 selected GCC 9 standard-library headers without coroutine support. Final Clang
+    18 configuration selects the installed GCC 13 headers.
+pending:
+- Integrate the correction after the frozen integration regression finishes.
+- Resolve the upstream UVM format-security diagnostic without claiming patched-source evidence as unmodified-UVM
+  acceptance.
+- Pass combined-source CI and full regression.
+new_gate_credit: 0
+upstream_uvm:
+  revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+  source_tree_clean: true

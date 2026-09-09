@@ -1115,7 +1115,14 @@ class TaskVisitor final : public VNVisitor {
                     AstVar* const newPortp = portp->cloneTree(false);
                     newPortp->funcLocal(true);
                     dpip->addArgsp(newPortp);
-                    if (!portp->basicp()) {
+                    const AstNodeDType* valueDtypep = portp->dtypep()->skipRefp();
+                    while (portp->isDpiOpenArray()
+                           && (VN_IS(valueDtypep, UnpackArrayDType)
+                               || VN_IS(valueDtypep, DynArrayDType)
+                               || VN_IS(valueDtypep, QueueDType))) {
+                        valueDtypep = valueDtypep->subDTypep()->skipRefp();
+                    }
+                    if (!valueDtypep->basicp()) {
                         allOk = false;
                         portp->v3warn(
                             E_UNSUPPORTED,
@@ -1153,11 +1160,15 @@ class TaskVisitor final : public VNVisitor {
                     if (args != "") args += ", ";
 
                     if (portp->isDpiOpenArray()) {
-                        AstNodeDType* const dtypep = portp->dtypep()->skipRefp();
-                        UASSERT_OBJ(!VN_IS(dtypep, DynArrayDType) && !VN_IS(dtypep, QueueDType),
-                                    portp,
-                                    "Passing dynamic array or queue as actual argument to DPI "
-                                    "open array is not yet supported");
+                        bool typedAccess = false;
+                        for (const AstNodeDType* dtp = portp->dtypep(); dtp;
+                             dtp = dtp->subDTypep()) {
+                            dtp = dtp->skipRefp();
+                            typedAccess |= VN_IS(dtp, DynArrayDType) || VN_IS(dtp, QueueDType);
+                            if (const AstBasicDType* const basicp = VN_CAST(dtp, BasicDType)) {
+                                typedAccess |= basicp->keyword().isCHandle();
+                            }
+                        }
                         // Ideally we'd make a table of variable
                         // characteristics, and reuse it wherever we can
                         // At least put them into the module's CTOR as static?
@@ -1169,11 +1180,12 @@ class TaskVisitor final : public VNVisitor {
                         // point to this task & thread's data, in addition
                         // to static info about the variable
                         const string name = portp->name() + "__Vopenarray";
-                        const string varCode
-                            = ("VerilatedDpiOpenVar "
-                               // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-                               + name + " (&" + propName + ", &" + portp->name() + ");\n");
-                        cfuncp->addStmtsp(new AstCStmt{portp->fileline(), varCode});
+                        AstCStmt* const declp = new AstCStmt{portp->fileline()};
+                        declp->add("VerilatedDpiOpenVar " + name + " (&" + propName + ", &");
+                        declp->add(new AstVarRef{portp->fileline(), portvscp, VAccess::READ});
+                        if (typedAccess) declp->add(", VerilatedDpiOpenVar::Typed{}");
+                        declp->add(");\n");
+                        cfuncp->addStmtsp(declp);
                         args += "&" + name;
                     } else {
                         if (portp->isWritable() && portp->basicp()->isDpiPrimitive()) {

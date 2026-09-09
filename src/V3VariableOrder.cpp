@@ -130,7 +130,7 @@ class VariableOrder final {
                     });
     }
 
-    static bool emptyAffinity(const MTaskIdVec& vec) {
+    static bool emptyAffinity(const MTaskIdVec& vec) VL_PURE {
         return std::find(vec.begin(), vec.end(), true) == vec.end();
     }
 

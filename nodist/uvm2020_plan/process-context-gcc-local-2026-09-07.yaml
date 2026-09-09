@@ -1,0 +1,97 @@
+---
+# DESCRIPTION: Verilator: Required process-context reference local evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+created_utc: '2026-09-07T19:59:11.799128+00:00'
+branch: codex/process-context-gcc
+revision: 6eaf8a0c371f2be81420fe23393b1685e3570da8
+parent: 982bae42940da7e7e06cc63e211ead68ec18e318
+tree: 68240e94126f365ba4eaea0ef758a6f7b2b7010c
+source_tree: 2cd580e7ba48a0a075683f8c9f1950063674a439
+compiler:
+  path: /home/holden/verilator-work/verilator_bin_process_context_6eaf8a0c3
+  sha256: 8b77250ee80b37ccc2d8949dea1db8bb86a791ae76db73f0bab3c277ae741e38
+sources:
+  include/verilated_types.h: ea28aae6753971c61787208d4b00b7ffb52c404d0687ae0a8ad14712e87526ba
+  src/V3EmitCFunc.h: 33719956b775e7951aca997576a01d537410746981d0de2e3196d8550b7ef885
+  test_regress/t/t_process_always_comb_identity.py: 9911d41455099c630adde2c30a8bf47b5d3a5074a22d3383d75ab50394c59811
+  test_regress/t/t_process_always_comb_self.py: b3d8aaa3c9af64ed5d96113de685c7098dcd30fd21dd160d40a2d36a937eb067
+logs:
+  /home/holden/verilator-work/process-context-gcc-evidence/parent-vlt-t_process_always_comb_identity-compile.log: d7bc2eb5d81f3451fb740625ce73f761dc4c6245d5593f80598b0d1ac7df41e6
+  /home/holden/verilator-work/process-context-gcc-evidence/candidate-vlt-t_process_always_comb_identity-compile.log: 33d9621b515f2470ed2f02a9c808750dde979f3b79b4e9b223e365f724fbeb73
+  /home/holden/verilator-work/process-context-gcc-evidence/candidate-vlt-t_process_always_comb_identity-sim.log: 07ee38ea13559a6b47c8b24d927e605f4927cbb7f2af7fe063ee84885b18a5cb
+  /home/holden/verilator-work/process-context-gcc-evidence/parent-vlt-t_process_always_comb_self-compile.log: 3a58766983d06982a40803ec01d2d3eee82343708c26fddc41b3fffe31753c81
+  /home/holden/verilator-work/process-context-gcc-evidence/candidate-vlt-t_process_always_comb_self-compile.log: cab33e45b97e499f9cf1936d591c6dbc881a230ba93e630363574285a8bf221b
+  /home/holden/verilator-work/process-context-gcc-evidence/candidate-vlt-t_process_always_comb_self-sim.log: e1212141daeee3e949a419db4c5aaaa8e44a09b3d5863bbd2c86e7b287423a5d
+  /home/holden/verilator-work/process-context-gcc-evidence/parent-vltmt-t_process_always_comb_identity-compile.log: c9df2a2abaaae7230ad69c6336b28717b14e5104feb6ff28b017e75b960eb24b
+  /home/holden/verilator-work/process-context-gcc-evidence/candidate-vltmt-t_process_always_comb_identity-compile.log: 96fb3e209d97c8f229f641b4bf19b5d9096c01bc24c60eb64ec47778763b589d
+  /home/holden/verilator-work/process-context-gcc-evidence/candidate-vltmt-t_process_always_comb_identity-sim.log: 0f128f3bcbcb3f8563ac45f94109b868dc24da6e745c6383a3b2ee59246e97ce
+  /home/holden/verilator-work/process-context-gcc-evidence/parent-vltmt-t_process_always_comb_self-compile.log: c62b06b16dfa29378e47b43d44cc5ef6e380c0c7d04339cb79dffa726a100700
+  /home/holden/verilator-work/process-context-gcc-evidence/candidate-vltmt-t_process_always_comb_self-compile.log: 6f7b200b77459fcaa195719e0b2cfc92f4be672697834f2c7fa4087535b7f32f
+  /home/holden/verilator-work/process-context-gcc-evidence/candidate-vltmt-t_process_always_comb_self-sim.log: 5e6a1eed6d9577c511559eb0883b7ddcceb0573dbc567b7cbebc7575d684b727
+  /home/holden/verilator-work/process-context-gcc-build.log: b625a365fd8e5b5bbacc3c068bd47bd2532a0ad6702c1f2f22235d3751e84eba
+  /home/holden/verilator-work/process-context-gcc-focused.log: 25134d68cabfd74f2ce527c847f0313b0eb53b0d0253aa278f5c5b4e8791d4ed
+  /home/holden/verilator-work/process-context-gcc-parent.log: 81320478d4452ca7a3680d587ad728673be206bb9cf62113d890baef9a98743e
+  /home/holden/verilator-work/process-context-gcc-format.log: f689e29b59aff30d04e2f47324d0f21d015b1eb4c7b54e961c6c4e5dbd381c94
+  /home/holden/verilator-work/process-context-gcc-lint-py.log: 866816dcc57a4333866321e1b8a0f2ba3ba903ef8ceb6f99d57f059ed6b03c37
+  /home/holden/verilator-work/process-probe-results.json: 89194f8d9a10b075d9470cf87e3d7f1e16ca0f3bd82b653d19ef5db59a14a98b
+  /home/holden/verilator-work/process-probe-original.cpp: be4c169534196e3ae8359b58b170b6d817d24348cb6449e75da5d7194b948402
+  /home/holden/verilator-work/process-probe-original.log: 668990360e9ad0c8a8e5178c4d69585dd98255cb95a9dcb450558526a493e4cf
+  /home/holden/verilator-work/process-probe-split_caller.cpp: 5b7ebe39811a0836da82e6adee657de15d043e07eee2a399d8b4411bd7507bd4
+  /home/holden/verilator-work/process-probe-split_caller.log: 72c7ec9e345e2579e143295017afba58441eeb1058531801b65fa8a3e53ad833
+  /home/holden/verilator-work/process-probe-no_context.cpp: 139fdf71bfc6dff88793f0d59d2ce612919b084f7ae8f5ae198fb9a226d9362c
+  /home/holden/verilator-work/process-probe-no_context.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/process-probe-state_before_context.cpp: 9ddd7a60a34fb8ca1d7271320ef20fc280b03daa494c1ebb278f33e984777ca4
+  /home/holden/verilator-work/process-probe-state_before_context.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/process-probe-reference.cpp: f046c1a9bdab4823ddc9e450afe33a9871e77d5c2cd432de4d4938f4adf3a9cd
+  /home/holden/verilator-work/process-probe-reference-final.log: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  /home/holden/verilator-work/process-context-gcc-neighbor-tests.txt: 333a13bdeb8013cb6c3489d9adc3fd2d079736d4cbf727f7bccb2ac2e16082ff
+  /home/holden/verilator-work/process-context-gcc-cppcheck-inputs.sha256: aa402fecf7ac641d27d30aec144eb83f497d8371a8d33822b291f07da94aa38e
+  /home/holden/verilator-work/process-context-gcc-neighbors.log: 1fb2850846a52d780b97eeabd67c0adc7d281800e9af55124a034308176b45ba
+focused:
+  passed: 10
+  failed: 0
+  elapsed: '1:06'
+causal_parent:
+  revision: 982bae42940da7e7e06cc63e211ead68ec18e318
+  worktree: /home/holden/verilator-work/process-context-parent-check
+  compiler: /home/holden/verilator-work/verilator_bin_pch_982bae429
+  CXXFLAGS: ''
+  passed: 0
+  failed: 4
+  elapsed: '1:02'
+  failure: GCC 13 -O2 reports stringop-overflow at the atomic process-state read after entering a nullable process context.
+portability: The reduced reference-context probe compiles under C++14 with -O2 and -Werror=stringop-overflow; all four simulator configurations pass.
+acceptance: Local code-generation correction; full static analysis, CI, conformance and performance acceptance remain pending.
+date: '2026-09-07'
+execution_worktree: /home/holden/verilator-work/randomize-recursion-check
+new_gate_credit: 0
+implementation: Generated functions that require a process enter their context through a reference overload. The nullable pointer overload remains available for optional contexts. Callers either create
+  a root/child, reuse persistent storage, or pass their existing required process.
+reduction: GCC 13 -O2 rejects both the original and split-caller probes. Removing context entry or reading state first avoids the diagnostic. The final reference overload avoids the nullable branch while
+  retaining context ordering.
+neighbors:
+  status: completed
+  drivers: 103
+  scenarios: 190
+  passed: 190
+  failed: 0
+  elapsed: '23:43'
+  manifest: /home/holden/verilator-work/process-context-gcc-neighbor-tests.txt
+  log: /home/holden/verilator-work/process-context-gcc-neighbors.log
+  sha256: 1fb2850846a52d780b97eeabd67c0adc7d281800e9af55124a034308176b45ba
+static_analysis:
+  status: running
+  log: /home/holden/verilator-work/process-context-gcc-cppcheck.log
+  inputs: /home/holden/verilator-work/process-context-gcc-cppcheck-inputs.sha256
+ci:
+  format:
+    run: 34157649422
+    status: queued
+  build_test:
+    run: 34157649775
+    status: queued
+  contributor_agreement:
+    run: 34157649458
+    status: queued

@@ -125,6 +125,10 @@ elif [ "$CI_BUILD_STAGE_NAME" = "test" ]; then
     uvm2020)
       "$MAKE" -C "$TEST_REGRESS" uvm2020
       ;;
+    uvm2020-protocol-source|uvm2020-randomize-source|uvm2020-source)
+      : "${UVM_SOURCE_ROOT:?set UVM_SOURCE_ROOT to the upstream UVM checkout}"
+      "$MAKE" -C "$TEST_REGRESS" "$TESTS" UVM_SOURCE_ROOT="$UVM_SOURCE_ROOT"
+      ;;
     vltmt-0)
       "$MAKE" -C "$TEST_REGRESS" SCENARIOS="--vltmt --driver-clean" DRIVER_HASHSET=--hashset=0/3
       ;;

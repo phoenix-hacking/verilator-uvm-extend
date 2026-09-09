@@ -4,12 +4,68 @@
 
 # UVM 2020.3.1 regression plan
 
+Current accepted progress is **8/20 milestones, 32/46 gates and 4/21 program
+criteria**. Use [PROGRESS.md](PROGRESS.md) and [tracker.yaml](tracker.yaml)
+for the current state. Dated lane snapshots and their numerical status tables
+below retain historical evidence; they do not override the current tracker.
+
+## Accepted protocol profile: 2026-09-09
+
+M15 and C16 pass the [ten-rule APB/AXI-lite profile](SVA_PROTOCOL_PROFILE.md).
+All eight pinned-source DPI/thread configurations agree at the first invalid
+sampled cycle in 76 paired fault cases. The 24 seeded positives retain
+58,848 transfers, coverage, RAL and deterministic replay checks; four extra
+APB controls permit legal changes to unused data. Twenty-four expected-error
+drivers establish the documented unsupported forms. See the
+[exact local evidence](sva-protocol-local-2026-09-09.yaml). Full SVA/UVM
+conformance and current-revision release/performance gates remain open.
+
+## Explicit compliance and performance goals
+
+The [goal contract](GOALS.md) defines **G-UVM: full IEEE 1800.2-2020 UVM
+compliance** and **G-PERF: measured production performance optimization**.
+Both remain in progress, with zero of six final acceptance checks accepted
+for each. These checks supplement the existing program gates. Documented
+mandatory-feature limitations cannot satisfy full compliance, and regression
+durations cannot satisfy performance acceptance. `check_tracker.py` rejects
+a goal marked pass without its required checks, evidence, and prerequisites.
+
+## Historical checkpoint: 2026-09-07
+
+The declared 27-test UVM contract has accepted local, push, and pull-request
+CI evidence. Both CI matrices passed all 46 jobs at source
+`91089908ad5e464f33676dfd88ffc1e8e266885b`; the PR tested merge
+`4c8c048cfa734dcfad26dd50a624b1e0362af662`. Both have source tree
+`b678cab2a01c6019f1914c2755cd28b22d82658c`, matching retained local validation.
+
+The downloaded UVM logs each contain exactly 27 passing tests in Makefile
+order, successful symlink-safety and cleanup checks, and the 1,000-phase
+teardown sentinel. Push elapsed 22:02; PR elapsed 21:17. The retained local
+run passed in 30:10. These are regression durations, not performance grades.
+[CI evidence](ordered-lane-ci-2026-09-07.yaml) records job URLs, source
+provenance, log hashes, pass order, and the exact acceptance sentinels.
+
+The evidence closes the declared M05 class/factory/static-initialization and
+M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
+criteria, 4/20 milestone exits, and 28/46 atomic gates**. The compatibility
+inventory now has **115/115 passing declared oracles, zero blocked**, using
+accumulated evidence. The [eight newly executed tests](dependency-closure-2026-09-07.yaml)
+passed locally with the debug compiler and Z3 available. This is not a fresh
+115-test run and does not close the constrained-random UVM item milestone.
+M07 stays open: the resource direct-lookup XFAIL is not conformance credit.
+Unmodified upstream UVM source flow and both performance gates remain open.
+
+Both PRs remain draft for human review and Contributor Agreement/DCO. No new
+compiler implementation is claimed by this evidence update. Older dated
+results and detailed tables below are historical; use `tracker.yaml` and this
+checkpoint for current status.
+
 This plan tracks one resource-capped regression lane for the vendored,
 concatenated UVM 2020.3.1 package. It advances issue #21 package-elaboration
 smoke and issue #39 `UVM_NO_DPI` command-flow evidence. Two independent current
 Makefile contracts gate this PR: 15 focused named-disable tests run in both
-`vlt` and `vltmt`, and 20 ordered UVM integration tests run in `vlt`. Their
-validation remains independent: the focused and UVM targets passed locally and
+`vlt` and `vltmt`, and 27 ordered UVM integration tests run in `vlt`. Historical
+validation remains independent: the focused and previous 20-test UVM targets passed locally and
 in exact-head push and pull-request CI. The accepted exact-head scope is source
 revision
 `ea172f63c5ddab12a5ca032e119b2f1a95b4e71e` (tree
@@ -39,9 +95,9 @@ combined into one percentage:
 | Program exit criteria | `C01` through `C21` (21) | A criterion counts only when its status is `pass` and every referenced public capability milestone has exited. |
 | Public capability milestones | `M00` through `M19` (20) | A milestone exits only when every required gate has accepted evidence. |
 | Atomic milestone gates | 46 required gates | Engineering progress counts each required gate with accepted evidence; this diagnostic does not substitute for milestone exits. |
-| Historical pull request #41 evidence slice | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs were accepted at the recorded revisions: 11/11. This does not validate the current 20-test contract. |
+| Historical pull request #41 evidence slice | 11 required proof environments | Five evidence IDs require local and CI proof; `HARNESS-DEFAULT-0001` requires local proof only. Six local and five canonical-CI proofs were accepted at the recorded revisions: 11/11. This does not validate the current 27-test contract. |
 | Current focused named-disable lane | 15 tests in two scenarios | `check_tracker.py` derives the ordered 15-test contract from `NAMED_DISABLE_EXISTING_TESTS` followed by `NAMED_DISABLE_COMPILER_TESTS`. Every test runs under both `vlt` and `vltmt`, for 30 scenario executions and 30 cleanup sentinels. Local and exact-head push/PR CI passed. |
-| Current Makefile lane contract | 20 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Local and exact-head push/PR CI passed. |
+| Current Makefile lane contract | 27 ordered tests | `check_tracker.py` derives the reduced-then-package order from `test_regress/Makefile` and requires `tracker.yaml` to match it exactly. Pull-request `build-test` run 31346076613 passed the tested integration head `b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge `cda98bba177663b2df45745d2e946ddf0e274d73`; accepted local validation remains pending because the workspace is blocked by `ENOSPC`. Historical 20-test results do not validate this membership. |
 | Test corpora | Per-corpus planned-test count | Report implementation, execution, pass, and verified rates separately as described below. |
 
 Full-program `C01`-`C21` completion cannot be inferred from a lane evidence
@@ -52,23 +108,23 @@ implementation dependency order, not another completion denominator. Their
 order is:
 
 1. `M0` baseline/dashboard;
-2. `M1` packages, macros, and source locations;
-3. `M2` scheduler, processes, `$finish`, `wait`, and `fork`;
-4. `M3` classes, factory, and static initialization;
-5. `M4` interfaces, virtual interfaces, and clocking blocks;
-6. `M5` configuration and resource databases;
-7. `M6` components, build/connect, and reporting;
-8. `M7` TLM;
-9. `M8` sequences, sequencers, and drivers;
-10. `M9` constrained randomization;
-11. `M10` APB agent;
-12. `M11` AXI-lite agent;
-13. `M12` RAL frontdoor and predictor;
-14. `M13` functional coverage, reporting, and merge;
-15. `M14` SVA profile;
-16. `M15` DPI, VPI, and backdoor;
-17. `M16` synthetic SoC; and
-18. `M17` packaging, documentation, and performance.
+1. `M1` packages, macros, and source locations;
+1. `M2` scheduler, processes, `$finish`, `wait`, and `fork`;
+1. `M3` classes, factory, and static initialization;
+1. `M4` interfaces, virtual interfaces, and clocking blocks;
+1. `M5` configuration and resource databases;
+1. `M6` components, build/connect, and reporting;
+1. `M7` TLM;
+1. `M8` sequences, sequencers, and drivers;
+1. `M9` constrained randomization;
+1. `M10` APB agent;
+1. `M11` AXI-lite agent;
+1. `M12` RAL frontdoor and predictor;
+1. `M13` functional coverage, reporting, and merge;
+1. `M14` SVA profile;
+1. `M15` DPI, VPI, and backdoor;
+1. `M16` synthetic SoC; and
+1. `M17` packaging, documentation, and performance.
 
 `tracker.yaml` owns atomic statuses and evidence references. Its checker
 derives all roll-ups so documentation does not become a second source of
@@ -86,9 +142,9 @@ public milestone exits: 2/20 (10.0%)
 atomic milestone gates: 24/46 (52.2%)
 historical original PR #41 evidence slice: 11/11 accepted at recorded revisions
 current focused lane contract: 15 tests x 2 scenarios; local and CI pass
-current Makefile lane contract: 20 ordered tests; local and CI pass
-mixed corpus: planned=108 implemented=108 executed=100 passed=100 failed=0 blocked=8
-mixed corpus rates: execution=92.6% pass/executed=100.0% verified=92.6%
+current Makefile lane contract: 27 ordered tests; tested integration-head PR CI pass, local pending (ENOSPC)
+mixed corpus: planned=115 implemented=115 executed=100 passed=100 failed=0 blocked=8 pending=7
+mixed corpus rates: execution=87.0% pass/executed=100.0% verified=87.0%
 issue #5 mapped gates: 4/6 (66.7%)
 issue #7 mapped gates: 3/4 (75.0%)
 issue #21 mapped gates: 5/6 (83.3%)
@@ -190,12 +246,12 @@ Run the UVM integration lane from the repository root:
 make -C test_regress uvm2020
 ```
 
-The current target runs 14 reduced scheduler/process/interface tests followed
-by six UVM package/API tests:
+The current target runs 16 reduced scheduler/process/interface/class tests
+followed by 11 UVM package/API tests:
 
 ```sh
 cd test_regress
-python3 driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
+python3 driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
   --driver-clean-before-seed=interrupted.gch \
   --obj-suffix=-uvm2020 --vlt \
   t/t_uvm_lrm_sched_wait_zero.py \
@@ -212,9 +268,16 @@ python3 driver.py --jobs=1 --driver-build-jobs=1 --driver-clean-before \
   t/t_timing_finish.py \
   t/t_finish_stops_nonfinal.py \
   t/t_clocking_virtual.py \
+  t/t_class_param_static_identity.py \
+  t/t_class_member_sel_used.py \
   t/t_uvm_core_factory_basic.py \
+  t/t_uvm_core_factory_param.py \
   t/t_uvm_config_vif_clocking.py \
+  t/t_uvm_config_resource_component.py \
+  t/t_uvm_resource_numeric_precedence.py \
   t/t_uvm_core_phasing.py \
+  t/t_uvm_tlm_analysis_fifo.py \
+  t/t_uvm_sequence_driver_flow.py \
   t/t_uvm_hello_all_v2020_3_1_nodpi.py \
   t/t_uvm_hello_all_v2020_3_1_dpi.py \
   t/t_uvm_dpi_v2020_3_1.py
@@ -224,9 +287,9 @@ The child regression process plants `interrupted.gch` in each dedicated
 object directory immediately before that test is cleaned. It then atomically
 renames the complete directory to a process- and time-unique quarantine,
 creates the active directory, asserts that the active directory is empty, and
-removes the quarantine. The current target therefore creates and removes 20
+removes the quarantine. The current target therefore creates and removes 27
 sentinels without an external pre-seeding race. After the harness returns, a
-fail-fast shell loop independently asserts that all 20 sentinel paths are
+fail-fast shell loop independently asserts that all 27 sentinel paths are
 absent and prints `uvm2020: stale-artifact cleanup PASSED`. Thus every lane
 execution, including the first execution in a clean checkout, exercises the
 recovery policy rather than relying on pre-existing workspace state.
@@ -257,7 +320,27 @@ The `uvm2020` suite in `ci/ci-script.bash` runs the same Make target. The suite
 is an Ubuntu GCC entry in the normal `build-test` workflow, which connects the
 proof to the repository's built-checkout regression path.
 
-### Recorded local result
+### Current twenty-seven-test pull-request CI result
+
+Pull-request `build-test` run
+[31346076613](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31346076613)
+completed successfully for source head
+`b09ff3e78f97e928907b8f2929bf8bacab6b16bd` through synthetic merge
+`cda98bba177663b2df45745d2e946ddf0e274d73`. The successful workflow includes
+the configured current `uvm2020` job, which runs
+`make -C test_regress uvm2020`.
+
+The connector exposes only the first page of run jobs, so no UVM job ID,
+elapsed time, per-test summary, or cleanup count is claimed. Accepted local
+evidence remains pending because the workspace is blocked by `ENOSPC`.
+Later evidence-only `[ci skip]` commits are not tested revisions, and the
+lane remains pending until accepted local evidence exists.
+
+### Historical twenty-test local and CI result
+
+The following evidence covers the previous ordered twenty-test contract only.
+It does not validate the current twenty-seven-test Makefile membership. No
+accepted local result yet covers all 27 tests.
 
 Validation worktree head `c1dab4a4f5961fe5e6c61ed57d539d576cecca0d`
 passed the exact `make -C test_regress uvm2020` command with
@@ -275,8 +358,9 @@ seconds. The clean-before symlink-safety preflight passed, the run seeded and
 removed 20/20 `interrupted.gch` sentinels, and the postcheck printed
 `uvm2020: stale-artifact cleanup PASSED`.
 
-The current UVM local gate and its exact-head CI proof are satisfied. Push job
-93239580961 passed 20/0 in 13:12, and pull-request job 93239545848 passed 20/0
+The historical twenty-test UVM local gate and its exact-head CI proof were
+satisfied at their recorded revisions. Push job 93239580961 passed 20/0 in
+13:12, and pull-request job 93239545848 passed 20/0
 in 13:03. Each job passed symlink preflight, one 1,000-phase teardown stress
 run (`phases=1000`, `winners=1000`, `cleanups=1000`), and cleanup. The
 historical 15-test target passed locally in 14:27, and a historical canonical
@@ -368,7 +452,7 @@ make -j2
 make -C test_regress uvm2020
 ```
 
-The named target performs its 20-directory child-local sentinel setup and
+The named target performs its 27-directory child-local sentinel setup and
 assertions automatically. It must report the expected test pass markers and
 the cleanup pass marker, then exit zero. Repeating the same command
 additionally proves that artifacts left by a prior completed or interrupted

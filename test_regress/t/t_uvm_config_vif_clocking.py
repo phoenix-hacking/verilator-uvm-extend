@@ -20,8 +20,7 @@ test.compile(v_flags2=[
     test.build_jobs_groups,
     "--CFLAGS -O0",
     "-Wall",
-    "+incdir+t/uvm",
-    "t/uvm/uvm_pkg_all_v2020_3_1_nodpi.svh",
+    *test.uvm2020_flags(),
 ])
 
 test.execute(all_run_flags=['' if test.verbose else '+UVM_NO_RELNOTES'])

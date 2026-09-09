@@ -67,6 +67,7 @@ test.write_wholefile(ccjson_file, ccjson_str)
 test.run(
     logfile=test.run_log_filename,
     tee=True,
+    fails=True,
     # With `--verilator-root` set to the current directory
     # (i.e. `test_regress`) the script will skip annotation issues in
     # headers from the `../include` directory.
@@ -75,6 +76,10 @@ test.run(
         "--compile-commands-dir=" + test.obj_dir, "--jobs=1", srcfiles_str
     ])
 
+# MT_SAFE_EXCLUDES bodies must receive the same call checks as MT_SAFE bodies.
+test.file_grep(
+    test.run_log_filename, r'"sfc_test_caller_func_VL_MT_SAFE_EXCLUDES\(VerilatedMutex &\)"'
+    r' is mtsafe but calls non-mtsafe function\(s\)')
 test.files_identical(test.run_log_filename, test.golden_filename)
 
 test.passes()

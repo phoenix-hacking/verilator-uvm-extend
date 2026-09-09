@@ -415,9 +415,13 @@ bool VlRandomVar::set(const std::string& idx, const std::string& val) const {
 }
 
 void VlRandomizer::randomConstraint(std::ostream& os, VlRNG& rngr, int bits) {
-    const IData hash = VL_RANDOM_RNG_I(rngr) & ((1 << bits) - 1);
     int varBits = 0;
     for (const auto& var : m_vars) varBits += var.second->totalWidth();
+    if (varBits == 0) {
+        os << "true";
+        return;
+    }
+    const IData hash = VL_RANDOM_RNG_I(rngr) & ((1 << bits) - 1);
     os << "(= #b";
     for (int i = bits - 1; i >= 0; i--) os << (VL_BITISSET_I(hash, i) ? '1' : '0');
     if (bits > 1) os << " (concat";
@@ -486,8 +490,11 @@ bool VlRandomizer::next_check_only(VlRNG& rngr) {
 }
 
 bool VlRandomizer::next(VlRNG& rngr) {
-    if (!m_checkOnly && m_vars.empty() && m_unique_arrays.empty()) return true;
-    if (m_checkOnly && m_vars.empty()) return true;  // No rand members: trivially SAT
+    // Predicates over state still need checking when there are no random variables.
+    if (m_vars.empty() && m_unique_arrays.empty() && m_constraints.empty()
+        && m_softConstraints.empty()) {
+        return true;
+    }
     for (const std::string& baseName : m_unique_arrays) {
         const auto it = m_vars.find(baseName);
         const uint32_t size = m_unique_array_sizes.at(baseName);
@@ -630,7 +637,7 @@ bool VlRandomizer::next(VlRNG& rngr) {
             return false;
         }
 
-        if (!m_checkOnly) {
+        if (!m_checkOnly && !m_vars.empty()) {
             bool hasArray = false;
             for (const auto& var : m_vars) {
                 if (var.second->dimension() > 0) {
@@ -789,6 +796,12 @@ bool VlRandomizer::parseSolution(std::iostream& os, bool log) {
         return false;
     }
 
+    // State-only constraints and empty arrays have no model values to retrieve.
+    if (std::none_of(m_vars.begin(), m_vars.end(),
+                     [](const auto& var) { return var.second->totalWidth() > 0; })) {
+        return true;
+    }
+
     os << "(get-value (";
     for (const auto& var : m_vars) {
         if (var.second->dimension() > 0) {
@@ -913,6 +926,27 @@ void VlRandomizer::clearConstraints() {
     m_solveBefore.clear();
     m_softConstraints.clear();
     // Keep m_vars for class member randomization
+}
+
+void VlRandomizer::clear_var(const std::string& name) {
+    const auto eraseVar = [this](decltype(m_vars)::iterator it) {
+        if (it->second->dimension() > 0) clear_arr_table(it->first);
+        m_disabledVars.erase(it->first);
+        m_staticVars.erase(it->first);
+        m_randcVarNames.erase(it->first);
+        return m_vars.erase(it);
+    };
+    const auto it = m_vars.find(name);
+    if (it != m_vars.end()) eraseVar(it);
+    // A struct or an array of structs registers leaves below its base name.
+    // Ordered ranges avoid scanning unrelated variables on each refresh.
+    for (const char separator : {'.', '['}) {
+        const std::string prefix = name + separator;
+        auto pos = m_vars.lower_bound(prefix);
+        while (pos != m_vars.end() && pos->first.compare(0, prefix.size(), prefix) == 0) {
+            pos = eraseVar(pos);
+        }
+    }
 }
 
 void VlRandomizer::clearAll() {

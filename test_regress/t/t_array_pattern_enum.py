@@ -9,11 +9,9 @@
 
 import vltest_bootstrap
 
-test.skip('Needs clang fix')
-
 test.scenarios('simulator')
 
-test.compile()
+test.compile(threads=2 if test.vltmt else 1)
 
 test.execute()
 

@@ -19,7 +19,7 @@ t/t_dist_attributes/mt_enabled.h:204:    [mt_safe]                              
 t/t_dist_attributes/mt_enabled.cpp:146:  [mt_safe, pure]                        TestClass::cm_ae_VL_MT_SAFE(VerilatedMutex &)
 
 %Error: "TestClass::cm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" declaration does not match definition
-t/t_dist_attributes/mt_enabled.h:204:    [excludes]                             TestClass::cm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
+t/t_dist_attributes/mt_enabled.h:204:    [mt_safe, excludes]                    TestClass::cm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
 t/t_dist_attributes/mt_enabled.cpp:146:  [mt_safe, pure, excludes]              TestClass::cm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 
 %Error: "TestClass::cm_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)" declaration does not match definition
@@ -65,6 +65,17 @@ t/t_dist_attributes/mt_enabled.h:204:    [mt_unsafe_one]                        
 t/t_dist_attributes/mt_enabled.h:209:    [mt_safe, mt_unsafe, pure]               TestClass::cm_ea_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:209:    [mt_safe, mt_unsafe_one, pure]           TestClass::cm_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
 
+%Error: "TestClass::cm_test_caller_smethod_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.cpp:155:  [mt_safe, excludes]                    TestClass::cm_test_caller_smethod_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe]                              TestClass::cm_au_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe_one]                          TestClass::cm_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:199:    [mt_unsafe]                              TestClass::cm_aa_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:199:    [mt_unsafe_one]                          TestClass::cm_aa_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:204:    [mt_unsafe]                              TestClass::cm_ae_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:204:    [mt_unsafe_one]                          TestClass::cm_ae_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:209:    [mt_safe, mt_unsafe, pure]               TestClass::cm_ea_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:209:    [mt_safe, mt_unsafe_one, pure]           TestClass::cm_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
 %Error: "TestClass::cm_test_caller_smethod_VL_MT_START(VerilatedMutex &)" is stable_tree but calls non-stable_tree or non-mtsafe
 t/t_dist_attributes/mt_enabled.cpp:155:  [mt_start, requires]                   TestClass::cm_test_caller_smethod_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe]                              TestClass::cm_au_VL_MT_UNSAFE(VerilatedMutex &)
@@ -83,7 +94,7 @@ t/t_dist_attributes/mt_enabled.h:191:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:191:    [acquire]                                TestClass::cm_au_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [excludes]                               TestClass::cm_au_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_safe]                                TestClass::cm_au_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:191:    [excludes]                               TestClass::cm_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:191:    [mt_safe, excludes]                      TestClass::cm_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_safe_postinit]                       TestClass::cm_au_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_start, requires]                     TestClass::cm_au_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe]                              TestClass::cm_au_VL_MT_UNSAFE(VerilatedMutex &)
@@ -110,7 +121,7 @@ t/t_dist_attributes/mt_enabled.h:199:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:199:    [acquire]                                TestClass::cm_aa_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [excludes]                               TestClass::cm_aa_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_safe]                                TestClass::cm_aa_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:199:    [excludes]                               TestClass::cm_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:199:    [mt_safe, excludes]                      TestClass::cm_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_safe_postinit]                       TestClass::cm_aa_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_start, requires]                     TestClass::cm_aa_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_unsafe]                              TestClass::cm_aa_VL_MT_UNSAFE(VerilatedMutex &)
@@ -123,7 +134,7 @@ t/t_dist_attributes/mt_enabled.h:204:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:204:    [acquire]                                TestClass::cm_ae_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [excludes]                               TestClass::cm_ae_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [mt_safe]                                TestClass::cm_ae_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:204:    [excludes]                               TestClass::cm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:204:    [mt_safe, excludes]                      TestClass::cm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [mt_safe_postinit]                       TestClass::cm_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [mt_start, requires]                     TestClass::cm_ae_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [mt_unsafe]                              TestClass::cm_ae_VL_MT_UNSAFE(VerilatedMutex &)
@@ -134,6 +145,17 @@ t/t_dist_attributes/mt_enabled.h:204:    [requires]                             
 
 %Error: "TestClass::cm_test_caller_smethod_hdr_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
 t/t_dist_attributes/mt_enabled.h:212:    [mt_safe]                              TestClass::cm_test_caller_smethod_hdr_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe]                              TestClass::cm_au_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe_one]                          TestClass::cm_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:199:    [mt_unsafe]                              TestClass::cm_aa_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:199:    [mt_unsafe_one]                          TestClass::cm_aa_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:204:    [mt_unsafe]                              TestClass::cm_ae_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:204:    [mt_unsafe_one]                          TestClass::cm_ae_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:209:    [mt_safe, mt_unsafe, pure]               TestClass::cm_ea_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:209:    [mt_safe, mt_unsafe_one, pure]           TestClass::cm_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
+%Error: "TestClass::cm_test_caller_smethod_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.h:212:    [mt_safe, excludes]                    TestClass::cm_test_caller_smethod_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe]                              TestClass::cm_au_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe_one]                          TestClass::cm_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_unsafe]                              TestClass::cm_aa_VL_MT_UNSAFE(VerilatedMutex &)
@@ -161,7 +183,7 @@ t/t_dist_attributes/mt_enabled.h:191:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:191:    [acquire]                                TestClass::cm_au_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [excludes]                               TestClass::cm_au_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_safe]                                TestClass::cm_au_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:191:    [excludes]                               TestClass::cm_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:191:    [mt_safe, excludes]                      TestClass::cm_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_safe_postinit]                       TestClass::cm_au_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_start, requires]                     TestClass::cm_au_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:191:    [mt_unsafe]                              TestClass::cm_au_VL_MT_UNSAFE(VerilatedMutex &)
@@ -188,7 +210,7 @@ t/t_dist_attributes/mt_enabled.h:199:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:199:    [acquire]                                TestClass::cm_aa_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [excludes]                               TestClass::cm_aa_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_safe]                                TestClass::cm_aa_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:199:    [excludes]                               TestClass::cm_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:199:    [mt_safe, excludes]                      TestClass::cm_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_safe_postinit]                       TestClass::cm_aa_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_start, requires]                     TestClass::cm_aa_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:199:    [mt_unsafe]                              TestClass::cm_aa_VL_MT_UNSAFE(VerilatedMutex &)
@@ -201,7 +223,7 @@ t/t_dist_attributes/mt_enabled.h:204:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:204:    [acquire]                                TestClass::cm_ae_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [excludes]                               TestClass::cm_ae_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [mt_safe]                                TestClass::cm_ae_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:204:    [excludes]                               TestClass::cm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:204:    [mt_safe, excludes]                      TestClass::cm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [mt_safe_postinit]                       TestClass::cm_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [mt_start, requires]                     TestClass::cm_ae_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:204:    [mt_unsafe]                              TestClass::cm_ae_VL_MT_UNSAFE(VerilatedMutex &)
@@ -228,7 +250,7 @@ t/t_dist_attributes/mt_enabled.cpp:137:  [mt_safe]                              
 
 %Error: "TestClass::cm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" declaration does not match definition
 t/t_dist_attributes/mt_enabled.h:195:    []                                     TestClass::cm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
-t/t_dist_attributes/mt_enabled.cpp:137:  [excludes]                             TestClass::cm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.cpp:137:  [mt_safe, excludes]                    TestClass::cm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 
 %Error: "TestClass::cm_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &)" declaration does not match definition
 t/t_dist_attributes/mt_enabled.h:195:    []                                     TestClass::cm_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &) [declaration]
@@ -273,6 +295,11 @@ t/t_dist_attributes/mt_enabled.cpp:175:  [mt_safe]                              
 t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe]                              TestClass::icm_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe_one]                          TestClass::icm_VL_MT_UNSAFE_ONE(VerilatedMutex &)
 
+%Error: "TestClass::icm_test_caller_smethod_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.cpp:175:  [mt_safe, excludes]                    TestClass::icm_test_caller_smethod_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe]                              TestClass::icm_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe_one]                          TestClass::icm_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
 %Error: "TestClass::icm_test_caller_smethod_VL_MT_START(VerilatedMutex &)" is stable_tree but calls non-stable_tree or non-mtsafe
 t/t_dist_attributes/mt_enabled.cpp:175:  [mt_start, requires]                   TestClass::icm_test_caller_smethod_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe]                              TestClass::icm_VL_MT_UNSAFE(VerilatedMutex &)
@@ -285,7 +312,7 @@ t/t_dist_attributes/mt_enabled.h:235:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:235:    [acquire]                                TestClass::icm_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [excludes]                               TestClass::icm_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_safe]                                TestClass::icm_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:235:    [excludes]                               TestClass::icm_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:235:    [mt_safe, excludes]                      TestClass::icm_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_safe_postinit]                       TestClass::icm_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_start, requires]                     TestClass::icm_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe]                              TestClass::icm_VL_MT_UNSAFE(VerilatedMutex &)
@@ -296,6 +323,11 @@ t/t_dist_attributes/mt_enabled.h:235:    [requires]                             
 
 %Error: "TestClass::icm_test_caller_smethod_hdr_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
 t/t_dist_attributes/mt_enabled.h:238:    [mt_safe]                              TestClass::icm_test_caller_smethod_hdr_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe]                              TestClass::icm_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe_one]                          TestClass::icm_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
+%Error: "TestClass::icm_test_caller_smethod_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.h:238:    [mt_safe, excludes]                    TestClass::icm_test_caller_smethod_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe]                              TestClass::icm_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe_one]                          TestClass::icm_VL_MT_UNSAFE_ONE(VerilatedMutex &)
 
@@ -311,7 +343,7 @@ t/t_dist_attributes/mt_enabled.h:235:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:235:    [acquire]                                TestClass::icm_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [excludes]                               TestClass::icm_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_safe]                                TestClass::icm_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:235:    [excludes]                               TestClass::icm_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:235:    [mt_safe, excludes]                      TestClass::icm_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_safe_postinit]                       TestClass::icm_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_start, requires]                     TestClass::icm_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:235:    [mt_unsafe]                              TestClass::icm_VL_MT_UNSAFE(VerilatedMutex &)
@@ -322,6 +354,12 @@ t/t_dist_attributes/mt_enabled.h:235:    [requires]                             
 
 %Error: "TestClass::iscm_test_caller_smethod_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
 t/t_dist_attributes/mt_enabled.cpp:119:  [mt_safe]                              TestClass::iscm_test_caller_smethod_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:170:    []                                       TestClass::iscm_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe]                              TestClass::iscm_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe_one]                          TestClass::iscm_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
+%Error: "TestClass::iscm_test_caller_smethod_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.cpp:119:  [mt_safe, excludes]                    TestClass::iscm_test_caller_smethod_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    []                                       TestClass::iscm_NO_ANNOTATION(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe]                              TestClass::iscm_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe_one]                          TestClass::iscm_VL_MT_UNSAFE_ONE(VerilatedMutex &)
@@ -339,7 +377,7 @@ t/t_dist_attributes/mt_enabled.h:170:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:170:    [acquire]                                TestClass::iscm_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [excludes]                               TestClass::iscm_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_safe]                                TestClass::iscm_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:170:    [excludes]                               TestClass::iscm_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:170:    [mt_safe, excludes]                      TestClass::iscm_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_safe_postinit]                       TestClass::iscm_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_start, requires]                     TestClass::iscm_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe]                              TestClass::iscm_VL_MT_UNSAFE(VerilatedMutex &)
@@ -350,6 +388,12 @@ t/t_dist_attributes/mt_enabled.h:170:    [requires]                             
 
 %Error: "TestClass::iscm_test_caller_smethod_hdr_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
 t/t_dist_attributes/mt_enabled.h:173:    [mt_safe]                              TestClass::iscm_test_caller_smethod_hdr_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:170:    []                                       TestClass::iscm_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe]                              TestClass::iscm_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe_one]                          TestClass::iscm_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
+%Error: "TestClass::iscm_test_caller_smethod_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.h:173:    [mt_safe, excludes]                    TestClass::iscm_test_caller_smethod_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    []                                       TestClass::iscm_NO_ANNOTATION(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe]                              TestClass::iscm_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe_one]                          TestClass::iscm_VL_MT_UNSAFE_ONE(VerilatedMutex &)
@@ -367,7 +411,7 @@ t/t_dist_attributes/mt_enabled.h:170:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:170:    [acquire]                                TestClass::iscm_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [excludes]                               TestClass::iscm_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_safe]                                TestClass::iscm_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:170:    [excludes]                               TestClass::iscm_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:170:    [mt_safe, excludes]                      TestClass::iscm_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_safe_postinit]                       TestClass::iscm_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_start, requires]                     TestClass::iscm_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:170:    [mt_unsafe]                              TestClass::iscm_VL_MT_UNSAFE(VerilatedMutex &)
@@ -397,7 +441,7 @@ t/t_dist_attributes/mt_enabled.h:133:    [mt_safe]                              
 t/t_dist_attributes/mt_enabled.cpp:84:   [mt_safe, pure]                        TestClass::scm_ae_VL_MT_SAFE(VerilatedMutex &)
 
 %Error: "TestClass::scm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" declaration does not match definition
-t/t_dist_attributes/mt_enabled.h:133:    [excludes]                             TestClass::scm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
+t/t_dist_attributes/mt_enabled.h:133:    [mt_safe, excludes]                    TestClass::scm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
 t/t_dist_attributes/mt_enabled.cpp:84:   [mt_safe, pure, excludes]              TestClass::scm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 
 %Error: "TestClass::scm_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)" declaration does not match definition
@@ -460,6 +504,34 @@ t/t_dist_attributes/mt_enabled.h:133:    [mt_unsafe_one]                        
 t/t_dist_attributes/mt_enabled.h:138:    [mt_safe, mt_unsafe, pure]               TestClass::scm_ea_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:138:    [mt_safe, mt_unsafe_one, pure]           TestClass::scm_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
 
+%Error: "TestClass::scm_test_caller_smethod_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.cpp:93:   [mt_safe, excludes]                    TestClass::scm_test_caller_smethod_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:120:    []                                       TestClass::scm_au_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:120:    [mt_unsafe]                              TestClass::scm_au_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:120:    [mt_unsafe_one]                          TestClass::scm_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_ACQUIRE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_ACQUIRE_SHARED(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_START(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_PURE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_RELEASE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_RELEASE_SHARED(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_REQUIRES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:128:    []                                       TestClass::scm_aa_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:128:    [mt_unsafe]                              TestClass::scm_aa_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:128:    [mt_unsafe_one]                          TestClass::scm_aa_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:133:    []                                       TestClass::scm_ae_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:133:    [mt_unsafe]                              TestClass::scm_ae_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:133:    [mt_unsafe_one]                          TestClass::scm_ae_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:138:    [mt_safe, mt_unsafe, pure]               TestClass::scm_ea_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:138:    [mt_safe, mt_unsafe_one, pure]           TestClass::scm_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
 %Error: "TestClass::scm_test_caller_smethod_VL_MT_START(VerilatedMutex &)" is stable_tree but calls non-stable_tree or non-mtsafe
 t/t_dist_attributes/mt_enabled.cpp:93:   [mt_start, requires]                   TestClass::scm_test_caller_smethod_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    []                                       TestClass::scm_au_NO_ANNOTATION(VerilatedMutex &)
@@ -495,7 +567,7 @@ t/t_dist_attributes/mt_enabled.h:120:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:120:    [acquire]                                TestClass::scm_au_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [excludes]                               TestClass::scm_au_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_safe]                                TestClass::scm_au_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:120:    [excludes]                               TestClass::scm_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:120:    [mt_safe, excludes]                      TestClass::scm_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_safe_postinit]                       TestClass::scm_au_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_start, requires]                     TestClass::scm_au_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_unsafe]                              TestClass::scm_au_VL_MT_UNSAFE(VerilatedMutex &)
@@ -522,7 +594,7 @@ t/t_dist_attributes/mt_enabled.h:128:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:128:    [acquire]                                TestClass::scm_aa_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [excludes]                               TestClass::scm_aa_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [mt_safe]                                TestClass::scm_aa_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:128:    [excludes]                               TestClass::scm_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:128:    [mt_safe, excludes]                      TestClass::scm_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [mt_safe_postinit]                       TestClass::scm_aa_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [mt_start, requires]                     TestClass::scm_aa_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [mt_unsafe]                              TestClass::scm_aa_VL_MT_UNSAFE(VerilatedMutex &)
@@ -535,7 +607,7 @@ t/t_dist_attributes/mt_enabled.h:133:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:133:    [acquire]                                TestClass::scm_ae_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [excludes]                               TestClass::scm_ae_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [mt_safe]                                TestClass::scm_ae_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:133:    [excludes]                               TestClass::scm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:133:    [mt_safe, excludes]                      TestClass::scm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [mt_safe_postinit]                       TestClass::scm_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [mt_start, requires]                     TestClass::scm_ae_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [mt_unsafe]                              TestClass::scm_ae_VL_MT_UNSAFE(VerilatedMutex &)
@@ -546,6 +618,34 @@ t/t_dist_attributes/mt_enabled.h:133:    [requires]                             
 
 %Error: "TestClass::scm_test_caller_smethod_hdr_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
 t/t_dist_attributes/mt_enabled.h:141:    [mt_safe]                              TestClass::scm_test_caller_smethod_hdr_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:120:    []                                       TestClass::scm_au_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:120:    [mt_unsafe]                              TestClass::scm_au_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:120:    [mt_unsafe_one]                          TestClass::scm_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_ACQUIRE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_ACQUIRE_SHARED(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_START(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_PURE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_RELEASE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_RELEASE_SHARED(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:124:    []                                       TestClass::scm_ua_VL_REQUIRES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:128:    []                                       TestClass::scm_aa_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:128:    [mt_unsafe]                              TestClass::scm_aa_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:128:    [mt_unsafe_one]                          TestClass::scm_aa_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:133:    []                                       TestClass::scm_ae_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:133:    [mt_unsafe]                              TestClass::scm_ae_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:133:    [mt_unsafe_one]                          TestClass::scm_ae_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:138:    [mt_safe, mt_unsafe, pure]               TestClass::scm_ea_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:138:    [mt_safe, mt_unsafe_one, pure]           TestClass::scm_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
+%Error: "TestClass::scm_test_caller_smethod_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.h:141:    [mt_safe, excludes]                    TestClass::scm_test_caller_smethod_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    []                                       TestClass::scm_au_NO_ANNOTATION(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_unsafe]                              TestClass::scm_au_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_unsafe_one]                          TestClass::scm_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
@@ -607,7 +707,7 @@ t/t_dist_attributes/mt_enabled.h:120:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:120:    [acquire]                                TestClass::scm_au_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [excludes]                               TestClass::scm_au_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_safe]                                TestClass::scm_au_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:120:    [excludes]                               TestClass::scm_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:120:    [mt_safe, excludes]                      TestClass::scm_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_safe_postinit]                       TestClass::scm_au_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_start, requires]                     TestClass::scm_au_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:120:    [mt_unsafe]                              TestClass::scm_au_VL_MT_UNSAFE(VerilatedMutex &)
@@ -634,7 +734,7 @@ t/t_dist_attributes/mt_enabled.h:128:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:128:    [acquire]                                TestClass::scm_aa_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [excludes]                               TestClass::scm_aa_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [mt_safe]                                TestClass::scm_aa_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:128:    [excludes]                               TestClass::scm_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:128:    [mt_safe, excludes]                      TestClass::scm_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [mt_safe_postinit]                       TestClass::scm_aa_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [mt_start, requires]                     TestClass::scm_aa_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:128:    [mt_unsafe]                              TestClass::scm_aa_VL_MT_UNSAFE(VerilatedMutex &)
@@ -647,7 +747,7 @@ t/t_dist_attributes/mt_enabled.h:133:    [acquire]                              
 t/t_dist_attributes/mt_enabled.h:133:    [acquire]                                TestClass::scm_ae_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [excludes]                               TestClass::scm_ae_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [mt_safe]                                TestClass::scm_ae_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:133:    [excludes]                               TestClass::scm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:133:    [mt_safe, excludes]                      TestClass::scm_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [mt_safe_postinit]                       TestClass::scm_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [mt_start, requires]                     TestClass::scm_ae_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:133:    [mt_unsafe]                              TestClass::scm_ae_VL_MT_UNSAFE(VerilatedMutex &)
@@ -674,7 +774,7 @@ t/t_dist_attributes/mt_enabled.cpp:75:   [mt_safe]                              
 
 %Error: "TestClass::scm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" declaration does not match definition
 t/t_dist_attributes/mt_enabled.h:124:    []                                     TestClass::scm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
-t/t_dist_attributes/mt_enabled.cpp:75:   [excludes]                             TestClass::scm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.cpp:75:   [mt_safe, excludes]                    TestClass::scm_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 
 %Error: "TestClass::scm_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &)" declaration does not match definition
 t/t_dist_attributes/mt_enabled.h:124:    []                                     TestClass::scm_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &) [declaration]
@@ -745,25 +845,31 @@ t/t_dist_attributes/mt_enabled.h:392:    [mt_safe]                              
 t/t_dist_attributes/mt_enabled.h:285:    [mt_unsafe]                              ConstructorCallsUnsafeLocalFunction::unsafe_function()
 
 %Error: "UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad()" defined in a file marked as VL_MT_DISABLED_CODE_UNIT has declaration(s) without VL_MT_DISABLED annotation
-t/t_dist_attributes/mt_disabled.h:27:    [mt_disabled, excludes]                UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad() [declaration]
-t/t_dist_attributes/mt_disabled.cpp:23:  []                                     UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad()
+t/t_dist_attributes/mt_disabled.h:27:    []                                     UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad() [declaration]
+t/t_dist_attributes/mt_disabled.cpp:23:  [mt_disabled, excludes]                UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad()
 t/t_dist_attributes/mt_disabled.h:27:    []                                       UnannotatedMtDisabledClass::unannotatedMtDisabledMethodBad()
 
 %Error: "UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad()" defined in a file marked as VL_MT_DISABLED_CODE_UNIT has declaration(s) without VL_MT_DISABLED annotation
-t/t_dist_attributes/mt_disabled.h:28:    [mt_disabled, excludes]                UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad() [declaration]
-t/t_dist_attributes/mt_disabled.cpp:26:  []                                     UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad()
+t/t_dist_attributes/mt_disabled.h:28:    []                                     UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad() [declaration]
+t/t_dist_attributes/mt_disabled.cpp:26:  [mt_disabled, excludes]                UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad()
 t/t_dist_attributes/mt_disabled.h:28:    []                                       UnannotatedMtDisabledClass::unannotatedMtDisabledStaticMethodBad()
 
-%Error: "VirtualInheritance::Base1::func(int, int)" is pure but calls non-pure function(s)
-t/t_dist_attributes/mt_enabled.h:382:    [pure]                                 VirtualInheritance::Base1::func(int, int)
+%Error: "VirtualInheritance::Derived::func()" is pure but calls non-pure function(s)
+t/t_dist_attributes/mt_enabled.h:383:    [pure]                                 VirtualInheritance::Derived::func()
 t/t_dist_attributes/mt_enabled.h:384:    []                                       VirtualInheritance::Derived::notPure()
 
-%Error: "VirtualInheritance::Base2::func()" is pure but calls non-pure function(s)
-t/t_dist_attributes/mt_enabled.h:383:    [pure]                                 VirtualInheritance::Base2::func()
+%Error: "VirtualInheritance::Derived::func(int, int)" is pure but calls non-pure function(s)
+t/t_dist_attributes/mt_enabled.h:382:    [pure]                                 VirtualInheritance::Derived::func(int, int)
 t/t_dist_attributes/mt_enabled.h:384:    []                                       VirtualInheritance::Derived::notPure()
 
 %Error: "ifh_test_caller_func_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
 t/t_dist_attributes/mt_enabled.cpp:53:   [mt_safe]                              ifh_test_caller_func_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:94:     []                                       ifh_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe]                              ifh_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe_one]                          ifh_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
+%Error: "ifh_test_caller_func_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.cpp:53:   [mt_safe, excludes]                    ifh_test_caller_func_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     []                                       ifh_NO_ANNOTATION(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe]                              ifh_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe_one]                          ifh_VL_MT_UNSAFE_ONE(VerilatedMutex &)
@@ -781,7 +887,7 @@ t/t_dist_attributes/mt_enabled.h:94:     [acquire]                              
 t/t_dist_attributes/mt_enabled.h:94:     [acquire]                                ifh_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [excludes]                               ifh_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_safe]                                ifh_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:94:     [excludes]                               ifh_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:94:     [mt_safe, excludes]                      ifh_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_safe_postinit]                       ifh_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_start, requires]                     ifh_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe]                              ifh_VL_MT_UNSAFE(VerilatedMutex &)
@@ -792,6 +898,12 @@ t/t_dist_attributes/mt_enabled.h:94:     [requires]                             
 
 %Error: "ifh_test_caller_func_hdr_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
 t/t_dist_attributes/mt_enabled.h:97:     [mt_safe]                              ifh_test_caller_func_hdr_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:94:     []                                       ifh_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe]                              ifh_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe_one]                          ifh_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
+%Error: "ifh_test_caller_func_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.h:97:     [mt_safe, excludes]                    ifh_test_caller_func_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     []                                       ifh_NO_ANNOTATION(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe]                              ifh_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe_one]                          ifh_VL_MT_UNSAFE_ONE(VerilatedMutex &)
@@ -809,7 +921,7 @@ t/t_dist_attributes/mt_enabled.h:94:     [acquire]                              
 t/t_dist_attributes/mt_enabled.h:94:     [acquire]                                ifh_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [excludes]                               ifh_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_safe]                                ifh_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:94:     [excludes]                               ifh_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:94:     [mt_safe, excludes]                      ifh_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_safe_postinit]                       ifh_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_start, requires]                     ifh_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:94:     [mt_unsafe]                              ifh_VL_MT_UNSAFE(VerilatedMutex &)
@@ -839,7 +951,7 @@ t/t_dist_attributes/mt_enabled.h:75:     [mt_safe]                              
 t/t_dist_attributes/mt_enabled.cpp:34:   [mt_safe, pure]                        nsf_ae_VL_MT_SAFE(VerilatedMutex &)
 
 %Error: "nsf_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" declaration does not match definition
-t/t_dist_attributes/mt_enabled.h:75:     [excludes]                             nsf_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
+t/t_dist_attributes/mt_enabled.h:75:     [mt_safe, excludes]                    nsf_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
 t/t_dist_attributes/mt_enabled.cpp:34:   [mt_safe, pure, excludes]              nsf_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 
 %Error: "nsf_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)" declaration does not match definition
@@ -902,6 +1014,34 @@ t/t_dist_attributes/mt_enabled.h:75:     [mt_unsafe_one]                        
 t/t_dist_attributes/mt_enabled.h:80:     [mt_safe, mt_unsafe, pure]               nsf_ea_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:80:     [mt_safe, mt_unsafe_one, pure]           nsf_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
 
+%Error: "nsf_test_caller_func_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.cpp:42:   [mt_safe, excludes]                    nsf_test_caller_func_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:62:     []                                       nsf_au_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:62:     [mt_unsafe]                              nsf_au_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:62:     [mt_unsafe_one]                          nsf_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_ACQUIRE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_ACQUIRE_SHARED(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_START(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_PURE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_RELEASE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_RELEASE_SHARED(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_REQUIRES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:70:     []                                       nsf_aa_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:70:     [mt_unsafe]                              nsf_aa_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:70:     [mt_unsafe_one]                          nsf_aa_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:75:     []                                       nsf_ae_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:75:     [mt_unsafe]                              nsf_ae_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:75:     [mt_unsafe_one]                          nsf_ae_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:80:     [mt_safe, mt_unsafe, pure]               nsf_ea_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:80:     [mt_safe, mt_unsafe_one, pure]           nsf_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
 %Error: "nsf_test_caller_func_VL_MT_START(VerilatedMutex &)" is stable_tree but calls non-stable_tree or non-mtsafe
 t/t_dist_attributes/mt_enabled.cpp:42:   [mt_start, requires]                   nsf_test_caller_func_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     []                                       nsf_au_NO_ANNOTATION(VerilatedMutex &)
@@ -937,7 +1077,7 @@ t/t_dist_attributes/mt_enabled.h:62:     [acquire]                              
 t/t_dist_attributes/mt_enabled.h:62:     [acquire]                                nsf_au_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [excludes]                               nsf_au_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_safe]                                nsf_au_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:62:     [excludes]                               nsf_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:62:     [mt_safe, excludes]                      nsf_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_safe_postinit]                       nsf_au_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_start, requires]                     nsf_au_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_unsafe]                              nsf_au_VL_MT_UNSAFE(VerilatedMutex &)
@@ -964,7 +1104,7 @@ t/t_dist_attributes/mt_enabled.h:70:     [acquire]                              
 t/t_dist_attributes/mt_enabled.h:70:     [acquire]                                nsf_aa_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [excludes]                               nsf_aa_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [mt_safe]                                nsf_aa_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:70:     [excludes]                               nsf_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:70:     [mt_safe, excludes]                      nsf_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [mt_safe_postinit]                       nsf_aa_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [mt_start, requires]                     nsf_aa_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [mt_unsafe]                              nsf_aa_VL_MT_UNSAFE(VerilatedMutex &)
@@ -977,7 +1117,7 @@ t/t_dist_attributes/mt_enabled.h:75:     [acquire]                              
 t/t_dist_attributes/mt_enabled.h:75:     [acquire]                                nsf_ae_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [excludes]                               nsf_ae_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [mt_safe]                                nsf_ae_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:75:     [excludes]                               nsf_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:75:     [mt_safe, excludes]                      nsf_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [mt_safe_postinit]                       nsf_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [mt_start, requires]                     nsf_ae_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [mt_unsafe]                              nsf_ae_VL_MT_UNSAFE(VerilatedMutex &)
@@ -988,6 +1128,34 @@ t/t_dist_attributes/mt_enabled.h:75:     [requires]                             
 
 %Error: "nsf_test_caller_func_hdr_VL_MT_SAFE(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
 t/t_dist_attributes/mt_enabled.h:83:     [mt_safe]                              nsf_test_caller_func_hdr_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:62:     []                                       nsf_au_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:62:     [mt_unsafe]                              nsf_au_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:62:     [mt_unsafe_one]                          nsf_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_ACQUIRE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_ACQUIRE_SHARED(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_SAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_START(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_PURE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_RELEASE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_RELEASE_SHARED(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:66:     []                                       nsf_ua_VL_REQUIRES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:70:     []                                       nsf_aa_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:70:     [mt_unsafe]                              nsf_aa_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:70:     [mt_unsafe_one]                          nsf_aa_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:75:     []                                       nsf_ae_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:75:     [mt_unsafe]                              nsf_ae_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:75:     [mt_unsafe_one]                          nsf_ae_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:80:     [mt_safe, mt_unsafe, pure]               nsf_ea_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:80:     [mt_safe, mt_unsafe_one, pure]           nsf_ea_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
+%Error: "nsf_test_caller_func_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.h:83:     [mt_safe, excludes]                    nsf_test_caller_func_hdr_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     []                                       nsf_au_NO_ANNOTATION(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_unsafe]                              nsf_au_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_unsafe_one]                          nsf_au_VL_MT_UNSAFE_ONE(VerilatedMutex &)
@@ -1049,7 +1217,7 @@ t/t_dist_attributes/mt_enabled.h:62:     [acquire]                              
 t/t_dist_attributes/mt_enabled.h:62:     [acquire]                                nsf_au_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [excludes]                               nsf_au_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_safe]                                nsf_au_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:62:     [excludes]                               nsf_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:62:     [mt_safe, excludes]                      nsf_au_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_safe_postinit]                       nsf_au_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_start, requires]                     nsf_au_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:62:     [mt_unsafe]                              nsf_au_VL_MT_UNSAFE(VerilatedMutex &)
@@ -1076,7 +1244,7 @@ t/t_dist_attributes/mt_enabled.h:70:     [acquire]                              
 t/t_dist_attributes/mt_enabled.h:70:     [acquire]                                nsf_aa_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [excludes]                               nsf_aa_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [mt_safe]                                nsf_aa_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:70:     [excludes]                               nsf_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:70:     [mt_safe, excludes]                      nsf_aa_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [mt_safe_postinit]                       nsf_aa_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [mt_start, requires]                     nsf_aa_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:70:     [mt_unsafe]                              nsf_aa_VL_MT_UNSAFE(VerilatedMutex &)
@@ -1089,7 +1257,7 @@ t/t_dist_attributes/mt_enabled.h:75:     [acquire]                              
 t/t_dist_attributes/mt_enabled.h:75:     [acquire]                                nsf_ae_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [excludes]                               nsf_ae_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [mt_safe]                                nsf_ae_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.h:75:     [excludes]                               nsf_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.h:75:     [mt_safe, excludes]                      nsf_ae_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [mt_safe_postinit]                       nsf_ae_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [mt_start, requires]                     nsf_ae_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.h:75:     [mt_unsafe]                              nsf_ae_VL_MT_UNSAFE(VerilatedMutex &)
@@ -1116,7 +1284,7 @@ t/t_dist_attributes/mt_enabled.cpp:25:   [mt_safe]                              
 
 %Error: "nsf_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" declaration does not match definition
 t/t_dist_attributes/mt_enabled.h:66:     []                                     nsf_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &) [declaration]
-t/t_dist_attributes/mt_enabled.cpp:25:   [excludes]                             nsf_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.cpp:25:   [mt_safe, excludes]                    nsf_ua_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 
 %Error: "nsf_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &)" declaration does not match definition
 t/t_dist_attributes/mt_enabled.h:66:     []                                     nsf_ua_VL_MT_SAFE_POSTINIT(VerilatedMutex &) [declaration]
@@ -1156,6 +1324,12 @@ t/t_dist_attributes/mt_enabled.cpp:60:   []                                     
 t/t_dist_attributes/mt_enabled.cpp:60:   [mt_unsafe]                              sfc_VL_MT_UNSAFE(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.cpp:60:   [mt_unsafe_one]                          sfc_VL_MT_UNSAFE_ONE(VerilatedMutex &)
 
+%Error: "sfc_test_caller_func_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)" is mtsafe but calls non-mtsafe function(s)
+t/t_dist_attributes/mt_enabled.cpp:63:   [mt_safe, excludes]                    sfc_test_caller_func_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.cpp:60:   []                                       sfc_NO_ANNOTATION(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.cpp:60:   [mt_unsafe]                              sfc_VL_MT_UNSAFE(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.cpp:60:   [mt_unsafe_one]                          sfc_VL_MT_UNSAFE_ONE(VerilatedMutex &)
+
 %Error: "sfc_test_caller_func_VL_MT_START(VerilatedMutex &)" is stable_tree but calls non-stable_tree or non-mtsafe
 t/t_dist_attributes/mt_enabled.cpp:63:   [mt_start, requires]                   sfc_test_caller_func_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.cpp:60:   []                                       sfc_NO_ANNOTATION(VerilatedMutex &)
@@ -1169,7 +1343,7 @@ t/t_dist_attributes/mt_enabled.cpp:60:   [acquire]                              
 t/t_dist_attributes/mt_enabled.cpp:60:   [acquire]                                sfc_VL_ACQUIRE_SHARED(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.cpp:60:   [excludes]                               sfc_VL_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.cpp:60:   [mt_safe]                                sfc_VL_MT_SAFE(VerilatedMutex &)
-t/t_dist_attributes/mt_enabled.cpp:60:   [excludes]                               sfc_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
+t/t_dist_attributes/mt_enabled.cpp:60:   [mt_safe, excludes]                      sfc_VL_MT_SAFE_EXCLUDES(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.cpp:60:   [mt_safe_postinit]                       sfc_VL_MT_SAFE_POSTINIT(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.cpp:60:   [mt_start, requires]                     sfc_VL_MT_START(VerilatedMutex &)
 t/t_dist_attributes/mt_enabled.cpp:60:   [mt_unsafe]                              sfc_VL_MT_UNSAFE(VerilatedMutex &)
@@ -1179,8 +1353,8 @@ t/t_dist_attributes/mt_enabled.cpp:60:   [release]                              
 t/t_dist_attributes/mt_enabled.cpp:60:   [requires]                               sfc_VL_REQUIRES(VerilatedMutex &)
 
 %Error: "unannotatedMtDisabledFunctionBad()" defined in a file marked as VL_MT_DISABLED_CODE_UNIT has declaration(s) without VL_MT_DISABLED annotation
-t/t_dist_attributes/mt_disabled.h:20:    [mt_disabled, excludes]                unannotatedMtDisabledFunctionBad() [declaration]
-t/t_dist_attributes/mt_disabled.cpp:20:  []                                     unannotatedMtDisabledFunctionBad()
+t/t_dist_attributes/mt_disabled.h:20:    []                                     unannotatedMtDisabledFunctionBad() [declaration]
+t/t_dist_attributes/mt_disabled.cpp:20:  [mt_disabled, excludes]                unannotatedMtDisabledFunctionBad()
 t/t_dist_attributes/mt_disabled.h:20:    []                                       unannotatedMtDisabledFunctionBad()
 t/t_dist_attributes/mt_disabled.h:23:    []                                       unannotatedMtDisabledFunctionBad()
 Number of functions reported unsafe: 230

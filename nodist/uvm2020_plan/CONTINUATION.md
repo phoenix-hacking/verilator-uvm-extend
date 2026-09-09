@@ -4,7 +4,375 @@
 
 # UVM 2020 continuation ledger
 
-This file is the durable handoff record for pull request #41. It records
+## Integrated compiler and CI golden correction: 2026-09-08
+
+The recursive-pattern component and complete analysis/protocol evidence are
+integrated through `fad9c5d31`. The optimized combined compiler rebuilt with
+warnings treated as errors and embeds this source revision; native SHA256 is
+`95923e6b665994bafc4b68199a45d6b9a1428b5147292f9a7474638f6d5876ce`.
+All 421 recorded compiler/runtime inputs stayed unchanged during the build.
+
+CI at parent `471351e7b` exposed stale `t_debug_emitv.out` and
+`t_vlcov_covergroup.annotate.out`. Both failures reproduced locally. Commit
+`ab69ef0d9` regenerates those files through the harness after reviewing the
+new coverage weight fields and current source annotations. All 127 individual
+coverage-bin counts are preserved after accounting for the unnamed cross's
+internal ordinal. The generation command itself reports the two mismatches
+while writing the files; it is not a passing validation run.
+
+The subsequent normal run, with updates disabled, passes **6/6 in 0:45**:
+ordinary/protected enum patterns in both modes, AST emission, and coverage
+annotation. All 9,774 source inputs and the rebuilt native hash stayed fixed.
+[Integrated evidence](integration-pattern-local-2026-09-08.yaml) retains the
+source, binary, logs, statuses, golden review and exact component boundaries.
+Source protocol validation in the component used native `45fca9766fba`; its
+four passes are separate from these six runs against native `95923e6b6659`.
+
+The completed protocol models released another 1.17 GiB from 108 disposable
+objects/archives/PCH files, with 88 retained artifact hashes verified before
+and after removal. Current free space is approximately 141 GiB. The combined
+native build, pattern validation and complete cppcheck are terminal; continue
+with current-revision CI, remaining attribute audits, broader RAL policies/maps
+and the full goals. Formal acceptance remains **7/20, 31/46, 3/21**.
+
+## Recursive patterns and source protocol checkpoint: 2026-09-08
+
+Compiler source `bf891338a` re-enables the enum-pattern regression by fixing
+recursive type/default keys and protected structure initializer names. Broad
+GCC validation passes 98/98 scenarios and targeted Clang/C++14 passes 14/14;
+full Python lint and distribution checks pass. Separate LCOV/HTML and NUMA
+reruns pass 4/4, leaving two attribute-audit skips open. Historical regression
+rows and formal **7/20, 31/46, 3/21** acceptance totals are unchanged.
+
+The source protocol target at this compiler passes all four APB and extended
+AXI/RAL configurations in 13:50: 12 seeded positives and 22 negatives. Exact
+native and 9,774 source-input hashes stayed unchanged; pinned UVM was clean
+before and after, and stale-artifact checks passed. This supersedes the earlier
+named target's limited AXI transport scope, while retaining that older result.
+
+Full cppcheck completed after AST, Bison and both lexer inputs were generated.
+The final cached run has no missing-input or parsing diagnostics and verifies
+498 input hashes. Its 1,058 unique findings include ten error-level reports in
+unchanged files; the changed-file comparison is 19 versus 19 with none added.
+Two earlier attempts had incomplete generated inputs and are explicitly
+excluded from complete-analysis claims. See
+[evidence](regression-skip-closure-local-2026-09-08.yaml).
+
+Integrate the component, rebuild the combined native compiler, and preserve
+exact-revision validation. CI and fresh complete regression remain open, along
+with broader RAL policies/maps, coverage, assertions, normative requirements,
+static-analysis findings and controlled performance acceptance.
+
+## AXI acceptance and completed regression: 2026-09-08
+
+AXI RAL and class coverage are committed at `cd75adad3`, with published
+evidence at `f27e5001c`, and merged into the combined checkout. All four
+bundled/source and vlt/vltmt configurations pass: 12 positives and 24 negatives,
+2,468 transfers per positive, all 27 exact coverage bins, merge/report, explicit
+monitor prediction and built-in RAL sequences. This accepts M12/C08 and raises
+formal progress to **7/20 milestones, 31/46 gates and 3/21 criteria**. See
+[AXI evidence](uvm-axi-ral-local-2026-09-08.yaml). M13 policies/maps and both full
+goals remain open.
+
+The combined strict-C11 DPI reference source checks passed 4/4 in 14:52,
+adding to the earlier four protocol and 22 neighbor passes at `77a328f91`.
+[Combined evidence](integration-next-local-2026-09-08.yaml) records the existing
+DPI wrapper: unchanged upstream common components plus the Verilator HDL backend.
+
+The original segmented regression is complete: **6,727 pass, eight skip,
+three fail**, with every result hash and native/source input reverified.
+[Final evidence](integration-resume-final-2026-09-08.yaml) retains all failure
+and skip reasons. No fresh full pass or release acceptance is claimed. After
+completion, another 78.40 GiB of disposable build intermediates was removed;
+total cleanup recovered about 93.3 GiB, with roughly 135 GiB available at the
+checkpoint. All acceptance evidence and native tools are retained.
+
+## Combined protocol validation and disk cleanup: 2026-09-08
+
+At combined checkout `77a328f91`, both native tools built successfully. The
+compiler embeds source version `021134c56`; compiler/runtime source trees are
+identical through the evidence checkout. The protocol source target passed
+**4/4 scenarios in 17:25**, including 12 seeded positives, 20 negatives and
+all stale-artifact checks. Source UVM remains clean at the pinned revision.
+Another **22/22 compiler, weighted coverage and CMake neighbor scenarios
+passed in 4:24**. [Combined evidence](integration-next-local-2026-09-08.yaml)
+retains exact binary, input and log hashes. DPI-enabled source checks and
+combined CI remain open. The combined build-test run is `34183526282`.
+Six superseded component build matrices were canceled after preserving their
+metadata and verifying their revisions are ancestors of the combined source.
+
+Issues #7 and #12 now close their accepted local clocking/APB scope. Formal
+counts remain **6/20 milestones, 30/46 gates, 2/21 criteria**. The original
+regression last recorded 4,112 resumed passes and three failures: contributor
+certification plus the known CMake FST dependency failure in vlt and vltmt.
+Its actual results remain separate from passing candidate validation.
+
+Continue AXI coverage/RAL work in `/home/holden/verilator-work/uvm-axi-ral`,
+branch `codex/uvm-axi-ral`, using the retained combined compiler. Its first
+extended run completed 2,272 RAL operations and matched all 27 coverage bins
+to independent driver handshakes, then failed the reset-duration check.
+Aligning off-edge reset requests fixed that check; source vlt now passes
+three positives and six negatives. Source vltmt and both bundled scenarios
+are running. M12 is not accepted by this partial configuration result.
+
+The user requested disk cleanup. Removing 556 disposable object/archive/PCH
+files from completed component runs recovered 8.14 GiB after verifying 152
+retained evidence files. Archiving and byte-verifying 108 old compiler AST
+dumps recovered another 6.72 GiB. Sources, logs, coverage, statuses, retained
+executables and live integration artifacts were preserved. Manifests are
+`/home/holden/verilator-work/completed-build-cleanup-20260908.json` and
+`/home/holden/verilator-work/completed-ast-archives-20260908/manifest.jsonl`.
+
+## Protocol acceptance and combined checkout: 2026-09-07
+
+Formal progress is now **6/20 milestones, 30/46 gates and 2/21 program
+criteria**. The APB fixture passes bundled/source and vlt/vltmt, including
+2,436 transfers per positive, full RW RAL/predictor/built-in checks, seven
+coverage bins plus merge/report, and data/protocol negatives. This accepts
+M06-G04 and M11-G01, completing M06/M11 and C06/C07. See
+[APB evidence](uvm-apb-local-2026-09-07.yaml). These are local component
+acceptances; combined-source CI and both full goals remain open.
+
+Compiler safe-access fixes reduced the full audit from 21 to 11 findings
+(47 before the earlier correction), with 18 behavioral scenarios passing.
+Weighted coverage has 52 final distinct passing scenarios across two runs.
+AXI transport passes all four local configurations, including reset VALID
+checks and negatives; its class coverage and RAL frontdoor remain required.
+CMake FST dependency discovery fixes the reproduced missing-header failure
+and passes eight trace scenarios. All components and their evidence are
+committed and published on their component branches.
+
+Continue in `/home/holden/verilator-work/uvm-integration-20260908`, branch
+`codex/uvm-integration-20260908`. Its combined optimized native build passed
+with warnings treated as errors; log
+`/home/holden/verilator-work/integration-next-opt-build.log`.
+The coverage utility build and combined protocol validation follow.
+The new `uvm2020-protocol-source` target and CI job run APB/AXI with explicit
+source selection and both simulation modes. `UVM_HOME` alone uses bundled
+UVM, so always pass `--driver-uvm-source-root` or use that named target for
+unmodified-source acceptance. The earlier byte-enable inspection hypothesis
+was not reproduced: all four byte lanes pass against the unchanged library.
+
+The original main checkout remains frozen at `382553c08`; do not modify its
+source or native binary while the detached regression runs. Last observed
+continuation count was 3,313 passes and two failures. Preserve the original
+failure dispositions and distinguish the CMake component fix from old-run
+success. Current details and process handles are in the local handoff above.
+
+## Second session recovery: 2026-09-07
+
+The interrupted integration run at `382553c08` is preserved and has resumed
+in recorded batches. Exact source and native-binary hashes match. Its status
+files recover 2,532 passes, eight skips, and 13 failures; 4,185 scenarios had
+no completed status. The last printed summary had only 2,524 passes. The
+continuation uses two test workers and the verified dependency environment;
+[recovery evidence](session-resume-local-2026-09-07.yaml) records the process,
+commands, archived results, and observed progress. This is segmented evidence,
+and complete regression acceptance remains open.
+
+The compiler annotation correction is committed at `fdcb80851` on
+`codex/compiler-attribute-contracts`. Its optimized build passes, along with
+12 targeted behavioral checks and eight distribution checks. Formatting and
+Python lint pass. The complete 164-unit attribute audit falls from 47 to 21
+primary diagnostics, with 26 removed, none added, and no parse failures.
+Focused cppcheck has the identical 796-report multiset as its parent across
+four translation units. [Component evidence](compiler-attribute-contracts-local-2026-09-07.yaml)
+records exact inputs, hashes, commands, and remaining findings. The mutable
+debug pointer-ID map and type-cache paths still need correction.
+
+Both integration CI matrices completed with 35 successful and 13 failed jobs
+each. All 26 failed jobs are preserved and classified: ten attribute-check
+jobs, twelve DPI C-build jobs, and four upstream-UVM format-security jobs.
+The isolated `t_assign_dff` failure passed on rerun. Existing DPI C-build and
+checker component fixes still require integration and combined CI.
+
+Formal acceptance remains **4/20 milestones, 28/46 gates, and 0/21 program
+criteria**. The main checkout remains frozen for its continuation. Active
+source work and the next validation checkpoint are in
+`/home/holden/verilator-work/compiler-attribute-contracts`; live regression
+state is `/home/holden/verilator-work/integration-resume-20260908/state.json`.
+
+## Post-crash resume point: 2026-09-07
+
+The 24 recovered source commits were integrated at `a48169e1b`, followed by
+compiler style cleanup at `75580fc39` and the profiler correction at
+`7bbee7b22`. Both native builds completed. The combined focused run passed
+43/44 checks; both attribute checks then passed using `attribute-env.sh`,
+which supplies the missing Clang builtin headers only to attribute analysis.
+Keep that environment separate from GCC model builds.
+The recovered UVM sequence files are committed at `d01193d80` and backed up in
+`integration-recovery-20260907T200409Z`. They passed against unmodified
+UVM 2020.3.1 at `78c06547a2a0a29b3dc9dcafae62b75b2ff61544`, with DPI/no-DPI,
+vlt/vltmt, and same/different-seed replay: 12 runs and 768 transactions in
+36:13. The binary is preserved as
+`/home/holden/verilator-work/verilator_bin_integration_cleanup_0903892f6`;
+the log is `uvm-sequence-randomize-source.log`. Source, binary, simulation,
+and trace hashes are recorded in
+[UVM sequence evidence](uvm-sequence-source-local-2026-09-07.yaml).
+Three build logs are retained; the first no-DPI build log was overwritten
+before observation, and its mislabeled snapshot is excluded. All 12 complete
+simulation logs are retained. The new `uvm2020-randomize-source` CI target
+executes all four configurations from a pinned clean upstream checkout.
+[Combined evidence](integration-recovered-local-2026-09-07.yaml) records the
+source and binary hashes; full regression and release acceptance remain open.
+
+Current compiler source is unchanged from `75580fc39`, but the shared runtime
+header and formatting helper changed at integrated `5a3bdae03` (component
+`d69a86352`). The explicit nonnull format contract fixes the GCC 13 sanitizer
+warning. Fifteen simulator checks pass, plus five initial distribution checks
+and the standalone-header replay after generating build prerequisites. Both
+GCC and Clang C++14 builds pass; runtime cppcheck has identical diagnostic
+multisets, including four existing errors. Two further trace sanitizer
+replays pass with the original Conda flags. The component worktree is frozen
+at `/home/holden/verilator-work/runtime-format-contract`.
+Build both native variants and start the next complete regression from this
+combined source with `/home/holden/verilator-work/regression-env.sh`. That
+environment clears inherited optimization flags and supplies the saved
+Clang headers only to `clang_check_attributes`; its two attribute checks pass
+and GCC parent include paths remain unset. The UVM evidence predates this
+runtime annotation and does not replace combined-source validation.
+
+Nine superseded component CI runs were cancelled after their job metadata
+and completed results were saved. The integrated branch is the current CI
+target; [cancellation evidence](ci-superseded-components-2026-09-07.yaml)
+records 20 running and 173 queued jobs at the snapshot, without treating any
+cancelled job as passed. Older per-component CI status fields are historical.
+The completed-build cache cleanup removed only .o/.gch/.a files from inactive
+test object directories. Its audit and receipt are under
+`/home/holden/verilator-work/completed-build-cache-cleanup-*`; source, log,
+compiler-binary and model-executable evidence remains available.
+
+The [recovery record](recovery-validation-2026-09-07.yaml) supersedes old local
+session identifiers and full-regression running/completion claims. All eight
+worktrees survived; uncommitted work is backed up under
+`/home/holden/verilator-work/recovery-20260907T133852Z`. The interrupted
+nested-foreach implementation was committed and pushed at `3b36d58dc`, with
+4/4 focused passes, causal 0/4 parent results, 21 adjacent passes, and five
+distribution passes. Full formatting and Python lint pass. Full regression,
+CI, and broad static acceptance remain pending. The constraint-array width
+follow-up is pushed at `c325d9c0d`; six foreach scenarios and five distribution
+checks pass, with causal failures in both new scenarios on the previous compiler.
+The complete `make test` run finished in the frozen foreach worktree with
+6,655 passes, 33 failures, and eight skips in 391:10; one additional initial
+failure passed on rerun. [Full-run evidence](foreach-full-regression-local-2026-09-07.yaml)
+records all final failures and the resource guards. This run predates the
+subsequent fixes and does not establish acceptance of the integrated source.
+
+The null rand-child fix is pushed at `04fc80d15` in
+`/home/holden/verilator-work/randomize-null-child`. Its parent `b9f9fcc75` carries
+the same foreach correction as `c325d9c0d`. Ten behavioral scenarios and five
+distribution checks pass; the preserved parent aborts in all four original
+reproducer configurations. Formatting and Python lint pass. The
+[local evidence](randomize-null-child-local-2026-09-07.yaml) includes exact hashes
+and the 174-driver, 304-scenario neighbor run, which completed with 300 passes
+and four failures. The associative-array size test fails in both scenarios on
+the preserved parent too; the recursive-class negative test exhausts memory.
+Logs are in `/home/holden/verilator-work/randomize-null-neighbors.log`. The
+recursion correction is published at `ab1d4498f` on
+`codex/randomize-recursion-check`, with 28/28 focused passes and causal 0/4 parent
+results under resource limits. It diagnoses self, mutual, and inherited rand
+class recursion before constraint expansion. The
+[local evidence](randomize-recursion-local-2026-09-07.yaml) preserves exact source,
+binary, and log hashes. Its optimized compiler is retained as
+`/home/holden/verilator-work/verilator_bin_recursive_ab1d4498f`.
+The frozen foreach full regression has a process-specific memory/CPU guard for
+the known recursive negative test, with interventions recorded in
+`/home/holden/verilator-work/foreach-recursion-resource-limits.log`.
+CI, full regression, and static acceptance remain pending. Explicit dereference errors stay active;
+`randomize(null)` with class/container members remains separately unsupported.
+
+The original and frozen null-child cppcheck sweeps completed with the same 11
+error reports as the pre-crash candidate; this is not a clean static pass.
+[Triage evidence](regression-triage-2026-09-07.yaml) records the completed results.
+The failure-state worktree was fast-forwarded to `04fc80d15` and its recovered
+changes reapplied cleanly; the original stash and patch remain preserved.
+
+The state-only solver correction is published at `04808c883` on
+`codex/randomize-state-constraints`, with 44/44 focused passes and causal failures
+in both new scenarios on the parent runtime. The new test builds with C++14.
+[Local evidence](randomize-state-only-local-2026-09-07.yaml) records its inputs.
+The associative-size correction is published at `b392c1065` on
+`codex/randomize-assoc-size`. The native build worktree
+`/home/holden/verilator-work/randomize-recursion-check` was frozen for that completed run.
+It is now at `6eaf8a0c3` on `codex/process-context-gcc`; the associative-size
+and PCH compilers and completed evidence remain preserved. The PCH source
+checkpoint is `982bae429` on `codex/compiler-pch-flags`. The PCH correction passes
+9/9 focused checks and 12/12 neighboring build scenarios. Full cppcheck reports
+the same 11 baseline error findings. [Local evidence](compiler-pch-flags-local-2026-09-07.yaml)
+records the parent failure with CXXFLAGS cleared and an explicit `-CFLAGS -O1`
+override. New-branch full regression and CI acceptance remain open.
+The neighboring regression completed 318/318 checks in 21:15, logged in
+`/home/holden/verilator-work/randomize-assoc-size-neighbors.log`. Its 12 focused
+checks also pass; full cppcheck completed with the same 11 baseline error reports. The
+[local evidence](randomize-assoc-size-local-2026-09-07.yaml) records exact inputs.
+The compiler is preserved as
+`/home/holden/verilator-work/verilator_bin_assoc_b392c1065`.
+The exact-parent worktree `/home/holden/verilator-work/randomize-assoc-parent-check`
+is detached at `04808c883`, with the final positive test sources copied in. All
+four configurations fail; suppressing only the unused-generated-variable warning
+reproduces all four original simulation SIGSEGVs.
+The failure-state worktree was advanced to `b392c1065`; its five recovered changes
+reapplied cleanly. The patch and stash `07b6e82f6d2daa93366fbeffba1dceedb18b17da`
+are retained under `/home/holden/verilator-work/randomize-failure-state-before-assoc*`.
+The failed-class-randomization correction is published at `001c6ca86` on
+`codex/randomize-failure-state`, with 10/10 focused checks passing and 0/4 on
+the exact parent compiler/runtime using the final tests. The initial snapshot
+implementation exposed a child callback regression; the final implementation
+finishes all enabled pre callbacks before taking the snapshot and defers all
+post callbacks until the containing randomization succeeds. Aliases receive
+one callback per attempt. The C++14 ordinary/protected tests cover nested
+containers, static and derived fields, resizing, modes, and cyclic history.
+[Local evidence](randomize-failure-state-local-2026-09-07.yaml) records exact
+source/compiler hashes and retained logs. The 196-driver neighboring regression
+passed all 347 scenarios in 36:10 against the frozen source. Full cppcheck
+completed with 11 unchanged error reports and two added style reports
+(`afterp` can be const; `newStateThisRef` can be static). The GitHub format
+workflow passed.
+The earlier partial cppcheck run was stopped for the callback correction; it
+is not acceptance evidence. Full repository regression and CI acceptance
+remain unfinished.
+
+The scope-randomization worktree `/home/holden/verilator-work/randomize-std-failure`
+is frozen at published `d513bed19`, based on `001c6ca86`. Four final C++14
+ordinary/protected scenarios pass and all four fail on the unchanged parent;
+six distribution checks pass. It saves all arguments before basic writes and
+restores existing array elements individually so active ref aliases stay valid.
+Its broader regression passed all 341 scenarios in 64:23; full cppcheck is running. The existing
+IMPURE restriction for array references in module functions remains separate;
+the final alias tests use static class methods.
+
+The process-context correction is published at `6eaf8a0c3`, with 10 focused
+passes and four GCC 13 parent failures at explicit `-O2` with CXXFLAGS cleared.
+All 190 neighboring scenarios passed in 23:43. Its worktree remains frozen
+for full cppcheck. The
+nullable runtime context overload remains; generated functions use the required
+reference overload. Detailed source/compiler/log hashes are in the new local
+evidence records.
+
+The frozen full regression also has a guard for GCC compiling only
+`t_opt_merge_cond_blowup` in its original object directory. The initial compiler
+had consumed 3935 CPU seconds and 13.5 GB virtual memory before limits were
+applied; the failure remains recorded. Clearing inherited CXXFLAGS on the same
+frozen compiler/runtime passes seven of nine replay scenarios, including the
+merge-condition case, four C-split checks, and both untimed profiling checks.
+Both timing-profile scenarios failed because the report parser required a
+public eval/eval_step entry to identify the model. The independent parser fix
+is published at `8e9a9178d` and integrated at `7bbee7b22`: discover root symbols
+when those entries are absent. Its reduced regression fails on the parent;
+eight checks pass, including both real timing-profile scenarios. Full format
+and Python lint pass. [Local evidence](profiler-root-discovery-local-2026-09-07.yaml)
+retains exact inputs and outputs. The profiler worktree remains available at
+`/home/holden/verilator-work/profiler-root-discovery`.
+The replay is bounded to 180 CPU seconds per process and 4 GiB address space.
+
+Next work is to inspect the active regressions and CI, finish broader failed-randomization and process-context
+validation, then execute and integrate the real UVM sequence-item regression and continue the complete milestone
+scope in GOALS.md. The ten pre-crash CI failures must be classified from actual
+job logs; available shutdown/cancellation evidence is not semantic acceptance.
+M00/M01 issues #1 and #2 are closed; reconciliation changes no accepted-gate totals. Use
+PROGRESS.md and the recovery record for current development state.
+
+This file is the durable handoff record for pull requests #41 and #42. It records
 published checkpoints, exact evidence boundaries, unresolved design issues, and
 the next reproducible action. It deliberately does not treat historical CI as
 proof of later source changes.
@@ -12,6 +380,138 @@ proof of later source changes.
 Do not commit extracted standards text, rendered standards pages, generated
 test objects, or temporary compiler trees. In particular, the repository-local
 `tmp/` directory is scratch material and is not part of any checkpoint.
+
+## Explicit compliance and performance goals
+
+The [goal contract](GOALS.md) defines **G-UVM: full IEEE 1800.2-2020 UVM
+compliance** and **G-PERF: measured production performance optimization**.
+Both remain in progress, with zero of six final acceptance checks accepted
+for each. These checks supplement the existing program gates. Documented
+mandatory-feature limitations cannot satisfy full compliance, and regression
+durations cannot satisfy performance acceptance. `check_tracker.py` rejects
+a goal marked pass without its required checks, evidence, and prerequisites.
+
+## 2026-09-07 ordered-lane CI acceptance
+
+The declared 27-test UVM contract has accepted local, push, and pull-request
+CI evidence. Both CI matrices passed all 46 jobs at source
+`91089908ad5e464f33676dfd88ffc1e8e266885b`; the PR tested merge
+`4c8c048cfa734dcfad26dd50a624b1e0362af662`. Both have source tree
+`b678cab2a01c6019f1914c2755cd28b22d82658c`, matching retained local validation.
+
+The downloaded UVM logs each contain exactly 27 passing tests in Makefile
+order, successful symlink-safety and cleanup checks, and the 1,000-phase
+teardown sentinel. Push elapsed 22:02; PR elapsed 21:17. The retained local
+run passed in 30:10. These are regression durations, not performance grades.
+[CI evidence](ordered-lane-ci-2026-09-07.yaml) records job URLs, source
+provenance, log hashes, pass order, and the exact acceptance sentinels.
+
+The evidence closes the declared M05 class/factory/static-initialization and
+M08 TLM/sequence acceptance gates. Current formal progress is **0/21 program
+criteria, 4/20 milestone exits, and 28/46 atomic gates**. The compatibility
+inventory now has **115/115 passing declared oracles, zero blocked**, using
+accumulated evidence. The [eight newly executed tests](dependency-closure-2026-09-07.yaml)
+passed locally with the debug compiler and Z3 available. This is not a fresh
+115-test run and does not close the constrained-random UVM item milestone.
+M07 stays open: the resource direct-lookup XFAIL is not conformance credit.
+Unmodified upstream UVM source flow and both performance gates remain open.
+
+Both PRs remain draft for human review and Contributor Agreement/DCO. No new
+compiler implementation is claimed by this evidence update. Older dated
+results and detailed tables below are historical; use `tracker.yaml` and this
+checkpoint for current status.
+
+## 2026-09-06 ordered-lane correction
+
+Resume on `codex/uvm-program-integration-wip`, stacked draft PR #42. The
+starting head was `4906f041ddd73e53099393a9d7155414d1458f0a`.
+
+The job-list endpoint with `per_page=100` recovered all 46 jobs from run
+31346076613\. UVM job
+[93328492250](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/31346076613/job/93328492250)
+passed all 27 members in 27:01, including the symlink-safety preflight and
+cleanup postcheck. Its source head was `b09ff3e78f97e928907b8f2929bf8bacab6b16bd`
+and synthetic merge was `cda98bba177663b2df45745d2e946ddf0e274d73`.
+The log also revealed that priority-50 UVM package tests ran before the
+priority-1 reduced tests. Earlier claims of reduced-then-package execution
+were therefore incorrect even though membership and pass counts were correct.
+
+The new `--driver-preserve-order` option bypasses priority sorting when
+explicitly requested. Both serial named targets use it; ordinary regression
+runs keep their default priority policy. `t_driver_order.py` exercises the
+real prefilter and scheduler, with submissions intercepted to avoid compiling
+HDL. It failed on the parent ordering, then passed after the correction,
+including scenario filtering and deduplication. The tracker now rejects an
+ordered UVM recipe that omits either `--jobs=1` or the new option.
+
+The old `ENOSPC` workspace is gone. This session rebuilt the optimized
+compiler locally with GCC 13.3 and warnings as errors. Build bootstrap used
+the generated configure/parser/lexer files from verified Ubuntu 22.04 CI
+artifact 9047394914 (archive SHA-256
+`a84948639f3c54e746d7e3a1fd70ec9ae4446bf67075cb51ff2846a8a0ab46a4`).
+The artifact's `src`, `include`, `bin`, and `test_regress` source trees match
+the starting head. The missing FlexLexer header came from `westes/flex`
+tag `v2.6.4`; no vendored UVM source was edited. Exact build details and lane
+results are retained below. A local-only Python shim selects
+the ordinary `fork` context because this workspace disallows the Unix socket
+required by `forkserver`; it does not change simulator behavior.
+
+The corrected full lane subsequently passed: **27/27 in 30:10**, with
+1,811.252 seconds wall time, 1,679.939988 user seconds, and 134.334901 system
+seconds. Every reduced test completed before any package test, all 27 child
+cleanup sentinels were removed, and both cleanup checks passed. The phase
+stress sentinel reported `phases=1000 winners=1000 cleanups=1000`.
+
+The local validation head was `e9b1b0de6e7ccc09b917efd51c093887d42f0c98`.
+Command-line push had no credentials, so the connected GitHub app published
+`91089908ad5e464f33676dfd88ffc1e8e266885b` with the same parent and exact
+source tree `b678cab2a01c6019f1914c2755cd28b22d82658c`. No source difference
+exists between those revisions. Reproduce from the published revision, not
+from assumptions about the old local-only commit. The worktree was clean for
+the complete lane and remained clean before evidence recording.
+
+The compiler version was
+`Verilator 5.051 devel rev vUNKNOWN-built20260906-4906f041d`, SHA-256
+`bc3b0a11063ab31e39712b3008b92620208799008015b5b6a54b47f790f0a27b`.
+No compiler source changed between that build and the ordered-lane patch.
+The successful bootstrap commands were `LEX=true YACC=true ./configure --enable-longtests --enable-ccwarn`, then `CPATH=/workspace/scratch/86e4a45a0d74/tmp/build-include make -C src opt -j8 OBJCACHE=`. All 163 compiler objects were rebuilt after
+removing local object, dependency, and PCH files. Only the matching generated
+parser/lexer inputs were reused. Package installation had failed on restricted
+user/group operations; overriding CPPFLAGS then hid normal include paths and
+was abandoned. The final build used CPATH, keeping normal compiler flags.
+
+The exact lane environment and invocation, complete pass sequence, checksums,
+and raw-log digest are in
+[ordered-lane-validation-2026-09-06.yaml](ordered-lane-validation-2026-09-06.yaml).
+The [retained log](run_logs/2026-09-06-uvm2020-order.log) expands tabs, removes
+trailing whitespace, and adds the repository license header; no log lines were
+omitted. Seven previously pending corpus entries now pass their declared local
+oracles, bringing the inventory to 107/115 with eight blocked and none pending.
+The two resource direct-lookup XFAIL outcomes remain explicit and are not
+conformance. No broader milestone or criterion is promoted.
+
+Format run 34023206562 and both Python lint jobs passed. Push `build-test`
+run 34023206800 and PR run 34023208357 remain in progress. Their UVM jobs are
+101460515806 and 101460640739; named-disable jobs are 101460515894 and
+101460640736\. Do not promote the current CI gate until those runs finish.
+The Contributor Agreement checks still require human action.
+
+Next, collect the pending CI results at published implementation revision
+`91089908ad5e464f33676dfd88ffc1e8e266885b`. If green, assess M05 and M08
+against their declared gates using this retained local proof; do not repeat
+this 30-minute lane merely because a later evidence-only commit exists. Keep
+M07 open until the direct numeric resource-lookup boundary is resolved without
+silently altering the bundled UVM acceptance target.
+
+The resource-precedence exception remains explicit: IEEE 1800.2-2020
+C.2.4.4.2 and C.2.4.4.4, printed pages 396-397, require the highest numeric
+precedence. The bundled Accellera `sort_by_precedence_q` appends ascending
+associative-array buckets, and its direct name lookup returns the first match.
+The existing bounded XFAIL is not direct-path conformance. Preserve unmodified
+UVM and resolve that implementation boundary separately from driver ordering.
+
+Keep both PRs draft. Human review and Contributor Agreement/DCO remain human
+actions; do not add an agent signature or edit `docs/CONTRIBUTORS`.
 
 ## 2026-08-09 sequential named-activation technical closure
 
@@ -168,10 +668,10 @@ focused regressions passed that parent.
 The failing timing tree showed the exact post-`V3Task` prefix:
 
 1. the fork kill hook;
-2. a generated `std::process::self()` call;
-3. one generated process-reference output-commit assignment;
-4. the semantically marked named-disable queue push; and
-5. the source branch body.
+1. a generated `std::process::self()` call;
+1. one generated process-reference output-commit assignment;
+1. the semantically marked named-disable queue push; and
+1. the source branch body.
 
 The launch checkpoint had recognized only the direct call-output form. The
 hotfix accepts exactly one optional, non-timing output-commit assignment and
@@ -806,23 +1306,23 @@ together:
 1. A named sequential begin/task activation is disable-eligible only while that
    activation is executing. A later disable of a completed activation has no
    effect.
-2. A named fork needs its own tree-completion lifetime so a disable can still
+1. A named fork needs its own tree-completion lifetime so a disable can still
    reach live branches and descendants.
-3. Concurrent and recursive activations need distinct membership groups.
+1. Concurrent and recursive activations need distinct membership groups.
    Process-identity dedup alone cannot represent overlapping activations.
-4. Dynamically created descendants must inherit the activation token while the
+1. Dynamically created descendants must inherit the activation token while the
    target remains active.
-5. Registry membership must not be the only strong owner of the general process
+1. Registry membership must not be the only strong owner of the general process
    tree. A finished named block may leave a `join_none` descendant blocked in
    `wait(0)`; dropping named-disable membership must not let a later
    `wait fork` complete incorrectly.
-6. `disableAll` must atomically drain activation groups and deduplicate the
+1. `disableAll` must atomically drain activation groups and deduplicate the
    process forest before callbacks can resume or destroy frames.
-7. Direct `PROCESS_DISABLE_ALL` operations inside `always` procedures must
+1. Direct `PROCESS_DISABLE_ALL` operations inside `always` procedures must
    also be visible to the split/reorder barriers.
-8. An in-scope disable of a named begin inside an automatic task must reach all
+1. An in-scope disable of a named begin inside an automatic task must reach all
    concurrent activations, not just perform a local `AstJumpGo` in the caller.
-9. Any compiler-generated child boundary around a named begin must not strand
+1. Any compiler-generated child boundary around a named begin must not strand
    `return`, `break`, or `continue` jumps whose targets remain outside that
    boundary.
 

@@ -7,7 +7,7 @@
 This matrix tracks support evidence for the UVM 2020 execution plan. It is
 developer planning data, not user documentation. It preserves the 2026-07-03
 broad-roadmap snapshot; its progress bars are historical, not current claims.
-Use `tracker.yaml` and `PROGRESS.md` for the current broader 0/21 state and
+Use `tracker.yaml` and `PROGRESS.md` for the current accepted state and
 `PLAN.md` for the focused PR lane contract.
 
 Progress bars use the scale in `PLAN.md`.
@@ -23,6 +23,11 @@ Objective alignment:
 | Protocol verification | S4 | Protocol And SoC Matrix APB/AXI-lite rows. |
 | SoC verification pressure | S5 | Protocol And SoC Matrix synthetic SoC rows. |
 | Professional support envelope | S6 | Known static risks, update contract, CI/performance/dashboard rows. |
+
+The current [full-compliance and performance goals](GOALS.md) supersede
+this historical snapshot wherever a documented limitation was sufficient
+for a narrower support claim. Mandatory UVM deviations remain blockers to
+full compliance.
 
 ## Competitive Claim Matrix
 

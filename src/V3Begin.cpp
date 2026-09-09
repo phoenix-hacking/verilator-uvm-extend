@@ -120,7 +120,14 @@ class BeginVisitor final : public VNVisitor {
 
     // VISITORS
     void visit(AstForeach* nodep) override {
-        VL_DO_DANGLING(V3Begin::convertToWhile(nodep), nodep);
+        const AstNode* const afterp = nodep->nextp();
+        AstNode* const replacementp = V3Begin::convertToWhile(nodep);
+        VL_DANGLING(nodep);
+        // Late-generated loops need their new declarations lifted and nested loops lowered.
+        for (AstNode *nextp, *stmtp = replacementp; stmtp && stmtp != afterp; stmtp = nextp) {
+            nextp = stmtp->nextp();
+            iterate(stmtp);
+        }
     }
     void visit(AstNodeAssign* nodep) override {
         // Keep begin under assignment (in nodep->timingControlp())
@@ -527,6 +534,7 @@ static AstNode* createForeachLoop(AstNodeForeach* /*nodep*/, AstNode* bodysp, bo
     if (arrayMayResize) {
         sizeVarp = new AstVar{fl, VVarType::BLOCKTEMP, varp->name() + "__Vloopsize",
                               varp->findUInt32DType()};
+        sizeVarp->funcLocal(varp->isFuncLocal());
         sizeVarp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
         sizeVarp->usedLoopIdx(true);  // Not technically an index, but used only inside loop
         varp->addNext(sizeVarp);
@@ -570,12 +578,14 @@ static AstNode* createForeachAssoc(FileLine* fl, AstVar* varp, AstNodeExpr* subf
     AstNode* loopp = varp;
     AstVar* const next_varp  // Iterator containing next element (to handle mid-array delete)
         = new AstVar{fl, VVarType::BLOCKTEMP, varp->name() + "__Vnext", varp};
+    next_varp->funcLocal(varp->isFuncLocal());
     next_varp->usedLoopIdx(true);
     next_varp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
     loopp->addNext(next_varp);
 
     AstVar* const more_varp  // bool var. 0 = loop empty/done, 1 = continue with loop
         = new AstVar{fl, VVarType::BLOCKTEMP, varp->name() + "__Vmore", VFlagBitPacked{}, 1};
+    more_varp->funcLocal(varp->isFuncLocal());
     more_varp->usedLoopIdx(true);  // Not technically an index, but used only inside loop
     more_varp->lifetime(VLifetime::AUTOMATIC_EXPLICIT);
     loopp->addNext(more_varp);
@@ -649,7 +659,6 @@ AstNode* V3Begin::convertToWhile(AstForeach* nodep) {
     AstNode* bodyPointp = new AstBegin{nodep->fileline(), "[EditWrapper]", nullptr, false};
     AstNode* newp = nullptr;
     AstNode* lastp = nodep;
-    AstVar* nestedIndexp = nullptr;
     // subfromp used to traverse each dimension of multi-d variable-sized unpacked array (queue,
     // dyn-arr and associative-arr)
     AstNodeExpr* subfromp = fromp->cloneTreePure(false);
@@ -671,10 +680,20 @@ AstNode* V3Begin::convertToWhile(AstForeach* nodep) {
             if (const AstNodeArrayDType* const adtypep = VN_CAST(fromDtp, NodeArrayDType)) {
                 loopp = createForeachLoopRanged(nodep, bodyPointp, subfromp, varp,
                                                 adtypep->declRange());
+                if (VN_IS(adtypep, UnpackArrayDType)) {
+                    // Width has already run: ArraySel needs a normalized storage index.
+                    // Descend every fixed dimension before querying a nested container.
+                    V3Number low{nodep, 32};
+                    low.isSigned(true);
+                    low.setLongS(adtypep->declRange().lo());
+                    AstNodeExpr* const indexp = new AstSub{
+                        fl, new AstVarRef{fl, varp, VAccess::READ}, new AstConst{fl, low}};
+                    subfromp = new AstArraySel{fl, subfromp, indexp};
+                }
             } else if (const AstBasicDType* const adtypep = VN_CAST(fromDtp, BasicDType)) {
                 if (adtypep->isString()) {
                     AstConst* const leftp = new AstConst{fl, 0};
-                    AstNodeExpr* const rightp = new AstLenN{fl, fromp->cloneTreePure(false)};
+                    AstNodeExpr* const rightp = new AstLenN{fl, subfromp->cloneTreePure(false)};
                     loopp = createForeachLoop(nodep, bodyPointp, arrayMayResize, subfromp, varp,
                                               leftp, rightp, VNType::Lt);
                 } else {
@@ -684,20 +703,15 @@ AstNode* V3Begin::convertToWhile(AstForeach* nodep) {
                 }
             } else if (VN_IS(fromDtp, DynArrayDType) || VN_IS(fromDtp, QueueDType)) {
                 AstConst* const leftp = new AstConst{fl, 0};
-                AstNodeExpr* const rightp = new AstCMethodHard{
-                    fl,
-                    VN_IS(subfromp->dtypep(), NodeArrayDType)
-                        ? new AstArraySel{fl, subfromp->cloneTreePure(false),
-                                          new AstVarRef{fl, nestedIndexp, VAccess::READ}}
-                        : subfromp->cloneTreePure(false),
-                    VCMethod::DYN_SIZE};
+                AstNodeExpr* const rightp
+                    = new AstCMethodHard{fl, subfromp->cloneTreePure(false), VCMethod::DYN_SIZE};
                 AstVarRef* varRefp = new AstVarRef{fl, varp, VAccess::READ};
                 rightp->dtypeSetInt();
                 rightp->protect(false);
                 loopp = createForeachLoop(nodep, bodyPointp, arrayMayResize, subfromp, varp, leftp,
                                           rightp, VNType::Lt);
                 subfromp = new AstCMethodHard{fl, subfromp, VCMethod::ARRAY_AT, varRefp};
-                subfromp->dtypep(fromDtp);
+                subfromp->dtypep(fromDtp->subDTypep());
             } else if (VN_IS(fromDtp, AssocArrayDType)) {
                 // Make this: var KEY_TYPE index;
                 //            bit index__Vfirst;
@@ -707,7 +721,7 @@ AstNode* V3Begin::convertToWhile(AstForeach* nodep) {
                 loopp = createForeachAssoc(fl, varp, subfromp, fromDtp, bodyPointp);
                 AstVarRef* varRefp = new AstVarRef{fl, varp, VAccess::READ};
                 subfromp = new AstCMethodHard{fl, subfromp, VCMethod::ARRAY_AT, varRefp};
-                subfromp->dtypep(fromDtp);
+                subfromp->dtypep(fromDtp->subDTypep());
             }
             UASSERT_OBJ(loopp, argsp, "unable to foreach " << fromDtp);
             // New loop goes UNDER previous loop
@@ -716,7 +730,6 @@ AstNode* V3Begin::convertToWhile(AstForeach* nodep) {
             if (!newp) newp = loopp;
         }
         // Prep for next
-        nestedIndexp = varp;
         fromDtp = fromDtp->subDTypep();
     }
     VL_DO_DANGLING(subfromp->deleteTree(), subfromp);

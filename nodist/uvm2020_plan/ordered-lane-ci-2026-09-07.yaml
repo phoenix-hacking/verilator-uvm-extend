@@ -1,0 +1,128 @@
+# DESCRIPTION: Verilator: Accepted ordered UVM CI evidence
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+collected_at_utc: '2026-09-07'
+source_head_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+source_tree: b678cab2a01c6019f1914c2755cd28b22d82658c
+method: Verify both 46-job API result lists, then compare all Self PASSED records in each UVM job log
+  with the declared 27-test order and check exact result, cleanup, teardown, class, factory, TLM, and
+  sequence sentinels.
+claim_boundary: The declared class/factory and TLM/sequence acceptance tests pass. The resource direct-lookup
+  XFAIL, unmodified upstream UVM source-flow proof, performance gates, and broader UVM program remain
+  open.
+runs:
+  push:
+    status: pass
+    source_head_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+    tested_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+    tested_source_tree: b678cab2a01c6019f1914c2755cd28b22d82658c
+    workflow_run_id: 34023206800
+    workflow_run_url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023206800
+    workflow_jobs:
+      passed: 46
+      failed: 0
+      total: 46
+    job_id: 101460515806
+    job_url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023206800/job/101460515806
+    raw_job_log_sha256: 582094f3b6da8e2b4a3a53f22ce7ec591ab8aa86cb7227293fe07ba28bc5a9b9
+    log_retrieval_command: gh api repos/phoenix-hacking/verilator-uvm-extend/actions/jobs/101460515806/logs
+    result:
+      passed: 27
+      failed: 0
+      driver_elapsed: '22:02'
+      declared_order_verified: true
+    verified_sentinels:
+    - 'uvm2020: clean-before symlink safety PASSED'
+    - 'uvm2020: stale-artifact cleanup PASSED'
+    - PHASE_TEARDOWN_SENTINEL phases=1000 winners=1000 cleanups=1000
+    - '*-* CLASS PARAM STATIC IDENTITY PASSED *-*'
+    - '*-* CLASS MEMBER SELECT USAGE PASSED *-*'
+    - '** UVM FACTORY PARAM PASSED **'
+    - '** UVM TLM ANALYSIS FIFO PASSED **'
+    - '** UVM SEQUENCE DRIVER FLOW PASSED **'
+    passed_in_order:
+    - t_uvm_lrm_sched_wait_zero
+    - t_uvm_lrm_process_kill_tree
+    - t_uvm_lrm_process_kill_self_tree
+    - t_uvm_lrm_process_kill_self_zero
+    - t_uvm_lrm_process_kill_function
+    - t_uvm_lrm_process_kill_wait_zero
+    - t_process_context_fork
+    - t_process_fork_finished
+    - t_process_phase_teardown
+    - t_process_self_kill_ctor
+    - t_process_self_kill_initial
+    - t_timing_finish
+    - t_finish_stops_nonfinal
+    - t_clocking_virtual
+    - t_class_param_static_identity
+    - t_class_member_sel_used
+    - t_uvm_core_factory_basic
+    - t_uvm_core_factory_param
+    - t_uvm_config_vif_clocking
+    - t_uvm_config_resource_component
+    - t_uvm_resource_numeric_precedence
+    - t_uvm_core_phasing
+    - t_uvm_tlm_analysis_fifo
+    - t_uvm_sequence_driver_flow
+    - t_uvm_hello_all_v2020_3_1_nodpi
+    - t_uvm_hello_all_v2020_3_1_dpi
+    - t_uvm_dpi_v2020_3_1
+  pull_request:
+    status: pass
+    source_head_revision: 91089908ad5e464f33676dfd88ffc1e8e266885b
+    tested_revision: 4c8c048cfa734dcfad26dd50a624b1e0362af662
+    tested_source_tree: b678cab2a01c6019f1914c2755cd28b22d82658c
+    workflow_run_id: 34023208357
+    workflow_run_url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023208357
+    workflow_jobs:
+      passed: 46
+      failed: 0
+      total: 46
+    job_id: 101460640739
+    job_url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34023208357/job/101460640739
+    raw_job_log_sha256: d680ee372aa651d1145f086f2a8a6ce3f881b5d0403cae87f373c39a217e6b6a
+    log_retrieval_command: gh api repos/phoenix-hacking/verilator-uvm-extend/actions/jobs/101460640739/logs
+    result:
+      passed: 27
+      failed: 0
+      driver_elapsed: '21:17'
+      declared_order_verified: true
+    verified_sentinels:
+    - 'uvm2020: clean-before symlink safety PASSED'
+    - 'uvm2020: stale-artifact cleanup PASSED'
+    - PHASE_TEARDOWN_SENTINEL phases=1000 winners=1000 cleanups=1000
+    - '*-* CLASS PARAM STATIC IDENTITY PASSED *-*'
+    - '*-* CLASS MEMBER SELECT USAGE PASSED *-*'
+    - '** UVM FACTORY PARAM PASSED **'
+    - '** UVM TLM ANALYSIS FIFO PASSED **'
+    - '** UVM SEQUENCE DRIVER FLOW PASSED **'
+    passed_in_order:
+    - t_uvm_lrm_sched_wait_zero
+    - t_uvm_lrm_process_kill_tree
+    - t_uvm_lrm_process_kill_self_tree
+    - t_uvm_lrm_process_kill_self_zero
+    - t_uvm_lrm_process_kill_function
+    - t_uvm_lrm_process_kill_wait_zero
+    - t_process_context_fork
+    - t_process_fork_finished
+    - t_process_phase_teardown
+    - t_process_self_kill_ctor
+    - t_process_self_kill_initial
+    - t_timing_finish
+    - t_finish_stops_nonfinal
+    - t_clocking_virtual
+    - t_class_param_static_identity
+    - t_class_member_sel_used
+    - t_uvm_core_factory_basic
+    - t_uvm_core_factory_param
+    - t_uvm_config_vif_clocking
+    - t_uvm_config_resource_component
+    - t_uvm_resource_numeric_precedence
+    - t_uvm_core_phasing
+    - t_uvm_tlm_analysis_fifo
+    - t_uvm_sequence_driver_flow
+    - t_uvm_hello_all_v2020_3_1_nodpi
+    - t_uvm_hello_all_v2020_3_1_dpi
+    - t_uvm_dpi_v2020_3_1

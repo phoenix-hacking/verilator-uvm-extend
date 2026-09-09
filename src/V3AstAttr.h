@@ -873,10 +873,16 @@ public:
         RANDOMIZER_SOLVE_BEFORE,
         RANDOMIZER_PIN_VAR,
         RANDOMIZER_WRITE_VAR,
+        RANDOMIZER_CLEAR_VAR,
         RANDOMIZER_SET_VAR_DISABLED,
         RANDOMIZER_CLEAR_VAR_DISABLED,
         RANDOMIZER_MARK_VAR_STATIC,
         RANDOMIZER_SET_STATIC_RANDMODE,
+        RANDOMIZER_SAVE_RANDC_STATE,
+        RANDOMIZE_STATE_ENTER,
+        RANDOMIZE_STATE_RESTORE,
+        RANDOMIZE_STATE_SAVE,
+        RANDOMIZE_STATE_SAVE_ARGUMENT,
         RNG_GET_RANDSTATE,
         RNG_SET_RANDSTATE,
         SCHED_ANY_TRIGGERED,
@@ -1027,10 +1033,16 @@ inline std::ostream& operator<<(std::ostream& os, const VCMethod& rhs) {
            {RANDOMIZER_SOLVE_BEFORE, "solveBefore", false}, \
            {RANDOMIZER_PIN_VAR, "pin_var", false}, \
            {RANDOMIZER_WRITE_VAR, "write_var", false}, \
+           {RANDOMIZER_CLEAR_VAR, "clear_var", false}, \
            {RANDOMIZER_SET_VAR_DISABLED, "set_var_disabled", false}, \
            {RANDOMIZER_CLEAR_VAR_DISABLED, "clear_var_disabled", false}, \
            {RANDOMIZER_MARK_VAR_STATIC, "mark_var_static", false}, \
            {RANDOMIZER_SET_STATIC_RANDMODE, "set_static_randmode", false}, \
+           {RANDOMIZER_SAVE_RANDC_STATE, "saveRandcState", false}, \
+           {RANDOMIZE_STATE_ENTER, "enter", false}, \
+           {RANDOMIZE_STATE_RESTORE, "restore", false}, \
+           {RANDOMIZE_STATE_SAVE, "save", false}, \
+           {RANDOMIZE_STATE_SAVE_ARGUMENT, "saveArgument", false}, \
            {RNG_GET_RANDSTATE, "__Vm_rng.get_randstate", true}, \
            {RNG_SET_RANDSTATE, "__Vm_rng.set_randstate", false}, \
            {SCHED_ANY_TRIGGERED, "anyTriggered", false}, \
@@ -1686,8 +1698,8 @@ public:
         m_right = ascending ? hi : lo;
         m_ranged = true;
     }
-    int left() const { return m_left; }
-    int right() const { return m_right; }
+    int left() const VL_MT_SAFE { return m_left; }
+    int right() const VL_MT_SAFE { return m_right; }
     int hi() const VL_MT_SAFE {
         return m_left > m_right ? m_left : m_right;
     }  // How to show a declaration
@@ -1696,12 +1708,12 @@ public:
     }  // How to show a declaration
     int leftToRightInc() const { return ascending() ? 1 : -1; }
     int elements() const VL_MT_SAFE { return hi() - lo() + 1; }
-    bool ranged() const { return m_ranged; }
+    bool ranged() const VL_MT_SAFE { return m_ranged; }
     bool ascending() const { return m_left < m_right; }
     int hiMaxSelect() const {
         return (lo() < 0 ? hi() - lo() : hi());
     }  // Maximum value a [] select may index
-    void dump(std::ostream& str) const {
+    void dump(std::ostream& str) const VL_MT_STABLE {
         if (ranged()) {
             str << "[" << left() << ":" << right() << "]";
         } else {
@@ -1709,7 +1721,7 @@ public:
         }
     }
 };
-inline std::ostream& operator<<(std::ostream& os, const VNumRange& rhs) {
+inline std::ostream& operator<<(std::ostream& os, const VNumRange& rhs) VL_MT_STABLE {
     rhs.dump(os);
     return os;
 }
