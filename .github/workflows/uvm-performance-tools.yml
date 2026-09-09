@@ -1,0 +1,24 @@
+---
+# DESCRIPTION: Github actions config
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+name: UVM performance tools
+
+on:
+  push:
+    paths: ['nodist/uvm2020_plan/performance*.py', 'nodist/uvm2020_plan/test_performance.py', '.github/workflows/uvm-performance-tools.yml']
+  pull_request:
+    paths: ['nodist/uvm2020_plan/performance*.py', 'nodist/uvm2020_plan/test_performance.py', '.github/workflows/uvm-performance-tools.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+      - name: Check collection, corruption rejection and report reproduction
+        run: python3 nodist/uvm2020_plan/test_performance.py -v
