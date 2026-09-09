@@ -188,9 +188,10 @@ private:
         const dumpCb_t m_cb;  // The callback
         void* const m_userp;  // The use pointer to pass to the callback
         Buffer* const m_bufp;  // The buffer pointer to pass to the callback
-        std::atomic<bool> m_ready{false};  // The ready flag
+        std::atomic<bool> m_ready{false};  // Worker no longer accesses this work item
         mutable VerilatedMutex m_mutex;  // Mutex for suspension until ready
         std::condition_variable_any m_cv;  // Condition variable for suspension
+        bool m_completed VL_GUARDED_BY(m_mutex) = false;  // Callback finished (CV predicate)
         bool m_waiting VL_GUARDED_BY(m_mutex) = false;  // Whether a thread is suspended in wait()
 
         void wait();

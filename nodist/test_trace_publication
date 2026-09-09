@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+# DESCRIPTION: Verilator: Verify parallel trace publication under ThreadSanitizer
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of either the GNU Lesser General Public License Version 3
+# or the Perl Artistic License Version 2.0.
+# SPDX-FileCopyrightText: 2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+"""Check the actual VCD runtime's fast wait, sleeping wait and work item lifetime.
+
+Run after configuring Verilator, with a compiler supporting ThreadSanitizer:
+  nodist/test_trace_publication --output /tmp/verilator-trace-test
+
+Linux and a linker supporting --wrap are required. Outputs must be new; failed
+commands and sanitizer diagnostics are retained. --root can select another
+runtime checkout for comparison without changing that checkout.
+"""
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import subprocess
+import sys
+
+
+def verify_trace(filename, samples):
+    """Check every emitted value independently of the callback-side assertions."""
+    codes = {}
+    values = {}
+    for line in filename.read_text().splitlines():
+        declaration = re.fullmatch(r'\s*\$var wire 32 (\S+) (\w+) \[31:0\] \$end', line)
+        if declaration:
+            codes[declaration.group(1)] = declaration.group(2)
+        value = re.fullmatch(r'b([01]+) (\S+)', line)
+        if value:
+            values.setdefault(value.group(2), []).append(int(value.group(1), 2))
+    expected = list(range(1, samples + 1))
+    return (len(codes) == 2 and set(codes.values()) == {'main_value', 'worker_value'}
+            and set(values) == set(codes) and all(values.get(code) == expected for code in codes))
+
+
+def main():
+    """Compile instrumented runtime sources and run all publication paths."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parent.parent)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--cxx', default=os.environ.get('CXX', 'c++'))
+    args = parser.parse_args()
+    if not sys.platform.startswith('linux'):
+        parser.error('This native regression requires Linux and a linker with --wrap')
+    root = args.root.resolve()
+    if not (root / 'include/verilated_config.h').is_file():
+        parser.error('Configure the selected runtime checkout first')
+    output = args.output.resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    results = []
+
+    def run(label, command):
+        record = {'label': label, 'command': command, 'exit_code': None}
+        results.append(record)
+        (output / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
+        try:
+            with (output / (label + '.log')).open('w') as log:
+                process = subprocess.run(command,
+                                         cwd=output,
+                                         stdout=log,
+                                         stderr=subprocess.STDOUT,
+                                         env={
+                                             **os.environ, 'TSAN_OPTIONS':
+                                             'halt_on_error=1:exitcode=66'
+                                         },
+                                         timeout=300,
+                                         check=False)
+            record['exit_code'] = process.returncode
+        except subprocess.TimeoutExpired:
+            record['exit_code'] = 124
+        (output / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
+        print(label, 'exit', record['exit_code'], flush=True)
+        return record['exit_code']
+
+    failed = False
+    for variant, spins in (('fast', 1000000), ('slow', 0)):
+        executable = output / ('trace-' + variant)
+        command = [
+            *shlex.split(args.cxx), '-std=c++14', '-O1', '-g', '-fsanitize=thread', '-pthread',
+            '-DVL_LOCK_SPINS=' + str(spins), '-I' + str(root / 'include'),
+            '-I' + str(root / 'include/vltstd'),
+            str(Path(__file__).with_suffix('.cpp').resolve()), *[
+                str(root / 'include' / name)
+                for name in ('verilated.cpp', 'verilated_threads.cpp', 'verilated_vcd_c.cpp')
+            ], '-Wl,--wrap=pthread_mutex_unlock', '-latomic', '-o',
+            str(executable)
+        ]
+        if run('build-' + variant, command):
+            return 1
+        for mode in (('fast', 'unlock') if variant == 'fast' else ('slow', )):
+            trace = output / (mode + '.vcd')
+            valid = (run(mode, [str(executable), mode, str(trace)]) == 0
+                     and verify_trace(trace, {
+                         'fast': 1000,
+                         'unlock': 1,
+                         'slow': 10
+                     }[mode]))
+            results[-1]['trace_verified'] = valid
+            (output / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
+            failed |= not valid
+    print('Parallel trace publication:', 'FAIL' if failed else 'PASS')
+    return int(failed)
+
+
+if __name__ == '__main__':
+    sys.exit(main())

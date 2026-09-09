@@ -248,24 +248,32 @@ void VerilatedTrace<VL_SUB_T, VL_BUF_T>::parallelWorkerTask(void* datap, bool) {
     ParallelWorkerData* const wdp = reinterpret_cast<ParallelWorkerData*>(datap);
     // Run the task
     wdp->m_cb(wdp->m_userp, wdp->m_bufp);
-    // Mark buffer as ready
-    const VerilatedLockGuard lock{wdp->m_mutex};
-    wdp->m_ready.store(true);
-    if (wdp->m_waiting) wdp->m_cv.notify_one();
+    {
+        const VerilatedLockGuard lock{wdp->m_mutex};
+        wdp->m_completed = true;
+        if (wdp->m_waiting) wdp->m_cv.notify_one();
+    }
+    // Publish the buffer only after our last use of the work item's mutex/CV.
+    // The caller may destroy the entire work item as soon as it observes ready.
+    wdp->m_ready.store(true, std::memory_order_release);
 }
 
 template <>
 VL_ATTR_NOINLINE void VerilatedTrace<VL_SUB_T, VL_BUF_T>::ParallelWorkerData::wait() {
     // Spin for a while, waiting for the buffer to become ready
     for (int i = 0; i < VL_LOCK_SPINS; ++i) {
-        if (VL_LIKELY(m_ready.load(std::memory_order_relaxed))) return;
+        if (VL_LIKELY(m_ready.load(std::memory_order_acquire))) return;
         VL_CPU_RELAX();
     }
     // We have been spinning for a while, so yield the thread
-    VerilatedLockGuard lock{m_mutex};
-    m_waiting = true;
-    m_cv.wait(m_mutex, [this] { return m_ready.load(std::memory_order_relaxed); });
-    m_waiting = false;
+    {
+        VerilatedLockGuard lock{m_mutex};
+        m_waiting = true;
+        m_cv.wait(m_mutex, [this]() VL_REQUIRES(m_mutex) { return m_completed; });
+        m_waiting = false;
+    }
+    // Notification can precede the worker's final publication after unlocking.
+    while (!m_ready.load(std::memory_order_acquire)) VL_CPU_RELAX();
 }
 
 template <>
