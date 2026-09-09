@@ -100,19 +100,66 @@ module t;
       token = '1;
       observe(token, '1);
     endtask
+
+    function void tick_sync(int operation);
+      `checkd(operation, completed);
+      completed++;
+    endfunction
+
+    function void synchronous_loops(int loops);
+      int operation = 0;
+      completed = 0;
+      for (int outer = 0; outer < loops; outer++) begin
+        for (int inner = 0; inner < 3; inner++) begin
+          tick_sync(operation);
+          operation++;
+        end
+      end
+      `checkd(operation, loops * 3);
+      `checkd(completed, loops * 3);
+    endfunction
+
+    function void synchronous_branch(bit select);
+      completed = 0;
+      if (select) begin
+        tick_sync(0);
+        tick_sync(1);
+      end
+      else tick_sync(0);
+      `checkd(completed, select ? 2 : 1);
+    endfunction
+
+    task timing_branch(bit select);
+      completed = 0;
+      if (select) begin
+        tick(0);
+        tick(1);
+      end
+      else tick(0);
+      `checkd(completed, select ? 2 : 1);
+    endtask
   endclass
 
   bit nested_tests_done;
   initial begin
     CounterTest counter_test;
+    string test_case;
     counter_test = new;
+    if (!$value$plusargs("LIFE_CASE=%s", test_case)) test_case = "loops";
     for (int loops = 2; loops < 5; loops++) begin
-      counter_test.nested_loops(loops);
-      counter_test.block_loop(loops);
-      counter_test.loop_block(loops);
-      counter_test.nested_blocks(loops);
-      counter_test.preserve_read(loops);
+      case (test_case)
+        "loops": counter_test.nested_loops(loops);
+        "block_loop": counter_test.block_loop(loops);
+        "loop_block": counter_test.loop_block(loops);
+        "blocks": counter_test.nested_blocks(loops);
+        "read": counter_test.preserve_read(loops);
+        "sync_loops": counter_test.synchronous_loops(loops);
+        "sync_branch": counter_test.synchronous_branch(bit'(loops));
+        "timing_branch": counter_test.timing_branch(bit'(loops));
+        default: `stop;
+      endcase
     end
+    $display("LIFE_NESTED CHECKED case=%s", test_case);
     nested_tests_done = 1;
   end
 
