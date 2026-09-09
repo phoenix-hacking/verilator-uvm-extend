@@ -813,6 +813,8 @@ module Vt_debug_emitv_t;
         bit distribute_first;
         real real_interval;
     } type_option;
+    type_option.weight = 32'h1;
+    type_option.goal = 32'h64;
     function sample;
     endfunction
     function start;
@@ -821,13 +823,13 @@ module Vt_debug_emitv_t;
     endfunction
     function get_coverage;
         get_coverage = /*CRESET*/;
-        input string covered_bins;
-        input string total_bins;
+        ref int signed covered_bins;
+        ref int signed total_bins;
     endfunction
     function get_inst_coverage;
         get_inst_coverage = /*CRESET*/;
-        input string covered_bins;
-        input string total_bins;
+        ref int signed covered_bins;
+        ref int signed total_bins;
     endfunction
     function set_inst_name;
         input string name;
@@ -872,6 +874,8 @@ module Vt_debug_emitv_t;
         bit distribute_first;
         real real_interval;
     } type_option;
+    type_option.weight = 32'h1;
+    type_option.goal = 32'h64;
     function sample;
     endfunction
     function start;
@@ -880,13 +884,13 @@ module Vt_debug_emitv_t;
     endfunction
     function get_coverage;
         get_coverage = /*CRESET*/;
-        input string covered_bins;
-        input string total_bins;
+        ref int signed covered_bins;
+        ref int signed total_bins;
     endfunction
     function get_inst_coverage;
         get_inst_coverage = /*CRESET*/;
-        input string covered_bins;
-        input string total_bins;
+        ref int signed covered_bins;
+        ref int signed total_bins;
     endfunction
     function set_inst_name;
         input string name;
@@ -932,6 +936,8 @@ module Vt_debug_emitv_t;
         bit distribute_first;
         real real_interval;
     } type_option;
+    type_option.weight = 32'h1;
+    type_option.goal = 32'h64;
     function sample;
     endfunction
     function start;
@@ -940,13 +946,13 @@ module Vt_debug_emitv_t;
     endfunction
     function get_coverage;
         get_coverage = /*CRESET*/;
-        input string covered_bins;
-        input string total_bins;
+        ref int signed covered_bins;
+        ref int signed total_bins;
     endfunction
     function get_inst_coverage;
         get_inst_coverage = /*CRESET*/;
-        input string covered_bins;
-        input string total_bins;
+        ref int signed covered_bins;
+        ref int signed total_bins;
     endfunction
     function set_inst_name;
         input string name;
@@ -996,6 +1002,8 @@ module Vt_debug_emitv_t;
         bit distribute_first;
         real real_interval;
     } type_option;
+    type_option.weight = 32'h1;
+    type_option.goal = 32'h64;
     function sample;
     endfunction
     function start;
@@ -1004,13 +1012,13 @@ module Vt_debug_emitv_t;
     endfunction
     function get_coverage;
         get_coverage = /*CRESET*/;
-        input string covered_bins;
-        input string total_bins;
+        ref int signed covered_bins;
+        ref int signed total_bins;
     endfunction
     function get_inst_coverage;
         get_inst_coverage = /*CRESET*/;
-        input string covered_bins;
-        input string total_bins;
+        ref int signed covered_bins;
+        ref int signed total_bins;
     endfunction
     function set_inst_name;
         input string name;
@@ -1305,6 +1313,8 @@ package Vt_debug_emitv___024unit;
             bit distribute_first;
             real real_interval;
         } type_option;
+        type_option.weight = 32'h1;
+        type_option.goal = 32'h64;
         function sample;
         endfunction
         function start;
@@ -1313,13 +1323,13 @@ package Vt_debug_emitv___024unit;
         endfunction
         function get_coverage;
             get_coverage = /*CRESET*/;
-            input string covered_bins;
-            input string total_bins;
+            ref int signed covered_bins;
+            ref int signed total_bins;
         endfunction
         function get_inst_coverage;
             get_inst_coverage = /*CRESET*/;
-            input string covered_bins;
-            input string total_bins;
+            ref int signed covered_bins;
+            ref int signed total_bins;
         endfunction
         function set_inst_name;
             input string name;
