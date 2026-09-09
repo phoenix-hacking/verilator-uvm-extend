@@ -4,7 +4,7 @@
 
 # UVM 2020 program progress
 
-Updated 2026-09-08, with evidence observed on 2026-09-08 UTC.
+Updated 2026-09-09, with evidence observed on 2026-09-09 UTC.
 [tracker.yaml](tracker.yaml) is authoritative. Recompute every roll-up with
 `python nodist/uvm2020_plan/check_tracker.py`.
 
@@ -12,9 +12,9 @@ Updated 2026-09-08, with evidence observed on 2026-09-08 UTC.
 
 | Measure | Accepted | Percentage |
 |---|---:|---:|
-| Public capability milestones | 7/20 | 35.0% |
-| Required atomic gates | 31/46 | 67.4% |
-| Program exit criteria | 3/21 | 14.3% |
+| Public capability milestones | 8/20 | 40.0% |
+| Required atomic gates | 32/46 | 69.6% |
+| Program exit criteria | 4/21 | 19.0% |
 | Full UVM compliance goal checks | 0/6 | Pending |
 | Production performance goal checks | 0/6 | Pending |
 
@@ -25,6 +25,27 @@ oracles, including negative tests and bounded XFAIL handling; it does not
 establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## Latest validation checkpoint
+
+**M15 and C16 now pass their declared local acceptance.** At `350da6ef4`,
+all ten practical APB/AXI-lite assertion rules agree with independent UVM
+monitors and a Python oracle over physical bus samples. All eight clean,
+unmodified-source UVM configurations pass: each protocol with DPI off/on
+and one/two threads. The proof covers 24 seeded positives, 58,848 transfers,
+76 paired fault cases and four legal APB unused-data controls. Equal seeds
+replay identical traffic; individual coverage bins, merge, RAL and existing
+scoreboard checks remain required. The unchanged APB monitor previously
+accepted 3,570 sampled read-strobe violations; the corrected monitor detects
+the first invalid cycle, matching the assertion.
+
+The [profile](SVA_PROTOCOL_PROFILE.md) defines the ten rules and documents
+precise unsupported forms from 24 passing compile-only drivers. It excludes
+a stale, unpaired assertion-control golden that the compiler now accepts.
+[Acceptance evidence](sva-protocol-local-2026-09-09.yaml) retains exact source,
+native, library, build-command, thread/DPI, fault-cycle and raw-log provenance.
+Formatting, full Python lint and both distribution checks pass. This closes
+one milestone, one atomic gate and one criterion without changing any
+denominator. Full SVA/UVM conformance, current-revision release validation
+and controlled performance acceptance remain open.
 
 At `93762ff8b`, class-method writes now trigger combinational readers of
 persistent storage, including writes from non-suspending helpers. All six
@@ -115,8 +136,8 @@ driver handshakes, and merge/report checks pass. Reset requests arriving
 between clocking events now preserve three full sampled reset cycles. A
 corrupt RAL response is detected independently of correct bus and predictor
 observations. [AXI RAL evidence](uvm-axi-ral-local-2026-09-08.yaml) closes M12;
-broader policies/maps, full coverage semantics and the assertion profile stay
-open under M13, M10 and M15.
+broader policies/maps and full coverage semantics stay open under M13 and
+M10. The practical assertion profile now has the separate M15 acceptance above.
 
 ## Other validated components
 
@@ -124,7 +145,7 @@ open under M13, M10 and M15.
 |---|---|---|
 | Compiler safe access | Complete 164-unit audit reduced 47 to 21, then 11 primary findings; a statistics insertion race was reproduced and fixed; 18 behavioral scenarios pass. | Eleven source findings, runtime findings, broad sanitizer and release acceptance. |
 | Coverage weighting | Weighted item percentages, dynamic instance weights and supported array-bin cross products have passing evidence across 52 scenarios. | Type aggregation, lifetime/ownership, other options and complete cross semantics. |
-| AXI-lite environment | All four configurations pass RAL, coverage and the existing independent-channel transport checks; each positive completes 1,202 writes and 1,266 reads. | Broader RAL policies/maps, full coverage semantics and the assertion profile remain separate open scope. |
+| AXI-lite environment | All four configurations pass RAL, coverage and the existing independent-channel transport checks; each positive completes 1,202 writes and 1,266 reads. | Broader RAL policies/maps, full coverage semantics and full SVA parity remain separate open scope. |
 | CMake FST dependencies | Parent failed with missing `lz4.h` despite a valid prefix; dependency discovery now passes eight FST/VCD/SAIF scenarios. | Combined-source and supported-host CI validation. |
 
 See [compiler evidence](compiler-safe-access-local-2026-09-07.yaml),
@@ -182,16 +203,15 @@ intervals, memory limits and dedicated performance CI remain required.
 
 ## Next technical work
 
-1. Complete current combined-source CI and retain exact-revision evidence.
-1. Close the two remaining attribute-audit skips and compiler/runtime
-   safety findings and run a fresh full regression at the final combined revision.
-1. Extend RAL policies/maps and the full assertion/monitor profile without
-   relaxing their oracles.
-1. Resolve remaining compiler/runtime safety findings and coverage type/lifetime
-   semantics. Complete the normative language/UVM requirement inventory.
-1. Implement the synthetic SoC workload, resolve source-library deviations,
-   complete supported-host CI and sanitizers, then freeze correct performance
-   workloads and run the controlled acceptance protocol.
+1. Close M09 constrained-random sequence-item acceptance: verify the combined
+   source, deterministic replay, failed-solve state and documented constraint
+   limits against the original gate. Preserve required regression and CI proof.
+1. Complete the remaining normative UVM/language inventory, resource-precedence
+   behavior and class coverage semantics. Preserve the committed RAL checkpoint;
+   further RAL expansion stays paused while the next marker is addressed.
+1. Complete the synthetic SoC workload, supported-host and full release
+   validation, then freeze correct workloads for controlled performance
+   acceptance. Historical component passes retain their exact source scope.
 
 ## Public milestones
 
@@ -212,7 +232,7 @@ intervals, memory limits and dedicated performance CI remain required.
 | [M12](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/13) | AXI-lite protocol environment | 1/1 | pass | Accepted AXI-lite active/passive, RAL, coverage and assertion scope. |
 | [M13](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/14) | RAL frontdoor and predictor | 0/1 | in progress | Extend the passing APB RW model to all required access policies and maps. |
 | [M14](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/15) | DPI/reference model and minimal VPI strategy | 2/3 | in progress | Complete exact-revision CI and full-regression proof for DPI/HDL backdoor requirements. |
-| [M15](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16) | SVA protocol profile | 0/1 | in progress | Complete the assertion/monitor agreement profile and document unsupported constructs precisely. |
+| [M15](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16) | SVA protocol profile | 1/1 | pass | Ten-rule assertion/monitor agreement and precise unsupported forms accepted; see the profile evidence. |
 | [M16](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/17) | Synthetic SoC regression | 0/1 | not started | Implement and validate the scalable synthetic SoC workload. |
 | [M17](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18) | Packaging, CI, and performance | 2/3 | in progress | Finish packaging, diagnostics, coverage integration and exact-revision CI closure. |
 | [M18](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/19) | Advanced parity limits | 0/1 | not started | Complete required advanced-parity capabilities and independent validation. |
@@ -241,7 +261,7 @@ and map requirements still prevent those criteria from passing.
 | C13 | Constrained-random fixed-seed replay passes | M09, M16 | not started |
 | C14 | Functional coverage from UVM classes passes | M10 | in progress |
 | C15 | Coverage report and merge pass | M10, M17 | in progress |
-| C16 | APB and AXI-lite protocol assertions pass | M15 | in progress |
+| C16 | APB and AXI-lite protocol assertions pass | M15 | pass |
 | C17 | DPI and no-DPI flows are tested and documented | M14 | in progress |
 | C18 | VPI and backdoor strategy is implemented or documented | M14, M18 | not started |
 | C19 | Diagnostics provide useful source file, line, and context | M17 | not started |
@@ -292,7 +312,7 @@ in [tracker.yaml](tracker.yaml); accepted evidence retains its local/CI scope.
 | M14-G01-LOCAL-DPI-SMOKE | Existing DPI/no-DPI/HDL-DPI smokes pass locally | pass | LOCAL-UVM-SMOKE-0001 |
 | M14-G02-C-REFERENCE | C reference-model scoreboard path passes | pass | LOCAL-DPI-REFERENCE-20260907 |
 | M14-G03-VPI-BACKDOOR | Minimal VPI/backdoor support or limitation is accepted | in_progress | UVM-BACKDOOR-20260907 |
-| M15-G01-CLOSURE | Practical APB and AXI-lite assertion profile passes | pending | Pending |
+| M15-G01-CLOSURE | Practical APB and AXI-lite assertion profile passes | pass | [Local protocol proof](sva-protocol-local-2026-09-09.yaml) |
 | M16-G01-CLOSURE | Synthetic SoC acceptance regression passes | pending | Pending |
 | M17-G01-LOCAL-LANE | Clean and capped original lane passes locally | pass | LOCAL-LANE-CONTRACT-0001 |
 | M17-G02-CANONICAL-CI | Clean-checkout canonical CI lane passes | pass | HARNESS-FANOUT-0001, HARNESS-CLEAN-0001 |

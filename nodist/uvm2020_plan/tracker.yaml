@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
 schema_version: 2
-updated: 2026-09-07
+updated: 2026-09-09
 objective: Full IEEE 1800.2-2020 UVM compliance and measured production performance optimization
 repository: phoenix-hacking/verilator-uvm-extend
 goals:
@@ -1018,6 +1018,16 @@ evidence:
         status: pass
         refs: [nodist/uvm2020_plan/uvm-axi-ral-local-2026-09-08.yaml]
     note: Broader RAL policies/maps, full coverage semantics, the assertion profile and exact-revision release acceptance remain separate open requirements.
+  LOCAL-SVA-PROFILE-20260909:
+    claim: Ten practical APB and AXI-lite assertion rules agree with independent procedural monitors and a physical-bus oracle in all eight pinned-source DPI/thread configurations; current unsupported SVA
+      forms are documented precisely.
+    tests: [t_uvm_apb_env, t_uvm_axi_env]
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs: [nodist/uvm2020_plan/sva-protocol-local-2026-09-09.yaml, nodist/uvm2020_plan/SVA_PROTOCOL_PROFILE.md]
+    note: Local M15 and C16 acceptance only. Complete SVA/UVM conformance, current-revision CI and production performance remain separate open requirements.
 milestones:
   M00:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/1
@@ -1269,12 +1279,12 @@ milestones:
   M15:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16
     title: SVA protocol profile
-    status: in_progress
+    status: pass
     gates:
       M15-G01-CLOSURE:
         title: Practical APB and AXI-lite assertion profile passes
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-SVA-PROFILE-20260909]
   M16:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/17
     title: Synthetic SoC regression
@@ -1408,9 +1418,9 @@ program:
       evidence: [LOCAL-APB-RAL-20260908, LOCAL-COVERAGE-WEIGHT-20260908, LOCAL-AXI-RAL-20260908]
     C16:
       title: APB and AXI-lite protocol assertions pass
-      status: in_progress
+      status: pass
       milestones: [M15]
-      evidence: [LOCAL-APB-RAL-20260908, LOCAL-AXI-TRANSPORT-20260908, LOCAL-AXI-RAL-20260908]
+      evidence: [LOCAL-APB-RAL-20260908, LOCAL-AXI-TRANSPORT-20260908, LOCAL-AXI-RAL-20260908, LOCAL-SVA-PROFILE-20260909]
     C17:
       title: DPI and no-DPI flows are tested and documented
       status: in_progress
@@ -1921,17 +1931,17 @@ corpus:
         evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
 progress:
   program:
-    complete: 3
+    complete: 4
     total: 21
-    percent: 14.3
+    percent: 19.0
   milestones:
-    complete: 7
+    complete: 8
     total: 20
-    percent: 35.0
+    percent: 40.0
   gates:
-    complete: 31
+    complete: 32
     total: 46
-    percent: 67.4
+    percent: 69.6
   lane:
     complete: 11
     total: 11

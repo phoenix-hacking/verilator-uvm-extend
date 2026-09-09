@@ -4,10 +4,21 @@
 
 # UVM 2020.3.1 regression plan
 
-Current accepted progress is **7/20 milestones, 31/46 gates and 3/21 program
+Current accepted progress is **8/20 milestones, 32/46 gates and 4/21 program
 criteria**. Use [PROGRESS.md](PROGRESS.md) and [tracker.yaml](tracker.yaml)
 for the current state. Dated lane snapshots and their numerical status tables
 below retain historical evidence; they do not override the current tracker.
+
+## Accepted protocol profile: 2026-09-09
+
+M15 and C16 pass the [ten-rule APB/AXI-lite profile](SVA_PROTOCOL_PROFILE.md).
+All eight pinned-source DPI/thread configurations agree at the first invalid
+sampled cycle in 76 paired fault cases. The 24 seeded positives retain
+58,848 transfers, coverage, RAL and deterministic replay checks; four extra
+APB controls permit legal changes to unused data. Twenty-four expected-error
+drivers establish the documented unsupported forms. See the
+[exact local evidence](sva-protocol-local-2026-09-09.yaml). Full SVA/UVM
+conformance and current-revision release/performance gates remain open.
 
 ## Explicit compliance and performance goals
 
