@@ -1029,7 +1029,8 @@ evidence:
         refs: [nodist/uvm2020_plan/sva-protocol-local-2026-09-09.yaml, nodist/uvm2020_plan/SVA_PROTOCOL_PROFILE.md]
     note: Local M15 and C16 acceptance only. Complete SVA/UVM conformance, current-revision CI and production performance remain separate open requirements.
   UVM-RANDOM-PROFILE-20260909:
-    claim: Randomized UVM sequence items satisfy declared and inline constraints, modes, failed-solve state and callbacks with deterministic replay in all four pinned-source DPI/thread configurations; twenty constraint-limit diagnostics are documented precisely.
+    claim: Randomized UVM sequence items satisfy declared and inline constraints, modes, failed-solve state and callbacks with deterministic replay in all four pinned-source DPI/thread configurations; twenty
+      constraint-limit diagnostics are documented precisely.
     tests: [t_uvm_sequence_randomize]
     proofs:
       local:
@@ -1050,6 +1051,15 @@ evidence:
         status: pass
         refs: [nodist/uvm2020_plan/functional-coverage-local-2026-09-09.yaml, nodist/uvm2020_plan/FUNCTIONAL_COVERAGE_PROFILE.md]
     note: Original M10 and C14 profile acceptance only. Remaining full coverage semantics, exact-release CI/regression and final performance checks remain open; C15 also requires M17.
+  LOCAL-UVM-SOC-PROFILE-20260909:
+    claim: CSR/RAL, byte DMA, memory, interrupts, reset, distinct clocks, coverage, C DPI and fixed-seed replay pass the original M16 SoC profile in all four pinned-source configurations.
+    tests: [t_uvm_soc]
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs: [nodist/uvm2020_plan/synthetic-soc-local-2026-09-09.yaml, nodist/uvm2020_plan/SYNTHETIC_SOC_PROFILE.md]
+    note: Original M16 and C09 acceptance, plus C13 when combined with M09. Current-release CI, reproducible nightly C21, full semantics and production performance remain open.
 milestones:
   M00:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/1
@@ -1230,7 +1240,9 @@ milestones:
         status: pass
         evidence: [UVM-RANDOM-PROFILE-20260909]
         implementation_tests: [test_regress/t/t_uvm_sequence_randomize.py]
-        claim_boundary: The current 63fb4e86b2 fixture passes locally and in dedicated CI against unmodified UVM 2020.3.1 in all four DPI/thread configurations, with 12 seeded runs and 768 checked transactions per matrix. Independent trace checks, full failed-solve state, modes and callbacks pass; twenty constraint-limit drivers have precise documented diagnostics. Full language/UVM conformance and exact-release CI/regression remain open, including the five failed annotation-check jobs. See randomization-profile-2026-09-09.yaml.
+        claim_boundary: The current 63fb4e86b2 fixture passes locally and in dedicated CI against unmodified UVM 2020.3.1 in all four DPI/thread configurations, with 12 seeded runs and 768 checked transactions
+          per matrix. Independent trace checks, full failed-solve state, modes and callbacks pass; twenty constraint-limit drivers have precise documented diagnostics. Full language/UVM conformance and
+          exact-release CI/regression remain open, including the five failed annotation-check jobs. See randomization-profile-2026-09-09.yaml.
   M10:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11
     title: Functional coverage from UVM classes
@@ -1305,12 +1317,12 @@ milestones:
   M16:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/17
     title: Synthetic SoC regression
-    status: not_started
+    status: pass
     gates:
       M16-G01-CLOSURE:
         title: Synthetic SoC acceptance regression passes
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-UVM-SOC-PROFILE-20260909]
   M17:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18
     title: Packaging, CI, and performance
@@ -1400,9 +1412,9 @@ program:
       evidence: [LOCAL-AXI-TRANSPORT-20260908, LOCAL-AXI-RAL-20260908]
     C09:
       title: Scalable AXI-style synthetic SoC smoke passes
-      status: not_started
+      status: pass
       milestones: [M16]
-      evidence: []
+      evidence: [LOCAL-UVM-SOC-PROFILE-20260909]
     C10:
       title: RAL frontdoor mirror and update pass
       status: in_progress
@@ -1420,9 +1432,9 @@ program:
       evidence: [LOCAL-APB-RAL-20260908, LOCAL-AXI-RAL-20260908]
     C13:
       title: Constrained-random fixed-seed replay passes
-      status: in_progress
+      status: pass
       milestones: [M09, M16]
-      evidence: [UVM-RANDOM-PROFILE-20260909]
+      evidence: [UVM-RANDOM-PROFILE-20260909, LOCAL-UVM-SOC-PROFILE-20260909]
     C14:
       title: Functional coverage from UVM classes passes
       status: pass
@@ -1460,9 +1472,9 @@ program:
       evidence: []
     C21:
       title: Nightly synthetic SoC regression passes reproducibly
-      status: not_started
+      status: in_progress
       milestones: [M16, M17]
-      evidence: []
+      evidence: [LOCAL-UVM-SOC-PROFILE-20260909]
 baseline_inventory:
   manifest: nodist/uvm2020_plan/baseline-tests.txt
   status: pass
@@ -1948,17 +1960,17 @@ corpus:
         evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
 progress:
   program:
-    complete: 5
+    complete: 7
     total: 21
-    percent: 23.8
+    percent: 33.3
   milestones:
-    complete: 10
+    complete: 11
     total: 20
-    percent: 50.0
+    percent: 55.0
   gates:
-    complete: 34
+    complete: 35
     total: 46
-    percent: 73.9
+    percent: 76.1
   lane:
     complete: 11
     total: 11

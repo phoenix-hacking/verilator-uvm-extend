@@ -12,9 +12,9 @@ Updated 2026-09-09, with evidence observed on 2026-09-09 UTC.
 
 | Measure | Accepted | Percentage |
 |---|---:|---:|
-| Public capability milestones | 10/20 | 50.0% |
-| Required atomic gates | 34/46 | 73.9% |
-| Program exit criteria | 5/21 | 23.8% |
+| Public capability milestones | 11/20 | 55.0% |
+| Required atomic gates | 35/46 | 76.1% |
+| Program exit criteria | 7/21 | 33.3% |
 | Full UVM compliance goal checks | 0/6 | Pending |
 | Production performance goal checks | 0/6 | Pending |
 
@@ -25,6 +25,24 @@ oracles, including negative tests and bounded XFAIL handling; it does not
 establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## Latest validation checkpoint
+
+**M16, C09 and C13 now pass their original local acceptance.** The synthetic
+SoC combines an APB register model, byte DMA, AXI-lite memory, two clocks,
+interrupt masking/clearing, reset cancellation, class coverage, C DPI and seed
+replay. All four source DPI/thread configurations pass sixteen positive runs:
+100 completed commands, sixteen canceled commands, 1,264 DMA reads and writes
+each, and 59,392 independently checked memory bytes. DPI checks 29,696 bytes
+through the C reference. All eighteen hardware/reference fault runs and 112
+corrupted-trace controls are rejected. Individual bins, file merge and LCOV
+reports agree with independently reconstructed physical traffic.
+[Acceptance evidence](synthetic-soc-local-2026-09-09.yaml) preserves exact source,
+raw logs, clock/seed/resource provenance and the failing pilot cases. Final source
+also checks every frontdoor read updates the register mirror. C13 combines this
+SoC replay evidence with the already accepted M09 randomization profile.
+
+The [profile](SYNTHETIC_SOC_PROFILE.md) records the original scope and limits.
+The source CI lane is configured but no current CI pass or nightly execution is
+claimed. C21 still requires M17 and nightly evidence. Both full goals remain open.
 
 **M10 and C14 now pass the original functional coverage profile.** Real UVM
 subscribers pass all eight APB/AXI source DPI/thread configurations: 24 seeded
@@ -227,9 +245,9 @@ intervals, memory limits and dedicated performance CI remain required.
 
 ## Next technical work
 
-1. Implement M16's original synthetic SoC acceptance: CSR/RAL, DMA, IRQ,
-   reset, clocks, coverage, DPI and fixed-seed replay. M09 and M10 profile
-   acceptance now pass; their full-language requirements stay tracked.
+1. Establish M17's reproducible performance dashboard against its original
+   contract. Freeze correct workloads and measurement policy before collecting
+   data; dashboard acceptance alone does not complete production optimization.
 1. Complete the remaining normative UVM/language inventory, resource-precedence
    behavior and class coverage semantics. Preserve the committed RAL checkpoint;
    further RAL expansion stays paused while the next marker is addressed.
@@ -257,7 +275,7 @@ intervals, memory limits and dedicated performance CI remain required.
 | [M13](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/14) | RAL frontdoor and predictor | 0/1 | in progress | Extend the passing APB RW model to all required access policies and maps. |
 | [M14](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/15) | DPI/reference model and minimal VPI strategy | 2/3 | in progress | Complete exact-revision CI and full-regression proof for DPI/HDL backdoor requirements. |
 | [M15](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16) | SVA protocol profile | 1/1 | pass | Ten-rule assertion/monitor agreement and precise unsupported forms accepted; see the profile evidence. |
-| [M16](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/17) | Synthetic SoC regression | 0/1 | not started | Implement and validate the scalable synthetic SoC workload. |
+| [M16](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/17) | Synthetic SoC regression | 1/1 | pass | Original SoC CSR/RAL, DMA, IRQ, reset/clocks, coverage, DPI and replay profile accepted. |
 | [M17](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18) | Packaging, CI, and performance | 2/3 | in progress | Finish packaging, diagnostics, coverage integration and exact-revision CI closure. |
 | [M18](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/19) | Advanced parity limits | 0/1 | not started | Complete required advanced-parity capabilities and independent validation. |
 | [M19](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/20) | Competitive coverage closure and issue hygiene | 1/3 | in progress | Finish clean regression, sanitizer, supported-host and performance release acceptance. |
@@ -278,11 +296,11 @@ and map requirements still prevent those criteria from passing.
 | C06 | Clocking blocks work through virtual interfaces | M06 | pass |
 | C07 | Active and passive APB agent passes | M11 | pass |
 | C08 | Active and passive AXI-lite agent passes | M12 | pass |
-| C09 | Scalable AXI-style synthetic SoC smoke passes | M16 | not started |
+| C09 | Scalable AXI-style synthetic SoC smoke passes | M16 | pass |
 | C10 | RAL frontdoor mirror and update pass | M13 | in progress |
 | C11 | RAL predictor passes | M13 | in progress |
 | C12 | Built-in RAL reset, access, and bit-bash smokes pass | M13 | in progress |
-| C13 | Constrained-random fixed-seed replay passes | M09, M16 | in progress |
+| C13 | Constrained-random fixed-seed replay passes | M09, M16 | pass |
 | C14 | Functional coverage from UVM classes passes | M10 | pass |
 | C15 | Coverage report and merge pass | M10, M17 | in progress |
 | C16 | APB and AXI-lite protocol assertions pass | M15 | pass |
@@ -290,7 +308,7 @@ and map requirements still prevent those criteria from passing.
 | C18 | VPI and backdoor strategy is implemented or documented | M14, M18 | not started |
 | C19 | Diagnostics provide useful source file, line, and context | M17 | not started |
 | C20 | UVM 2020 user-facing selection flow exists | M17 | not started |
-| C21 | Nightly synthetic SoC regression passes reproducibly | M16, M17 | not started |
+| C21 | Nightly synthetic SoC regression passes reproducibly | M16, M17 | in progress |
 
 ## Atomic gates
 
@@ -337,7 +355,7 @@ in [tracker.yaml](tracker.yaml); accepted evidence retains its local/CI scope.
 | M14-G02-C-REFERENCE | C reference-model scoreboard path passes | pass | LOCAL-DPI-REFERENCE-20260907 |
 | M14-G03-VPI-BACKDOOR | Minimal VPI/backdoor support or limitation is accepted | in_progress | UVM-BACKDOOR-20260907 |
 | M15-G01-CLOSURE | Practical APB and AXI-lite assertion profile passes | pass | [Local protocol proof](sva-protocol-local-2026-09-09.yaml) |
-| M16-G01-CLOSURE | Synthetic SoC acceptance regression passes | pending | Pending |
+| M16-G01-CLOSURE | Synthetic SoC acceptance regression passes | pass | LOCAL-UVM-SOC-PROFILE-20260909 |
 | M17-G01-LOCAL-LANE | Clean and capped original lane passes locally | pass | LOCAL-LANE-CONTRACT-0001 |
 | M17-G02-CANONICAL-CI | Clean-checkout canonical CI lane passes | pass | HARNESS-FANOUT-0001, HARNESS-CLEAN-0001 |
 | M17-G03-PERFORMANCE | Reproducible performance dashboard is established | pending | Pending |

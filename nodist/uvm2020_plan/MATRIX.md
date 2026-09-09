@@ -4,9 +4,8 @@
 
 # UVM 2020.3.1 evidence matrix
 
-Current accepted progress is **8/20 milestones, 32/46 gates and 4/21 program
-criteria**. Use [PROGRESS.md](PROGRESS.md) and [tracker.yaml](tracker.yaml)
-for the current state. Dated lane snapshots and their numerical status tables
+Use [PROGRESS.md](PROGRESS.md) and [tracker.yaml](tracker.yaml) for the
+current checker-derived acceptance counts. Dated lane snapshots and their numerical status tables
 below retain historical evidence; they do not override the current tracker.
 
 ## Accepted protocol profile: 2026-09-09

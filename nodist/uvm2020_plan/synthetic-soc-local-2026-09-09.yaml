@@ -1,0 +1,102 @@
+---
+# DESCRIPTION: Verilator: Synthetic SoC UVM profile acceptance
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-09'
+observed_utc: '2026-09-09T18:51:14.724951+00:00'
+status: accepted_m16_profile
+source_revision: 767b32279184eee150a6ea83da588bddb345090a
+uvm_source_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+uvm_source_clean: true
+profile: nodist/uvm2020_plan/SYNTHETIC_SOC_PROFILE.md
+original_contract:
+  path: /home/holden/verilator-work/uvm-coverage-type-evidence/m16-next-original-contract.json
+  bytes: 610
+  sha256: c6f21ce56042d6c04cafef6762851916d8b2c76a34792a85e452988f50cb35ca
+acceptance:
+  milestone: M16
+  gate: M16-G01-CLOSURE
+  criteria: [C09, C13]
+  source_configurations: 4
+  dpi_modes: ['off', 'on']
+  simulation_threads: [1, 2]
+  requested_jobs: [4, 4, 4, 9]
+  seeds: [1729, 1729, 2718, 314159]
+  positive_runs: 16
+  completed_commands: 100
+  canceled_commands: 16
+  dma_reads: 1264
+  dma_writes: 1264
+  checked_memory_bytes: 59392
+  c_reference_checked_bytes: 29696
+  trace_fault_controls: 112
+  negative_runs: 18
+requirements:
+  - requirement: CSR/RAL and firmware-style flow
+    proof: Seven-register model, adapter/sequencer/driver frontdoor access; source/destination/count readback and register-mirror checks; status polling and invalid CSR response.
+  - requirement: DMA and memory
+    proof: All source/destination byte lanes, word crossings and four regular lengths; every AXI read/write and every byte of each full memory image checked independently, including untouched locations.
+  - requirement: Interrupts
+    proof: Completion pending, mask, unmask and write-one clear; UVM IRQ observations match sampled GPIO; missing and premature IRQ controls are rejected.
+  - requirement: Reset and clocks
+    proof: Distinct sampled periods 10 and 14; reset cancels a 63-byte command after three writes, clears memory/IRQ, and permits recovery; deliberately resumed stale DMA is rejected.
+  - requirement: Scoreboards, coverage and assertions
+    proof: SV byte-copy model, C reference and independent Python physical-pin oracle; all twelve subscriber bins, merged counts and LCOV locations/hits checked; protocol stability and reset assertions
+      remain enabled.
+  - requirement: DPI
+    proof: C11 compilation rejects C++; imported reference uses memmove over its own initial image. Both source-DPI thread modes validate each byte and reject a corrupted C result. No-DPI modes retain SV/Python
+      checks without claiming C execution.
+  - requirement: Fixed-seed replay and scalability
+    proof: Equal seeds replay identical meaningful command/transaction traces, a different seed changes them, and the larger nine-job workload preserves all checks. Hardware remains one DMA and a 512-byte
+      memory.
+receipts:
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/candidate-v4-final-results.json
+    bytes: 51049
+    sha256: fed09eb2e4d4bf0300fefc75743604f1f01a70e60c70d9818fbf9ea3facae272
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/candidate-v4-acceptance-source-recheck.json
+    bytes: 4385
+    sha256: aa08fed16bc01dae600d509fd2686e67f37bd3742f647c4ac59aa0574d5d2126
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/candidate-v4-provenance.json
+    bytes: 4638
+    sha256: 72ef55bdc716e93ccf8c6ec4a4dc44b825f9d53452a77b8a2a7b81119f70a5e9
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/candidate-v3-causal-parent.json
+    bytes: 1308
+    sha256: 200a7001038cfbeef32daf1bb33a752204f7b7a84a46b9db463729bb2e08cb0b
+validation:
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/lint-py-v3-final.log
+    bytes: 3752
+    sha256: 132b7ccd306e8c38046ca5bd27f18c8aa8ee8f5fae691539ea62105a30774b23
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/distribution-v3.log
+    bytes: 876
+    sha256: 70f19e274442306dbbdb10007f76c93082be1da58d5b21a92fb2236d623bcb7a
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/format-v4.log
+    bytes: 0
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/lint-v6-dpi.log
+    bytes: 322
+    sha256: 659da061d7d74e350fd0cff39cd59100ec68864fe3e2b9a727a1e60d61228703
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/ci-cleanup-safety.log
+    bytes: 44
+    sha256: 2ec04c7b79da79769809ded47f128bf2c9bf39fa27bf2279bf1fde610b08c767
+  - path: /home/holden/verilator-work/uvm-soc-profile-evidence/ci-target-dry-run.log
+    bytes: 966
+    sha256: ab57fd2ed9c46775a030587926f58f896808e9c889841738133fbcdd735429e9
+ci:
+  target: uvm2020-soc-source
+  configured: true
+  current_run_accepted: false
+  local_target_validation: Shell syntax, YAML parsing, generic cleanup safety and exact make dry-run verified. The four configurations were actually executed directly by the same driver; no completed named-target
+    or CI run is claimed.
+qualifications:
+  - The first pilot failed on the wrong runtime include root; the next exposed warning-option differences. Both failures are retained.
+  - Pilot v2 raw simulations passed their initial SV checks, but the independent checker rejected a false-idle status window and missing AW backpressure. Candidate v3 fixed both; the parent failures are
+    preserved.
+  - Candidate v4 normalizes read byte enables and verifies every frontdoor read updates the register mirror. Final results are all on v4 source.
+  - No independent commercial-simulator comparison is claimed. The independent evidence here is sampled-pin reconstruction, Python/SV normative fixture models and the pure C copy reference.
+boundaries:
+  - Original M16 profile acceptance only; full language/UVM compliance, all advanced protocol/RAL/clocking requirements and current-release CI remain open.
+  - C09 now has the scalable SoC profile. C13 combines existing M09 constrained-random acceptance with the new M16 fixed-seed replay; no full constraint-language conformance is inferred.
+  - C21 additionally requires M17 and reproducible nightly execution and remains in progress. Configuring a CI lane is not evidence it has passed.
+  - No performance improvement or final G-UVM/G-PERF check receives credit. The M17 dashboard and full production performance protocol remain required.
