@@ -14,7 +14,7 @@ Updated 2026-09-09, with evidence observed on 2026-09-09 UTC.
 |---|---:|---:|
 | Public capability milestones | 12/20 | 60.0% |
 | Required atomic gates | 36/46 | 78.3% |
-| Program exit criteria | 8/21 | 38.1% |
+| Program exit criteria | 9/21 | 42.9% |
 | Full UVM compliance goal checks | 0/6 | Pending |
 | Production performance goal checks | 0/6 | Pending |
 
@@ -25,6 +25,16 @@ oracles, including negative tests and bounded XFAIL handling; it does not
 establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## Latest validation checkpoint
+
+**C20 now passes its original user-facing source-selection criterion.** The
+documented `examples/make_uvm` flow selects an external UVM checkout and runs
+with or without DPI. Both the clean committed source and copied installation
+pass 12 independently checked positive runs, 96 operations and four fatal-exit
+controls. Seven invalid configurations give actionable diagnostics. Existing
+source and bundled HDL-backdoor regressions also pass after the shared adapter
+move. [Acceptance evidence](uvm-user-flow-2026-09-09.yaml) records exact inputs,
+logs and validation limits. The new CI lane is implemented but still pending;
+this accepts C20 locally and does not grant full-release or conformance credit.
 
 **M17 and C15 now pass their original acceptance.** The reproducible
 [performance dashboard](PERFORMANCE_DASHBOARD.md) retains frozen inputs,
@@ -38,7 +48,7 @@ C15 combines M17 with independently rechecked M10 report/merge evidence:
 all eight source configurations and 24 seeded runs still pass, with every
 coverage bin and report location/count checked. The corresponding compiler,
 runtime and fixture inputs remain unchanged. [Acceptance evidence](performance-dashboard-accepted-2026-09-09.yaml)
-records these distinct proof paths. C19, C20 and C21 remain open.
+records these distinct proof paths. C19 and C21 remain open; C20 now has the separate acceptance below.
 
 These short same-executable controls do not establish an optimization or
 production performance result. Full G-PERF requirements and current-release
@@ -263,8 +273,8 @@ intervals, memory limits and dedicated performance CI remain required.
 
 ## Next technical work
 
-1. Implement and verify C20's user-facing UVM source selection example and
-   documentation. Continue the full production benchmark workloads and measurements;
+1. Close M14's remaining exact-revision CI and release-regression evidence.
+   Continue the full production benchmark workloads and measurements;
    M17 dashboard acceptance does not complete production optimization.
 1. Complete the remaining normative UVM/language inventory, resource-precedence
    behavior and class coverage semantics. Preserve the committed RAL checkpoint;
@@ -325,7 +335,7 @@ and map requirements still prevent those criteria from passing.
 | C17 | DPI and no-DPI flows are tested and documented | M14 | in progress |
 | C18 | VPI and backdoor strategy is implemented or documented | M14, M18 | not started |
 | C19 | Diagnostics provide useful source file, line, and context | M17 | not started |
-| C20 | UVM 2020 user-facing selection flow exists | M17 | not started |
+| C20 | UVM 2020 user-facing selection flow exists | M17 | pass |
 | C21 | Nightly synthetic SoC regression passes reproducibly | M16, M17 | in progress |
 
 ## Atomic gates

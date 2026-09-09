@@ -1,0 +1,142 @@
+---
+# DESCRIPTION: Verilator: User-facing UVM source-selection acceptance
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-09'
+observed_utc: '2026-09-09T20:07:22.023229+00:00'
+status: accepted_original_c20_source_selection
+source_revision: 62a16e2d0777bb5c5558398c90529fd3303b2f73
+criterion: C20
+milestone_credit_added: false
+source_library_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+user_entry: examples/make_uvm/Makefile
+user_documentation: docs/guide/example_uvm.rst
+validation:
+  positive_runs: 12
+  checked_operations: 96
+  fatal_runs_rejected: 4
+  bad_configurations_rejected: 7
+  modes: [DPI, no-DPI]
+  flows: [clean committed source, copied staged installation]
+  backdoor_regressions: [external source, bundled library]
+evidence:
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/dpi0-positive-1.log
+    bytes: 2268
+    sha256: 6d091a1c745671f9a006e8aec44b2b7f5e196387615631a273ef7bbd477677ac
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/dpi0-positive-2.log
+    bytes: 2268
+    sha256: 0a18080c8d598e62e71885140f3b33cdb915ccc883301ab9108874a5c8bce9eb
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/dpi0-positive-3.log
+    bytes: 2268
+    sha256: 562b40bb7406416da3afe3bb23e9c8d6df6c73949f4e3fa4a2d3c6f4ce05f5b3
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/dpi0-missing-test.log
+    bytes: 2166
+    sha256: a0a94a9f47c02e9c374a974ce08a983fdf5b03f2763bff7b741a8700400979e5
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/dpi1-positive-1.log
+    bytes: 925
+    sha256: 342e611f12215fa1cf97ad5de2e7d88556b81d3eb7dda3e0f84f86937ed3d976
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/dpi1-positive-2.log
+    bytes: 925
+    sha256: 17b01622ef620e9b40e9ed426a9d54bb057a26ec87523d7d5b18efccd2a7605b
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/dpi1-positive-3.log
+    bytes: 925
+    sha256: cf8a48949754212260372b9df9418bc84af478bc6a41faf0534c5935ce1c8f9c
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/dpi1-missing-test.log
+    bytes: 1075
+    sha256: 028b79606933ed23bbf7cacdc01e19ecd5f11819a6be9e89d8a0b19e4466a800
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-verified/results.json
+    bytes: 4631
+    sha256: 39653fd01d76f814c8e8fc60655b7c45116ef21ac83a8beab310ea2ecb48a180
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/dpi0-positive-1.log
+    bytes: 2268
+    sha256: 949c0f9b2a12a45b0d37a346d90d1d7cccd327c15a17deabf0c7badcb31514b6
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/dpi0-positive-2.log
+    bytes: 2268
+    sha256: 73e34a6609f36dd15f482694f2c1b6a1412c8af76e5889bc9d40ed3815188d72
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/dpi0-positive-3.log
+    bytes: 2268
+    sha256: f62d6ec73fce9ee628dd96a8710b884f4286c5a0ff7238495b3c464c06764e7b
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/dpi0-missing-test.log
+    bytes: 2166
+    sha256: a0a94a9f47c02e9c374a974ce08a983fdf5b03f2763bff7b741a8700400979e5
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/dpi1-positive-1.log
+    bytes: 925
+    sha256: 3179428854fbcce82c35a8979f6ddd88701f4faa7d56b5c1f92abe02cf723af1
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/dpi1-positive-2.log
+    bytes: 925
+    sha256: 478600a4494f9f72e7f63e651658071e071b71b89e98f3c12d3101676b3f3571
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/dpi1-positive-3.log
+    bytes: 925
+    sha256: d5174d784f65c683b243a074e279422bea95d4607be7ce31bced54a93ea54678
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/dpi1-missing-test.log
+    bytes: 1075
+    sha256: 028b79606933ed23bbf7cacdc01e19ecd5f11819a6be9e89d8a0b19e4466a800
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-verified/results.json
+    bytes: 4739
+    sha256: b3f89b4d92a907350b3da132ca2f1204adeaebedb98802389c24fd6e34435eb2
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/preflight-final-missing-root.log
+    bytes: 293
+    sha256: 351e5a02c4ac73abb4d792c0cff0715009be7d57ec56464ad8d4fb2c0910cba4
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/preflight-final-wrong-root.log
+    bytes: 282
+    sha256: ac115b04ff0154943107bfa1469f597ed3582d945e3eece1460e7f397a052643
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/preflight-final-invalid-dpi.log
+    bytes: 248
+    sha256: 13bab45b1ea2ac9064b41bcaeb43d132533ff0544ef7c492e4d77bc47633ff6b
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/preflight-final-zero-jobs.log
+    bytes: 263
+    sha256: 8a66819f1fcb1aa73b8c4945cf26cae90ba0b1e464386d84a1ccb893c0c34d93
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/preflight-final-negative-jobs.log
+    bytes: 263
+    sha256: 8a66819f1fcb1aa73b8c4945cf26cae90ba0b1e464386d84a1ccb893c0c34d93
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/preflight-final-spaced-root.log
+    bytes: 276
+    sha256: 252249f1dd0ed423dda38bcd8033b9246ee6c8b712280ad36e19ee80fe86f2f6
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/preflight-final-missing-dpi.log
+    bytes: 303
+    sha256: a59555f1e3abd27cd5649a8fe293620a1eb233c6cebcac196c608ceb76402166
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-v1-committed-inputs.json
+    bytes: 1113
+    sha256: 421c4c47adc04ef9b4bf3d4ebbac8bfe3a65f5c6b482f45737e1ac904a68b9ec
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/preflight-final-results.json
+    bytes: 3622
+    sha256: d47b8774fb2c8afd1c0f22561f69992941aace1a84ce429408cea4a7e898d08b
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/backdoor-source-v4.log
+    bytes: 34288
+    sha256: 6de1b6050ef91f698fca7a3f67998b809fd1b2efe7969772c7cdf233291707ed
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/backdoor-bundled-v1.log
+    bytes: 32807
+    sha256: b8e10f0b783c5e1803e3290aa2b9187e83598dcb1e6c82afc432af81421d4b2a
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-dpi0.log
+    bytes: 3412
+    sha256: 25746c17486db570a0fa6e00dd338b69865e863dd263fece8aa261a047887f09
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/source-clean-dpi1.log
+    bytes: 2127
+    sha256: 3ba5950ec22a30ac248b1ec741aae5494760238c4c96332e5b86f5248b3c10ff
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-dpi0-v1.log
+    bytes: 30375
+    sha256: bbe8fd7380acec00bbcb48b10ec792a94b9d64430ee7789e6309ef62d4566987
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/installed-dpi1-v1.log
+    bytes: 32710
+    sha256: 47d9a73cdf0a64335db51c842c5eaa32a4f93aa0b53919394d8c394452102d4f
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/distribution-v2.log
+    bytes: 913
+    sha256: 4423b5058a7abea7abdbaeeafbe89d844256f57ddcbf015592f021cf4d93b6b6
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/lint-py.log
+    bytes: 3754
+    sha256: 0096a90ffe352b3fc4bf94ed94858ef3e68b85501826f895818dfc5175ff5400
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/docs-build.log
+    bytes: 3974
+    sha256: e3ec2d5078abf555e5b697fa775e0e83f4160652c29aca8f1a8e577a555bea51
+  - path: /home/holden/verilator-work/uvm-user-example-evidence/validation-limits.json
+    bytes: 1693
+    sha256: 8bae83da6ed23abebc92f931fbe759e17c7af3e6b29b5a1a44dc52d326c7852f
+boundaries:
+  - C20 alone receives credit; milestones stay 12/20 and atomic gates stay 36/46.
+  - The installed release binary, scripts, example and DPI data are qualified; the optional compiler debug binary was not installed.
+  - The compiler is the retained native-v8b binary with its archived modified compiler inputs verified against this source; no new compiler build is claimed.
+  - The new CI example lane is implemented but has no successful exact-revision CI result yet.
+  - Strict Sphinx validation retains one existing theme deprecation warning; cppcheck diagnostics remain recorded and unresolved.
+  - C19, C21, M14 release acceptance and both full goals remain open.

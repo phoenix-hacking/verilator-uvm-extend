@@ -1073,6 +1073,14 @@ evidence:
         status: pass
         refs: [https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34394319207]
     note: Dashboard acceptance only; full production performance, current-release CI, diagnostics, selection UX and nightly execution remain separate required work.
+  LOCAL-UVM-USER-FLOW-20260909:
+    claim: The documented source and copied installed UVM example passes both DPI modes, exact operation checks, fatal exit checks and explicit source-selection diagnostics.
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs: [nodist/uvm2020_plan/uvm-user-flow-2026-09-09.yaml]
+    note: Original C20 user-facing flow only; dedicated CI, complete release validation and full compliance remain open.
 milestones:
   M00:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/1
@@ -1480,9 +1488,9 @@ program:
       evidence: []
     C20:
       title: UVM 2020 user-facing selection flow exists
-      status: not_started
+      status: pass
       milestones: [M17]
-      evidence: []
+      evidence: [LOCAL-UVM-USER-FLOW-20260909]
     C21:
       title: Nightly synthetic SoC regression passes reproducibly
       status: in_progress
@@ -1973,9 +1981,9 @@ corpus:
         evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
 progress:
   program:
-    complete: 8
+    complete: 9
     total: 21
-    percent: 38.1
+    percent: 42.9
   milestones:
     complete: 12
     total: 20
