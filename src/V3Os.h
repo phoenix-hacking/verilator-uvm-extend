@@ -67,7 +67,7 @@ public:
     static string getline(std::istream& is, char delim = '\n');
 
     // METHODS (directory utilities)
-    static void createDir(const string& dirname);
+    static void createDir(const string& dirname) VL_MT_SAFE;
     static void filesystemFlush(const string& dirname);
     static void filesystemFlushBuildDir(const string& dirname);
     static void unlinkRegexp(const string& dir, const string& regexp);

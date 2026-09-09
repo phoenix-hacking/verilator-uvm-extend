@@ -338,7 +338,7 @@ string V3Os::getline(std::istream& is, char delim) {
 //######################################################################
 // Directory utilities
 
-void V3Os::createDir(const string& dirname) {
+void V3Os::createDir(const string& dirname) VL_MT_SAFE {
 #if defined(_WIN32) || defined(__MINGW32__)
     _mkdir(dirname.c_str());
 #else

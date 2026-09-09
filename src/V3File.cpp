@@ -335,7 +335,7 @@ void V3File::writeTimes(const string& filename, const string& cmdlineIn) {
 bool V3File::checkTimes(const string& filename, const string& cmdlineIn) {
     return dependImp.checkTimes(filename, cmdlineIn);
 }
-void V3File::createMakeDirFor(const string& filename) {
+void V3File::createMakeDirFor(const string& filename) VL_MT_SAFE {
     if (filename != VL_DEV_NULL
         // If doesn't start with makeDir then some output file user requested
         && filename.substr(0, v3Global.opt.makeDir().length() + 1)
@@ -343,13 +343,14 @@ void V3File::createMakeDirFor(const string& filename) {
         createMakeDir();
     }
 }
-void V3File::createMakeDir() {
-    static bool s_created = false;
-    if (!s_created) {
-        s_created = true;
+void V3File::createMakeDir() VL_MT_SAFE {
+    // Concurrent callers must wait until both directories have been created.
+    static const bool s_created = []() VL_MT_SAFE {
         V3Os::createDir(v3Global.opt.makeDir());
         if (v3Global.opt.hierTop()) V3Os::createDir(v3Global.opt.hierTopDataDir());
-    }
+        return true;
+    }();
+    (void)s_created;
 }
 
 //######################################################################
