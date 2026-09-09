@@ -317,12 +317,12 @@ void VL_DPI_CHECK_OPEN_ARRAY(const T_Array& array, std::initializer_list<int> si
 class VerilatedDpiOpenVar final {
     using HandleRefs = std::unordered_map<QData*, void*>;
     using StringRefs = std::unordered_map<std::string*, const char*>;
-    // MEMBERS
+    // MEMBERS - Callback contracts match the assigned VlDpiArrayAccess functions.
     const VerilatedVarProps* const m_propsp;  // Variable properties
     void* const m_datap;  // Location of data (local to thread always, so safe)
-    void* (*m_select)(void*, int, int, int) = nullptr;  // Noncontiguous element access
-    bool (*m_dynamic)(int) = nullptr;  // Which dimensions have a variable extent
-    int (*m_size)(const void*, int) = nullptr;  // Extent of a selected parent array
+    void* (*m_select)(void*, int, int, int)VL_MT_SAFE = nullptr;  // Noncontiguous element access
+    bool (*m_dynamic)(int) VL_PURE = nullptr;  // Which dimensions have a variable extent
+    int (*m_size)(const void*, int) VL_MT_SAFE = nullptr;  // Extent of a selected parent array
     int m_outerSize = 0;  // First-dimension extent at entry to the DPI call
     mutable std::unique_ptr<StringRefs> m_strings;  // C string pointer slots, allocated on demand
     mutable std::unique_ptr<HandleRefs> m_handles;  // Native pointer slots for model QData handles
@@ -374,7 +374,7 @@ public:
     void* datap() const VL_MT_SAFE { return m_datap; }
     // METHODS - from VerilatedVarProps
     bool magicOk() const { return m_propsp->magicOk(); }
-    VerilatedVarType vltype() const { return m_propsp->vltype(); }
+    VerilatedVarType vltype() const VL_MT_SAFE { return m_propsp->vltype(); }
     bool isDpiStdLayout() const {
         return m_propsp->isDpiCLayout() || m_propsp->vltype() == VLVT_STRING;
     }

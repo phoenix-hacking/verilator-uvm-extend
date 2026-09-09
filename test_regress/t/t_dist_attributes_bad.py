@@ -82,4 +82,17 @@ test.file_grep(
     r' is mtsafe but calls non-mtsafe function\(s\)')
 test.files_identical(test.run_log_filename, test.golden_filename)
 
+# The actual DPI runtime must preserve the contracts of its typed array-access
+# callbacks when storing and calling them through function pointers.
+dpi_log = test.obj_dir + '/dpi_attributes.log'
+test.run(logfile=dpi_log,
+         tee=True,
+         cmd=[
+             'python3', aroot + '/nodist/clang_check_attributes', '--verilator-root=' + aroot,
+             '--jobs=1',
+             "--cxxflags='-I" + aroot + '/include -I' + aroot + "/include/vltstd -std=c++14'",
+             aroot + '/include/verilated_dpi.cpp'
+         ])
+test.file_grep(dpi_log, r'Number of functions reported unsafe: +(\d+)', 0)
+
 test.passes()
