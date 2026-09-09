@@ -428,6 +428,7 @@ CPPCHECK_FLAGS += -j$(CPPCHECK_JOBS)
 CPPCHECK_INC = -I$(srcdir)/include
 CPPCHECK_INC += -I$(srcdir)/include/fstcpp
 CPPCHECK_INC += -I$(srcdir)/include/vltstd
+CPPCHECK_INC += -I$(srcdir)/test_regress/t/uvm/v2020_3_1/dpi
 CPPCHECK_INC += -I$(srcdir)/src/obj_dbg
 CPPCHECK_INC += -I$(srcdir)/src
 

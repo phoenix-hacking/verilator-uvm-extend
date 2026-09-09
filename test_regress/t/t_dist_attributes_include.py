@@ -36,6 +36,9 @@ if not have_clang_check():
 srcfiles = test.glob_some(test.root + "/include/*.cpp")
 srcfiles_str = " ".join(srcfiles)
 clang_args = "-I" + test.root + "/include/ -I" + test.root + "/include/vltstd/ -std=c++20"
+# The installed UVM adapter needs library declarations. Analyze it against the
+# shipped reference DPI sources, just as its bundled-library regression does.
+clang_args += " -I" + test.root + "/test_regress/t/uvm/v2020_3_1/dpi"
 
 test.run(logfile=test.run_log_filename,
          tee=True,
