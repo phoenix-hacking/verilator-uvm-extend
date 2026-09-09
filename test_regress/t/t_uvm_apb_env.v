@@ -391,12 +391,32 @@ module t;
       response: coverpoint err;
       wait_states: coverpoint delay_cycles {bins delays[] = {[0 : 2]};}
     endgroup
+    int unsigned sample_writes = 0;
+    int unsigned sample_reads = 0;
+
+    function void report_coverage();
+      int covered, total, type_covered, type_total;
+      real instance_value, type_value;
+      instance_value = transfers.get_inst_coverage(covered, total);
+      type_value = transfers.get_coverage(type_covered, type_total);
+      $display(
+          "APB_COVERAGE samples=%0d writes=%0d reads=%0d instance=%0.12f type=%0.12f covered=%0d total=%0d type_covered=%0d type_total=%0d",
+          sample_writes + sample_reads, sample_writes, sample_reads, instance_value, type_value,
+          covered, total, type_covered, type_total);
+    endfunction
+
     function new(string name, uvm_component parent);
       super.new(name, parent);
       transfers = new;
+      report_coverage();
     endfunction
     virtual function void write(apb_item item);
-      if (!item.reset) transfers.sample(item.write, item.error, item.waits);
+      if (!item.reset) begin
+        transfers.sample(item.write, item.error, item.waits);
+        if (item.write)++sample_writes;
+        else ++sample_reads;
+        if ((sample_writes + sample_reads) inside {1, 2, 17, 257}) report_coverage();
+      end
     endfunction
   endclass
 
@@ -542,6 +562,7 @@ module t;
         `uvm_fatal("APB_COUNT", "read, write or error totals were incorrect")
       if (active_scoreboard.digest != passive_scoreboard.digest)
         `uvm_fatal("APB_PASSIVE", "passive observations differ from active observations")
+      coverage.report_coverage();
       if (coverage.transfers.get_inst_coverage() != 100.0)
         `uvm_fatal("APB_COVERAGE", "direction, response and wait-state bins were not covered")
     endfunction
