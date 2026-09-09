@@ -1041,6 +1041,15 @@ evidence:
         status: pass
         refs: [https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34336465255/job/102426270066, nodist/uvm2020_plan/randomization-profile-2026-09-09.yaml]
     note: M09 profile acceptance only. Five source-annotation CI jobs failed; complete exact-release CI/regression and all final compliance/performance checks remain open. C13 also depends on M16.
+  LOCAL-UVM-COVERAGE-PROFILE-20260909:
+    claim: Real UVM APB/AXI subscribers pass instance/type queries, output counts, individual database bins, reporting and merge in all eight pinned-source DPI/thread configurations.
+    tests: [t_uvm_apb_env, t_uvm_axi_env, t_covergroup_weighted, t_covergroup_type_options, t_covergroup_type_runtime]
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs: [nodist/uvm2020_plan/functional-coverage-local-2026-09-09.yaml, nodist/uvm2020_plan/FUNCTIONAL_COVERAGE_PROFILE.md]
+    note: Original M10 and C14 profile acceptance only. Remaining full coverage semantics, exact-release CI/regression and final performance checks remain open; C15 also requires M17.
 milestones:
   M00:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/1
@@ -1225,12 +1234,13 @@ milestones:
   M10:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11
     title: Functional coverage from UVM classes
-    status: in_progress
+    status: pass
     gates:
       M10-G01-CLOSURE:
         title: UVM class coverage, report, and merge acceptance passes
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [LOCAL-UVM-COVERAGE-PROFILE-20260909]
+        claim_boundary: All eight source DPI/thread configurations pass independent subscriber/query/bin/report/merge checks. Full semantic requirements remain open under GOALS.md and FUNCTIONAL_COVERAGE_PROFILE.md.
   M11:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/12
     title: APB protocol environment
@@ -1415,14 +1425,14 @@ program:
       evidence: [UVM-RANDOM-PROFILE-20260909]
     C14:
       title: Functional coverage from UVM classes passes
-      status: in_progress
+      status: pass
       milestones: [M10]
-      evidence: [LOCAL-COVERAGE-WEIGHT-20260908, LOCAL-AXI-RAL-20260908]
+      evidence: [LOCAL-COVERAGE-WEIGHT-20260908, LOCAL-AXI-RAL-20260908, LOCAL-UVM-COVERAGE-PROFILE-20260909]
     C15:
       title: Coverage report and merge pass
       status: in_progress
       milestones: [M10, M17]
-      evidence: [LOCAL-APB-RAL-20260908, LOCAL-COVERAGE-WEIGHT-20260908, LOCAL-AXI-RAL-20260908]
+      evidence: [LOCAL-APB-RAL-20260908, LOCAL-COVERAGE-WEIGHT-20260908, LOCAL-AXI-RAL-20260908, LOCAL-UVM-COVERAGE-PROFILE-20260909]
     C16:
       title: APB and AXI-lite protocol assertions pass
       status: pass
@@ -1938,17 +1948,17 @@ corpus:
         evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
 progress:
   program:
-    complete: 4
+    complete: 5
     total: 21
-    percent: 19.0
+    percent: 23.8
   milestones:
-    complete: 9
+    complete: 10
     total: 20
-    percent: 45.0
+    percent: 50.0
   gates:
-    complete: 33
+    complete: 34
     total: 46
-    percent: 71.7
+    percent: 73.9
   lane:
     complete: 11
     total: 11

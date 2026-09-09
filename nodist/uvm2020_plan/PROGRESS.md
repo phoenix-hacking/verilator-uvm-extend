@@ -12,9 +12,9 @@ Updated 2026-09-09, with evidence observed on 2026-09-09 UTC.
 
 | Measure | Accepted | Percentage |
 |---|---:|---:|
-| Public capability milestones | 9/20 | 45.0% |
-| Required atomic gates | 33/46 | 71.7% |
-| Program exit criteria | 4/21 | 19.0% |
+| Public capability milestones | 10/20 | 50.0% |
+| Required atomic gates | 34/46 | 73.9% |
+| Program exit criteria | 5/21 | 23.8% |
 | Full UVM compliance goal checks | 0/6 | Pending |
 | Production performance goal checks | 0/6 | Pending |
 
@@ -25,6 +25,19 @@ oracles, including negative tests and bounded XFAIL handling; it does not
 establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## Latest validation checkpoint
+
+**M10 and C14 now pass the original functional coverage profile.** Real UVM
+subscribers pass all eight APB/AXI source DPI/thread configurations: 24 seeded
+runs, 58,848 transfers, 144 instance/type query checkpoints and 144 deliberately
+corrupted query controls. Every database bin, merged hit count and LCOV branch/
+line report matches independent driver traffic. Existing protocol, RAL and fault
+checks continue to pass. Weighted/type coverage, retained data, static group
+options and merged hit thresholds also have reduced C++14/protected/threaded
+and sanitizer evidence. [Acceptance evidence](functional-coverage-local-2026-09-09.yaml)
+records exact sources, the final independently replayed query helper and raw hashes.
+The [profile](FUNCTIONAL_COVERAGE_PROFILE.md) retains the remaining full semantic
+requirements. C15 still requires M17. No final compliance/performance check is
+accepted, and complete current-source release CI/regression remains open.
 
 **M09 now passes its original sequence-item acceptance.** Source `63fb4e86b2`
 passes the local and dedicated current-source CI matrices: four DPI/thread
@@ -214,9 +227,9 @@ intervals, memory limits and dedicated performance CI remain required.
 
 ## Next technical work
 
-1. Close M09 constrained-random sequence-item acceptance: verify the combined
-   source, deterministic replay, failed-solve state and documented constraint
-   limits against the original gate. Preserve required regression and CI proof.
+1. Implement M16's original synthetic SoC acceptance: CSR/RAL, DMA, IRQ,
+   reset, clocks, coverage, DPI and fixed-seed replay. M09 and M10 profile
+   acceptance now pass; their full-language requirements stay tracked.
 1. Complete the remaining normative UVM/language inventory, resource-precedence
    behavior and class coverage semantics. Preserve the committed RAL checkpoint;
    further RAL expansion stays paused while the next marker is addressed.
@@ -237,8 +250,8 @@ intervals, memory limits and dedicated performance CI remain required.
 | [M06](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/7) | Interfaces, virtual interfaces, modports, and clocking closure | 4/4 | pass | Accepted virtual-interface, modport and APB clocking scope. |
 | [M07](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/8) | Config/resource DB and component flow | 0/1 | in progress | Resolve direct resource-precedence behavior in the pinned library; retain the normative oracle. |
 | [M08](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/9) | TLM and sequence flow | 1/1 | pass | Accepted TLM/sequence scope. |
-| [M09](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10) | Constrained-random sequence items | 0/1 | in progress | Finish the declared constrained-random acceptance, including remaining scope/state cases. |
-| [M10](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11) | Functional coverage from UVM classes | 0/1 | in progress | Implement type aggregation, lifetime-safe ownership, remaining options and cross semantics; complete class coverage acceptance. |
+| [M09](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10) | Constrained-random sequence items | 1/1 | pass | Original randomization profile accepted with local and dedicated CI evidence. |
+| [M10](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11) | Functional coverage from UVM classes | 1/1 | pass | Original subscriber/query/report/merge profile accepted; full semantics remain open. |
 | [M11](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/12) | APB protocol environment | 1/1 | pass | Accepted APB active/passive, RAL, coverage and assertion scope. |
 | [M12](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/13) | AXI-lite protocol environment | 1/1 | pass | Accepted AXI-lite active/passive, RAL, coverage and assertion scope. |
 | [M13](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/14) | RAL frontdoor and predictor | 0/1 | in progress | Extend the passing APB RW model to all required access policies and maps. |
@@ -269,8 +282,8 @@ and map requirements still prevent those criteria from passing.
 | C10 | RAL frontdoor mirror and update pass | M13 | in progress |
 | C11 | RAL predictor passes | M13 | in progress |
 | C12 | Built-in RAL reset, access, and bit-bash smokes pass | M13 | in progress |
-| C13 | Constrained-random fixed-seed replay passes | M09, M16 | not started |
-| C14 | Functional coverage from UVM classes passes | M10 | in progress |
+| C13 | Constrained-random fixed-seed replay passes | M09, M16 | in progress |
+| C14 | Functional coverage from UVM classes passes | M10 | pass |
 | C15 | Coverage report and merge pass | M10, M17 | in progress |
 | C16 | APB and AXI-lite protocol assertions pass | M15 | pass |
 | C17 | DPI and no-DPI flows are tested and documented | M14 | in progress |
@@ -315,8 +328,8 @@ in [tracker.yaml](tracker.yaml); accepted evidence retains its local/CI scope.
 | M06-G04-APB-CYCLES | APB setup/access cycles pass through protocol drivers and monitors | pass | LOCAL-APB-RAL-20260908 |
 | M07-G01-CLOSURE | Config/resource DB and component flow acceptance passes | pending | Pending |
 | M08-G01-CLOSURE | TLM and sequence handshake acceptance passes | pass | TLM-SEQUENCE-CLOSURE-20260907 |
-| M09-G01-CLOSURE | Deterministic constrained-random sequence-item acceptance passes | pending | Pending |
-| M10-G01-CLOSURE | UVM class coverage, report, and merge acceptance passes | pending | Pending |
+| M09-G01-CLOSURE | Deterministic constrained-random sequence-item acceptance passes | pass | UVM-RANDOM-PROFILE-20260909 |
+| M10-G01-CLOSURE | UVM class coverage, report, and merge acceptance passes | pass | LOCAL-UVM-COVERAGE-PROFILE-20260909 |
 | M11-G01-CLOSURE | Active/passive APB environment acceptance passes | pass | LOCAL-APB-RAL-20260908 |
 | M12-G01-CLOSURE | Active/passive AXI-lite environment acceptance passes | pass | LOCAL-AXI-RAL-20260908 |
 | M13-G01-CLOSURE | RAL frontdoor, predictor, and built-in smoke acceptance passes | pending | Pending |

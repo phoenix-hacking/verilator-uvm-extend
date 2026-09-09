@@ -1,0 +1,91 @@
+---
+# DESCRIPTION: Verilator: UVM functional coverage profile acceptance
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-09'
+observed_utc: '2026-09-09T17:49:22.270859+00:00'
+status: accepted_m10_profile
+source_revision: ef15d0e92fe2493edf04b8a14e4c741e3b2a52a1
+development_revision: 85b8339da4eac25aaede5f6ebfe691b54461cc51
+uvm_source_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+uvm_source_clean: true
+profile: nodist/uvm2020_plan/FUNCTIONAL_COVERAGE_PROFILE.md
+original_issue:
+  url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/11
+  retained_contract:
+    path: /home/holden/verilator-work/uvm-random-profile-evidence/m10-next-independent-contract.json
+    bytes: 556
+    sha256: 512a8ad3a6844b0ef9df55fbf89f0f93af417f15bd7b377ed83e3100210dc174
+acceptance:
+  milestone: M10
+  gate: M10-G01-CLOSURE
+  criterion: C14
+  requirements:
+  - Real UVM class subscribers sample coverage.
+  - Coverage report and merge work or documented limitations exist.
+  source_configurations: 8
+  dpi_modes:
+  - 'off'
+  - 'on'
+  simulation_threads:
+  - 1
+  - 2
+  seeds:
+  - 1729
+  - 1729
+  - 2718
+  positive_replays: 24
+  positive_transfers: 58848
+  coverage_query_checkpoints: 144
+  query_corruption_controls: 144
+  protocol_paired_fault_cases: 76
+  individually_checked_bins:
+    APB: 7
+    AXI: 27
+  report: LCOV source locations and every branch/line count match independently derived merged traffic bins.
+  merge: Each merged bin equals the two different-seed input hit counts summed exactly.
+source_checks:
+- path: /home/holden/verilator-work/uvm-coverage-type-evidence/uvm-profile-v1-final-results.json
+  bytes: 204637
+  sha256: 12b5dd1a11696d29a6a915fe41a408bc9945de7b08ed461b439b978ffb31f613
+- path: /home/holden/verilator-work/uvm-coverage-type-evidence/uvm-profile-v1-acceptance-source-recheck.json
+  bytes: 7116
+  sha256: 4a02e06c447160605fa7f6eaaf349fb666285116ff5f83caff6d5bf52637171b
+- path: /home/holden/verilator-work/uvm-coverage-type-evidence/uvm-profile-v1-provenance.json
+  bytes: 11692
+  sha256: 9563d911ac87c900a2844fe2433de4516fd8fd4f8b31804062199d18e1364c3f
+- path: /home/holden/verilator-work/uvm-coverage-type-evidence/candidate-v8b-local-results.json
+  bytes: 2357
+  sha256: e60f6bb68db64b92a4ee3afd0d5b01a0e26cb23fbdfc4ae7357efaeb68bfd816
+- path: /home/holden/verilator-work/uvm-coverage-type-evidence/native-v8b-results.json
+  bytes: 5280
+  sha256: 14240c5a4b5d143eef2d77606cbdaa68d10c2ee3087426bb076ce490b5122c62
+local_validation:
+- path: /home/holden/verilator-work/uvm-coverage-type-evidence/uvm-profile-v1-lint-py-final.log
+  bytes: 3756
+  sha256: d718a47b49b9dba9538b6b8ba6b05f44c3aaeac188cf90e3407bad7878727eb7
+- path: /home/holden/verilator-work/uvm-coverage-type-evidence/uvm-profile-v1-dist-final.log
+  bytes: 636
+  sha256: d2c244c46f7b189a962b85b033ca1093e1efe6034f5107f9d1e6e78392b14121
+- path: /home/holden/verilator-work/uvm-coverage-type-evidence/uvm-profile-format.log
+  bytes: 0
+  sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+reduced_semantics: Weighted/type queries, retained data, static group options, whole-option/reference access, output counts and merged hit thresholds pass
+  ordinary/protected C++14, one/two threads, runtime and sanitizer cases; causal parent failures retained in candidate-v8b evidence.
+qualifications:
+- First helper lint failed on local-variable count; split into traffic derivation, frame validation and frame traversal. Full lint and final-oracle replay
+  pass.
+- Initial distribution selection named nonexistent t_dist_manifest.py and executed no tests; corrected copyright/whitespace driver passes both.
+- Earlier combined reduced drivers failed only on the initial negative golden URL normalization. Fresh normalized negative driver passes; original failures
+  retained.
+- Bundled Verible cannot parse the reduced type(expr)/static coverage syntax; do not claim that reduced SV formatting passed. The protocol fixtures format
+  cleanly.
+boundaries:
+- Acceptance is the original M10 subscriber/query/report/merge profile; full coverage and UVM conformance remain open.
+- Item static options/scoped access, remaining option defaults/metadata, start/stop/set_inst_name, strobe, dynamic layouts/runtime thresholds and full lifecycle/context
+  combinations remain mandatory open work under GOALS.md.
+- C15 also requires M17 and remains in progress. No final compliance or performance goal check receives credit.
+- Full current-source CI/regression remains required for release. This profile has local acceptance, like M15; it does not claim a current M10 CI pass or
+  waive existing CI failures.
