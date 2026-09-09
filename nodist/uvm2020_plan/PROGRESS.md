@@ -12,9 +12,9 @@ Updated 2026-09-09, with evidence observed on 2026-09-09 UTC.
 
 | Measure | Accepted | Percentage |
 |---|---:|---:|
-| Public capability milestones | 11/20 | 55.0% |
-| Required atomic gates | 35/46 | 76.1% |
-| Program exit criteria | 7/21 | 33.3% |
+| Public capability milestones | 12/20 | 60.0% |
+| Required atomic gates | 36/46 | 78.3% |
+| Program exit criteria | 8/21 | 38.1% |
 | Full UVM compliance goal checks | 0/6 | Pending |
 | Production performance goal checks | 0/6 | Pending |
 
@@ -26,17 +26,23 @@ establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## Latest validation checkpoint
 
-**M17 dashboard tooling is implemented and locally verified; marker credit is
-unchanged.** The [collector and report tools](PERFORMANCE_DASHBOARD.md) retain
-frozen inputs, paired runs, checked work counts and raw resource samples.
+**M17 and C15 now pass their original acceptance.** The reproducible
+[performance dashboard](PERFORMANCE_DASHBOARD.md) retains frozen inputs,
+paired measurements, checked completed work and raw resource samples.
 Thirty-two SoC control runs at two sizes verify 240 completed DMA commands;
-relocating the bundle reproduces identical JSON, Markdown and HTML reports.
-Eleven integrity tests pass, including corrupt-output and receipt rejection,
-missing pairs, input changes, timeouts and concurrent-child memory accounting.
-These short same-executable controls establish tooling behavior, not an
-optimization or production performance result. [Validation evidence](performance-tools-local-2026-09-09.yaml)
-records scope and remaining work. The new tooling CI workflow is configured;
-no completed remote run is claimed.
+relocation reproduces identical JSON, Markdown and HTML reports. Clean-checkout
+[tooling CI](https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34394319207)
+passes all eleven integrity controls on revision `8076d7069`.
+
+C15 combines M17 with independently rechecked M10 report/merge evidence:
+all eight source configurations and 24 seeded runs still pass, with every
+coverage bin and report location/count checked. The corresponding compiler,
+runtime and fixture inputs remain unchanged. [Acceptance evidence](performance-dashboard-accepted-2026-09-09.yaml)
+records these distinct proof paths. C19, C20 and C21 remain open.
+
+These short same-executable controls do not establish an optimization or
+production performance result. Full G-PERF requirements and current-release
+CI remain required. Neither final goal receives acceptance credit.
 
 **M16, C09 and C13 now pass their original local acceptance.** The synthetic
 SoC combines an APB register model, byte DMA, AXI-lite memory, two clocks,
@@ -54,7 +60,7 @@ SoC replay evidence with the already accepted M09 randomization profile.
 
 The [profile](SYNTHETIC_SOC_PROFILE.md) records the original scope and limits.
 The source CI lane is configured but no current CI pass or nightly execution is
-claimed. C21 still requires M17 and nightly evidence. Both full goals remain open.
+claimed. C21 still requires reproducible nightly evidence. Both full goals remain open.
 
 **M10 and C14 now pass the original functional coverage profile.** Real UVM
 subscribers pass all eight APB/AXI source DPI/thread configurations: 24 seeded
@@ -66,7 +72,7 @@ options and merged hit thresholds also have reduced C++14/protected/threaded
 and sanitizer evidence. [Acceptance evidence](functional-coverage-local-2026-09-09.yaml)
 records exact sources, the final independently replayed query helper and raw hashes.
 The [profile](FUNCTIONAL_COVERAGE_PROFILE.md) retains the remaining full semantic
-requirements. C15 still requires M17. No final compliance/performance check is
+requirements. C15 now passes after M17 dashboard acceptance. No final compliance/performance check is
 accepted, and complete current-source release CI/regression remains open.
 
 **M09 now passes its original sequence-item acceptance.** Source `63fb4e86b2`
@@ -257,9 +263,9 @@ intervals, memory limits and dedicated performance CI remain required.
 
 ## Next technical work
 
-1. Establish M17's reproducible performance dashboard against its original
-   contract. Freeze correct workloads and measurement policy before collecting
-   data; dashboard acceptance alone does not complete production optimization.
+1. Implement and verify C20's user-facing UVM source selection example and
+   documentation. Continue the full production benchmark workloads and measurements;
+   M17 dashboard acceptance does not complete production optimization.
 1. Complete the remaining normative UVM/language inventory, resource-precedence
    behavior and class coverage semantics. Preserve the committed RAL checkpoint;
    further RAL expansion stays paused while the next marker is addressed.
@@ -288,7 +294,7 @@ intervals, memory limits and dedicated performance CI remain required.
 | [M14](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/15) | DPI/reference model and minimal VPI strategy | 2/3 | in progress | Complete exact-revision CI and full-regression proof for DPI/HDL backdoor requirements. |
 | [M15](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/16) | SVA protocol profile | 1/1 | pass | Ten-rule assertion/monitor agreement and precise unsupported forms accepted; see the profile evidence. |
 | [M16](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/17) | Synthetic SoC regression | 1/1 | pass | Original SoC CSR/RAL, DMA, IRQ, reset/clocks, coverage, DPI and replay profile accepted. |
-| [M17](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18) | Packaging, CI, and performance | 2/3 | in progress | Finish packaging, diagnostics, coverage integration and exact-revision CI closure. |
+| [M17](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18) | Packaging, CI, and performance | 3/3 | pass | Original clean-flow, CI and reproducible dashboard gates accepted; production optimization remains open. |
 | [M18](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/19) | Advanced parity limits | 0/1 | not started | Complete required advanced-parity capabilities and independent validation. |
 | [M19](https://github.com/phoenix-hacking/verilator-uvm-extend/issues/20) | Competitive coverage closure and issue hygiene | 1/3 | in progress | Finish clean regression, sanitizer, supported-host and performance release acceptance. |
 
@@ -314,7 +320,7 @@ and map requirements still prevent those criteria from passing.
 | C12 | Built-in RAL reset, access, and bit-bash smokes pass | M13 | in progress |
 | C13 | Constrained-random fixed-seed replay passes | M09, M16 | pass |
 | C14 | Functional coverage from UVM classes passes | M10 | pass |
-| C15 | Coverage report and merge pass | M10, M17 | in progress |
+| C15 | Coverage report and merge pass | M10, M17 | pass |
 | C16 | APB and AXI-lite protocol assertions pass | M15 | pass |
 | C17 | DPI and no-DPI flows are tested and documented | M14 | in progress |
 | C18 | VPI and backdoor strategy is implemented or documented | M14, M18 | not started |
@@ -370,7 +376,7 @@ in [tracker.yaml](tracker.yaml); accepted evidence retains its local/CI scope.
 | M16-G01-CLOSURE | Synthetic SoC acceptance regression passes | pass | LOCAL-UVM-SOC-PROFILE-20260909 |
 | M17-G01-LOCAL-LANE | Clean and capped original lane passes locally | pass | LOCAL-LANE-CONTRACT-0001 |
 | M17-G02-CANONICAL-CI | Clean-checkout canonical CI lane passes | pass | HARNESS-FANOUT-0001, HARNESS-CLEAN-0001 |
-| M17-G03-PERFORMANCE | Reproducible performance dashboard is established | pending | Pending |
+| M17-G03-PERFORMANCE | Reproducible performance dashboard is established | pass | UVM-PERFORMANCE-DASHBOARD-20260909 |
 | M18-G01-DISPOSITION | Advanced gaps are implemented or accepted as non-blocking limits | pending | Pending |
 | M19-G01-TRACKER-SCHEMA | Machine-checked tracker and manifest validate | pass | LOCAL-TRACKER-MANIFEST-0001 |
 | M19-G02-ROADMAP-ALIGNMENT | All public trackers and leaf issues are aligned | pending | Pending |

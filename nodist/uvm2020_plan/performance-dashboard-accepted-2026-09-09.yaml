@@ -1,0 +1,68 @@
+---
+# DESCRIPTION: Verilator: Original performance dashboard acceptance
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-09'
+observed_utc: '2026-09-09T19:25:51.152459+00:00'
+status: accepted_original_m17_dashboard
+source_revision: 8076d70695eac8a656c480d03fa67cdf12ba3d3b
+original_contract:
+  path: /home/holden/verilator-work/uvm-soc-profile-evidence/m17-next-original-contract.json
+  bytes: 1049
+  sha256: 93c6032c831e2d26b3f9af99ab5e6a202688110c7fbac0f7603539c5c642e74a
+acceptance:
+  milestone: M17
+  gate: M17-G03-PERFORMANCE
+  criterion: C15
+  previous_gates: Original local clean-lane and canonical CI acceptance remain unchanged.
+  dashboard: Frozen checked paired measurements regenerate identical JSON, Markdown and HTML after relocation.
+  ci: Clean checkout executes all eleven process/data-integrity and report-reproduction controls.
+  coverage: Existing M10 report and merge evidence rechecked in all eight source configurations; corresponding compiler/runtime/fixture inputs unchanged.
+measurements:
+  scope: exploratory same-executable control
+  source_configurations: 1
+  workload_sizes: [4, 9]
+  runs: 32
+  warmups: 4
+  paired_samples: 28
+  completed_dma_commands: 240
+  optimization_claim: false
+  production_performance_acceptance: false
+ci:
+  run: 34394319207
+  job: 102610122893
+  head: 8076d70695eac8a656c480d03fa67cdf12ba3d3b
+  status: completed
+  conclusion: success
+  tests_passed: 11
+  url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34394319207
+evidence:
+  - path: /home/holden/verilator-work/uvm-performance-evidence/dashboard-foundation-results.json
+    bytes: 900
+    sha256: 732b5b509d938fbe33ae6a132f06de3f5198027cf9a6d96628a784a7b4a6ebd6
+  - path: /home/holden/verilator-work/uvm-performance-evidence/tools-ci-current.json
+    bytes: 13971
+    sha256: 50cea215ad1017f252fe41acc06caa88e6c8cad788fde5b28bceab2bbe9e8a27
+  - path: /home/holden/verilator-work/uvm-performance-evidence/tools-ci-jobs-current.json
+    bytes: 1931
+    sha256: 30e01f54591f32977a39dd1b697158c7f25aa830a9e0dffd56138a5733546f8d
+  - path: /home/holden/verilator-work/uvm-performance-evidence/tools-ci-job-102610122893.log
+    bytes: 16861
+    sha256: 0548ea4fd8825c19d1f92ea98a085c51736012b9c9830dcd29758559551400fc
+  - path: /home/holden/verilator-work/uvm-performance-evidence/collector-final-tests.log
+    bytes: 1320
+    sha256: 9721f944950e236b93d3d26e33e3af595a9f190e6c23432b4579dd9750def2de
+  - path: /home/holden/verilator-work/uvm-performance-evidence/distribution-checkpoint-final.log
+    bytes: 876
+    sha256: 70f19e274442306dbbdb10007f76c93082be1da58d5b21a92fb2236d623bcb7a
+  - path: /home/holden/verilator-work/uvm-coverage-type-evidence/m17-c15-report-merge-recheck.json
+    bytes: 204637
+    sha256: 53c612655e6b84c1de036aebd7e55a9c365a45f8b912d785833a8cfb8094759c
+boundaries:
+  - Only the original M17 dashboard and C15 report/merge criteria receive acceptance.
+  - 'G-PERF remains 0/6: no optimized baseline, production speedup, 30-second steady state, exact peak-memory or leak result is claimed.'
+  - Full representative workloads, clean/incremental compilation, solver separation, lifecycle memory and dedicated production threshold CI remain required by GOALS.md.
+  - C19 diagnostics, C20 user-facing selection and C21 reproducible nightly execution require their own evidence and remain open.
+  - Current-release build/regression CI remains open; passing the tooling job is not full release acceptance.

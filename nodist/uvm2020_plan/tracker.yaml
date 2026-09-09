@@ -245,9 +245,9 @@ issues:
     milestones: [M01, M14, M17]
     progress_basis: accepted_required_gates_in_owned_milestones
     progress:
-      complete: 7
+      complete: 8
       total: 9
-      percent: 77.8
+      percent: 88.9
   40:
     id: A20
     url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/40
@@ -1060,6 +1060,19 @@ evidence:
         status: pass
         refs: [nodist/uvm2020_plan/synthetic-soc-local-2026-09-09.yaml, nodist/uvm2020_plan/SYNTHETIC_SOC_PROFILE.md]
     note: Original M16 and C09 acceptance, plus C13 when combined with M09. Current-release CI, reproducible nightly C21, full semantics and production performance remain open.
+  UVM-PERFORMANCE-DASHBOARD-20260909:
+    claim: The original M17 reproducible dashboard passes local checked SoC controls and clean-checkout tooling CI; C15 additionally uses the independently rechecked M10 coverage report and merge evidence.
+    tests: [test_performance, t_uvm_apb_env, t_uvm_axi_env]
+    proofs:
+      local:
+        required: true
+        status: pass
+        refs: [nodist/uvm2020_plan/performance-dashboard-accepted-2026-09-09.yaml]
+      ci:
+        required: true
+        status: pass
+        refs: [https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34394319207]
+    note: Dashboard acceptance only; full production performance, current-release CI, diagnostics, selection UX and nightly execution remain separate required work.
 milestones:
   M00:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/1
@@ -1326,7 +1339,7 @@ milestones:
   M17:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/18
     title: Packaging, CI, and performance
-    status: in_progress
+    status: pass
     gates:
       M17-G01-LOCAL-LANE:
         title: Clean and capped original lane passes locally
@@ -1338,8 +1351,8 @@ milestones:
         evidence: [HARNESS-FANOUT-0001, HARNESS-CLEAN-0001]
       M17-G03-PERFORMANCE:
         title: Reproducible performance dashboard is established
-        status: pending
-        evidence: []
+        status: pass
+        evidence: [UVM-PERFORMANCE-DASHBOARD-20260909]
   M18:
     issue: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/19
     title: Advanced parity limits
@@ -1442,9 +1455,9 @@ program:
       evidence: [LOCAL-COVERAGE-WEIGHT-20260908, LOCAL-AXI-RAL-20260908, LOCAL-UVM-COVERAGE-PROFILE-20260909]
     C15:
       title: Coverage report and merge pass
-      status: in_progress
+      status: pass
       milestones: [M10, M17]
-      evidence: [LOCAL-APB-RAL-20260908, LOCAL-COVERAGE-WEIGHT-20260908, LOCAL-AXI-RAL-20260908, LOCAL-UVM-COVERAGE-PROFILE-20260909]
+      evidence: [LOCAL-APB-RAL-20260908, LOCAL-COVERAGE-WEIGHT-20260908, LOCAL-AXI-RAL-20260908, LOCAL-UVM-COVERAGE-PROFILE-20260909, UVM-PERFORMANCE-DASHBOARD-20260909]
     C16:
       title: APB and AXI-lite protocol assertions pass
       status: pass
@@ -1960,17 +1973,17 @@ corpus:
         evidence: [LOCAL-ORDERED-UVM-LANE-20260906]
 progress:
   program:
-    complete: 7
+    complete: 8
     total: 21
-    percent: 33.3
+    percent: 38.1
   milestones:
-    complete: 11
+    complete: 12
     total: 20
-    percent: 55.0
+    percent: 60.0
   gates:
-    complete: 35
+    complete: 36
     total: 46
-    percent: 76.1
+    percent: 78.3
   lane:
     complete: 11
     total: 11
