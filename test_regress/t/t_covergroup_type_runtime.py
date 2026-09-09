@@ -12,10 +12,11 @@ import re
 import vltest_bootstrap
 
 test.scenarios('vlt')
-test.compile(verilator_flags2=['--coverage-user', '--exe', test.pli_filename, '-CFLAGS -std=c++14'],
-             make_flags=['CPPFLAGS_ADD=-DTEST_OBJ_DIR="' + test.obj_dir + '"'],
-             make_top_shell=False,
-             make_main=False)
+test.compile(
+    verilator_flags2=['--coverage-user', '--exe', test.pli_filename, '-CFLAGS -std=c++14'],
+    make_flags=['CPPFLAGS_ADD=-DTEST_OBJ_DIR="' + test.obj_dir + '"'],
+    make_top_shell=False,
+    make_main=False)
 test.execute()
 
 # Confirm report pointers still address the retained instance after handle release.
