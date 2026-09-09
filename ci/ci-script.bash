@@ -131,7 +131,7 @@ elif [ "$CI_BUILD_STAGE_NAME" = "test" ]; then
         VERILATOR_ROOT="$PWD" "$MAKE" -C examples/make_uvm UVM_SOURCE_ROOT="$UVM_SOURCE_ROOT" UVM_DPI="$dpi" BUILD_JOBS=1
       done
       ;;
-    uvm2020-protocol-source|uvm2020-randomize-source|uvm2020-soc-source|uvm2020-source)
+    uvm2020-dpi-source|uvm2020-protocol-source|uvm2020-randomize-source|uvm2020-soc-source|uvm2020-source)
       : "${UVM_SOURCE_ROOT:?set UVM_SOURCE_ROOT to the upstream UVM checkout}"
       "$MAKE" -C "$TEST_REGRESS" "$TESTS" UVM_SOURCE_ROOT="$UVM_SOURCE_ROOT"
       ;;

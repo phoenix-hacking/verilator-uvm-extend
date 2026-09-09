@@ -2395,6 +2395,14 @@ driver.py Non-Scenario Arguments
    object directories from the bundled ``uvm2020`` target. CI pins the source
    checkout to Accellera UVM 2020.3.1 and checks that it remains unmodified.
 
+   Run ``make -C test_regress uvm2020-dpi-source
+   UVM_SOURCE_ROOT=/path/to/uvm-core`` for the C reference model, dynamic-array
+   DPI reference, and clocked HDL-backdoor tests. This target first runs their
+   reduced dynamic-array and nested-``foreach`` prerequisites, then executes
+   the integrations in single- and multithreaded modes. It uses the same
+   pinned source checkout in CI and separate object directories. Each driver
+   retains its positive checks and expected error or injected-fault checks.
+
 .. option:: --dump-tree
 
    Same as ``verilator --dump-tree``: Enable Verilator writing .tree debug

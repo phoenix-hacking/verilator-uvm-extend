@@ -168,6 +168,33 @@ uvm2020-source:
 		fi; \
 	done; echo "uvm2020-source: stale-artifact cleanup PASSED"
 
+UVM2020_DPI_SOURCE_TESTS := \
+	t/t_foreach_nonzero_nested.py \
+	t/t_dpi_open_dynamic.py \
+	t/t_dpi_open_dynamic_protect_ids.py \
+	t/t_dpi_open_dynamic_bad.py \
+	t/t_dpi_open_dynamic_oob_bad.py \
+	t/t_uvm_dpi_reference.py \
+	t/t_uvm_dpi_reference_dynamic.py \
+	t/t_uvm_hdl_backdoor.py
+UVM2020_DPI_SOURCE_OBJ_DIRS := $(foreach scenario,vlt vltmt, \
+	$(patsubst t/%.py,obj_$(scenario)/%-uvm2020-dpi-source,$(UVM2020_DPI_SOURCE_TESTS)))
+UVM2020_DPI_SOURCE_SENTINELS := $(addsuffix /interrupted.gch,$(UVM2020_DPI_SOURCE_OBJ_DIRS))
+
+.PHONY: uvm2020-dpi-source
+uvm2020-dpi-source:
+	@test -n "$(UVM_SOURCE_ROOT)" || { echo "%Error: set UVM_SOURCE_ROOT to the upstream UVM checkout"; exit 1; }
+	$(PYTHON3) ../nodist/uvm2020_plan/check_cleanup_safety.py
+	$(PYTHON3) driver.py --jobs=1 --driver-preserve-order --driver-build-jobs=1 --driver-clean-before \
+		--driver-clean-before-seed=interrupted.gch --driver-uvm-source-root="$(UVM_SOURCE_ROOT)" \
+		--obj-suffix=-uvm2020-dpi-source --vlt --vltmt $(UVM2020_DPI_SOURCE_TESTS)
+	@for sentinel in $(UVM2020_DPI_SOURCE_SENTINELS); do \
+		if test -e "$$sentinel" || test -L "$$sentinel"; then \
+			echo "%Error: stale-artifact sentinel survived: $$sentinel" >&2; \
+			exit 1; \
+		fi; \
+	done; echo "uvm2020-dpi-source: stale-artifact cleanup PASSED"
+
 UVM2020_RANDOMIZE_SOURCE_OBJ_DIRS := \
 	obj_vlt/t_uvm_sequence_randomize-uvm2020-randomize-source \
 	obj_vltmt/t_uvm_sequence_randomize-uvm2020-randomize-source
