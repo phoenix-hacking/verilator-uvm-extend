@@ -26,6 +26,18 @@ establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## Latest validation checkpoint
 
+**M17 dashboard tooling is implemented and locally verified; marker credit is
+unchanged.** The [collector and report tools](PERFORMANCE_DASHBOARD.md) retain
+frozen inputs, paired runs, checked work counts and raw resource samples.
+Thirty-two SoC control runs at two sizes verify 240 completed DMA commands;
+relocating the bundle reproduces identical JSON, Markdown and HTML reports.
+Eleven integrity tests pass, including corrupt-output and receipt rejection,
+missing pairs, input changes, timeouts and concurrent-child memory accounting.
+These short same-executable controls establish tooling behavior, not an
+optimization or production performance result. [Validation evidence](performance-tools-local-2026-09-09.yaml)
+records scope and remaining work. The new tooling CI workflow is configured;
+no completed remote run is claimed.
+
 **M16, C09 and C13 now pass their original local acceptance.** The synthetic
 SoC combines an APB register model, byte DMA, AXI-lite memory, two clocks,
 interrupt masking/clearing, reset cancellation, class coverage, C DPI and seed

@@ -1,0 +1,61 @@
+---
+# DESCRIPTION: Verilator: Performance dashboard tooling validation
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-09'
+status: validated_dashboard_foundation
+source_revision: 4fd3646feb208d715f7622fd5c80a757ac71cad7
+milestone_credit_added: false
+goal_credit_added: false
+measurements:
+  workloads: [soc-dpi-jobs-4, soc-dpi-jobs-9]
+  runs: 32
+  warmups: 4
+  paired_samples: 28
+  completed_dma_commands: 240
+  same_executable_control: true
+  scope: exploratory
+  optimized_baseline: false
+  steady_state_30_seconds: false
+  rss_method: sampled process-group aggregate estimate; not kernel-accounted peak
+validation:
+  tool_integrity_checks: 11
+  pylint: pass
+  ruff: pass
+  distribution_checks: 3
+  source_clean: true
+  report_relocation: JSON/Markdown/HTML byte-identical using archived implementation
+evidence:
+  - path: /home/holden/verilator-work/uvm-performance-evidence/dashboard-foundation-results.json
+    bytes: 900
+    sha256: 732b5b509d938fbe33ae6a132f06de3f5198027cf9a6d96628a784a7b4a6ebd6
+  - path: /home/holden/verilator-work/uvm-performance-evidence/collector-final-tests.log
+    bytes: 1320
+    sha256: 9721f944950e236b93d3d26e33e3af595a9f190e6c23432b4579dd9750def2de
+  - path: /home/holden/verilator-work/uvm-performance-evidence/pylint-final.log
+    bytes: 0
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  - path: /home/holden/verilator-work/uvm-performance-evidence/distribution-v2.log
+    bytes: 876
+    sha256: b653c278b9f0e2a1af9f1284cbc45efad76f1a9453340cd161effe559d610bda
+  - path: /home/holden/verilator-work/uvm-performance-evidence/soc-control-final/bundle.json
+    bytes: 584
+    sha256: d2740e59318b76552ad4bac52de4de20f3f1bf5be57b9ce09fd1404a26026d52
+  - path: /home/holden/verilator-work/uvm-performance-evidence/soc-control-final/journal.jsonl
+    bytes: 2998
+    sha256: 78fe42b16d0b2ccb7d134598e8f492f9aa64d5dfde0ae2bee88fbf4bed3f5862
+  - path: /home/holden/verilator-work/uvm-performance-evidence/soc-control-final/report.json
+    bytes: 5755
+    sha256: d0417f133f2cf2dcaafd29b3f6db7c88fad7ebd8e5da261014dee12d97eabb9f
+ci:
+  workflow: .github/workflows/uvm-performance-tools.yml
+  configured: true
+  current_run_verified: false
+  scope: Collector integrity checks only; no production thresholds or SoC nightly result.
+boundaries:
+  - 'No source optimization or speedup is claimed: baseline and candidate use the same accepted M16 executable.'
+  - M17 remains open pending acceptance review against its original dashboard contract. Full G-PERF requirements must not be silently substituted for that narrower milestone contract.
+  - Clean/incremental compilation, solver separation, lifecycle growth, additional workload categories, optimized calibration and dedicated production threshold CI remain required by G-PERF.
+  - Existing RTLMeter provides the RTL benchmark/report route; its sequential new/old workflow has not established the required paired production protocol.
