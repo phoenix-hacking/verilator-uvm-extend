@@ -97,13 +97,13 @@ void VlCovergroupData::coverageParts(double& covered, double& total, uint32_t& c
         double itemCovered = 0.0;
         double itemTotal = 0.0;
         m_items[i].coverageParts(itemCovered, itemTotal);
-        if (!itemTotal) continue;
+        if (itemTotal == 0.0) continue;
         covered += itemWeight(static_cast<int>(i)) * itemCovered / itemTotal;
         total += itemWeight(static_cast<int>(i));
         coveredBins += static_cast<uint32_t>(itemCovered);
         totalBins += static_cast<uint32_t>(itemTotal);
     }
-    if (!total) coveredBins = totalBins = 0;
+    if (total == 0.0) coveredBins = totalBins = 0;
 }
 
 double VlCovergroupData::coverage() const {
@@ -121,7 +121,7 @@ double VlCovergroupData::coverage(uint32_t& coveredBins, uint32_t& totalBins) co
     // Assign after computing both results, including when the ref arguments alias.
     coveredBins = binCovered;
     totalBins = binTotal;
-    return total ? 100.0 * covered / total : (weight() ? 0.0 : 100.0);
+    return total != 0.0 ? 100.0 * covered / total : (weight() ? 0.0 : 100.0);
 }
 
 std::shared_ptr<VlCovergroupData> VlCovergroupType::create() {
@@ -198,14 +198,14 @@ double VlCovergroupType::coverage(uint32_t weight, bool mergeInstances, uint32_t
             uint32_t instanceBinsTotal = 0;
             instancep->coverageParts(instanceCovered, instanceTotal, instanceBinsCovered,
                                      instanceBinsTotal);
-            if (!instanceTotal) continue;
+            if (instanceTotal == 0.0) continue;
             covered += instancep->weight() * instanceCovered / instanceTotal;
             total += instancep->weight();
             binCovered += instanceBinsCovered;
             binTotal += instanceBinsTotal;
         }
     }
-    coveredBins = total ? binCovered : 0;
-    totalBins = total ? binTotal : 0;
-    return total ? 100.0 * covered / total : (weight ? 0.0 : 100.0);
+    coveredBins = total != 0.0 ? binCovered : 0;
+    totalBins = total != 0.0 ? binTotal : 0;
+    return total != 0.0 ? 100.0 * covered / total : (weight ? 0.0 : 100.0);
 }
