@@ -200,6 +200,7 @@ jobs:
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: uvm2020}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: uvm2020-protocol-source}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: uvm2020-randomize-source}
+          - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: uvm2020-soc-source}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: uvm2020-source}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: vltmt-0}
           - {os: ubuntu-26.04, cc: gcc, reloc: 0, suite: vltmt-1}
