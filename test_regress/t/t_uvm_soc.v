@@ -308,7 +308,7 @@ module t;
       rw.addr = uvm_reg_addr_t'(item.addr);
       rw.kind = item.write ? UVM_WRITE : UVM_READ;
       rw.data = uvm_reg_data_t'(item.data);
-      rw.byte_en = uvm_reg_byte_en_t'(item.strb);
+      rw.byte_en = item.write ? uvm_reg_byte_en_t'(item.strb) : '1;
       rw.n_bits = 32;
       rw.status = item.error ? UVM_NOT_OK : UVM_IS_OK;
     endfunction
@@ -403,6 +403,8 @@ module t;
       uvm_reg_data_t actual;
       registers.words[index].read(status, actual, UVM_FRONTDOOR);
       if (status != UVM_IS_OK) `uvm_fatal("SOC_RAL", "register read failed")
+      if (registers.words[index].get_mirrored_value() !== actual)
+        `uvm_fatal("SOC_RAL", "frontdoor read did not update the register mirror")
       value = 32'(actual);
     endtask
     task reset_hardware();
