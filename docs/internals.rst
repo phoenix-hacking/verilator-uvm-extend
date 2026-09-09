@@ -2412,7 +2412,8 @@ driver.py Non-Scenario Arguments
 .. option:: --fail-max <numtests>
 
    Set the number of failing tests, after which the driver will stop
-   running additional tests. Defaults to 20, 0 disables.
+   running additional tests. Zero or omitting this option disables the limit.
+   The value must be a nonnegative integer.
 
 .. option:: --gdb
 

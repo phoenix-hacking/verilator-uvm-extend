@@ -320,14 +320,14 @@ class Forker:
                 more_now = True
             else:
                 nrunning += 1
-        # Start new work now, so running in background while we then collect completions
+        # Account for completed failures before checking whether new work may start.
+        for process in completed:
+            self._finished(process)
         while len(self._left) and nrunning < self._max_processes and not Quitting:
             process = self._left.popleft()
             self._run(process)
             nrunning += 1
             more_now = True
-        for process in completed:
-            self._finished(process)
         return more_now
 
     def running(self) -> list:
@@ -477,7 +477,10 @@ class Runner:
             os.system("cat " + test.obj_dir + "/*.log")
             print("  ---------- Earlier logfiles above; test was rerunnable = False\n")
         elif process.fail_max_skip:
-            test.skip("Too many test failures; exceeded --fail-max")
+            try:
+                test.skip("Too many test failures; exceeded --fail-max")
+            except VtSkipException:
+                pass  # Write the skipped status through the normal exit path below.
         else:
             VtOs.unlink_ok(test._status_filename)
             test._read()
@@ -3077,6 +3080,7 @@ if __name__ == '__main__':
     parser.add_argument('--fail-max',
                         action='store',
                         default=None,
+                        type=int,
                         help='after specified number of failures, skip remaining tests')
     parser.add_argument('--gdb', action='store_true', help='run Verilator executable with gdb')
     parser.add_argument('--gdbbt',
@@ -3127,6 +3131,8 @@ if __name__ == '__main__':
                             help='scenario-enable ' + scen)
 
     (Args, rest) = parser.parse_known_intermixed_args()
+    if Args.fail_max is not None and Args.fail_max < 0:
+        parser.error('--fail-max must be nonnegative (0 disables the limit)')
     if Args.driver_uvm_source_root is not None:
         if not Args.driver_uvm_source_root:
             parser.error('--driver-uvm-source-root requires a nonempty path')
