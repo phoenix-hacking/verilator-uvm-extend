@@ -21,6 +21,32 @@ interface apb_if (
   logic ready;
   logic error;
   logic [31:0] rdata;
+  bit check_sva;
+  bit trace_protocol;
+  logic [31:0] checked_wdata;
+
+  // Only active write lanes carry request data. Read data and inactive
+  // write lanes may vary (Arm IHI 0024D, Appendix A signal validity).
+  assign checked_wdata = write ? wdata & {{8{strb[3]}}, {8{strb[2]}}, {8{strb[1]}}, {8{strb[0]}}} : 0;
+
+  initial begin
+    check_sva = !$test$plusargs("APB_MONITOR_ONLY");
+    trace_protocol = $test$plusargs("APB_PROTOCOL_TRACE");
+  end
+  always @(negedge clk)
+    if (trace_protocol)
+      $display(
+          "APB_SAMPLE %0t %0d %0d %0d %0d %02h %08h %0h %0d",
+          $time,
+          reset_n,
+          sel,
+          enable,
+          write,
+          addr,
+          wdata,
+          strb,
+          ready
+      );
 
   clocking driver_cb @(posedge clk);
     default input #1step output #0;
@@ -37,26 +63,26 @@ interface apb_if (
   function automatic void protocol_error(string rule);
     // The driver requires a success sentinel on every positive run and this
     // exact assertion marker on each deliberately corrupted negative run.
-    $display("APB_ASSERTION %s", rule);
+    $display("APB_ASSERTION %s time=%0t", rule, $time);
     $finish;
   endfunction
 
   // Setup lasts one cycle; request fields persist through a stalled access.
-  assert property (@(posedge clk) disable iff (!reset_n)
+  assert property (@(posedge clk) disable iff (!reset_n || !check_sva)
                    sel && !enable |=> sel && enable
                    && $stable(
-      {addr, write, wdata, strb}
+      {addr, write, checked_wdata, strb}
   ))
   else protocol_error("setup");
-  assert property (@(posedge clk) disable iff (!reset_n)
+  assert property (@(posedge clk) disable iff (!reset_n || !check_sva)
                    sel && enable && !ready |=> sel && enable
                    && $stable(
-      {addr, write, wdata, strb}
+      {addr, write, checked_wdata, strb}
   ))
   else protocol_error("wait");
-  assert property (@(posedge clk) disable iff (!reset_n) enable |-> sel)
+  assert property (@(posedge clk) disable iff (!reset_n || !check_sva) enable |-> sel)
   else protocol_error("select");
-  assert property (@(posedge clk) disable iff (!reset_n) sel && !write |-> strb == 0)
+  assert property (@(posedge clk) disable iff (!reset_n || !check_sva) sel && !write |-> strb == 0)
   else protocol_error("strobe");
 endinterface
 
@@ -146,6 +172,11 @@ module t;
       repeat (2) tick();
       vif.driver_cb.reset_n <= 1;
       tick();
+      // Isolate the select rule during idle, without also violating setup.
+      if ($test$plusargs("APB_CORRUPT_SELECT")) begin
+        vif.driver_cb.enable <= 1;
+        tick();
+      end
     endtask
     virtual task run_phase(uvm_phase phase);
       tick();
@@ -153,6 +184,8 @@ module t;
       forever begin
         apb_item req;
         apb_item rsp;
+        bit [31:0] driven_data;
+        bit [31:0] unused_mask;
         seq_item_port.get_next_item(req);
         // An off-edge clocking output drive is scheduled for the next clock.
         // Align first so setup and enable cannot both be driven on that edge.
@@ -167,22 +200,33 @@ module t;
         rsp.addr = req.addr;
         rsp.write = req.write;
         rsp.strb = req.strb;
+        driven_data = req.data;
+        unused_mask = '1;
+        for (int lane = 0; lane < 4; lane++)
+        if (req.write && req.strb[lane]) unused_mask[lane*8+:8] = 0;
         vif.driver_cb.sel <= 1;
         vif.driver_cb.enable <= 0;
         vif.driver_cb.addr <= req.addr;
         vif.driver_cb.write <= req.write;
         vif.driver_cb.wdata <= req.data;
         vif.driver_cb.strb <= req.write ? req.strb : 4'b0;
-        if ($test$plusargs("APB_CORRUPT_STROBE")) vif.driver_cb.strb <= 1;
+        if ($test$plusargs("APB_CORRUPT_STROBE") && !req.write) vif.driver_cb.strb <= 1;
         tick();
         vif.driver_cb.enable <= 1;
+        if ($test$plusargs("APB_VARY_UNUSED")) begin
+          driven_data ^= unused_mask;
+          vif.driver_cb.wdata <= driven_data;
+        end
         if ($test$plusargs("APB_CORRUPT_SETUP")) vif.driver_cb.addr <= req.addr ^ 8'h04;
-        if ($test$plusargs("APB_CORRUPT_SELECT")) vif.driver_cb.sel <= 0;
         do begin
           tick();
           if (!vif.driver_cb.ready) rsp.waits++;
           if (!vif.driver_cb.ready && $test$plusargs("APB_CORRUPT_WAIT"))
             vif.driver_cb.addr <= req.addr ^ 8'h08;
+          if (!vif.driver_cb.ready && $test$plusargs("APB_VARY_UNUSED")) begin
+            driven_data ^= unused_mask;
+            vif.driver_cb.wdata <= driven_data;
+          end
           if (req.abort_transfer) begin
             if (vif.driver_cb.ready)
               `uvm_fatal("APB_ABORT", "reset injection did not interrupt a stalled access")
@@ -223,6 +267,7 @@ module t;
       apb_item pending;
       bit in_reset;
       bit previous_complete;
+      if ($test$plusargs("APB_SVA_ONLY")) return;
       forever begin
         @(vif.monitor_cb);
         if (!vif.monitor_cb.reset_n) begin
@@ -239,6 +284,14 @@ module t;
         end
         else begin
           in_reset = 0;
+          if (vif.monitor_cb.enable && !vif.monitor_cb.sel) begin
+            `uvm_fatal("APB_PROTOCOL", "enable requires select in the single-peripheral fixture")
+            return;
+          end
+          if (vif.monitor_cb.sel && !vif.monitor_cb.write && vif.monitor_cb.strb != 0) begin
+            `uvm_fatal("APB_PROTOCOL", "read strobes must be zero")
+            return;
+          end
           if (vif.monitor_cb.sel && !vif.monitor_cb.enable) begin
             if (pending != null) begin
               `uvm_fatal("APB_PROTOCOL", "setup interrupted an incomplete transfer")
@@ -252,13 +305,19 @@ module t;
             pending.strb = vif.monitor_cb.strb;
           end
           else if (vif.monitor_cb.sel && vif.monitor_cb.enable) begin
+            bit changed;
             if (pending == null) begin
               `uvm_fatal("APB_PROTOCOL", "access was not preceded by setup")
               return;
             end
-            if ({pending.addr, pending.write, pending.data, pending.strb}
-                !== {vif.monitor_cb.addr, vif.monitor_cb.write,
-                     vif.monitor_cb.wdata, vif.monitor_cb.strb}) begin
+            changed = {pending.addr, pending.write, pending.strb}
+                      !== {vif.monitor_cb.addr, vif.monitor_cb.write, vif.monitor_cb.strb};
+            for (int lane = 0; lane < 4; lane++) begin
+              if (pending.write && pending.strb[lane]
+                  && pending.data[lane*8+:8] !== vif.monitor_cb.wdata[lane*8+:8])
+                changed = 1;
+            end
+            if (changed) begin
               `uvm_fatal("APB_PROTOCOL", "request changed before transfer completion")
               return;
             end

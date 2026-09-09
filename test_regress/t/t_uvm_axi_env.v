@@ -36,8 +36,43 @@ interface axi_if (
   logic [1:0] rresp;
   logic rready = 0;
   bit check_sva;
+  bit trace_protocol;
 
-  initial check_sva = !$test$plusargs("AXI_MONITOR_ONLY");
+  initial begin
+    check_sva = !$test$plusargs("AXI_MONITOR_ONLY");
+    trace_protocol = $test$plusargs("AXI_PROTOCOL_TRACE");
+  end
+  always @(negedge clk)
+    if (trace_protocol)
+      $display(
+          "AXI_SAMPLE %0t %0d %0d %0d %02h %0h %0d %0d %08h %0h %0d %0d %0h %0d %0d %02h %0h %0d %0d %08h %0h",
+          $time,
+          reset_n,
+          awvalid,
+          awready,
+          awaddr,
+          awprot,
+          wvalid,
+          wready,
+          wdata,
+          wstrb,
+          bvalid,
+          bready,
+          bresp,
+          arvalid,
+          arready,
+          araddr,
+          arprot,
+          rvalid,
+          rready,
+          rdata,
+          rresp
+      );
+
+  function automatic void protocol_error(string rule);
+    $display("AXI_ASSERTION %s time=%0t", rule, $time);
+    $fatal(1, "AXI_SVA_%s", rule);
+  endfunction
   clocking driver_cb @(posedge clk);
     default input #1step output #0;
     output reset_n, awvalid, awaddr, awprot, wvalid, wdata, wstrb, bready;
@@ -56,32 +91,32 @@ interface axi_if (
   // Arm IHI 0022H A3.1.2 requires both interfaces to clear VALID during reset.
   assert property (@(posedge clk) disable iff (!check_sva)
                    !reset_n |-> {awvalid, wvalid, bvalid, arvalid, rvalid} == 0)
-  else $fatal(1, "AXI_SVA_RESET_VALID");
+  else protocol_error("RESET_VALID");
   assert property (@(posedge clk) disable iff (!reset_n || !check_sva)
                    awvalid && !awready |=> awvalid && $stable(
       {awaddr, awprot}
   ))
-  else $fatal(1, "AXI_SVA_AW_STABLE");
+  else protocol_error("AW_STABLE");
   assert property (@(posedge clk) disable iff (!reset_n || !check_sva)
                    wvalid && !wready |=> wvalid && $stable(
       {wdata, wstrb}
   ))
-  else $fatal(1, "AXI_SVA_W_STABLE");
+  else protocol_error("W_STABLE");
   assert property (@(posedge clk) disable iff (!reset_n || !check_sva)
                    bvalid && !bready |=> bvalid && $stable(
       bresp
   ))
-  else $fatal(1, "AXI_SVA_B_STABLE");
+  else protocol_error("B_STABLE");
   assert property (@(posedge clk) disable iff (!reset_n || !check_sva)
                    arvalid && !arready |=> arvalid && $stable(
       {araddr, arprot}
   ))
-  else $fatal(1, "AXI_SVA_AR_STABLE");
+  else protocol_error("AR_STABLE");
   assert property (@(posedge clk) disable iff (!reset_n || !check_sva)
                    rvalid && !rready |=> rvalid && $stable(
       {rdata, rresp}
   ))
-  else $fatal(1, "AXI_SVA_R_STABLE");
+  else protocol_error("R_STABLE");
 endinterface
 
 module axi_regs (
@@ -96,10 +131,21 @@ module axi_regs (
   int unsigned cycle;
   bit corrupt_data;
   bit corrupt_protocol;
+  bit corrupt_b_payload;
+  bit corrupt_b_valid;
+  bit corrupt_r_valid;
+  bit corrupt_reset_b;
+  bit corrupt_reset_r;
 
   initial begin
     corrupt_data = $test$plusargs("AXI_CORRUPT_DATA");
-    corrupt_protocol = $test$plusargs("AXI_CORRUPT_PROTOCOL");
+    corrupt_protocol = $test$plusargs("AXI_CORRUPT_PROTOCOL") ||
+        $test$plusargs("AXI_CORRUPT_R_PAYLOAD");
+    corrupt_b_payload = $test$plusargs("AXI_CORRUPT_B_PAYLOAD");
+    corrupt_b_valid = $test$plusargs("AXI_CORRUPT_B_VALID");
+    corrupt_r_valid = $test$plusargs("AXI_CORRUPT_R_VALID");
+    corrupt_reset_b = $test$plusargs("AXI_CORRUPT_RESET_B");
+    corrupt_reset_r = $test$plusargs("AXI_CORRUPT_RESET_R");
   end
   // READY depends only on local registered state, never a channel input.
   assign bus.awready = !have_aw && !bus.bvalid && cycle % 4 != 1;
@@ -115,9 +161,9 @@ module axi_regs (
       address <= 0;
       data <= 0;
       strobe <= 0;
-      bus.bvalid <= 0;
+      bus.bvalid <= corrupt_reset_b;
       bus.bresp <= 0;
-      bus.rvalid <= 0;
+      bus.rvalid <= corrupt_reset_r;
       bus.rdata <= 0;
       bus.rresp <= 0;
     end
@@ -151,6 +197,9 @@ module axi_regs (
       if (bus.rvalid && bus.rready) bus.rvalid <= 0;
       // Deliberately violate the hold rule only in the causal negative runs.
       if (corrupt_protocol && bus.rvalid && !bus.rready) bus.rdata <= bus.rdata ^ 32'b1;
+      if (corrupt_r_valid && bus.rvalid && !bus.rready) bus.rvalid <= 0;
+      if (corrupt_b_payload && bus.bvalid && !bus.bready) bus.bresp <= bus.bresp ^ 2'b10;
+      if (corrupt_b_valid && bus.bvalid && !bus.bready) bus.bvalid <= 0;
     end
   end
 endmodule
@@ -224,7 +273,9 @@ module t;
       vif.driver_cb.arvalid <= 0;
       vif.driver_cb.bready <= 0;
       vif.driver_cb.rready <= 0;
-      if ($test$plusargs("AXI_CORRUPT_RESET")) vif.driver_cb.awvalid <= 1;
+      if ($test$plusargs("AXI_CORRUPT_RESET_AW")) vif.driver_cb.awvalid <= 1;
+      if ($test$plusargs("AXI_CORRUPT_RESET_W")) vif.driver_cb.wvalid <= 1;
+      if ($test$plusargs("AXI_CORRUPT_RESET_AR")) vif.driver_cb.arvalid <= 1;
       repeat (3) tick();
       vif.driver_cb.reset_n <= 1;
       tick();
@@ -234,7 +285,13 @@ module t;
       vif.driver_cb.awaddr <= req.addr;
       vif.driver_cb.awprot <= 0;
       vif.driver_cb.awvalid <= 1;
-      do tick(); while (!vif.driver_cb.awready);
+      do begin
+        tick();
+        if (!vif.driver_cb.awready) begin
+          if ($test$plusargs("AXI_CORRUPT_AW_PAYLOAD")) vif.driver_cb.awaddr <= req.addr ^ 8'h04;
+          if ($test$plusargs("AXI_CORRUPT_AW_VALID")) vif.driver_cb.awvalid <= 0;
+        end
+      end while (!vif.driver_cb.awready);
       req.aw_accepted_at = $time;
       vif.driver_cb.awvalid <= 0;
     endtask
@@ -243,7 +300,13 @@ module t;
       vif.driver_cb.wdata <= req.data;
       vif.driver_cb.wstrb <= req.strb;
       vif.driver_cb.wvalid <= 1;
-      do tick(); while (!vif.driver_cb.wready);
+      do begin
+        tick();
+        if (!vif.driver_cb.wready) begin
+          if ($test$plusargs("AXI_CORRUPT_W_PAYLOAD")) vif.driver_cb.wdata <= req.data ^ 32'b1;
+          if ($test$plusargs("AXI_CORRUPT_W_VALID")) vif.driver_cb.wvalid <= 0;
+        end
+      end while (!vif.driver_cb.wready);
       req.w_accepted_at = $time;
       vif.driver_cb.wvalid <= 0;
     endtask
@@ -252,7 +315,14 @@ module t;
       vif.driver_cb.araddr <= req.read_addr;
       vif.driver_cb.arprot <= 0;
       vif.driver_cb.arvalid <= 1;
-      do tick(); while (!vif.driver_cb.arready);
+      do begin
+        tick();
+        if (!vif.driver_cb.arready) begin
+          if ($test$plusargs("AXI_CORRUPT_AR_PAYLOAD"))
+            vif.driver_cb.araddr <= req.read_addr ^ 8'h04;
+          if ($test$plusargs("AXI_CORRUPT_AR_VALID")) vif.driver_cb.arvalid <= 0;
+        end
+      end while (!vif.driver_cb.arready);
       vif.driver_cb.arvalid <= 0;
     endtask
     task write_transfer(axi_item req, axi_item rsp);
@@ -371,6 +441,7 @@ module t;
       int cycle_count;
       int aw_cycle;
       int w_cycle;
+      if ($test$plusargs("AXI_SVA_ONLY")) return;
       forever begin
         @(vif.monitor_cb);
         cycle_count++;
