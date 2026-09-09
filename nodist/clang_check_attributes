@@ -764,7 +764,9 @@ class CallAnnotationsValidator:
         # Preserve the method's own declaration and definition identities. Only
         # actual virtual overrides inherit base contracts; a same-named overload
         # or hidden nonvirtual method has an independent contract.
-        annotations = annotations | self.overridden_annotations(node)
+        inherited = self.overridden_annotations(node)
+        annotations = annotations | inherited
+        def_annotations = def_annotations | inherited
 
         if def_annotations != annotations:
             # Use definition's annotations for the diagnostic

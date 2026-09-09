@@ -110,28 +110,34 @@ inheritance_cases = {
                      '  struct Nested { int value() const { return unsafe(); } };\n'
                      '  int value() const override SAFE { return safe(); }\n'
                      '};\n', ''),
+    'implicit_override':
+    ('struct Base { virtual int value() const SAFE = 0; };\n'
+     'struct Derived : Base { int value() const override { return safe(); } };\n', ''),
+    'implicit_external_override': ('struct Base { virtual int value() const SAFE = 0; };\n'
+                                   'struct Derived : Base { int value() const override; };\n'
+                                   'int Derived::value() const { return safe(); }\n', ''),
     'nested_override_bad': ('struct Base { virtual int value() const SAFE = 0; };\n'
                             'struct Derived : Base {\n'
                             '  struct Nested {};\n'
                             '  int value() const override { return unsafe(); }\n'
-                            '};\n', 'declaration does not match definition'),
+                            '};\n', 'is mtsafe but calls non-mtsafe'),
     'external_override_bad': ('struct Base { virtual int value() const SAFE = 0; };\n'
                               'struct Derived : Base { int value() const override; };\n'
                               'int Derived::value() const { return unsafe(); }\n',
-                              'declaration does not match definition'),
+                              'is mtsafe but calls non-mtsafe'),
     'template_override_bad':
     ('template <typename T> struct Base { virtual int value(T) const SAFE = 0; };\n'
      'struct Derived : Base<int> { int value(int) const override { return unsafe(); } };\n',
-     'declaration does not match definition'),
+     'is mtsafe but calls non-mtsafe'),
     'conversion_override_bad':
     ('struct Base { virtual operator bool() const SAFE = 0; };\n'
      'struct Derived : Base { operator bool() const override { return unsafe() != 0; } };\n',
-     'declaration does not match definition'),
+     'is mtsafe but calls non-mtsafe'),
     'multiple_bases_bad': ('struct PureBase { virtual int value() const PURE = 0; };\n'
                            'struct SafeBase { virtual int value() const SAFE = 0; };\n'
                            'struct Derived : PureBase, SafeBase {\n'
                            '  int value() const override SAFE { return safe(); }\n'
-                           '};\n', 'declaration does not match definition'),
+                           '};\n', 'is pure but calls non-pure'),
     'multiple_bases': ('struct PureBase { virtual int value() const PURE = 0; };\n'
                        'struct SafeBase { virtual int value() const SAFE = 0; };\n'
                        'struct Derived : PureBase, SafeBase {\n'
@@ -142,7 +148,7 @@ inheritance_cases = {
      'struct Left : virtual Base { int value() const override SAFE { return 1; } };\n'
      'struct Right : virtual Base { int value() const override SAFE { return 1; } };\n'
      'struct Derived : Left, Right { int value() const override { return unsafe(); } };\n',
-     'declaration does not match definition'),
+     'is mtsafe but calls non-mtsafe'),
     'disabled_override':
     ('#define VL_MT_DISABLED_CODE_UNIT 1\n#include "inheritance.h"\n'
      'struct Derived : DisabledBase { int value() const override { return 1; } };\n', ''),
