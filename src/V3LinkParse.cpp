@@ -1226,7 +1226,20 @@ class LinkParseVisitor final : public VNVisitor {
                                              new AstClassOrPackageRef{nodep->fileline(), "std",
                                                                       nullptr, nullptr},
                                              nullptr}};
+            varp->isStatic(true);
+            varp->lifetime(VLifetime::STATIC_EXPLICIT);
             nodep->addMembersp(varp);
+            // Type options exist before the first instance and are initialized
+            // once per model, just like ordinary static class members.
+            for (const auto& entry : {std::make_pair("weight", 1), std::make_pair("goal", 100)}) {
+                FileLine* const fl = nodep->fileline();
+                AstNodeExpr* const fieldp
+                    = new AstDot{fl, false, new AstParseRef{fl, "type_option"},
+                                 new AstParseRef{fl, entry.first}};
+                nodep->addMembersp(new AstInitialStatic{
+                    fl, new AstAssign{fl, fieldp,
+                                      new AstConst{fl, static_cast<uint32_t>(entry.second)}}});
+            }
         }
 
         // IEEE: function void sample([arguments])
@@ -1375,9 +1388,14 @@ class LinkParseVisitor final : public VNVisitor {
     }
 
     void visit(AstCgOptionAssign* nodep) override {
-        if (!nodep->typeOption() && nodep->optionType() == VCoverOptionType::WEIGHT) {
+        if (!nodep->typeOption()
+            && (nodep->optionType() == VCoverOptionType::WEIGHT
+                || nodep->optionType() == VCoverOptionType::GET_INST_COVERAGE)) {
+            AstNodeExpr* const fieldp = new AstDot{
+                nodep->fileline(), false, new AstParseRef{nodep->fileline(), "option"},
+                new AstParseRef{nodep->fileline(), nodep->optionType().ascii()}};
             AstAssign* const assignp
-                = newCoverageWeightAssign(nodep->fileline(), "", nodep->valuep()->unlinkFrBack());
+                = new AstAssign{nodep->fileline(), fieldp, nodep->valuep()->unlinkFrBack()};
             nodep->replaceWith(assignp);
             VL_DO_DANGLING(pushDeletep(nodep), nodep);
             iterate(assignp);

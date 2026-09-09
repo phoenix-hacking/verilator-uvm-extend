@@ -178,11 +178,16 @@ double VlCovergroupType::coverage() const {
 }
 
 double VlCovergroupType::coverage(uint32_t& coveredBins, uint32_t& totalBins) const {
+    return coverage(m_weight, m_mergeInstances, coveredBins, totalBins);
+}
+
+double VlCovergroupType::coverage(uint32_t weight, bool mergeInstances, uint32_t& coveredBins,
+                                  uint32_t& totalBins) const {
     double covered = 0.0;
     double total = 0.0;
     uint32_t binCovered = 0;
     uint32_t binTotal = 0;
-    if (m_mergeInstances) {
+    if (mergeInstances) {
         mergedCoverageParts(covered, total, binCovered, binTotal);
     } else {
         // Excluded groups contribute to neither side of the weighted average.
@@ -202,5 +207,5 @@ double VlCovergroupType::coverage(uint32_t& coveredBins, uint32_t& totalBins) co
     }
     coveredBins = total ? binCovered : 0;
     totalBins = total ? binTotal : 0;
-    return total ? 100.0 * covered / total : (m_weight ? 0.0 : 100.0);
+    return total ? 100.0 * covered / total : (weight ? 0.0 : 100.0);
 }

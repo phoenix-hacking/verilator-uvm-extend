@@ -1,0 +1,6 @@
+%Error: t/t_covergroup_type_option_bad.v:7:26: Expecting expression to be constant, but variable isn't const: 'weight_arg'
+                                             : ... note: In instance 't'
+    7 |     type_option.weight = weight_arg;
+      |                          ^~~~~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: Exiting due to

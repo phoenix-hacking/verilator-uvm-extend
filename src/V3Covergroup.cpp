@@ -295,24 +295,73 @@ class FunctionalCoverageVisitor final : public VNVisitor {
                     configurep = namerp;
                 }
             }
+            // The current supported at_least expressions are elaborated constants.
+            // Apply the same threshold after all instance counters are initialized.
+            AstCStmt* const thresholdp = new AstCStmt{fl};
+            thresholdp->add(new AstVarRef{fl, typep, VAccess::READWRITE});
+            thresholdp->add(".itemAtLeast(" + std::to_string(i) + ") = ");
+            thresholdp->add(newItem());
+            thresholdp->add(".atLeast();");
+            m_constructorp->addStmtsp(thresholdp);
         }
+        generateCoverageQueries(typep, statep);
+    }
+
+    void generateCoverageQueries(AstVar* typep, AstVar* statep) {
+        FileLine* const fl = m_covergroupp->fileline();
+        AstVar* const typeOptionp
+            = VN_AS(m_memberMap.findMember(m_covergroupp, "type_option"), Var);
+        AstVar* const optionp = VN_AS(m_memberMap.findMember(m_covergroupp, "option"), Var);
+        const auto newField = [&](AstVar* varp, const string& field) {
+            const AstNodeUOrStructDType* const dtypep
+                = VN_AS(varp->dtypep()->skipRefp(), NodeUOrStructDType);
+            const AstMemberDType* const memberp
+                = VN_AS(m_memberMap.findMember(dtypep, field), MemberDType);
+            AstStructSel* const selp
+                = new AstStructSel{fl, new AstVarRef{fl, varp, VAccess::READ}, field};
+            selp->dtypep(memberp->subDTypep());
+            return selp;
+        };
         for (const string& name : {"get_coverage"s, "get_inst_coverage"s}) {
             AstFunc* const funcp = VN_AS(m_memberMap.findMember(m_covergroupp, name), Func);
-            AstCExpr* const coveragep = new AstCExpr{fl};
-            coveragep->add(
-                new AstVarRef{fl, name == "get_coverage" ? typep : statep, VAccess::READ});
-            coveragep->add(name == "get_coverage" ? ".coverage(" : "->coverage(");
+            AstCExpr* const typeCoveragep = new AstCExpr{fl};
+            typeCoveragep->add(new AstVarRef{fl, typep, VAccess::READ});
+            typeCoveragep->add(".coverage(");
+            typeCoveragep->add(newField(typeOptionp, "weight"));
+            typeCoveragep->add(", ");
+            typeCoveragep->add(newField(typeOptionp, "merge_instances"));
+            typeCoveragep->add(", ");
+            AstCExpr* const instanceCoveragep = new AstCExpr{fl};
+            instanceCoveragep->add(new AstVarRef{fl, statep, VAccess::READ});
+            instanceCoveragep->add("->coverage(");
             int arguments = 0;
             for (AstNode* stmtp = funcp->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
                 if (AstVar* const varp = VN_CAST(stmtp, Var)) {
                     if (!varp->isRef()) continue;
-                    if (arguments++) coveragep->add(", ");
-                    coveragep->add(new AstVarRef{fl, varp, VAccess::WRITE});
+                    if (arguments++) {
+                        typeCoveragep->add(", ");
+                        instanceCoveragep->add(", ");
+                    }
+                    typeCoveragep->add(new AstVarRef{fl, varp, VAccess::WRITE});
+                    instanceCoveragep->add(new AstVarRef{fl, varp, VAccess::WRITE});
                 }
             }
             UASSERT_OBJ(arguments == 2, funcp, "Coverage query requires two reference outputs");
-            coveragep->add(")");
-            coveragep->dtypeSetDouble();
+            typeCoveragep->add(")");
+            typeCoveragep->dtypeSetDouble();
+            instanceCoveragep->add(")");
+            instanceCoveragep->dtypeSetDouble();
+            AstNodeExpr* coveragep = typeCoveragep;
+            if (name == "get_inst_coverage") {
+                coveragep = new AstCond{
+                    fl,
+                    new AstLogAnd{fl, newField(typeOptionp, "merge_instances"),
+                                  new AstLogNot{fl, newField(optionp, "get_inst_coverage")}},
+                    typeCoveragep, instanceCoveragep};
+                coveragep->dtypeSetDouble();
+            } else {
+                VL_DO_DANGLING(instanceCoveragep->deleteTree(), instanceCoveragep);
+            }
             funcp->addStmtsp(new AstAssign{
                 fl, new AstVarRef{fl, VN_AS(funcp->fvarp(), Var), VAccess::WRITE}, coveragep});
         }

@@ -1925,6 +1925,34 @@ class WidthVisitor final : public VNVisitor {
         if (m_vup->prelim()) iterateCheckSizedSelf(nodep, "LHS", nodep->lhsp(), SELF, BOTH);
     }
     void visit(AstCgOptionAssign* nodep) override {
+        if (nodep->typeOption()
+            && (nodep->optionType() == VCoverOptionType::WEIGHT
+                || nodep->optionType() == VCoverOptionType::GOAL
+                || nodep->optionType() == VCoverOptionType::COMMENT
+                || nodep->optionType() == VCoverOptionType::MERGE_INSTANCES)) {
+            // IEEE 1800-2023 19.7.1 requires a constant declaration initializer.
+            // Procedural writes later in simulation use the ordinary static variable.
+            iterateCheckSizedSelf(nodep, "type option", nodep->valuep(), SELF, BOTH);
+            V3Const::constifyParamsEdit(nodep->valuep());
+            AstVar* const varp = VN_AS(m_memberMap.findMember(m_cgClassp, "type_option"), Var);
+            if (!varp->didWidth()) userIterate(varp, nullptr);
+            AstVarRef* const refp = new AstVarRef{nodep->fileline(), varp, VAccess::WRITE};
+            refp->classOrPackagep(m_cgClassp);
+            AstStructSel* const fieldp
+                = new AstStructSel{nodep->fileline(), refp, nodep->optionType().ascii()};
+            const AstMemberDType* const memberp = VN_AS(
+                m_memberMap.findMember(VN_AS(varp->dtypep()->skipRefp(), NodeUOrStructDType),
+                                       nodep->optionType().ascii()),
+                MemberDType);
+            fieldp->dtypep(memberp->subDTypep());
+            AstAssign* const assignp
+                = new AstAssign{nodep->fileline(), fieldp, nodep->valuep()->unlinkFrBack()};
+            AstInitialStatic* const initp = new AstInitialStatic{nodep->fileline(), assignp};
+            m_cgClassp->addMembersp(initp);
+            VL_DO_DANGLING(pushDeletep(nodep->unlinkFrBack()), nodep);
+            userIterate(initp, nullptr);
+            return;
+        }
         // Extract covergroup option values and store in AstClass before deleting.
         // m_cgClassp is always set here: AstCgOptionAssign only appears in covergroup
         // class bodies, and visitClass sets m_cgClassp before iterating children.

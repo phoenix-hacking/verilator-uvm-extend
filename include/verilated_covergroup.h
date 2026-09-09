@@ -110,6 +110,8 @@ public:
     // METHODS
     // ---- configuration (from generated constructor) ----
     void init(const char* hier, uint32_t atLeast, int nBins);
+    /// Elaborated hit threshold used for both instance and merged type coverage.
+    uint32_t atLeast() const { return m_atLeast; }
     void addSingleNamer(VlCovBinKind set, const char* name, const char* file, int line, int col) {
         addNamer(set, 1, VlCovBinNaming::Single, name, file, line, col);
     }
@@ -240,6 +242,9 @@ public:
     double coverage() const;
     /// Return the type percentage and aggregated bin counts (IEEE 19.8).
     double coverage(uint32_t& coveredBins, uint32_t& totalBins) const;
+    /// Query using the current generated static type options.
+    double coverage(uint32_t weight, bool mergeInstances, uint32_t& coveredBins,
+                    uint32_t& totalBins) const;
 };
 
 #endif  // Guard
