@@ -613,7 +613,7 @@ public:
     bool reportUnoptflat() const { return m_reportUnoptflat; }
     bool verilate() const { return m_verilate; }
     bool vpi() const { return m_vpi; }
-    bool waiverMultiline() const { return m_waiverMultiline; }
+    bool waiverMultiline() const VL_MT_SAFE { return m_waiverMultiline; }
     bool xInitialEdge() const { return m_xInitialEdge; }
     bool serializeOnly() const { return m_jsonOnly; }
     bool topIfacesSupported() const { return lintOnly() && !hierarchical(); }

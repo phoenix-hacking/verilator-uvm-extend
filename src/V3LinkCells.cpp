@@ -82,7 +82,7 @@ public:
              AstCell* cellp)
         : V3GraphEdge{graphp, fromp, top, weight, cutable}
         , m_cellp{cellp} {}
-    AstCell* cellp() const { return m_cellp; }
+    AstCell* cellp() const VL_MT_SAFE { return m_cellp; }
     string name() const override VL_MT_STABLE {
         return cellp() ? cvtToHex(cellp()) + ' ' + cellp()->name() : "";
     }
