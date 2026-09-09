@@ -95,6 +95,18 @@ test.run(logfile=dpi_log,
          ])
 test.file_grep(dpi_log, r'Number of functions reported unsafe: +(\d+)', 0)
 
+# Profiling may report an existing context from another thread, without creating
+# a pool or depending on the reporting thread's current context.
+profiler_log = test.obj_dir + '/profiler_attributes.log'
+test.run(logfile=profiler_log,
+         cmd=[
+             'python3', aroot + '/nodist/clang_check_attributes', '--verilator-root=' + aroot,
+             '--jobs=1',
+             "--cxxflags='-I" + aroot + '/include -I' + aroot + "/include/vltstd -std=c++14'",
+             aroot + '/include/verilated_profiler.cpp'
+         ])
+test.file_grep(profiler_log, r'Number of functions reported unsafe: +(\d+)', 0)
+
 # Process-tree lock requirements must be visible before the implementation is
 # included. A friend supplies this reduced member body to exercise the actual
 # private declaration, rather than a duplicate declaration in a synthetic class.

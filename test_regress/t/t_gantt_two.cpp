@@ -7,10 +7,12 @@
 //
 
 #include "verilated.h"
+#include "verilated_profiler.h"
 
 #include VM_PREFIX_INCLUDE
 
 #include <memory>
+#include <thread>
 
 int main(int argc, char** argv) {
     srand48(5);
@@ -40,5 +42,21 @@ int main(int argc, char** argv) {
     if (!contextp->gotFinish()) {
         vl_fatal(__FILE__, __LINE__, "main", "%Error: Timeout; never got a $finish");
     }
+    // Dump the existing profile while a different context is current. The report
+    // must retain its owner's settings and must not create a pool in either context.
+    VlExecutionProfiler* const profilerp = static_cast<VlExecutionProfiler*>(
+        contextp->enableExecutionProfiler(&VlExecutionProfiler::construct));
+    const std::string filename = contextp->profExecFilename() + ".context";
+    std::thread reporter{[&]() {
+        VerilatedContext otherContext;
+        otherContext.threads(2);
+        otherContext.profExecStart(99);
+        otherContext.profExecWindow(99);
+        profilerp->dump(filename.c_str(), VL_CPU_TICK());
+        // This is rejected if dumping incorrectly initialized otherContext's pool.
+        otherContext.threads(1);
+        Verilated::threadContextp(contextp.get());
+    }};
+    reporter.join();
     return 0;
 }

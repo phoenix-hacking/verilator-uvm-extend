@@ -678,6 +678,8 @@ public:
     // Internal: Model and thread setup
     void addModel(const VerilatedModel* modelp);
     VerilatedVirtualBase* threadPoolp();
+    // Read the existing pool without creating one. Thread setup/clone must be complete.
+    VerilatedVirtualBase* threadPoolp() const VL_MT_SAFE_POSTINIT { return m_threadPool.get(); }
     void prepareClone();
     VerilatedVirtualBase* threadPoolpOnClone();
     VerilatedVirtualBase*

@@ -32,6 +32,13 @@ test.execute(all_run_flags=[
     " +verilator+prof+exec+file+" + test.obj_dir + "/profile_exec.dat",
     " +verilator+prof+vlt+file+" + test.obj_dir + "/profile.vlt"])   # yapf:disable
 
+context_profile = test.obj_dir + "/profile_exec.dat.context"
+test.file_grep(context_profile, r'VLPROF arg \+verilator\+prof\+exec\+start\+4\n')
+test.file_grep(context_profile, r'VLPROF arg \+verilator\+prof\+exec\+window\+4\n')
+numa_status = re.search(r'^VLPROF info numa (.*)$',
+                        test.file_contents(test.obj_dir + "/profile_exec.dat"), re.MULTILINE)
+test.file_grep(context_profile, r'VLPROF info numa ' + re.escape(numa_status.group(1)) + r'\n')
+
 gantt_log = test.obj_dir + "/gantt.log"
 
 # The profiling data goes direct to the runtime's STDOUT

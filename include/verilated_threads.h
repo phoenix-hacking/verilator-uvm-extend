@@ -86,7 +86,7 @@ public:
     explicit VlMTaskVertex(uint32_t upstreamDepCount);
     ~VlMTaskVertex() = default;
 
-    static uint64_t yields() { return s_yields; }
+    static uint64_t yields() VL_MT_SAFE { return s_yields; }
     static void yieldThread() {
         ++s_yields;  // Statistics
         std::this_thread::yield();
@@ -243,7 +243,7 @@ public:
     }
     unsigned assignTaskIndex() { return m_assignedTasks++; }
     int numThreads() const { return static_cast<int>(m_workers.size()); }
-    std::string numaStatus() const { return m_numaStatus; }
+    std::string numaStatus() const VL_MT_SAFE_POSTINIT { return m_numaStatus; }
     VlWorkerThread* workerp(int index) {
         assert(index >= 0);
         assert(index < static_cast<int>(m_workers.size()));

@@ -38,7 +38,7 @@ constexpr const char* const VlExecutionRecord::s_ascii[];
 // VlExecutionProfiler implementation
 
 template <size_t N>
-static size_t roundUptoMultipleOf(size_t value) {
+static size_t roundUptoMultipleOf(size_t value) VL_PURE {
     static_assert((N & (N - 1)) == 0, "'N' must be a power of 2");
     const size_t mask = N - 1;
     return (value + mask) & ~mask;
@@ -140,13 +140,13 @@ void VlExecutionProfiler::dump(const char* filenamep, uint64_t tickEnd)
     // TODO Perhaps merge with verilated_coverage output format, so can
     // have a common merging and reporting tool, etc.
     fprintf(fp, "VLPROFVERSION 2.2 # Verilator execution profile version 2.2\n");
-    fprintf(fp, "VLPROF arg +verilator+prof+exec+start+%" PRIu64 "\n",
-            Verilated::threadContextp()->profExecStart());
-    fprintf(fp, "VLPROF arg +verilator+prof+exec+window+%u\n",
-            Verilated::threadContextp()->profExecWindow());
+    // Reporting must neither use another thread's context nor initialize a thread pool.
+    const VerilatedContext& context = m_context;
+    fprintf(fp, "VLPROF arg +verilator+prof+exec+start+%" PRIu64 "\n", context.profExecStart());
+    fprintf(fp, "VLPROF arg +verilator+prof+exec+window+%u\n", context.profExecWindow());
     std::string numa = "no threads";
     if (const VlThreadPool* const threadPoolp
-        = static_cast<VlThreadPool*>(Verilated::threadContextp()->threadPoolp())) {
+        = static_cast<VlThreadPool*>(context.threadPoolp())) {
         numa = threadPoolp->numaStatus();
     }
     fprintf(fp, "VLPROF info numa %s\n", numa.c_str());
