@@ -421,7 +421,8 @@ class VlProcess final : public std::enable_shared_from_this<VlProcess> {
     static void disableProcessesLocked(
         const std::vector<VlProcessRef>& rootProcessps, std::vector<VlProcessRef>& heldProcessps,
         std::vector<std::shared_ptr<VlForkSyncState>>& forkSyncps,
-        std::vector<std::shared_ptr<VlCoroutineHandleState>>& releasedForeverSuspensionps);
+        std::vector<std::shared_ptr<VlCoroutineHandleState>>& releasedForeverSuspensionps)
+        VL_REQUIRES(mutex());
     static void disableProcesses(const std::vector<VlProcessRef>& rootProcessps);
 
     explicit VlProcess(const VlProcessRef& parentp);
@@ -435,6 +436,9 @@ public:
         SUSPENDED = 3,
         KILLED = 4,
     };
+
+    /// Internal: mutex shared by process-tree transitions and named activations.
+    static VerilatedMutex& mutex() VL_MT_SAFE;
 
     // CONSTRUCTORS
     // Construct independent process
@@ -2258,7 +2262,7 @@ public:
     VlClassRef() = default;
     // Init with nullptr
     // cppcheck-suppress noExplicitConstructor
-    VlClassRef(VlNull){};
+    VlClassRef(VlNull) {};
     template <typename... T_Args>
     VlClassRef(VlDeleter& deleter, T_Args&&... args)
         : m_objp{new T_Class} {

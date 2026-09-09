@@ -95,4 +95,44 @@ test.run(logfile=dpi_log,
          ])
 test.file_grep(dpi_log, r'Number of functions reported unsafe: +(\d+)', 0)
 
+# Process-tree lock requirements must be visible before the implementation is
+# included. A friend supplies this reduced member body to exercise the actual
+# private declaration, rather than a duplicate declaration in a synthetic class.
+timing_flags = '-I' + aroot + '/include -I' + aroot + '/include/vltstd -std=c++20'
+timing_log = test.obj_dir + '/timing_attributes.log'
+test.run(logfile=timing_log,
+         cmd=[
+             'python3', aroot + '/nodist/clang_check_attributes', '--verilator-root=' + aroot,
+             '--jobs=1', "--cxxflags='" + timing_flags + "'",
+             aroot + '/include/verilated_timing.cpp'
+         ])
+test.file_grep(timing_log, r'Number of functions reported unsafe: +(\d+)', 0)
+process_lock = os.path.abspath(test.obj_dir + '/process_lock.cpp')
+test.write_wholefile(
+    process_lock, '#include "verilated_timing.h"\n'
+    'void VlNamedActivationRegistry::disableAll() VL_MT_UNSAFE {\n'
+    '  std::vector<VlProcessRef> roots, held;\n'
+    '  std::vector<std::shared_ptr<VlForkSyncState>> forks;\n'
+    '  std::vector<std::shared_ptr<VlCoroutineHandleState>> suspensions;\n'
+    '#ifdef LOCKED\n'
+    '  const VerilatedLockGuard lock{VlProcess::mutex()};\n'
+    '#endif\n'
+    '  VlProcess::disableProcessesLocked(roots, held, forks, suspensions);\n'
+    '}\n')
+for locked in (True, False):
+    log = test.obj_dir + ('/process_locked.log' if locked else '/process_unlocked.log')
+    # Pass the warning directly to Clang's front end; the checker filters out
+    # driver warning flags that may belong to another recorded compiler.
+    flags = timing_flags + ' -Xclang -Werror=thread-safety' + (' -DLOCKED' if locked else '')
+    test.run(logfile=log,
+             fails=not locked,
+             cmd=[
+                 'python3', aroot + '/nodist/clang_check_attributes', '--verilator-root=' + aroot,
+                 '--jobs=1', "--cxxflags='" + flags + "'", process_lock
+             ])
+    if locked:
+        test.file_grep(log, r'Number of functions reported unsafe: +(\d+)', 0)
+    else:
+        test.file_grep(log, r"calling function 'disableProcessesLocked' requires holding mutex")
+
 test.passes()
