@@ -163,6 +163,7 @@ class VlCovergroupData final {
     std::vector<std::shared_ptr<void>> m_options;
 
 public:
+    // Need () for vector size constructors; braces would select initializer lists.
     explicit VlCovergroupData(int items)
         : m_items(items)
         , m_weights(items, 1)
@@ -228,7 +229,7 @@ public:
     /// Configure the type before constructing instances. Thresholds and type
     /// weights are supplied from the elaborated coverage item declarations.
     explicit VlCovergroupType(int items = 0)
-        : m_items(items) {}
+        : m_items(items) {}  // Need () for the vector size constructor.
     /// Allocate and retain only the coverage data of a new instance.
     std::shared_ptr<VlCovergroupData> create();
     /// Lazily configure a generated type before its first instance is created.
