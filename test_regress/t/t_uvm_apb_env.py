@@ -12,6 +12,7 @@ import os
 import re
 
 import vltest_bootstrap
+from uvm_coverage_common import verify_queries
 from uvm_protocol_common import compare_faults, verify_positive, verify_unused_apb
 
 
@@ -23,7 +24,10 @@ def read_bins(filename):
             field.split('\x02', 1) for field in metadata.split('\x01') if '\x02' in field)
         hierarchy = fields.get('h', '')
         if 'transfers.' in hierarchy:
-            bins[hierarchy.split('transfers.', 1)[1]] = int(count)
+            name = hierarchy.split('transfers.', 1)[1]
+            if name in bins:
+                test.error('Duplicate APB coverage bin: ' + name)
+            bins[name] = int(count)
     if len(bins) != 7:
         test.error('Coverage database did not contain all seven APB subscriber bins')
     return bins
@@ -70,6 +74,7 @@ for dpi in (False, True):
             log, r'^APB_RAL_SENTINEL registers=16 reads=1120 writes=1152 '
             r'resets=3 backdoor_reads=32 backdoor_writes=16$', 1)
         verify_positive(test.file_contents(log), 'APB')
+        verify_queries(test.file_contents(log), 'APB')
         traces.append(trace)
         expected = Counter()
         for line in trace:

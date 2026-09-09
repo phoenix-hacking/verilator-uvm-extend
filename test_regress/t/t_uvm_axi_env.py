@@ -12,6 +12,7 @@ import os
 import re
 
 import vltest_bootstrap
+from uvm_coverage_common import verify_queries
 from uvm_protocol_common import compare_faults, first_violation, samples, verify_positive
 
 
@@ -89,6 +90,7 @@ for dpi in (False, True):
         if tuple(map(len, trace)) != (1202, 1266):
             test.error('Replay did not record every completed AXI transaction')
         verify_positive(test.file_contents(log), 'AXI')
+        verify_queries(test.file_contents(log), 'AXI')
         traces.append(trace)
         expected = Counter()
         for direction_trace in trace:
