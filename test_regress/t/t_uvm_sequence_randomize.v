@@ -143,7 +143,24 @@ module t;
       `checkd(item.address, 1)
       item.address_c.constraint_mode(1);
       `checkd(item.address_c.constraint_mode(), 1)
-      `checkd(item.randomize() with {address == 1;}, 0)
+      begin
+        bit [14:0] saved_address = item.address;
+        bit [7:0] saved_tag = item.tag;
+        int unsigned saved_length = item.length;
+        bit [7:0] saved_payload[] = item.payload;
+        bit [4:0] saved_channel = item.meta.channel;
+        `checkd(item.randomize() with {address == 1;}, 0)
+        // A failed solve preserves every random value, container shape and
+        // existing nested handle; pre_randomize side effects still occur.
+        `checkd(item.address, saved_address)
+        `checkd(item.tag, saved_tag)
+        `checkd(item.length, saved_length)
+        `checkd(item.payload.size(), saved_payload.size())
+        foreach (saved_payload[i]) `checkd(item.payload[i], saved_payload[i])
+        if (item.meta != original_meta)
+          `uvm_fatal("FAILED_STATE", "Failed solve replaced the nested object handle")
+        `checkd(item.meta.channel, saved_channel)
+      end
       `checkd(item.pre_count, 67)
       `checkd(item.post_count, 66)
       `checkd(item.address, 1)
@@ -152,6 +169,7 @@ module t;
       `checkd(item.address, 132)
       `checkd(item.pre_count, 68)
       `checkd(item.post_count, 67)
+      $write("UVM_RANDOM_STATE pre=%0d post=%0d failures=1\n", item.pre_count, item.post_count);
     endtask
   endclass
 
