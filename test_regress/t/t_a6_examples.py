@@ -8,6 +8,7 @@
 # SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
 import vltest_bootstrap
+import shlex
 
 test.priority(180)
 test.scenarios('dist')
@@ -19,6 +20,12 @@ if not os.path.exists(test.root + "/.git"):
 
 examples = sorted(test.glob_some(test.root + "/examples/*"))
 for example in examples:
-    test.run(cmd=[os.environ["MAKE"], "-C", example])
+    command = [os.environ["MAKE"], "-C", example]
+    if os.path.basename(example) == 'make_uvm':
+        source_root = os.environ.get('UVM_SOURCE_ROOT', os.environ.get('UVM_HOME', ''))
+        if source_root:
+            source_root = os.path.abspath(source_root)
+        command.append(shlex.quote('UVM_SOURCE_ROOT=' + source_root))
+    test.run(logfile=test.obj_dir + '/' + os.path.basename(example) + '.log', cmd=command)
 
 test.passes()

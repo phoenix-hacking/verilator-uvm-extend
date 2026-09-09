@@ -1575,6 +1575,11 @@ For all tests to pass, you must install the following packages:
 
 - Cmake for build paths that use it.
 
+- An unmodified UVM source checkout for the UVM example. Set
+  ``UVM_SOURCE_ROOT`` to its root; the example regression also accepts
+  ``UVM_HOME`` when ``UVM_SOURCE_ROOT`` is unset. The qualified reference
+  is Accellera UVM 2020.3.1.
+
 
 Controlling the Test Driver
 ---------------------------
