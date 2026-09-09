@@ -20,6 +20,10 @@ examples/make_hello_c
 examples/make_hello_sc
    Example GNU-make simple Verilog->SystemC conversion
 
+examples/make_uvm
+   Self-checking UVM source-tree example with explicit DPI selection; see
+   :ref:`Example UVM Source Execution`. Requires an external UVM checkout.
+
 examples/make_tracing_c
    Example GNU-make Verilog->C++ with tracing
 

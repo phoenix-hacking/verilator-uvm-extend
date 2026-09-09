@@ -113,6 +113,7 @@ SUBDIRS = docs src test_regress \
   examples/make_hello_binary \
   examples/make_hello_c \
   examples/make_hello_sc \
+  examples/make_uvm \
   examples/make_tracing_c \
   examples/make_tracing_sc \
   examples/make_protect_lib \
@@ -126,7 +127,11 @@ EXAMPLES_FIRST = \
   examples/make_hello_c \
   examples/make_hello_sc \
 
-EXAMPLES = $(EXAMPLES_FIRST) $(filter-out $(EXAMPLES_FIRST), $(sort $(wildcard examples/*)))
+EXAMPLES = $(EXAMPLES_FIRST) $(filter-out $(EXAMPLES_FIRST) examples/make_uvm, $(sort $(wildcard examples/*)))
+# The UVM example requires an explicitly selected external library.
+ifneq ($(UVM_SOURCE_ROOT),)
+EXAMPLES += examples/make_uvm
+endif
 
 # See uninstall also - don't put wildcards in this variable, it might uninstall other stuff
 # No verilator_ccache_report.1, verilator_difftree.1 as those are not bin/ installed
@@ -261,6 +266,7 @@ VL_INST_INC_SRCDIR_FILES = \
   include/*.vlt \
   include/*.sv \
   include/fstcpp/*.[chv]* \
+  include/uvm/*.c \
   include/vltstd/*.[chv]* \
 
 VL_INST_DATA_SRCDIR_FILES = \
@@ -310,6 +316,7 @@ installman: $(VL_INST_MAN_FILES)
 	done
 
 installdata:
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/include/uvm
 	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/include/fstcpp
 	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/include/vltstd
 	for p in $(VL_INST_INC_BLDDIR_FILES) ; do \
@@ -319,6 +326,7 @@ installdata:
 	; for p in $(VL_INST_INC_SRCDIR_FILES) ; do \
 	  $(INSTALL_DATA) $$p $(DESTDIR)$(pkgdatadir)/$$p; \
 	done
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/examples/make_uvm
 	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/examples/make_hello_binary
 	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/examples/make_hello_c
 	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/examples/make_hello_sc
@@ -355,9 +363,11 @@ uninstall:
 	-rm $(DESTDIR)$(pkgdatadir)/verilator-config.cmake
 	-rm $(DESTDIR)$(pkgdatadir)/verilator-config-version.cmake
 	-rmdir $(DESTDIR)$(pkgdatadir)/bin
+	-rmdir $(DESTDIR)$(pkgdatadir)/include/uvm
 	-rmdir $(DESTDIR)$(pkgdatadir)/include/fstcpp
 	-rmdir $(DESTDIR)$(pkgdatadir)/include/vltstd
 	-rmdir $(DESTDIR)$(pkgdatadir)/include
+	-rmdir $(DESTDIR)$(pkgdatadir)/examples/make_uvm
 	-rmdir $(DESTDIR)$(pkgdatadir)/examples/make_hello_binary
 	-rmdir $(DESTDIR)$(pkgdatadir)/examples/make_hello_c
 	-rmdir $(DESTDIR)$(pkgdatadir)/examples/make_hello_sc

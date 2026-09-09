@@ -84,7 +84,8 @@ jobs:
       - name: Checkout unmodified UVM 2020.3.1
         if: >-
           ${{ inputs.suite == 'uvm2020-source' || inputs.suite == 'uvm2020-randomize-source'
-          || inputs.suite == 'uvm2020-protocol-source' || inputs.suite == 'uvm2020-soc-source' }}
+          || inputs.suite == 'uvm2020-protocol-source' || inputs.suite == 'uvm2020-soc-source'
+          || inputs.suite == 'uvm2020-example-source' }}
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
         with:
           repository: accellera-official/uvm-core
@@ -105,7 +106,8 @@ jobs:
       - name: Verify UVM source provenance
         if: >-
           ${{ (inputs.suite == 'uvm2020-source' || inputs.suite == 'uvm2020-randomize-source'
-          || inputs.suite == 'uvm2020-protocol-source' || inputs.suite == 'uvm2020-soc-source') && always() }}
+          || inputs.suite == 'uvm2020-protocol-source' || inputs.suite == 'uvm2020-soc-source'
+          || inputs.suite == 'uvm2020-example-source') && always() }}
         working-directory: uvm2020-source
         run: |
           test "$(git rev-parse HEAD)" = 78c06547a2a0a29b3dc9dcafae62b75b2ff61544

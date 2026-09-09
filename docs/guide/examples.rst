@@ -13,6 +13,7 @@ This section covers the following examples:
 - :ref:`Example Create-Binary Execution`
 - :ref:`Example C++ Execution`
 - :ref:`Example SystemC Execution`
+- :ref:`Example UVM Source Execution`
 - :ref:`Examples in the Distribution`
 
 .. toctree::
@@ -22,4 +23,5 @@ This section covers the following examples:
    example_binary.rst
    example_cc.rst
    example_sc.rst
+   example_uvm.rst
    example_dist.rst
