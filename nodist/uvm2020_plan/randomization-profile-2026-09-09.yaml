@@ -1,0 +1,79 @@
+---
+# DESCRIPTION: Verilator: UVM sequence-item randomization profile acceptance
+# SPDX-FileCopyrightText: 2026-2026 Wilson Snyder
+# SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+
+schema_version: 1
+date: '2026-09-09'
+observed_utc: '2026-09-09T17:13:37.633125+00:00'
+status: accepted_m09_profile
+source_revision: 63fb4e86b20cc489f05b087ced2d56b7b84fcdcc
+uvm_source_revision: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+uvm_source_clean: true
+profile: nodist/uvm2020_plan/RANDOMIZATION_PROFILE.md
+acceptance:
+  milestone: M09
+  gate: M09-G01-CLOSURE
+  requirements:
+  - requirement: Random sequence items pass with deterministic seed replay.
+    proof: Four DPI/thread configurations, each seeds 1729/1729/2718; 64 requests per run; independent field/constraint/payload oracle; successful and failed-solve
+      state/callback checks.
+    local_runs: 12
+    local_transactions: 768
+    ci_runs: 12
+    ci_transactions: 768
+  - requirement: Unsupported constraint forms are documented precisely.
+    proof: RANDOMIZATION_PROFILE.md maps twenty active drivers to exact golden diagnostics and documents the separately reproduced module-function array-reference
+      IMPURE limitation.
+    diagnostic_drivers_passed: 20
+original_issue:
+  url: https://github.com/phoenix-hacking/verilator-uvm-extend/issues/10
+  retained_contract:
+    path: /home/holden/verilator-work/uvm-protocol-profile-evidence/m09-next-issue-contract-20260909.json
+    bytes: 3282
+    sha256: c1bb0ff4ca09142bea5499c2b02fd897a5ac0af8afff4cf64eaefc89a03aef96
+source_checks:
+- path: /home/holden/verilator-work/uvm-random-profile-evidence/candidate-v1-local-validation.json
+  bytes: 4683
+  sha256: 4b4ac9599b173b29fa2a7ed0a82ed68c60fa843393d94cce51bbcc2d1e403e9b
+- path: /home/holden/verilator-work/uvm-random-profile-evidence/candidate-v1-acceptance-source-recheck.json
+  bytes: 11742
+  sha256: e8738d91ab2e188102d54e6613141049eeb219e218106ca3a2756ef594486208
+- path: /home/holden/verilator-work/uvm-random-profile-evidence/candidate-v1-final-source-results.json
+  bytes: 11742
+  sha256: df153dfc18466251d4f4ae088e0d02ad914cd15a6470454afe21d52d8838aef0
+- path: /home/holden/verilator-work/uvm-random-profile-evidence/constraint-limits-v1-results.json
+  bytes: 49043
+  sha256: 4039db7be1845dff6e6df5052c7fb8b12f082249683e481e5254fb930526073c
+- path: /home/holden/verilator-work/uvm-random-profile-evidence/candidate-v1-fixture-validation.json
+  bytes: 752
+  sha256: d83b4d44882bd0ffcc517199d40c21e59bd9512c8027ee0684ad4331bc440c15
+ci:
+  run: 34336465255
+  head: 63fb4e86b20cc489f05b087ced2d56b7b84fcdcc
+  job: 102426270066
+  url: https://github.com/phoenix-hacking/verilator-uvm-extend/actions/runs/34336465255/job/102426270066
+  conclusion: success
+  verification:
+    path: /home/holden/verilator-work/uvm-random-profile-evidence/candidate-v1-ci-randomization-verified.json
+    bytes: 1991
+    sha256: 95c231c238a60ecdc947f2b585bfd94888c1d9900eb2f66bdd5ad504411b747c
+  raw_log:
+    path: /home/holden/verilator-work/uvm-random-profile-evidence/current-ci-randomize-source.log
+    bytes: 321441
+    sha256: 1154cdd506a40409b8cd3e39e2de419d072c822afc6338a6ccb1b0df58e47f68
+  overall_run_conclusion: failure
+  overall_failed_jobs: 5
+  failed_tests:
+  - t_dist_attributes_include
+  - t_dist_attributes_src
+  failure_review:
+    path: /home/holden/verilator-work/uvm-random-profile-evidence/candidate-v1-ci-failures-verified.json
+    bytes: 3019
+    sha256: 5250075bae14089d080b6a9d243c5f4c9e3640db4238f701374da0fdfd0de243
+boundaries:
+- Acceptance applies to the original M09 sequence-item profile, not complete constraint-language or UVM conformance.
+- The current-source named CI job resolves the earlier combined-source qualification; its fixture includes complete failed-solve state and the independent oracle.
+- Full exact-release CI/regression remains required by GOALS.md G-UVM release closure; five annotation-check jobs failed and receive no pass credit.
+- Mandatory unsupported language/UVM requirements remain open under the full goal; documenting diagnostics does not waive them.
+- C13 also requires M16 synthetic SoC replay and remains open. No production performance or final-goal check is accepted.

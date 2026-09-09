@@ -12,8 +12,8 @@ Updated 2026-09-09, with evidence observed on 2026-09-09 UTC.
 
 | Measure | Accepted | Percentage |
 |---|---:|---:|
-| Public capability milestones | 8/20 | 40.0% |
-| Required atomic gates | 32/46 | 69.6% |
+| Public capability milestones | 9/20 | 45.0% |
+| Required atomic gates | 33/46 | 71.7% |
 | Program exit criteria | 4/21 | 19.0% |
 | Full UVM compliance goal checks | 0/6 | Pending |
 | Production performance goal checks | 0/6 | Pending |
@@ -25,6 +25,17 @@ oracles, including negative tests and bounded XFAIL handling; it does not
 establish full compliance. Direct resource lookup remains a normative blocker.
 
 ## Latest validation checkpoint
+
+**M09 now passes its original sequence-item acceptance.** Source `63fb4e86b2`
+passes the local and dedicated current-source CI matrices: four DPI/thread
+configurations, 12 seeded runs and 768 independently checked transactions in
+each matrix. Complete failed-solve state, callbacks, modes and deterministic
+replay pass. Twenty current constraint-limit drivers match the documented
+diagnostics. [Acceptance evidence](randomization-profile-2026-09-09.yaml)
+records the exact source, pinned library, raw logs and validation hashes.
+The overall CI run failed five jobs on two annotation checks; full exact-release
+CI/regression remains open. C13 also requires M16, so no exit criterion or
+final-goal check receives credit. Denominators and acceptance scope are unchanged.
 
 **M15 and C16 now pass their declared local acceptance.** At `350da6ef4`,
 all ten practical APB/AXI-lite assertion rules agree with independent UVM
