@@ -197,7 +197,8 @@ void V3Global::dumpCheckGlobalTree(const string& stagename, int newNumber, bool 
     }
 }
 
-void V3Global::idPtrMapDumpJson(std::ostream& os) {
+void V3GlobalDebug::idPtrMapDumpJson(std::ostream& os) VL_MT_SAFE_EXCLUDES(m_mutex) {
+    const V3LockGuard lock{m_mutex};
     std::string sep = "\n  ";
     os << "\"pointers\": {";
     for (const auto& itr : m_ptrToId) {
@@ -207,11 +208,14 @@ void V3Global::idPtrMapDumpJson(std::ostream& os) {
     os << "\n }";
 }
 
-void V3Global::saveJsonPtrFieldName(const std::string& fieldName) {
+void V3GlobalDebug::saveJsonPtrFieldName(const std::string& fieldName)
+    VL_MT_SAFE_EXCLUDES(m_mutex) {
+    const V3LockGuard lock{m_mutex};
     m_jsonPtrNames.insert(fieldName);
 }
 
-void V3Global::ptrNamesDumpJson(std::ostream& os) {
+void V3GlobalDebug::ptrNamesDumpJson(std::ostream& os) VL_MT_SAFE_EXCLUDES(m_mutex) {
+    const V3LockGuard lock{m_mutex};
     std::string sep = "\n  ";
     os << "\"ptrFieldNames\": [";
     for (const auto& itr : m_jsonPtrNames) {
@@ -221,7 +225,8 @@ void V3Global::ptrNamesDumpJson(std::ostream& os) {
     os << "\n ]";
 }
 
-const std::string& V3Global::ptrToId(const void* p) {
+const std::string& V3GlobalDebug::ptrToId(const void* p) VL_MT_SAFE_EXCLUDES(m_mutex) {
+    const V3LockGuard lock{m_mutex};
     const auto pair = m_ptrToId.emplace(p, "");
     if (pair.second) {
         std::ostringstream os;

@@ -903,7 +903,7 @@ public:
     // strings with a bijection to aid human readability. Observe that this might
     // not actually be a unique identifier as the address can get reused after a
     // node has been freed.
-    static std::string nodeAddr(const AstNode* nodep) {
+    static std::string nodeAddr(const AstNode* nodep) VL_MT_SAFE {
         return v3Global.opt.dumpTreeAddrids() ? v3Global.ptrToId(nodep) : cvtToHex(nodep);
     }
 

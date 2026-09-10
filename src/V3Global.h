@@ -96,6 +96,20 @@ constexpr bool operator==(VWidthMinUsage::en lhs, const VWidthMinUsage& rhs) {
 //######################################################################
 // V3Global - The top level class for the entire program
 
+// Debug identifiers shared by tree dumps. Entries are never erased and an ID
+// is immutable after insertion, so references remain valid until destruction.
+class V3GlobalDebug final {
+    V3Mutex m_mutex;  // Protects both registries; no other locks acquired while held
+    std::unordered_map<const void*, std::string> m_ptrToId VL_GUARDED_BY(m_mutex);
+    std::unordered_set<std::string> m_jsonPtrNames VL_GUARDED_BY(m_mutex);
+
+public:
+    const std::string& ptrToId(const void* p) VL_MT_SAFE_EXCLUDES(m_mutex);
+    void saveJsonPtrFieldName(const std::string& fieldName) VL_MT_SAFE_EXCLUDES(m_mutex);
+    void ptrNamesDumpJson(std::ostream& os) VL_MT_SAFE_EXCLUDES(m_mutex);
+    void idPtrMapDumpJson(std::ostream& os) VL_MT_SAFE_EXCLUDES(m_mutex);
+};
+
 class V3Global final {
     // Globals
     // Root of entire netlist, created by makeInitNetlist(} so static constructors run first
@@ -137,12 +151,7 @@ class V3Global final {
     bool m_hasPrintedObjects = false;  // Design has format args printed with to_string()
     uint64_t m_currentHierBlockCost = 0;  // Total cost of this hier block, used for scheduling
 
-    // Memory address to short string mapping (for debug)
-    std::unordered_map<const void*, std::string>
-        m_ptrToId;  // The actual 'address' <=> 'short string' bijection
-
-    // Names of fields that were dumped by dumpJsonPtr()
-    std::unordered_set<std::string> m_jsonPtrNames;
+    V3GlobalDebug m_debug;  // Shared pointer IDs and JSON pointer field names
 
     // Id of the main thread
     const std::thread::id m_mainThreadId = std::this_thread::get_id();
@@ -227,10 +236,12 @@ public:
     void useRandomizeMethods(bool flag) { m_useRandomizeMethods = flag; }
     bool hasPrintedObjects() const { return m_hasPrintedObjects; }
     void hasPrintedObjects(bool flag) { m_hasPrintedObjects = flag; }
-    void saveJsonPtrFieldName(const std::string& fieldName);
-    void ptrNamesDumpJson(std::ostream& os);
-    void idPtrMapDumpJson(std::ostream& os);
-    const std::string& ptrToId(const void* p);
+    void saveJsonPtrFieldName(const std::string& fieldName) VL_MT_SAFE {
+        m_debug.saveJsonPtrFieldName(fieldName);
+    }
+    void ptrNamesDumpJson(std::ostream& os) VL_MT_SAFE { m_debug.ptrNamesDumpJson(os); }
+    void idPtrMapDumpJson(std::ostream& os) VL_MT_SAFE { m_debug.idPtrMapDumpJson(os); }
+    const std::string& ptrToId(const void* p) VL_MT_SAFE { return m_debug.ptrToId(p); }
     std::thread::id mainThreadId() const { return m_mainThreadId; }
     static std::vector<std::string> verilatedCppFiles();
     uint64_t currentHierBlockCost() const { return m_currentHierBlockCost; }
