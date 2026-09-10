@@ -616,11 +616,11 @@ public:
     static string encodeName(const string& namein);
     static string encodeNumber(int64_t num);  // Encode number into internal C representation
     static string vcdName(const string& namein);  // Name for printing out to vcd files
-    string prettyName() const { return prettyName(name()); }
+    string prettyName() const VL_MT_STABLE { return prettyName(name()); }
     string prettyNameQ() const { return prettyNameQ(name()); }
     string verilogName() const { return vpiName(origName()); }  // Decoded original Verilog name
     // "VARREF" for error messages (NOT dtype's pretty name)
-    string prettyTypeName() const;
+    string prettyTypeName() const VL_MT_STABLE;
     virtual string prettyOperatorName() const { return "operator " + prettyTypeName(); }
     FileLine* fileline() const VL_MT_SAFE { return m_fileline; }
     void fileline(FileLine* fl) { m_fileline = fl; }

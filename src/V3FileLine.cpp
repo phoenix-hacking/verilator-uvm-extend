@@ -473,7 +473,7 @@ string FileLine::prettySource() const VL_MT_SAFE {
     return VString::spaceUnprintable(out);
 }
 
-string FileLine::warnContext() const {
+string FileLine::warnContext() const VL_MT_SAFE {
     if (!v3Global.opt.context()) return "";
     if (firstLineno() == lastLineno() && firstColumn()) {
         const string sourceLine = prettySource();

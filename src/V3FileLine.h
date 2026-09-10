@@ -446,8 +446,9 @@ public:
         return warnContext() + warnContextParent();
     }
     /// When building an error, additional location for additional references
-    /// Simplified information vs warnContextPrimary() to make dump clearer
-    string warnContextSecondary() const { return warnContext(); }
+    /// Simplified information vs warnContextPrimary() to make dump clearer.
+    /// Formats immutable source data without changing the active error context.
+    string warnContextSecondary() const VL_MT_SAFE { return warnContext(); }
     bool operator==(const FileLine& rhs) const {
         return (m_tokenNum == rhs.m_tokenNum && m_firstLineno == rhs.m_firstLineno
                 && m_firstColumn == rhs.m_firstColumn && m_lastLinenoAdder == rhs.m_lastLinenoAdder
@@ -482,7 +483,7 @@ public:
     }
 
 private:
-    string warnContext() const;
+    string warnContext() const VL_MT_SAFE;
     string warnContextParent() const VL_REQUIRES(V3Error::s().m_mutex);
     const MsgEnBitSet& msgEn() const VL_MT_SAFE { return singleton().msgEn(m_msgEnIdx); }
 };
