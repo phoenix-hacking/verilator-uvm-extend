@@ -532,7 +532,7 @@ public:
     bool coverageFsm() const { return m_coverageFsm; }
     bool coverageLine() const { return m_coverageLine; }
     bool coveragePerInstance() const { return m_coveragePerInstance; }
-    bool coverageToggle() const { return m_coverageToggle; }
+    bool coverageToggle() const VL_MT_SAFE { return m_coverageToggle; }
     bool coverageUnderscore() const { return m_coverageUnderscore; }
     bool coverageUser() const { return m_coverageUser; }
     bool debugCheck() const VL_MT_SAFE { return m_debugCheck; }

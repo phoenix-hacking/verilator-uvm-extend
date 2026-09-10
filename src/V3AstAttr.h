@@ -1947,7 +1947,7 @@ public:
     // cppcheck-suppress noExplicitConstructor
     constexpr VSystemCSectionType(en _e)
         : m_e{_e} {}
-    constexpr operator en() const { return m_e; }
+    constexpr operator en() const VL_PURE { return m_e; }
 };
 
 //######################################################################

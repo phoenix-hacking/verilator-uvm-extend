@@ -362,7 +362,7 @@ public:
     void modPublic(bool flag) { m_modPublic = flag; }
     bool modTrace() const { return m_modTrace; }
     void modTrace(bool flag) { m_modTrace = flag; }
-    bool ctorVarReset() const { return m_ctorVarReset; }
+    bool ctorVarReset() const VL_MT_STABLE { return m_ctorVarReset; }
     void ctorVarReset(bool flag) { m_ctorVarReset = flag; }
     bool dead() const { return m_dead; }
     void dead(bool flag) { m_dead = flag; }
