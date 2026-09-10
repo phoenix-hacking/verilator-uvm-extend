@@ -22,6 +22,18 @@ test.compile(verilator_flags2=[
     *test.uvm2020_flags(package=False, dpi=True),
 ])
 
-test.execute(expect_filename=test.golden_filename)
+test.execute()
+
+# The shared adapter is included from the runtime installation. Keep its
+# diagnostic file and line while normalizing the checkout/installation prefix.
+# Preserve the raw simulation log for debugging.
+normalized_log = test.obj_dir + "/dpi_normalized.log"
+test.write_wholefile(
+    normalized_log,
+    re.sub(r'^(UVM Report )(?:.*[/\\])?include[/\\]uvm[/\\]uvm_hdl_verilator\.c:',
+           r'\1include/uvm/uvm_hdl_verilator.c:',
+           test.file_contents(test.run_log_filename),
+           flags=re.MULTILINE))
+test.files_identical(normalized_log, test.golden_filename, is_logfile=True)
 
 test.passes()
